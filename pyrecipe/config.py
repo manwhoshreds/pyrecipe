@@ -10,9 +10,11 @@ __scriptname__  = os.path.basename(sys.argv[0])
 __email__       = "m.k.miller@gmx.com"
 
 #---GLOBALS--------
-CONFIG_FILE     = os.path.expanduser('~/.config/pyrecipe/config')
-DB_FILE         = os.path.expanduser('~/.config/pyrecipe/recipe.db')
-RECIPE_DATA_DIR = os.path.expanduser('~/.config/pyrecipe/recipe_data/')
+CONFIG_DIR      = os.path.expanduser('~/.config/pyrecipe/')
+CONFIG_FILE     = CONFIG_DIR + 'config'
+DB_FILE         = CONFIG_DIR + 'recipe.db'
+RECIPE_DATA_DIR = CONFIG_DIR + 'recipe_data/'
+EDITOR          = os.getenv('EDITOR', 'nano')
 #HASH_FILE      = os.path.expanduser('~/.local/')
 
 with open(CONFIG_FILE, "r") as stream:
@@ -63,41 +65,11 @@ PINT_UNDEFINED_UNITS = ['box', 'taste', 'inch piece', 'stick', 'bottle', 'each',
 # QUANTITY_UNITS are checked later and put in parenthesis
 # its not considered professional recipe writing
 # to use two numbers in a row like "1 32 ounce can"
-CAN_UNITS         = ['32 ounce can', '16 ounce can', '15 ounce can', '8.5 ounce can', '8 ounce can', '2 pound package']
-ALLOWED_INGRED_UNITS   = CAN_UNITS + CULINARY_UNITS + PINT_UNDEFINED_UNITS
-PREP_TYPES             = ['softened', 
-                          'diced', 
-						  'finely diced', 
-						  'shredded', 
-						  'tightly packed', 
-						  'drained', 
-						  'deviened', 
-						  'cubed', 
-						  'chopped', 
-						  'finely chopped', 
-						  'freshly ground', 
-						  'very finely chopped', 
-						  'minced', 
-						  'finely minced', 
-						  'peeled and finely minced', 
-						  'sliced', 
-						  'grated', 
-						  'squeezed', 
-						  'freshly grated', 
-						  'peeled', 
-						  'quartered', 
-						  'julienned', 
-						  'puréed', 
-						  'crushed', 
-						  'coarsely chopped', 
-						  'coarsely cracked', 
-						  'cut up', 
-						  'melted', 
-						  'seeded and deviened', 
-						  'cut into 2 inch pieces', 
-						  'cut into 1 inch pieces', 
-						  'cut into 1 inch lengths', 
-						  'uncooked',
-						  'peeled and grated',
-						  'lightly packed',
-						  'roasted']
+CAN_UNITS            = ['32 ounce can', '16 ounce can', '15 ounce can', '8.5 ounce can', '8 ounce can', '2 pound package']
+ALLOWED_INGRED_UNITS = CAN_UNITS + CULINARY_UNITS + PINT_UNDEFINED_UNITS
+PREP_TYPES           = ['softened', 'diced', 'finely diced', 'shredded', 'tightly packed', 'drained', 'deviened', 
+						'cubed', 'chopped', 'finely chopped', 'freshly ground', 'very finely chopped', 'minced', 
+						'finely minced', 'peeled and finely minced', 'sliced', 'grated', 'squeezed', 'freshly grated', 
+						'peeled', 'quartered', 'julienned', 'puréed', 'crushed', 'coarsely chopped', 'coarsely cracked', 
+						'cut up', 'melted', 'seeded and deviened', 'cut into 2 inch pieces', 'cut into 1 inch pieces', 
+						'cut into 1 inch lengths', 'uncooked', 'peeled and grated', 'lightly packed', 'roasted']

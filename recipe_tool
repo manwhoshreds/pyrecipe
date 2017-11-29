@@ -4,10 +4,8 @@
 import os
 import sys
 import argparse
-import sqlite3
 
 import pyrecipe.recipe as recipe
-
 
 
 def print_shopping_list(menu_items):
@@ -23,49 +21,31 @@ def print_random_shopping_list(random_count):
 	rr = recipe.ShoppingList()
 	rr.random_recipes(random_count)
 
-def devel():
-	
-	
-	
-	conn = sqlite3.connect(DB_FILE)
-	cur = conn.cursor()
-	cur.execute('''CREATE TABLE IF NOT EXISTS Units
-				 (unit_id INTEGER PRIMARY KEY, unit_name VARCHAR(30), UNIQUE(unit_name))''')
-	cur.execute('''CREATE TABLE IF NOT EXISTS DishTypes
-				 (dish_type_id INTEGER PRIMARY KEY, dish_type_name VARCHAR(30), UNIQUE(dish_type_name))''')
-	for unit in ALLOWED_INGRED_UNITS:
-		cur.execute('INSERT OR IGNORE INTO Units(unit_name) VALUES(?)', [unit])
-	for types in ALLOWED_DISH_TYPES:
-		cur.execute('INSERT OR IGNORE INTO DishTypes(dish_type_name) VALUES(?)', [types])
-	
-	test = cur.execute('SELECT * FROM Units')
-	for item, row in test:
-		print(row)
-	test2 = cur.execute('SELECT * FROM DishTypes')
-	for row2 in test2:
-		print(row2)
-	conn.commit()
-	conn.close
+def print_reicipe(args):
+	if args.title not in recipe.
 
 def parse_args():
 	parser = argparse.ArgumentParser(
-		description="The Python recipe management tool. Works with recipe files\
-					 written in yaml. Default behavior prints recipe to screen."
+		description="recipe_tool *The Python recipe management program* \
+		             Works with recipe files written in yaml.",
+		add_help=False
 	)
+	
+	parser.add_argument(
+		"-h", "--help",
+		action='help',
+		help='Show this help message and quit'
+		
+	)
+	
+
 
 	parser.add_argument(
 		"source", 
-		metavar="FILE", 
-		nargs="?", 
+		metavar="source", 
+		nargs='?',
 		help="Generate xml file from this yaml source file or directory"
 	)
-
-	#parser.add_argument(
-	#	"edit",
-	#	metavar="edit",
-	#	help="Edit an ORD file"
-
-#		)
 	parser.add_argument(
 		"-a", 
 		"--all", 
@@ -93,13 +73,6 @@ def parse_args():
 		dest="gui_mode",
 		action="store_true",
 		help="Start pyrecipe in gui-mode."
-			)
-	parser.add_argument(
-		"-l", 
-		"--list-recipes", 
-		dest="list_recipes", 
-		action="store_true", 
-		help="List all recipes currently stored in the recipe directory"
 	)
 	parser.add_argument(
 		"-o", 
@@ -118,20 +91,6 @@ def parse_args():
 		metavar="NUM", 
 		dest="random", 
 		help="Pick n random recipes for the week"
-	)
-	parser.add_argument(
-		"-s",
-		"--stats",
-		dest="stats",
-		action="store_true",
-		help="Show statistics about your recipes."
-	)
-	parser.add_argument(
-		"-t", 
-		"--template", 
-		dest="template", 
-		action="store_true", 
-		help="Start the interactive template builder"
 	)
 	parser.add_argument(
 		"-v", 
@@ -181,13 +140,63 @@ def parse_args():
 		help="print a shopping list from menu items"
 	)
 
+	# subparsers start here
+	subparser = parser.add_subparsers()
+
+	# recipe_tool print
+	parser_print = subparser.add_parser(
+		"print",
+		help="Print the recipe to screen"
+	)
+	
+	# recipe_tool list
+	parser_list = subparser.add_parser(
+		"list",
+		help="List recipes"
+	)
+	parser_list.set_defaults(func=recipe.list_recipes)
+
+	# recipe_tool edit	
+	parser_edit = subparser.add_parser(
+		"edit",
+		help="Use system editor to edit recipe data file"
+	)
+	parser_edit.add_argument(
+		"recipe",
+		help="Recipe to edit"
+	)
+	parser_edit.set_defaults(func=recipe.edit_recipe)
+
+	# recipe_tool add
+	parser_add = subparser.add_parser(
+		"add",
+		help='Add a recipe'
+	)
+	parser_add.set_defaults(func=recipe.template)
+
+	# recipe_tool show
+	parser_show = subparser.add_parser(
+		"show",
+		help='Show information about recipes'
+	)
+	parser_show.set_defaults(func=recipe.stats)
+	
+	
+	# Print help if no arguments given
+	if len(sys.argv) == 1:
+		parser.print_help()
+	
 	return parser.parse_args()
 
 
 def main():
 	"""Main entry point of recipe_tool"""
 	args = parse_args()
+	if hasattr(args, 'func'):
+		args.func()
+
 	
+
 	if args.source:
 		# if source supplied, set these
 		source = args.source
@@ -209,12 +218,6 @@ def main():
 		menu_items = args.shopping_list
 		print_shopping_list(menu_items)
 		exit(0)
-	if args.template:
-		r.template()
-		exit(0)
-	if args.list_recipes:
-		recipe.list_recipes()
-		exit(0)
 	if args.print_yaml:
 		r.print_yaml()
 		exit(0)
@@ -227,9 +230,6 @@ def main():
 	if args.check_file:
 		r.check_file()
 		exit(0)
-	if args.stats:
-		recipe.stats(args.verbose_out)
-		exit(0)
 	if args.version:
 		recipe.version()
 		exit(0)
@@ -238,11 +238,9 @@ def main():
 		exit(0)
 	if args.gui_mode:
 		gui_mode()
-	else:
-		if 'r' in locals():
-			r.print_recipe(args.verbose_out)
-		else:
-			print("You must at least supply a recipe to work with")
+	if sys.argv == 0:
+		args.print_help()
+
 		
 if __name__ == '__main__':
 	main()

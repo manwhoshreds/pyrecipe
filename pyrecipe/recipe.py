@@ -14,6 +14,7 @@ import yaml
 import pprint
 import random
 import sys
+import subprocess
 import sqlite3
 import datetime
 
@@ -260,7 +261,7 @@ class Recipe:
 			print(color.ERROR 
 				+ self.source 
 				+ ": The following units are not allowed by the ORD spec: " 
-				+ ", ".join(failure_units) 
+				+ ", ".join(failure_units)
 				+ color.NORMAL)
 		
 		if len(failure_amounts) > 0:
@@ -736,12 +737,13 @@ def template():
 		# check if file exist, lets catch this early so we can exit before entering in all the info
 		new_name = recipe_name.replace(" ", "_")
 		lower_new_name = new_name.lower() # I prefer file names to be all lower case
-		if os.path.isfile(lower_new_name + ".recipe"):
+		file_name = RECIPE_DATA_DIR + lower_new_name + '.recipe'
+		if os.path.isfile(file_name):
 			print("File with this name already exist in directory exiting...")
 			exit(1)
 		while True:
 			dish_type = input("Enter dish type: ")
-			if dish_type not in ALLOWED_DISH_TYPES:
+			if dish_type not in DISH_TYPES:
 				print("Dish type must be one of {}".format(", ".join(ALLOWED_DISH_TYPES)))
 				continue
 			else:
@@ -768,14 +770,15 @@ def template():
 			template += "    - name:\n      amounts:\n        - amount:\n          unit:\n"
 		template += "steps:\n  - step: Coming soon"
 		template += "\n# vim: set expandtab ts=4 syntax=yaml:"
-		file = open(lower_new_name + ".recipe", "w")
-		print("Writing to file... " + lower_new_name + ".recipe")
-		file.write(str(template))
-		file.close()
-
+		print("Writing to file... " + file_name)
+		with open(file_name, "w") as tmp:
+			tmp.write(str(template))
+	
 	except KeyboardInterrupt:
 		print("\nExiting...")
 		sys.exit(0)
+	
+	subprocess.call([EDITOR, file_name])
 
 
 def gui_mode():
@@ -804,7 +807,12 @@ def list_recipes():
 		recipe_list.append(recipename)
 
 	for item in sorted(recipe_list): print(item)
-	
+
+
+def edit_recipe(recipe_name):
+
+	pass
+
 
 def version():
 	"""Print the current version of pyrecipe and exit."""
