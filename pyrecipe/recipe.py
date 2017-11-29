@@ -795,7 +795,7 @@ def gui_mode():
 	root.mainloop()
 
 
-def list_recipes():
+def list_recipes(ret=False):
 	"""List all recipes in the database"""
 	
 	recipe_files = os.listdir(RECIPE_DATA_DIR)
@@ -805,8 +805,11 @@ def list_recipes():
 		recipe = Recipe(abspath_file)
 		recipename = recipe.recipe_name
 		recipe_list.append(recipename)
-
-	for item in sorted(recipe_list): print(item)
+	
+	if ret:
+		return recipe_list
+	else:
+		for item in sorted(recipe_list): print(item)
 
 
 def edit_recipe(recipe_name):

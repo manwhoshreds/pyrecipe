@@ -21,8 +21,15 @@ def print_random_shopping_list(random_count):
 	rr = recipe.ShoppingList()
 	rr.random_recipes(random_count)
 
-def print_reicipe(args):
-	if args.title not in recipe.
+def print_recipe(args):
+	if args.name not in recipe.list_recipes(ret=True):
+		print("No recipe found for {}".format(args.name))
+	else:
+		file_name = args.name.replace(" ", "_").lower() + ".recipe"
+		abspath_file_name = recipe.RECIPE_DATA_DIR + file_name
+		r = recipe.Recipe(abspath_file_name)
+		r.print_recipe()
+	
 
 def parse_args():
 	parser = argparse.ArgumentParser(
@@ -36,15 +43,6 @@ def parse_args():
 		action='help',
 		help='Show this help message and quit'
 		
-	)
-	
-
-
-	parser.add_argument(
-		"source", 
-		metavar="source", 
-		nargs='?',
-		help="Generate xml file from this yaml source file or directory"
 	)
 	parser.add_argument(
 		"-a", 
@@ -148,6 +146,12 @@ def parse_args():
 		"print",
 		help="Print the recipe to screen"
 	)
+	parser_print.add_argument(
+		"name",
+		type=str,
+		help="Recipe to print"
+		)
+	parser_print.set_defaults(func=print_recipe)
 	
 	# recipe_tool list
 	parser_list = subparser.add_parser(
@@ -192,18 +196,9 @@ def parse_args():
 def main():
 	"""Main entry point of recipe_tool"""
 	args = parse_args()
-	if hasattr(args, 'func'):
-		args.func()
 
 	
 
-	if args.source:
-		# if source supplied, set these
-		source = args.source
-		r = recipe.Recipe(source)
-		if args.write_xml:	
-			r.process_xml(mode="write")
-			exit(0)
 	if args.print_all:
 		args.verbose_out = 2
 		r.print_recipe()
@@ -233,14 +228,8 @@ def main():
 	if args.version:
 		recipe.version()
 		exit(0)
-	if args.devel:
-		devel()
-		exit(0)
-	if args.gui_mode:
-		gui_mode()
-	if sys.argv == 0:
-		args.print_help()
-
+	if hasattr(args, 'func'):
+		args.func(args)
 		
 if __name__ == '__main__':
 	main()
