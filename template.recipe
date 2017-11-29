@@ -1,0 +1,97 @@
+#!ORD--*
+recipe_name: Template
+recipe_uuid: 0982830948029384098
+category:
+  - mexican
+  - yummy
+dish_type: main # one of main dish, side, appetizer, desert, dip, sauce, salad dressing, and beverage
+prep_time: 20 # |- in seconds
+cook_time: 90 # |
+author: Me
+notes:
+  - This is a note
+  - This is another note
+source_url: http://localhost/
+source_book: 0
+oven_temp:
+  amount: 0
+  unit: F
+oven_fan: off
+bake_time: 0
+yields:
+  - 4
+  - 5
+  - 6
+ingredients:
+- name: apples
+  usda_num: 09003
+  amount: 4
+  unit: tablespoon
+- name: bananas
+  amount: 10
+  unit: each
+  prep: diced
+  size: small
+  substitutions:
+- name: pears
+  usda_nm: 09252
+  amount: 4
+  unit: each
+  amount: 10
+alt_ingredients:
+  - ketchup sauce:
+      - name: ketchup
+        usda_num: 098098
+        amounts:
+          - amount: 1
+            unit: tablespoon
+
+steps:
+  - step: make sauce
+    notes:
+    - Sauce is not the right consistancy
+  - step: make other stuff
+  - step: Enjoy
+
+nutrition:
+  apple:
+    - unit: g
+      amount: 100
+      proximates:
+      water: 85.56
+      energy: 52
+      protein: 0.26
+      total_lipid: 0.17
+      carbohydrate: 13.81
+      total_fiber: 2.4
+      total_sugars: 10.39
+      minerals:
+      calcium: 6
+      iron: 0.12
+      magnesium: 5
+      phosphorus: 11
+      potassium: 107
+      sodium: 1
+      zinc: 0.04
+      vitamins:
+      vitamin_c: 4.6
+      thiamin: 0.017
+      riboflavin: 0.026
+      niacin: 0.091
+      vitamin_b6: 0.041
+      folate: 3
+      vitamin_b12: 0
+      vitamin_a_rae: 3
+      vitamin_a_iu: 54
+      vitamin_e: 0.18
+      vitamin_d2_d3: 0
+      vitamin_d: 0
+      vitamin_k: 2.2
+      lipids:
+      total_saturated: 0.028
+      total_monounsaturated: 0.007
+      total_polyunsaturated: 0.051
+      cholesterol: 0
+      other:
+      caffeine: 0
+# vim: noai:tabstop=4 syntax=yaml
