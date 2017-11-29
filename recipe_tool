@@ -1,1 +1,248 @@
-../../../bin/recipe_tool
+#!/usr/bin/env python
+# -*- encoding: UTF-8 -*-
+
+import os
+import sys
+import argparse
+import sqlite3
+
+import pyrecipe.recipe as recipe
+
+
+
+def print_shopping_list(menu_items):
+	
+	sl = recipe.ShoppingList()
+	
+	for item in menu_items:
+		sl.update(item)
+			
+	sl.print_list()
+
+def print_random_shopping_list(random_count):
+	rr = recipe.ShoppingList()
+	rr.random_recipes(random_count)
+
+def devel():
+	
+	
+	
+	conn = sqlite3.connect(DB_FILE)
+	cur = conn.cursor()
+	cur.execute('''CREATE TABLE IF NOT EXISTS Units
+				 (unit_id INTEGER PRIMARY KEY, unit_name VARCHAR(30), UNIQUE(unit_name))''')
+	cur.execute('''CREATE TABLE IF NOT EXISTS DishTypes
+				 (dish_type_id INTEGER PRIMARY KEY, dish_type_name VARCHAR(30), UNIQUE(dish_type_name))''')
+	for unit in ALLOWED_INGRED_UNITS:
+		cur.execute('INSERT OR IGNORE INTO Units(unit_name) VALUES(?)', [unit])
+	for types in ALLOWED_DISH_TYPES:
+		cur.execute('INSERT OR IGNORE INTO DishTypes(dish_type_name) VALUES(?)', [types])
+	
+	test = cur.execute('SELECT * FROM Units')
+	for item, row in test:
+		print(row)
+	test2 = cur.execute('SELECT * FROM DishTypes')
+	for row2 in test2:
+		print(row2)
+	conn.commit()
+	conn.close
+
+def parse_args():
+	parser = argparse.ArgumentParser(
+		description="The Python recipe management tool. Works with recipe files\
+					 written in yaml. Default behavior prints recipe to screen."
+	)
+
+	parser.add_argument(
+		"source", 
+		metavar="FILE", 
+		nargs="?", 
+		help="Generate xml file from this yaml source file or directory"
+	)
+
+	#parser.add_argument(
+	#	"edit",
+	#	metavar="edit",
+	#	help="Edit an ORD file"
+
+#		)
+	parser.add_argument(
+		"-a", 
+		"--all", 
+		dest="print_all", 
+		action="store_true", 
+		help="Print the recipe, yaml, and xml dump"
+	)
+	parser.add_argument(
+		"-c", 
+		"--check", 
+		dest="check_file", 
+		action="store_true", 
+		help="Validate a recipe file"
+	)
+	parser.add_argument(
+		"-d", 
+		"--devel", 
+		dest="devel", 
+		action="store_true", 
+		help="Used for development purposes only"
+	)
+	parser.add_argument(
+		"-g",
+		"--gui-mode",
+		dest="gui_mode",
+		action="store_true",
+		help="Start pyrecipe in gui-mode."
+			)
+	parser.add_argument(
+		"-l", 
+		"--list-recipes", 
+		dest="list_recipes", 
+		action="store_true", 
+		help="List all recipes currently stored in the recipe directory"
+	)
+	parser.add_argument(
+		"-o", 
+		"--output-dir", 
+		dest="output_dir", 
+		metavar="DIR", 
+		type=str,  
+		help="Choose a directory to output written xml files."
+	)
+	parser.add_argument(
+		"-r", 
+		"--random", 
+		nargs='?', 
+		const=recipe.RAND_RECIPE_COUNT, 
+		type=int , 
+		metavar="NUM", 
+		dest="random", 
+		help="Pick n random recipes for the week"
+	)
+	parser.add_argument(
+		"-s",
+		"--stats",
+		dest="stats",
+		action="store_true",
+		help="Show statistics about your recipes."
+	)
+	parser.add_argument(
+		"-t", 
+		"--template", 
+		dest="template", 
+		action="store_true", 
+		help="Start the interactive template builder"
+	)
+	parser.add_argument(
+		"-v", 
+		"--verbose", 
+		dest="verbose_out", 
+		action="count", 
+		default=0,
+		help="Verbose output. When used by itself, \
+			  it prints the recipe with extra \
+			  info such as cooking time and prep time.\
+			  To increase verbosity, use -vv."
+	)
+	parser.add_argument(
+		"-V", 
+		"--version", 
+		dest="version", 
+		action="store_true", 
+		help="Print version and exit"
+	)
+	parser.add_argument(
+		"-w", 
+		"--write-xml", 
+		dest="write_xml", 
+		action="store_true",
+		help="Write the xml to file"
+	)
+	parser.add_argument(
+		"-x", 
+		"--xml-only", 
+		dest="print_xml", 
+		action="store_true", 
+		help="Dump sorce xml tree to standard output"
+	)
+	parser.add_argument(
+		"-y", 
+		"--yaml-only", 
+		dest="print_yaml", 
+		action="store_true", 
+		help="Dump source yaml to standard output"
+	)
+	parser.add_argument(
+		"-z",
+		"--shopping-list",
+		nargs="*",
+		dest="shopping_list",
+		type=str,
+		help="print a shopping list from menu items"
+	)
+
+	return parser.parse_args()
+
+
+def main():
+	"""Main entry point of recipe_tool"""
+	args = parse_args()
+	
+	if args.source:
+		# if source supplied, set these
+		source = args.source
+		r = recipe.Recipe(source)
+		if args.write_xml:	
+			r.process_xml(mode="write")
+			exit(0)
+	if args.print_all:
+		args.verbose_out = 2
+		r.print_recipe()
+		print("")
+		print("")
+		r.process_xml()
+		print("")
+		print("")
+		r.print_yaml()
+		exit(0)
+	if args.shopping_list:
+		menu_items = args.shopping_list
+		print_shopping_list(menu_items)
+		exit(0)
+	if args.template:
+		r.template()
+		exit(0)
+	if args.list_recipes:
+		recipe.list_recipes()
+		exit(0)
+	if args.print_yaml:
+		r.print_yaml()
+		exit(0)
+	if args.print_xml:
+		r.process_xml()
+		exit(0)
+	if args.random:
+		print_random_shopping_list(args.random)
+		exit(0)
+	if args.check_file:
+		r.check_file()
+		exit(0)
+	if args.stats:
+		recipe.stats(args.verbose_out)
+		exit(0)
+	if args.version:
+		recipe.version()
+		exit(0)
+	if args.devel:
+		devel()
+		exit(0)
+	if args.gui_mode:
+		gui_mode()
+	else:
+		if 'r' in locals():
+			r.print_recipe(args.verbose_out)
+		else:
+			print("You must at least supply a recipe to work with")
+		
+if __name__ == '__main__':
+	main()
