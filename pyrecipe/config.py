@@ -68,9 +68,9 @@ DISH_TYPES           = ['main', 'side', 'dessert', 'condiment', 'dip',
 CULINARY_UNITS       = ['teaspoon', 'tablespoon', 'ounce', 'cup', 'quart', 'gallon', 'pound', 'pint']
 PINT_UNDEFINED_UNITS = ['box', 'taste', 'inch piece', 'stick', 'bottle', 'each', 'bag',
                         'whole', 'link', 'sprig', 'stalk', 'can', 'pinch', 'cube', 'splash']
-# QUANTITY_UNITS are checked later and put in parenthesis
+# CAN_UNITS are checked later and put in parenthesis
 # its not considered professional recipe writing
-# to use two numbers in a row like "1 32 ounce can"
+# to use two numbers in a row, for example "1 32 ounce can"
 CAN_UNITS            = ['32 ounce can', '16 ounce can', '15 ounce can', '8.5 ounce can', '8 ounce can', '2 pound package']
 ALLOWED_INGRED_UNITS = CAN_UNITS + CULINARY_UNITS + PINT_UNDEFINED_UNITS
 PREP_TYPES           = ['softened', 'diced', 'finely diced', 'shredded', 'tightly packed', 'drained', 'deviened', 

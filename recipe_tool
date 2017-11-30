@@ -51,7 +51,7 @@ def recipe_completer(**kwargs):
 	return recipe_list
 
 def print_recipe(args):
-	if args.source.title() not in recipe.list_recipes(ret=True):
+	if args.source not in recipe.list_recipes(ret=True):
 		print("No recipe found for {}".format(args.source))
 	else:
 		r = recipe.Recipe(args.source)

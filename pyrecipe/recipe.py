@@ -271,13 +271,9 @@ class Recipe:
 			ingredient_data = self.ingredient_data
 		
 		for item in ingredient_data:
-			ingred_string = ""
-			name = item['name']
-			if name == "s&p":
-				ingred_string += "salt and pepper to taste"
-				ingredients.append(ingred_string)
-				continue
 			amount = item['amounts'][amount_level].get('amount', 0)
+			unit = item['amounts'][amount_level]['unit']
+			name = item['name']
 			try:	
 				size = item['size']
 			except KeyError:
@@ -342,6 +338,8 @@ class Recipe:
 		print("")
 		print(color.RECIPENAME + self.recipe_name + color.NORMAL)
 		print("")
+		test = Ingredient(2, "each", "stupid")
+		print(str(test))
 		
 		if verb_level >= 1:
 			try:
@@ -393,16 +391,10 @@ class Recipe:
 				pass
 
 
-		print(S_DIV
-			+ color.TITLE
-			+ "\nIngredients:"
-			+ color.NORMAL
-			)
-		
+		print(S_DIV + color.TITLE + "\nIngredients:" + color.NORMAL)
 		# Put together all the ingredients
 		for ingred in self.get_ingredients():	
 			print(ingred)
-		
 		try:	
 			for item in self.alt_ingredients:
 				print("\n{}{}{}".format(color.TITLE, item.title(), color.NORMAL))
@@ -496,6 +488,62 @@ class Recipe:
 		"""Print the recipe's source yaml. This can be helpful in troubleshooting"""
 		
 		PP.pprint(self.recipe_data)
+
+
+class Ingredient(object):
+	"""The ingredient class is used to build an ingredietns object"""
+
+	def __init__(self, magnitude, unit, ingredient, prep=None):
+		self.magnitude = magnitude
+		self.unit = unit
+		self.ingredient = ingredient
+		self.prep = prep
+
+	def __repr__(self):
+		return "<Ingredient({}, '{}', '{}', '{}')>".format(self.magnitude, 
+														   self.unit, 
+														   self.ingredient,
+														   self.prep)
+
+	def __str__(self):
+		if self.prep is None:
+			if self.unit == 'each' or self.unit is None:
+				return "{} {}".format(self._magnitude(), self._ingredient())
+			else:
+				return "{} {} {}".format(self._magnitude(), self._unit(), self._ingredient())
+		elif self.unit == 'each' or self.unit is None:
+			return "{} {}, {}".format(self._magnitude(), self._ingredient(), self.prep)
+		else:
+			return "{} {} {}, {}".format(self._magnitude(), self._unit(), self._ingredient(), self.prep)
+
+	def _ingredient(self):
+		if self.magnitude > 1 and self.unit == 'each':
+			return plural(self.ingredient)
+		else:
+			return self.ingredient
+	
+	def _magnitude(self):
+		if self.magnitude == .3:
+			return '1/3'
+		elif self.magnitude == .6:
+			return '1/6'
+		elif isinstance(self.magnitude, float) and self.magnitude < 1:
+			return Fraction(self.magnitude)
+		elif isinstance(self.magnitude, float) and self.magnitude > 1:
+			return improper_to_mixed(str(Fraction(self.magnitude)))
+		else:
+			return self.magnitude
+
+	def _unit(self):
+		if self.unit == 'each':
+			pass
+		elif self.magnitude > 1:
+			return plural(self.unit)
+		elif self.magnitude <= 1:
+			return self.unit
+		else:
+			return self.unit
+			
 
 
 class ShoppingList:
@@ -685,16 +733,15 @@ class DataBase:
 
 ###########
 # functions
-def template(recipe):
+def template(recipe_name):
 	"""Start the interactive template builder"""
 	
 	try:
 		print("Interactive Template Builder. Press Ctrl-c to abort.\n")
 		template = ""
-		recipe_name = recipe.title()
 		template += "recipe_name: {}\n".format(recipe_name)
 		# check if file exist, lets catch this early so we can exit before entering in all the info
-		file_name = get_file_name(recipe)
+		file_name = get_file_name(recipe_name)
 		if os.path.isfile(file_name):
 			print("File with this name already exist in directory exiting...")
 			exit(1)
@@ -769,6 +816,7 @@ def version():
 def stats(verb=0):
 	"""Print statistics about your recipe database and exit."""
 	
+	version()
 	print("Recipes: {}".format(len(RECIPE_FILES)))
 	if verb >= 1:
 		print("Recipe directory: {}".format(RECIPE_DATA_DIR))
