@@ -25,51 +25,9 @@ from . import ureg, Q_
 
 from .config import *
 from .config import __version__, __scriptname__, __email__
+from .utils import *
 
 
-
-
-# helpers
-def _plural(word):
-	es_plurals = ['tomato',
-				  'roma tomato',
-				  'potato']
-	
-	if word in es_plurals:
-		return word + 'es'
-	else:
-		return word + 's'
-
-
-def _md5():
-	#TODO-> md5 funtion to check which yaml files have changed and then write the coresponding xml.
-	pass
-
-
-def _improper_to_mixed(fraction):
-	str_frac = str(fraction)
-	x = str_frac.split('/')
-	num = int(x[0])
-	den = int(x[1])
-	whole_part = num // den
-	fract_part = num % den
-	return "{} {}/{}".format(whole_part, fract_part, den)
-
-
-class Color:
-	"""
-	   The color class defines various colors for 
-	   use in pyrecipe output.
-	"""
-	
-	NORMAL = '\033[m'
-	ERROR = '\033[1;31m'
-	RECIPENAME = '\033[1;36m'
-	TITLE = '\033[36m'
-	NUMBER = '\033[1;33m'
-	REGULAR = '\033[1;35m'
-	LINE = '\033[1;37m'
-	INFORM = '\033[1;36m'
 
 color = Color()
 
@@ -80,7 +38,7 @@ class Recipe:
 		recipe source files such as print and save xml.
 	"""
 	
-	def __init__(self, source):
+	def __init__(self, source, checkfile=True):
 		
 		# i need color
 		self.source = source
@@ -199,8 +157,9 @@ class Recipe:
 		if 'steps' in self.mainkeys:
 			self.steps = self.recipe_data['steps']
 		
-		if not self.check_file(silent=True): 
-			exit(0)
+		if checkfile:
+			if not self.check_file(silent=True): 
+				exit(0)
 
 	def __str__(self):
 		return "Im testing the function of the __str__ method"
@@ -340,7 +299,7 @@ class Recipe:
 				else:
 					ingred_string += str(Fraction(amount))
 			elif type(amount) is float:
-				ingred_string += _improper_to_mixed(str(Fraction(amount)))
+				ingred_string += improper_to_mixed(str(Fraction(amount)))
 			else:
 				ingred_string += str(amount)
 			if 'size' in locals():
@@ -352,13 +311,13 @@ class Recipe:
 				continue
 			if unit == "each":
 				if amount > 1:
-						ingred_string += " " + _plural(name)
+						ingred_string += " " + plural(name)
 				else:
 					ingred_string += " " + name
 				ingredients.append(ingred_string)
 				continue
 			if amount > 1:
-				ingred_string += " " + _plural(unit)
+				ingred_string += " " + plural(unit)
 			else:
 				ingred_string += " " + unit
 
@@ -546,10 +505,10 @@ class ShoppingList:
 	dressing_names = []
 
 	
-	def _proc_ingreds(self, source, alt_ingred=""):
+	def _proc_ingreds(self, file_name, alt_ingred=""):
 		#TODO-> Serious flaw in this logic, work on it
 		sd = ShoppingList.shopping_dict
-		r = Recipe(source)
+		r = Recipe(file_name)
 		if alt_ingred:
 			ingred = r.alt_ingredient_data[alt_ingred]
 		else:
@@ -632,7 +591,8 @@ class ShoppingList:
 		   list of recipes. If duplicate entries are found,
 		   ingredients are added together.
 		"""
-		r = Recipe(source)
+		file_name = get_file_name(source)
+		r = Recipe(file_name)
 		if r.dish_type == "salad dressing":
 			ShoppingList.dressing_names.append(r.recipe_name)
 		else:
@@ -640,7 +600,7 @@ class ShoppingList:
 			
 
 
-		self._proc_ingreds(source)
+		self._proc_ingreds(file_name)
 		try:
 			alt_ingreds = r.alt_ingredients
 			for item in alt_ingreds:
@@ -674,16 +634,16 @@ class ShoppingList:
 				print(" {}, {}".format(key, value[0]))
 				continue
 			#if num > den:
-			#	print("{}, {} {}".format(key, _improper_to_mixed(str(Fraction(amount))), value[1]))
+			#	print("{}, {} {}".format(key, improper_to_mixed(str(Fraction(amount))), value[1]))
 			if amount == 0:
 				print(" {}, {}".format(key, value[1]))
 			elif amount < 1:
 				print(" {}, {} {}".format(key, Fraction(amount), value[1]))
 			elif amount > 1:
 				#if type(amount) is float:
-				#	print("{}, {} {}".format(key, _improper_to_mixed(Fraction(amount)), _plural(value[1])))
+				#	print("{}, {} {}".format(key, improper_to_mixed(Fraction(amount)), plural(value[1])))
 				#else:
-				print(" {}, {} {}".format(key, Fraction(amount), _plural(value[1])))
+				print(" {}, {} {}".format(key, Fraction(amount), plural(value[1])))
 			else:
 				print(" {}, {} {}".format(key, Fraction(value[0]), value[1]))
 			
@@ -726,25 +686,23 @@ class DataBase:
 
 ###########
 # functions
-def template():
+def template(recipe):
 	"""Start the interactive template builder"""
 	
 	try:
 		print("Interactive Template Builder. Press Ctrl-c to abort.\n")
 		template = ""
-		recipe_name = input("Enter recipe name: ")
+		recipe_name = recipe.title()
 		template += "recipe_name: {}\n".format(recipe_name)
 		# check if file exist, lets catch this early so we can exit before entering in all the info
-		new_name = recipe_name.replace(" ", "_")
-		lower_new_name = new_name.lower() # I prefer file names to be all lower case
-		file_name = RECIPE_DATA_DIR + lower_new_name + '.recipe'
+		file_name = get_file_name(recipe)
 		if os.path.isfile(file_name):
 			print("File with this name already exist in directory exiting...")
 			exit(1)
 		while True:
 			dish_type = input("Enter dish type: ")
 			if dish_type not in DISH_TYPES:
-				print("Dish type must be one of {}".format(", ".join(ALLOWED_DISH_TYPES)))
+				print("Dish type must be one of {}".format(", ".join(DISH_TYPES)))
 				continue
 			else:
 				break
@@ -781,20 +739,6 @@ def template():
 	subprocess.call([EDITOR, file_name])
 
 
-def gui_mode():
-	"""Start recipe_tool in gui mode
-	this function is currently under
-	construction
-	"""
-	root = Tk()
-	content = ttk.Frame(root)
-	button = ttk.Button(content, text="Welcome to recipe tool")
-	button.grid()
-	text = Text(content, width="400", height="400")
-	text.insert('1.0', "hello worldsssssssssssss")
-	root.mainloop()
-
-
 def list_recipes(ret=False):
 	"""List all recipes in the database"""
 	
@@ -802,7 +746,7 @@ def list_recipes(ret=False):
 	recipe_list = []
 	for item in recipe_files:
 		abspath_file = RECIPE_DATA_DIR + item
-		recipe = Recipe(abspath_file)
+		recipe = Recipe(abspath_file, checkfile=False)
 		recipename = recipe.recipe_name
 		recipe_list.append(recipename)
 	
@@ -811,9 +755,8 @@ def list_recipes(ret=False):
 	else:
 		for item in sorted(recipe_list): print(item)
 
-
+	
 def edit_recipe(recipe_name):
-
 	pass
 
 

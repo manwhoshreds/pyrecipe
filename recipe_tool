@@ -4,31 +4,62 @@
 import os
 import sys
 import argparse
+import argcomplete
+import subprocess
 
 import pyrecipe.recipe as recipe
 
 
-def print_shopping_list(menu_items):
-	
-	sl = recipe.ShoppingList()
-	
-	for item in menu_items:
-		sl.update(item)
-			
-	sl.print_list()
+def print_shopping_list(args):
+	if args.random:
+		rr = recipe.ShoppingList()
+		rr.random_recipes(args.random)
+	else:
+		menu_items = args.recipes	
+		if len(menu_items) == 0:
+			sys.exit('You must supply at least one recipe'
+					 ' to build your shopping list from!')
+		
+		sl = recipe.ShoppingList()
+		
+		for item in menu_items:
+			sl.update(item)
+				
+		sl.print_list()
 
-def print_random_shopping_list(random_count):
-	rr = recipe.ShoppingList()
-	rr.random_recipes(random_count)
+#def print_random_shopping_list(random_count):
+#	rr = recipe.ShoppingList()
+#	rr.random_recipes(random_count)
+
 
 def print_recipe(args):
-	if args.name not in recipe.list_recipes(ret=True):
-		print("No recipe found for {}".format(args.name))
+	if args.recipe.title() not in recipe.list_recipes(ret=True):
+		print("No recipe found for {}".format(args.recipe))
 	else:
-		file_name = args.name.replace(" ", "_").lower() + ".recipe"
+		file_name = args.recipe.replace(" ", "_").lower() + ".recipe"
 		abspath_file_name = recipe.RECIPE_DATA_DIR + file_name
 		r = recipe.Recipe(abspath_file_name)
-		r.print_recipe()
+		r.print_recipe(args.verbose_out)
+
+
+def edit_recipe(args):
+	if args.recipe.title() not in recipe.list_recipes(ret=True):
+		print("No recipe found for {}".format(args.recipe))
+	else:
+		file_name = args.recipe.replace(" ", "_").lower() + ".recipe"
+		abspath_file_name = recipe.RECIPE_DATA_DIR + file_name
+		subprocess.call([recipe.EDITOR, abspath_file_name])
+
+def add_recipe(args):
+	if args.recipe.title() in recipe.list_recipes(ret=True):
+		sys.exit('{} already exist in the recipe store'.format(args.recipe.title()))
+	else:
+		print("sup")
+		#recipe.template(args.recipe)
+
+
+def print_list(args):
+	recipe.list_recipes()
 	
 
 def parse_args():
@@ -51,45 +82,7 @@ def parse_args():
 		action="store_true", 
 		help="Print the recipe, yaml, and xml dump"
 	)
-	parser.add_argument(
-		"-c", 
-		"--check", 
-		dest="check_file", 
-		action="store_true", 
-		help="Validate a recipe file"
-	)
-	parser.add_argument(
-		"-d", 
-		"--devel", 
-		dest="devel", 
-		action="store_true", 
-		help="Used for development purposes only"
-	)
-	parser.add_argument(
-		"-g",
-		"--gui-mode",
-		dest="gui_mode",
-		action="store_true",
-		help="Start pyrecipe in gui-mode."
-	)
-	parser.add_argument(
-		"-o", 
-		"--output-dir", 
-		dest="output_dir", 
-		metavar="DIR", 
-		type=str,  
-		help="Choose a directory to output written xml files."
-	)
-	parser.add_argument(
-		"-r", 
-		"--random", 
-		nargs='?', 
-		const=recipe.RAND_RECIPE_COUNT, 
-		type=int , 
-		metavar="NUM", 
-		dest="random", 
-		help="Pick n random recipes for the week"
-	)
+
 	parser.add_argument(
 		"-v", 
 		"--verbose", 
@@ -129,14 +122,6 @@ def parse_args():
 		action="store_true", 
 		help="Dump source yaml to standard output"
 	)
-	parser.add_argument(
-		"-z",
-		"--shopping-list",
-		nargs="*",
-		dest="shopping_list",
-		type=str,
-		help="print a shopping list from menu items"
-	)
 
 	# subparsers start here
 	subparser = parser.add_subparsers()
@@ -147,8 +132,7 @@ def parse_args():
 		help="Print the recipe to screen"
 	)
 	parser_print.add_argument(
-		"name",
-		type=str,
+		"recipe",
 		help="Recipe to print"
 		)
 	parser_print.set_defaults(func=print_recipe)
@@ -158,7 +142,7 @@ def parse_args():
 		"list",
 		help="List recipes"
 	)
-	parser_list.set_defaults(func=recipe.list_recipes)
+	parser_list.set_defaults(func=print_list)
 
 	# recipe_tool edit	
 	parser_edit = subparser.add_parser(
@@ -167,16 +151,43 @@ def parse_args():
 	)
 	parser_edit.add_argument(
 		"recipe",
+		type=str,
 		help="Recipe to edit"
 	)
-	parser_edit.set_defaults(func=recipe.edit_recipe)
+	parser_edit.set_defaults(func=edit_recipe)
 
 	# recipe_tool add
 	parser_add = subparser.add_parser(
 		"add",
 		help='Add a recipe'
 	)
-	parser_add.set_defaults(func=recipe.template)
+	parser_add.add_argument(
+		"recipe",
+		help='Reicipe to add'
+		)
+	parser_add.set_defaults(func=add_recipe)
+
+	# recipe_tool shop
+	parser_shop = subparser.add_parser(
+		"shop",
+		help='Make a shopping list'
+	)
+	parser_shop.add_argument(
+		"recipes",
+		nargs="*",
+		help='List of recipe to compile shopping list'
+	)
+	parser_shop.add_argument(
+		"-r", 
+		"--random", 
+		nargs='?', 
+		const=recipe.RAND_RECIPE_COUNT, 
+		type=int , 
+		metavar="NUM", 
+		dest="random", 
+		help="Pick n random recipes for the week"
+	)
+	parser_shop.set_defaults(func=print_shopping_list)
 
 	# recipe_tool show
 	parser_show = subparser.add_parser(
@@ -184,8 +195,12 @@ def parse_args():
 		help='Show information about recipes'
 	)
 	parser_show.set_defaults(func=recipe.stats)
-	
-	
+
+	# recipe_tool dump
+	parser_dump = subparser.add_parser(
+		"dump",
+		help="Dump yaml or xml representation of recipe"
+	) 
 	# Print help if no arguments given
 	if len(sys.argv) == 1:
 		parser.print_help()
@@ -197,39 +212,19 @@ def main():
 	"""Main entry point of recipe_tool"""
 	args = parse_args()
 
-	
-
-	if args.print_all:
-		args.verbose_out = 2
-		r.print_recipe()
-		print("")
-		print("")
-		r.process_xml()
-		print("")
-		print("")
-		r.print_yaml()
-		exit(0)
-	if args.shopping_list:
-		menu_items = args.shopping_list
-		print_shopping_list(menu_items)
-		exit(0)
 	if args.print_yaml:
 		r.print_yaml()
 		exit(0)
 	if args.print_xml:
 		r.process_xml()
 		exit(0)
-	if args.random:
-		print_random_shopping_list(args.random)
-		exit(0)
-	if args.check_file:
-		r.check_file()
-		exit(0)
 	if args.version:
 		recipe.version()
 		exit(0)
 	if hasattr(args, 'func'):
 		args.func(args)
-		
+
+
 if __name__ == '__main__':
 	main()
+		
