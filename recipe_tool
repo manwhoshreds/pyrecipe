@@ -55,7 +55,11 @@ def print_recipe(args):
 		print("No recipe found for {}".format(args.source))
 	else:
 		r = recipe.Recipe(args.source)
-		r.print_recipe(args.verbose_out)
+		r.print_recipe(args.verbose)
+
+
+def show_stats(args):
+	recipe.stats(args.verbose)
 
 def delete_recipe(args):
 	source = args.source
@@ -107,7 +111,7 @@ def parse_args():
 	parser.add_argument(
 		"-v", 
 		"--verbose", 
-		dest="verbose_out", 
+		dest="verbose", 
 		action="count", 
 		default=0,
 		help="Verbose output. Use -vv to increase verbosity"
@@ -171,7 +175,7 @@ def parse_args():
 		"show",
 		help='Show information about recipes'
 	)
-	parser_show.set_defaults(func=recipe.stats)
+	parser_show.set_defaults(func=show_stats)
 
 	# recipe_tool dump
 	parser_dump = subparser.add_parser(

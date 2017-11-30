@@ -771,7 +771,7 @@ def stats(verb=0):
 	
 	print("Recipes: {}".format(len(RECIPE_FILES)))
 	if verb >= 1:
-		print("Recipe directory: {}".format(RECIPE_DIR))
+		print("Recipe directory: {}".format(RECIPE_DATA_DIR))
 		print("Recipe xml directory: {}".format(RECIPE_XML_DIR))
 		print("Default random recipe: {}".format(RAND_RECIPE_COUNT))
 
