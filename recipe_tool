@@ -85,6 +85,10 @@ def add_recipe(args):
 
 def print_list(args):
 	recipe.list_recipes()
+
+
+def export_recipes(args):
+	pass
 	
 
 def parse_args():
@@ -115,14 +119,6 @@ def parse_args():
 		action="store_true", 
 		help="Print version and exit"
 	)
-	parser.add_argument(
-		"-w", 
-		"--write-xml", 
-		dest="write_xml", 
-		action="store_true",
-		help="Write the xml to file"
-	)
-
 
 	# subparsers start here
 	subparser = parser.add_subparsers()
@@ -137,7 +133,7 @@ def parse_args():
 	parser_list.set_defaults(func=print_list)
 
 	# recipe_tool edit	
-	parser_edit = subparser.add_parser("edit", help="Use system editor to edit recipe data file")
+	parser_edit = subparser.add_parser("edit", help="Edit a recipe data file")
 	parser_edit.add_argument("source", type=str, help="Recipe to edit").completer = recipe_completer
 	parser_edit.set_defaults(func=edit_recipe)
 
@@ -188,19 +184,29 @@ def parse_args():
 		).completer = recipe_completer
 	parser_dump.add_argument(
 		"-x", 
-		"--xml-only", 
+		"--xml", 
 		dest="print_xml", 
 		action="store_true", 
 		help="Dump sorce xml tree to standard output"
 	)
 	parser_dump.add_argument(
 		"-y", 
-		"--yaml-only", 
+		"--yaml", 
 		dest="print_yaml", 
 		action="store_true", 
 		help="Dump source yaml to standard output"
 	)
 	parser_dump.set_defaults(func=dump_data)
+
+	# recipe_tool export
+	parser_export = subparser.add_parser(
+		"export",
+		help="Export recipes in xml format"
+	)
+	parser_export.set_defaults(func=export_recipes)
+	
+
+	
 	# Print help if no arguments given
 	if len(sys.argv) == 1:
 		parser.print_help()
