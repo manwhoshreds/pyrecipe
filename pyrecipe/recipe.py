@@ -38,17 +38,17 @@ class Recipe:
 		recipe source files such as print and save xml.
 	"""
 	
-	def __init__(self, source, checkfile=True):
+	def __init__(self, recipe, checkfile=True):
 		
 		# i need color
-		self.source = source
+		self.recipe = get_file_name(recipe)
 		db = DataBase(DB_FILE)
 		
-		if not source.endswith(".recipe"):
+		if not self.recipe.endswith(".recipe"):
 			print("{}ERROR: {} is not a recipe file. Exiting...".format(color.ERROR, source))
 			sys.exit(1)
 		else:
-			with open(source, "r") as stream:
+			with open(self.recipe, "r") as stream:
 				try:
 					self.recipe_data = yaml.safe_load(stream)
 				except yaml.YAMLError as exc:
@@ -162,7 +162,7 @@ class Recipe:
 				exit(0)
 
 	def __str__(self):
-		return "Im testing the function of the __str__ method"
+		return self.recipe
 
 
 	def check_file(self, silent=False):
@@ -211,49 +211,49 @@ class Recipe:
 		
 		if len(failure_keys) > 0:
 			print(color.ERROR 
-				+ self.source 
+				+ self.recipe
 				+ ": The following keys are required by the ORD spec: " 
 				+ ",".join(failure_keys) 
 				+ color.NORMAL)
 		
 		if len(failure_units) > 0:
 			print(color.ERROR 
-				+ self.source 
+				+ self.recipe
 				+ ": The following units are not allowed by the ORD spec: " 
 				+ ", ".join(failure_units)
 				+ color.NORMAL)
 		
 		if len(failure_amounts) > 0:
 			print(color.ERROR 
-				+ self.source 
+				+ self.recipe
 				+ ": The following ingredients have no integer amounts: " 
 				+ ", ".join(failure_amounts) 
 				+ color.NORMAL)
 		
 		if len (failure_prep_types) > 0:
 			print(color.ERROR 
-				+ self.source 
+				+ self.recipe
 				+ ": The following prep types are not allowed by the ORD spec: " 
 				+ ", ".join(failure_prep_types) 
 				+ color.NORMAL)
 		
 		if self.recipe_data['dish_type'] not in DISH_TYPES:
 			print(color.ERROR 
-				+ self.source 
+				+ self.recipe
 				+ ": The current dish type is not in the ORD spec: " 
 				+ self.recipe_data['dish_type'] 
 				+ color.NORMAL)
 		
 		if len(self.steps) < 1:
 			print(color.ERROR 
-				+ self.source 
+				+ self.recipe
 				+ ": You must at least supply one step in the recipe." 
 				+ color.NORMAL)
 		
 		if failure_point == 0:
 			if silent == False:
 				print(color.TITLE 
-					+ self.source 
+					+ self.recipe
 					+ " is a valid ORD file")
 			else:
 				return True
@@ -591,8 +591,7 @@ class ShoppingList:
 		   list of recipes. If duplicate entries are found,
 		   ingredients are added together.
 		"""
-		file_name = get_file_name(source)
-		r = Recipe(file_name)
+		r = Recipe(source)
 		if r.dish_type == "salad dressing":
 			ShoppingList.dressing_names.append(r.recipe_name)
 		else:
@@ -600,7 +599,7 @@ class ShoppingList:
 			
 
 
-		self._proc_ingreds(file_name)
+		self._proc_ingreds(source)
 		try:
 			alt_ingreds = r.alt_ingredients
 			for item in alt_ingreds:
@@ -657,13 +656,13 @@ class ShoppingList:
 
 		sl = ShoppingList()
 		try:
-			recipe_sample = random.sample(MAINDISH_FILES, random_count)
-			salad_dressing_random = random.choice(DRESSING_FILES)
+			recipe_sample = random.sample(MAINDISH_NAMES, random_count)
+			salad_dressing_random = random.choice(DRESSING_NAMES)
 		except ValueError:
 			sys.exit("{}ERROR: Random count is higher than "
 				     "the amount of recipes available ({}). "
 				     "Please enter a lower number."
-				     .format(color.ERROR, str(len(MAINDISH_FILES))))
+				     .format(color.ERROR, str(len(MAINDISH_NAMES))))
 		
 		sl.update(salad_dressing_random)
 		for dish in recipe_sample:
@@ -742,13 +741,7 @@ def template(recipe):
 def list_recipes(ret=False):
 	"""List all recipes in the database"""
 	
-	recipe_files = os.listdir(RECIPE_DATA_DIR)
-	recipe_list = []
-	for item in recipe_files:
-		abspath_file = RECIPE_DATA_DIR + item
-		recipe = Recipe(abspath_file, checkfile=False)
-		recipename = recipe.recipe_name
-		recipe_list.append(recipename)
+	recipe_list = RECIPE_NAMES
 	
 	if ret:
 		return recipe_list

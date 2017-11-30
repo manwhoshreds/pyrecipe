@@ -32,26 +32,32 @@ for item in os.listdir(RECIPE_DATA_DIR):
 	RECIPE_FILES.append(RECIPE_DATA_DIR + item)
 
 # gather salad and main dish recipes	
-MAINDISH_FILES = []
-DRESSING_FILES = []
-DESSERT_FILES = []
-SIDE_FILES = []
+RECIPE_NAMES = []
+MAINDISH_NAMES = []
+DRESSING_NAMES = []
+DESSERT_NAMES = []
+SIDE_NAMES = [] 
 for item in RECIPE_FILES:
 	with open(item, "r") as stream:
 		try:
 			recipe = yaml.safe_load(stream)
+			recipe_name = recipe['recipe_name']
 			dtype = recipe['dish_type']
 		except yaml.YAMLError as exc:
 			print(exc)
 			sys.exit(0)
-	if dtype == "main":
-		MAINDISH_FILES.append(item)
-	elif dtype == "salad dressing":
-		DRESSING_FILES.append(item)
-	elif dtype == "side":
-		SIDE_FILES.append(item)
-	else:
-		continue
+		
+		RECIPE_NAMES.append(recipe_name)	
+		if dtype == "main":
+			MAINDISH_NAMES.append(recipe_name) 
+		elif dtype == "salad dressing":
+			DRESSING_NAMES.append(recipe_name)
+		elif dtype == "dessert":
+			DESSERT_NAMES.append(recipe_name)
+		elif dtype == "side":
+			SIDE_NAMES.append(recipe_name)
+		else:
+			continue
 
 PP                   = pprint.PrettyPrinter(indent=4)
 P_DIV                = "*" * 50
