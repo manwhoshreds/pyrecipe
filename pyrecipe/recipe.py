@@ -177,7 +177,7 @@ class Recipe:
 		
 		for item in self.ingredient_data:
 			try:	
-				amount = item['amounts'][0]['amount']
+				amount = item['amounts'][0].get('amount', None)
 				if isinstance(amount, int) or isinstance(amount, float):
 					pass
 				else:
@@ -271,10 +271,13 @@ class Recipe:
 			ingredient_data = self.ingredient_data
 		
 		for item in ingredient_data:
-				
+			name = item['name']
+			if name == 's&p':
+				ingred = Ingredient('s&p')
+				ingredients.append(str(ingred))
+				continue
 			amount = item['amounts'][amount_level].get('amount', 0)
 			unit = item['amounts'][amount_level]['unit']
-			name = item['name']
 			try:	
 				size = item['size']
 			except KeyError:
@@ -285,7 +288,7 @@ class Recipe:
 				prep = None
 			
 			unit = item['amounts'][amount_level]['unit']
-			ingred = Ingredient(amount, unit, name, size=size, prep=prep)
+			ingred = Ingredient(name, unit=unit, amount=amount, size=size, prep=prep)
 			ingredients.append(str(ingred))
 		
 		return ingredients
@@ -450,14 +453,15 @@ class Recipe:
 class Ingredient(object):
 	"""The ingredient class is used to build an ingredietns object"""
 
-	def __init__(self, magnitude, unit, ingredient, size=None, prep=None):
-		self.magnitude = magnitude
-		self.unit = unit
+	def __init__(self, ingredient, amount=None, unit=None, size=None, prep=None):
 		self.ingredient = ingredient
+		self.amount = amount
+		self.unit = unit
+		self.size = size
 		self.prep = prep
 
 	def __repr__(self):
-		return "<Ingredient({}, '{}', '{}', '{}')>".format(self.magnitude, 
+		return "<Ingredient({}, '{}', '{}', '{}', '{}')>".format(self.amount, 
 														   self.size,
 														   self.unit, 
 														   self.ingredient,
@@ -476,39 +480,52 @@ class Ingredient(object):
 		else:
 			return "{} {} {}, {}".format(self._magnitude(), self._unit(), self._ingredient(), self.prep)
 
+
+	def __add__(self, other):
+		return Ingredient(self.amount + other.amount)
+
 	def _ingredient(self):
-		if self.magnitude > 1 and self.unit == 'each':
+		if self.amount > 1 and self.unit == 'each':
 			return plural(self.ingredient)
 		else:
 			return self.ingredient
+
 	
 	def _magnitude(self):
-		if self.magnitude == .3:
+		if self.amount == .3:
 			return '1/3'
-		elif self.magnitude == .6:
+		elif self.amount == .6:
 			return '1/6'
-		elif isinstance(self.magnitude, float) and self.magnitude < 1:
-			return Fraction(self.magnitude)
-		elif isinstance(self.magnitude, float) and self.magnitude > 1:
-			return improper_to_mixed(str(Fraction(self.magnitude)))
+		elif isinstance(self.amount, float) and self.amount < 1:
+			return Fraction(self.amount)
+		elif isinstance(self.amount, float) and self.amount > 1:
+			return improper_to_mixed(str(Fraction(self.amount)))
 		else:
-			return self.magnitude
+			return self.amount
 
 	def _unit(self):
 		if self.unit == 'each':
 			pass
-		elif self.magnitude > 1:
-			return plural(self.unit)
-		elif self.magnitude <= 1:
-			return self.unit
+		elif self.amount > 1:
+			if self.unit in CAN_UNITS:
+				return "({})".format(plural(self.unit))
+			else:
+				return plural(self.unit)
+		elif self.amount <= 1:
+			if self.unit in CAN_UNITS:
+				return "({})".format(self.unit)
+			else:
+				return self.unit
 		else:
 			return self.unit
 			
 
 
 class ShoppingList:
+	# TODO Lots of work to do in the ShoppingLIst cls in general
 	"""Class to create and display a shopping list"""
 	shopping_dict = {}
+	
 	recipe_names = []
 	dressing_names = []
 
@@ -531,17 +548,18 @@ class ShoppingList:
 			if name	in sd.keys():
 				orig_amount = sd[name][0]
 				orig_unit   = sd[name][1]	
-				if orig_unit or unit in PINT_UNDEFINED_UNITS:
-					print(orig_unit + unit)
-					sys.exit('found offenders')
+				#if orig_unit or unit in PINT_UNDEFINED_UNITS:
+				#	print(orig_unit + unit)
 				if unit == orig_unit:
-					orig = orig_amount * ureg(orig_unit)
-					dup  = amount * ureg(unit)
-
-					addition = orig + dup
-					sd[name] = addition
-				else:
-					pass
+					if unit	in PINT_UNDEFINED_UNITS:
+						addition = amount + orig_amount
+						sd[name] = [addition, unit]
+						continue
+					else:
+						orig = orig_amount * ureg(orig_unit)
+						dup  = amount * ureg(unit)
+						addition = orig + dup
+						sd[name] = str(addition)
 			else:	
 				sd[name] = [amount, unit]
 	
@@ -637,7 +655,13 @@ class ShoppingList:
 		# Print list	
 		for key, value in sd.items():
 			amount = value[0]
-			if value[1] == "each":
+			unit = value[1]
+			print(amount)
+			print(type(amount))
+			ingred = Ingredient(amount, unit, key)
+			print(str(ingred))
+			#print("{}, {} {}".format(key, amount, unit))
+			'''if value[1] == "each":
 				print(" {}, {}".format(key, value[0]))
 				continue
 			#if num > den:
@@ -652,7 +676,7 @@ class ShoppingList:
 				#else:
 				print(" {}, {} {}".format(key, Fraction(amount), plural(value[1])))
 			else:
-				print(" {}, {} {}".format(key, Fraction(value[0]), value[1]))
+				print(" {}, {} {}".format(key, Fraction(value[0]), value[1]))'''
 			
 		# write the list to an xml file	
 		self.write_to_xml()
@@ -745,15 +769,7 @@ def template(recipe_name):
 	subprocess.call([EDITOR, file_name])
 
 
-def list_recipes(ret=False):
-	"""List all recipes in the database"""
-	
-	recipe_list = RECIPE_NAMES
-	
-	if ret:
-		return recipe_list
-	else:
-		for item in sorted(recipe_list): print(item)
+
 
 	
 def edit_recipe(recipe_name):

@@ -19,10 +19,10 @@ EDITOR          = os.getenv('EDITOR', 'nano')
 
 with open(CONFIG_FILE, "r") as stream:
 	try:
-		settings = yaml.safe_load(stream)
-		RECIPE_XML_DIR = os.path.expanduser(settings['recipe_xml_dir'])
-		RAND_RECIPE_COUNT = settings['rand_recipe_count']
-		SHOPPING_LIST_FILE = os.path.expanduser(settings['shopping_list_file'])
+		_settings = yaml.safe_load(stream)
+		RECIPE_XML_DIR = os.path.expanduser(_settings['recipe_xml_dir'])
+		RAND_RECIPE_COUNT = _settings['rand_recipe_count']
+		SHOPPING_LIST_FILE = os.path.expanduser(_settings['shopping_list_file'])
 	except yaml.YAMLError as exc:
 		print(exc)
 		sys.exit(1)
@@ -40,9 +40,9 @@ SIDE_NAMES = []
 for item in RECIPE_FILES:
 	with open(item, "r") as stream:
 		try:
-			recipe = yaml.safe_load(stream)
-			recipe_name = recipe['recipe_name']
-			dtype = recipe['dish_type']
+			_recipe = yaml.safe_load(stream)
+			recipe_name = _recipe['recipe_name']
+			dtype = _recipe['dish_type']
 		except yaml.YAMLError as exc:
 			print(exc)
 			sys.exit(0)

@@ -4,7 +4,7 @@
 """
 import os
 from .config import *
-from .recipe import *
+#from .recipe import *
 
 
 
@@ -23,6 +23,15 @@ def plural(word):
 	else:
 		return word + 's'
 
+def list_recipes(ret=False):
+	"""List all recipes in the database"""
+	
+	recipe_list = RECIPE_NAMES
+	
+	if ret:
+		return recipe_list
+	else:
+		for item in sorted(recipe_list): print(item)
 
 def md5():
 	#TODO-> md5 funtion to check which yaml files have changed and then write the coresponding xml.

@@ -1,9 +1,12 @@
 #!/usr/bin/env python 
 from pyrecipe.recipe import *
 
-test = Ingredient(1.5, "each", "onion")
-print(repr(test))
+test = Ingredient("onion", 3, "each")
+test2 = Ingredient("candy", 3, "tablespoon", prep="diced")
 print(str(test))
+print(repr(test))
+print(str(test2))
+print(repr(test2))
 
 def columnify(iterable):
     # First convert everything to its repr

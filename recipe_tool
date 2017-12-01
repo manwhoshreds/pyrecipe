@@ -3,18 +3,32 @@
 # PYTHON_ARGCOMPLETE_OK
 
 import argparse
+import sys
 
 #import pyrecipe.recipe as recipe
-from pyrecipe.argfuncs import *
+#from pyrecipe.argfuncs import *
 import argcomplete
+from pyrecipe.config import RAND_RECIPE_COUNT
+from pyrecipe.utils import list_recipes
+import pyrecipe.argfuncs as argfunc
 
+def recipe_completer(**kwargs):
+	recipe_list = list_recipes(ret=True)
+	return recipe_list
 	
-def parse_args():
+
+def main():
+	"""Main entry point of recipe_tool"""
+	
+
 	parser = argparse.ArgumentParser(
 		description="recipe_tool, the python recipe management program \
-		             reads recipe files written in yaml.",
+		             reads recipe files written in yaml. Recipe_tool has \
+					 tab completion functionality. After adding a recipe, \
+					 simply run recipe_tool print <TAB><TAB>... to view whats avialable.",
 		add_help=False
 	)
+
 	
 	parser.add_argument(
 		"-h", "--help",
@@ -44,26 +58,26 @@ def parse_args():
 	# recipe_tool print
 	parser_print = subparser.add_parser("print", help="Print the recipe to screen")
 	parser_print.add_argument("source", help="Recipe to print").completer = recipe_completer
-	parser_print.set_defaults(func=print_recipe)
+	parser_print.set_defaults(func=argfunc.print_recipe)
 	
 	# recipe_tool list
 	parser_list = subparser.add_parser("list", help="List recipes")
-	parser_list.set_defaults(func=print_list)
+	parser_list.set_defaults(func=argfunc.print_list)
 
 	# recipe_tool edit	
 	parser_edit = subparser.add_parser("edit", help="Edit a recipe data file")
 	parser_edit.add_argument("source", type=str, help="Recipe to edit").completer = recipe_completer
-	parser_edit.set_defaults(func=edit_recipe)
+	parser_edit.set_defaults(func=argfunc.edit_recipe)
 
 	# recipe_tool add
 	parser_add = subparser.add_parser("add", help='Add a recipe')
 	parser_add.add_argument("name", help='Name of the recipe to add')
-	parser_add.set_defaults(func=add_recipe)
+	parser_add.set_defaults(func=argfunc.add_recipe)
 
 	# recipe_tool remove
 	parser_remove = subparser.add_parser("remove", help='Delete a recipe')
 	parser_remove.add_argument("source", help='Recipe, to delete')
-	parser_remove.set_defaults(func=delete_recipe)
+	parser_remove.set_defaults(func=argfunc.delete_recipe)
 
 	# recipe_tool shop
 	parser_shop = subparser.add_parser("shop", help='Make a shopping list')
@@ -76,20 +90,20 @@ def parse_args():
 		"-r", 
 		"--random", 
 		nargs='?', 
-		const=recipe.RAND_RECIPE_COUNT, 
+		const=RAND_RECIPE_COUNT, 
 		type=int , 
 		metavar="NUM", 
 		dest="random", 
 		help="Pick n random recipes for the week"
 	)
-	parser_shop.set_defaults(func=print_shopping_list)
+	parser_shop.set_defaults(func=argfunc.print_shopping_list)
 
 	# recipe_tool show
 	parser_show = subparser.add_parser(
 		"show",
 		help='Show information about recipes'
 	)
-	parser_show.set_defaults(func=show_stats)
+	parser_show.set_defaults(func=argfunc.show_stats)
 
 	# recipe_tool dump
 	parser_dump = subparser.add_parser(
@@ -114,20 +128,21 @@ def parse_args():
 		action="store_true", 
 		help="Dump source yaml to standard output"
 	)
-	parser_dump.set_defaults(func=dump_data)
+	parser_dump.set_defaults(func=argfunc.dump_data)
 
 	# recipe_tool export
 	parser_export = subparser.add_parser(
 		"export",
 		help="Export recipes in xml format"
 	)
-	parser_export.set_defaults(func=export_recipes)
+	parser_export.set_defaults(func=argfunc.export_recipes)
+	
 	
 	# recipe_tool check
 	parser_check = subparser.add_parser("check", help="Check an ORD file for syntax errors")
 	parser_check.add_argument("source", type=str, help="Recipe to check").completer = recipe_completer
 	parser_check.add_argument("-a", "--all", dest="all", action="store_true", help="Check all files")
-	parser_check.set_defaults(func=check_file)
+	parser_check.set_defaults(func=argfunc.check_file)
 	
 
 	
@@ -136,20 +151,14 @@ def parse_args():
 		parser.print_help()
 	
 	argcomplete.autocomplete(parser)
-	return parser.parse_args()
-
-
-
-
-def main():
-	"""Main entry point of recipe_tool"""
-	args = parse_args()
-
+	args = parser.parse_args()
 	
 	if args.version:
 		recipe.version()
 		exit(0)
 	if hasattr(args, 'func'):
+
+
 		args.func(args)
 
 

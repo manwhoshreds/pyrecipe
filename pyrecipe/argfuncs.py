@@ -52,10 +52,7 @@ def check_file(args):
 		r.check_file()
 	
 
-def recipe_completer(**kwargs):
-	recipe_list = recipe.list_recipes(ret=True)
 
-	return recipe_list
 
 def print_recipe(args):
 	if args.source not in recipe.list_recipes(ret=True):
