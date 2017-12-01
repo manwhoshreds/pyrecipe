@@ -271,63 +271,22 @@ class Recipe:
 			ingredient_data = self.ingredient_data
 		
 		for item in ingredient_data:
+				
 			amount = item['amounts'][amount_level].get('amount', 0)
 			unit = item['amounts'][amount_level]['unit']
 			name = item['name']
 			try:	
 				size = item['size']
 			except KeyError:
-				pass
+				size = None
 			try:
 				prep = item['prep']
 			except KeyError:
-				pass
+				prep = None
+			
 			unit = item['amounts'][amount_level]['unit']
-			if unit == "taste":
-				ingred_string += "{} to taste".format(name.capitalize())
-				ingredients.append(ingred_string)
-				continue
-			if unit in CAN_UNITS:
-				unit = "({})".format(unit)
-			if amount < 1:
-				if amount == .333:
-					ingred_string += "1/3"
-				else:
-					ingred_string += str(Fraction(amount))
-			elif type(amount) is float:
-				ingred_string += improper_to_mixed(str(Fraction(amount)))
-			else:
-				ingred_string += str(amount)
-			if 'size' in locals():
-				ingred_string += " " + size
-				del size
-			if unit == "pinch":
-				ingred_string += "pinch of {}".format(name)
-				ingredients.append(ingred_string)
-				continue
-			if unit == "each":
-				if amount > 1:
-						ingred_string += " " + plural(name)
-				else:
-					ingred_string += " " + name
-				ingredients.append(ingred_string)
-				continue
-			if amount > 1:
-				ingred_string += " " + plural(unit)
-			else:
-				ingred_string += " " + unit
-
-			ingred_string += " " + name
-			# prep, as in chopped, diced, etc.., 
-			# indicated after the ingred string following a comma
-			try:
-				ingred_string += ", {}".format(prep)
-				del prep
-			except UnboundLocalError:
-				pass
-			ingredients.append(ingred_string)
-			del amount
-			del unit
+			ingred = Ingredient(amount, unit, name, size=size, prep=prep)
+			ingredients.append(str(ingred))
 		
 		return ingredients
 	
@@ -338,8 +297,6 @@ class Recipe:
 		print("")
 		print(color.RECIPENAME + self.recipe_name + color.NORMAL)
 		print("")
-		test = Ingredient(2, "each", "stupid")
-		print(str(test))
 		
 		if verb_level >= 1:
 			try:
@@ -493,7 +450,7 @@ class Recipe:
 class Ingredient(object):
 	"""The ingredient class is used to build an ingredietns object"""
 
-	def __init__(self, magnitude, unit, ingredient, prep=None):
+	def __init__(self, magnitude, unit, ingredient, size=None, prep=None):
 		self.magnitude = magnitude
 		self.unit = unit
 		self.ingredient = ingredient
@@ -501,12 +458,15 @@ class Ingredient(object):
 
 	def __repr__(self):
 		return "<Ingredient({}, '{}', '{}', '{}')>".format(self.magnitude, 
+														   self.size,
 														   self.unit, 
 														   self.ingredient,
 														   self.prep)
 
 	def __str__(self):
-		if self.prep is None:
+		if self.ingredient == 's&p':
+			return "Salt and pepper to taste"
+		elif self.prep is None:
 			if self.unit == 'each' or self.unit is None:
 				return "{} {}".format(self._magnitude(), self._ingredient())
 			else:
