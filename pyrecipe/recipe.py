@@ -40,10 +40,7 @@ class Recipe:
 	
 	def __init__(self, recipe, checkfile=True):
 		
-		# i need color
 		self.recipe = get_file_name(recipe)
-		db = DataBase(DB_FILE)
-		
 		if not self.recipe.endswith(".recipe"):
 			print("{}ERROR: {} is not a recipe file. Exiting...".format(color.ERROR, source))
 			sys.exit(1)
@@ -506,7 +503,7 @@ class Ingredient(object):
 	def _unit(self):
 		if self.unit == 'each':
 			pass
-		elif self.amount > 1:
+		elif int(self.amount) > 1:
 			if self.unit in CAN_UNITS:
 				return "({})".format(plural(self.unit))
 			else:
@@ -522,7 +519,7 @@ class Ingredient(object):
 
 
 class ShoppingList:
-	# TODO Lots of work to do in the ShoppingLIst cls in general
+	# TODO Lots of work to do in the ShoppingList cls in general
 	"""Class to create and display a shopping list"""
 	shopping_dict = {}
 	
@@ -543,13 +540,13 @@ class ShoppingList:
 			if name == "s&p":
 				continue
 			amount = item['amounts'][0].get('amount', 0)
-			unit = item['amounts'][0]['unit']
+			unit = item['amounts'][0].get('unit', None)
 			# check if name already in sd so we can add together
 			if name	in sd.keys():
 				orig_amount = sd[name][0]
 				orig_unit   = sd[name][1]	
-				#if orig_unit or unit in PINT_UNDEFINED_UNITS:
-				#	print(orig_unit + unit)
+				if orig_unit or unit in PINT_UNDEFINED_UNITS:
+					print(orig_unit + unit)
 				if unit == orig_unit:
 					if unit	in PINT_UNDEFINED_UNITS:
 						addition = amount + orig_amount
@@ -603,9 +600,9 @@ class ShoppingList:
 								method='xml',
 								pretty_print=True)
 		
-		print("\n{}Writing shopping list to {}{}".format(color.INFORM, SHOPPING_LIST_FILE, color.NORMAL))
-		with open(SHOPPING_LIST_FILE, "w") as f:
-			f.write(result.decode("utf-8"))
+		#print("\n{}Writing shopping list to {}{}".format(color.INFORM, SHOPPING_LIST_FILE, color.NORMAL))
+		#with open(SHOPPING_LIST_FILE, "w") as f:
+		#	f.write(result.decode("utf-8"))
 	
 	
 	def return_list(self):
@@ -653,30 +650,12 @@ class ShoppingList:
 
 		
 		# Print list	
+		print(sd)
 		for key, value in sd.items():
 			amount = value[0]
 			unit = value[1]
-			print(amount)
-			print(type(amount))
-			ingred = Ingredient(amount, unit, key)
+			ingred = Ingredient(key, amount=amount, unit=unit)
 			print(str(ingred))
-			#print("{}, {} {}".format(key, amount, unit))
-			'''if value[1] == "each":
-				print(" {}, {}".format(key, value[0]))
-				continue
-			#if num > den:
-			#	print("{}, {} {}".format(key, improper_to_mixed(str(Fraction(amount))), value[1]))
-			if amount == 0:
-				print(" {}, {}".format(key, value[1]))
-			elif amount < 1:
-				print(" {}, {} {}".format(key, Fraction(amount), value[1]))
-			elif amount > 1:
-				#if type(amount) is float:
-				#	print("{}, {} {}".format(key, improper_to_mixed(Fraction(amount)), plural(value[1])))
-				#else:
-				print(" {}, {} {}".format(key, Fraction(amount), plural(value[1])))
-			else:
-				print(" {}, {} {}".format(key, Fraction(value[0]), value[1]))'''
 			
 		# write the list to an xml file	
 		self.write_to_xml()
