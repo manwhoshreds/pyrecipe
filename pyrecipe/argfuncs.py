@@ -55,11 +55,8 @@ def check_file(args):
 
 
 def print_recipe(args):
-	if args.source not in recipe.list_recipes(ret=True):
-		print("No recipe found for {}".format(args.source))
-	else:
-		r = recipe.Recipe(args.source)
-		r.print_recipe(args.verbose)
+	r = recipe.Recipe(args.source)
+	r.print_recipe(args.verbose)
 
 
 def show_stats(args):
@@ -93,6 +90,10 @@ def add_recipe(args):
 
 def print_list(args):
 	recipe.list_recipes()
+
+
+def version(args):
+	recipe.version()
 
 
 def export_recipes(args):

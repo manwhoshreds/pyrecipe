@@ -1,13 +1,22 @@
+"""
+	pyrecipe.config.py
+	~~~~~~~~~~~~~~~~~~
+	pyrecipe configurations and globals
+"""
 
 import os
 import sys
 import yaml
 import pprint
 
-# Script constants
+
 __version__     = '0.5.1'
-__scriptname__  = os.path.basename(sys.argv[0])
 __email__       = "m.k.miller@gmx.com"
+__scriptname__  = os.path.basename(sys.argv[0])
+
+
+
+
 
 #---GLOBALS--------
 CONFIG_DIR      = os.path.expanduser('~/.config/pyrecipe/')
@@ -65,7 +74,8 @@ S_DIV                = "~" * 50
 REQUIRED_ORD_KEYS    = ['recipe_name', 'dish_type', 'prep_time', 'ingredients', 'steps']
 DISH_TYPES           = ['main', 'side', 'dessert', 'condiment', 'dip', 
 						  'salad dressing', 'sauce', 'base', 'garnish', 'seasoning']
-CULINARY_UNITS       = ['teaspoon', 'tablespoon', 'ounce', 'cup', 'quart', 'gallon', 'pound', 'pint']
+CULINARY_UNITS       = ['teaspoon', 'tablespoon', 'ounce', 'fulid ounce', 'cup', 'quart', 
+                        'gallon', 'pound', 'pint']
 PINT_UNDEFINED_UNITS = ['box', 'taste', 'inch piece', 'stick', 'bottle', 'each', 'bag',
                         'whole', 'link', 'sprig', 'stalk', 'can', 'pinch', 'cube', 'splash']
 # CAN_UNITS are checked later and put in parenthesis

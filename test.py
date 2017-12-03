@@ -1,13 +1,12 @@
 #!/usr/bin/env python 
 from pyrecipe.recipe import *
+import pdb
 
-test = Ingredient("onion", 3, "each")
-test2 = Ingredient("candy", 3, "tablespoon", prep="diced")
-print(str(test))
-print(repr(test))
+test = Ingredient("onion", 3, "teaspoon")
+test2 = Ingredient("onion", 3, "tablespoon", prep="diced", shop=True)
 print(str(test2))
-print(repr(test2))
 
+pdb.set_trace()
 def columnify(iterable):
     # First convert everything to its repr
     strings = [repr(x) for x in iterable]

@@ -3,7 +3,7 @@
 """
 	pyrecipe.recipe
 	~~~~~~~~~~~~~~~
-	The recipe module lets contains the main recipe
+	The recipe module contains the main recipe
 	classes used to interact with ORD (open recipe document) files. 
 	You can simply print the recipe or print the xml dump.
 """
@@ -17,20 +17,20 @@ import sys
 import subprocess
 import sqlite3
 import datetime
+# dubug
+import pdb
 
 from fractions import Fraction
 from lxml import etree
 from pint.errors import *
 from . import ureg, Q_
 
+from .utils import *
 from .config import *
 from .config import __version__, __scriptname__, __email__
-from .utils import *
-
-
+from .ingredient import *
 
 color = Color()
-
 
 class Recipe:
 	"""
@@ -52,14 +52,35 @@ class Recipe:
 					print(exc)
 					sys.exit(1)
 
+		self.failed = False
+		self._get_values()
+
+		
+		
+#		if checkfile:
+#			if self.check_file(silent=True): 
+#				sys.exit('Errors were found in {}, Please run'
+#						 ' recipe_tool check {} for more info'
+#						 .format(self.recipe, self.recipe_name))
+		self.check_file(silent=True)
+		if self.failed:
+			sys.exit('Errors were found in {}, Please run'
+					 ' recipe_tool check {} for more info'
+					 .format(self.recipe, self.recipe_name))
+	def __str__(self):
+		return self.recipe
+
+	
+	def _get_values(self):
+		"""used to extract all the values out of a recipe
+		source file while building xml at the same time
+
+		"""
+		
+		
 		self.root = etree.Element("recipe")
 		self.mainkeys = self.recipe_data.keys()
-
-		"""__init__: extract all variables from recipe source file
-		and put it in to class variables. We also start building
-		xml here.
-		"""	
-		#TODO-> make these vairables better
+		
 		# recipe name	
 		if 'recipe_name' in self.mainkeys:
 			self.recipe_name = self.recipe_data['recipe_name'] 
@@ -129,15 +150,12 @@ class Recipe:
 
 		# yields
 		if 'yields' in self.mainkeys:
-			yields = self.recipe_data['yields']
+			self.yields = self.recipe_data['yields']
 			xml_yields = etree.SubElement(self.root, "yields")
-			for yeld in yields:
+			for yeld in self.yields:
 				xml_servings = etree.SubElement(xml_yields, "servings")
 				xml_servings.text = str(yeld)
 
-		# more complex and nested. Also, these do not update the xml tree,
-		# this is done later on in program
-		# ingredients
 		if 'ingredients' in self.mainkeys:
 			self.ingredient_data = self.recipe_data['ingredients']
 		
@@ -153,13 +171,6 @@ class Recipe:
 		# steps	
 		if 'steps' in self.mainkeys:
 			self.steps = self.recipe_data['steps']
-		
-		if checkfile:
-			if not self.check_file(silent=True): 
-				exit(0)
-
-	def __str__(self):
-		return self.recipe
 
 
 	def check_file(self, silent=False):
@@ -170,7 +181,6 @@ class Recipe:
 		failure_prep_types = []
 		# amounts must be numbers
 		failure_amounts = []
-		failure_point = 0
 		
 		for item in self.ingredient_data:
 			try:	
@@ -179,21 +189,21 @@ class Recipe:
 					pass
 				else:
 					failure_amounts.append(item['name'])
-					failure_point += 1
+					self.failed = True
 			except KeyError:
 				continue
 		
 		for item in REQUIRED_ORD_KEYS:
 			if item not in self.mainkeys:
 				failure_keys.append(item)
-				failure_point += 1
+				self.failed = True
 		
 		for item in self.ingredient_data:
 			try:
 				unit = item['amounts'][0]['unit']
 				if unit not in ALLOWED_INGRED_UNITS:
 					failure_units.append(unit)
-					failure_point += 1
+					self.failed = True
 			except KeyError:
 				continue
 		
@@ -202,61 +212,65 @@ class Recipe:
 				prep = item['prep']
 				if prep not in PREP_TYPES and prep not in failure_prep_types:
 					failure_prep_types.append(prep)
-					failure_point += 1
+					self.failed = True
 			except KeyError:
 				continue
 		
-		if len(failure_keys) > 0:
-			print(color.ERROR 
-				+ self.recipe
-				+ ": The following keys are required by the ORD spec: " 
-				+ ",".join(failure_keys) 
-				+ color.NORMAL)
-		
-		if len(failure_units) > 0:
-			print(color.ERROR 
-				+ self.recipe
-				+ ": The following units are not allowed by the ORD spec: " 
-				+ ", ".join(failure_units)
-				+ color.NORMAL)
-		
-		if len(failure_amounts) > 0:
-			print(color.ERROR 
-				+ self.recipe
-				+ ": The following ingredients have no integer amounts: " 
-				+ ", ".join(failure_amounts) 
-				+ color.NORMAL)
-		
-		if len (failure_prep_types) > 0:
-			print(color.ERROR 
-				+ self.recipe
-				+ ": The following prep types are not allowed by the ORD spec: " 
-				+ ", ".join(failure_prep_types) 
-				+ color.NORMAL)
-		
-		if self.recipe_data['dish_type'] not in DISH_TYPES:
-			print(color.ERROR 
-				+ self.recipe
-				+ ": The current dish type is not in the ORD spec: " 
-				+ self.recipe_data['dish_type'] 
-				+ color.NORMAL)
-		
-		if len(self.steps) < 1:
-			print(color.ERROR 
-				+ self.recipe
-				+ ": You must at least supply one step in the recipe." 
-				+ color.NORMAL)
-		
-		if failure_point == 0:
-			if silent == False:
+		if silent == False:
+			if self.failed:
+				if len(failure_keys) > 0:
+					print(color.ERROR 
+						+ self.recipe
+						+ ": The following keys are required by the ORD spec: " 
+						+ ",".join(failure_keys) 
+						+ color.NORMAL)
+				
+				if len(failure_units) > 0:
+					print(color.ERROR 
+						+ self.recipe
+						+ ": The following units are not allowed by the ORD spec: " 
+						+ ", ".join(failure_units)
+						+ color.NORMAL)
+				
+				if len(failure_amounts) > 0:
+					print(color.ERROR 
+						+ self.recipe
+						+ ": The following ingredients have no integer amounts: " 
+						+ ", ".join(failure_amounts) 
+						+ color.NORMAL)
+				
+				if len (failure_prep_types) > 0:
+					print(color.ERROR 
+						+ self.recipe
+						+ ": The following prep types are not allowed by the ORD spec: " 
+						+ ", ".join(failure_prep_types) 
+						+ color.NORMAL)
+				
+				if self.recipe_data['dish_type'] not in DISH_TYPES:
+					print(color.ERROR 
+						+ self.recipe
+						+ ": The current dish type is not in the ORD spec: " 
+						+ self.recipe_data['dish_type'] 
+						+ color.NORMAL)
+				
+				if len(self.steps) < 1:
+					print(color.ERROR 
+						+ self.recipe
+						+ ": You must at least supply one step in the recipe." 
+						+ color.NORMAL)
+			else:	
 				print(color.TITLE 
 					+ self.recipe
 					+ " is a valid ORD file")
-			else:
-				return True
 		else:
-			return False
+			if self.failed:
+				return True
+			else:
+				return False
+
+		
 	
+
 			
 	def get_ingredients(self, amount_level=0, alt_ingred=None):	
 		"""Returns a list of ingredients."""
@@ -274,17 +288,9 @@ class Recipe:
 				ingredients.append(str(ingred))
 				continue
 			amount = item['amounts'][amount_level].get('amount', 0)
-			unit = item['amounts'][amount_level]['unit']
-			try:	
-				size = item['size']
-			except KeyError:
-				size = None
-			try:
-				prep = item['prep']
-			except KeyError:
-				prep = None
-			
-			unit = item['amounts'][amount_level]['unit']
+			unit = item['amounts'][amount_level].get('unit', None)
+			size = item.get('size', None)
+			prep = item.get('prep', None)
 			ingred = Ingredient(name, unit=unit, amount=amount, size=size, prep=prep)
 			ingredients.append(str(ingred))
 		
@@ -447,74 +453,7 @@ class Recipe:
 		PP.pprint(self.recipe_data)
 
 
-class Ingredient(object):
-	"""The ingredient class is used to build an ingredietns object"""
 
-	def __init__(self, ingredient, amount=None, unit=None, size=None, prep=None):
-		self.ingredient = ingredient
-		self.amount = amount
-		self.unit = unit
-		self.size = size
-		self.prep = prep
-
-	def __repr__(self):
-		return "<Ingredient({}, '{}', '{}', '{}', '{}')>".format(self.amount, 
-														   self.size,
-														   self.unit, 
-														   self.ingredient,
-														   self.prep)
-
-	def __str__(self):
-		if self.ingredient == 's&p':
-			return "Salt and pepper to taste"
-		elif self.prep is None:
-			if self.unit == 'each' or self.unit is None:
-				return "{} {}".format(self._magnitude(), self._ingredient())
-			else:
-				return "{} {} {}".format(self._magnitude(), self._unit(), self._ingredient())
-		elif self.unit == 'each' or self.unit is None:
-			return "{} {}, {}".format(self._magnitude(), self._ingredient(), self.prep)
-		else:
-			return "{} {} {}, {}".format(self._magnitude(), self._unit(), self._ingredient(), self.prep)
-
-
-	def __add__(self, other):
-		return Ingredient(self.amount + other.amount)
-
-	def _ingredient(self):
-		if self.amount > 1 and self.unit == 'each':
-			return plural(self.ingredient)
-		else:
-			return self.ingredient
-
-	
-	def _magnitude(self):
-		if self.amount == .3:
-			return '1/3'
-		elif self.amount == .6:
-			return '1/6'
-		elif isinstance(self.amount, float) and self.amount < 1:
-			return Fraction(self.amount)
-		elif isinstance(self.amount, float) and self.amount > 1:
-			return improper_to_mixed(str(Fraction(self.amount)))
-		else:
-			return self.amount
-
-	def _unit(self):
-		if self.unit == 'each':
-			pass
-		elif int(self.amount) > 1:
-			if self.unit in CAN_UNITS:
-				return "({})".format(plural(self.unit))
-			else:
-				return plural(self.unit)
-		elif self.amount <= 1:
-			if self.unit in CAN_UNITS:
-				return "({})".format(self.unit)
-			else:
-				return self.unit
-		else:
-			return self.unit
 			
 
 
@@ -522,7 +461,6 @@ class ShoppingList:
 	# TODO Lots of work to do in the ShoppingList cls in general
 	"""Class to create and display a shopping list"""
 	shopping_dict = {}
-	
 	recipe_names = []
 	dressing_names = []
 
@@ -532,33 +470,34 @@ class ShoppingList:
 		sd = ShoppingList.shopping_dict
 		r = Recipe(file_name)
 		if alt_ingred:
-			ingred = r.alt_ingredient_data[alt_ingred]
+			ingreds = r.alt_ingredient_data[alt_ingred]
 		else:
-			ingred = r.ingredient_data
-		for item in ingred:
+			ingreds = r.ingredient_data
+		for item in ingreds:
 			name = item['name']
+			try:
+				link = item['link']
+				self.update(item)
+			except KeyError:
+				pass
+				
 			if name == "s&p":
 				continue
 			amount = item['amounts'][0].get('amount', 0)
 			unit = item['amounts'][0].get('unit', None)
+			ingred = Ingredient(name, amount=amount, unit=unit)
 			# check if name already in sd so we can add together
 			if name	in sd.keys():
 				orig_amount = sd[name][0]
+				print(orig_amount)
 				orig_unit   = sd[name][1]	
-				if orig_unit or unit in PINT_UNDEFINED_UNITS:
-					print(orig_unit + unit)
-				if unit == orig_unit:
-					if unit	in PINT_UNDEFINED_UNITS:
-						addition = amount + orig_amount
-						sd[name] = [addition, unit]
-						continue
-					else:
-						orig = orig_amount * ureg(orig_unit)
-						dup  = amount * ureg(unit)
-						addition = orig + dup
-						sd[name] = str(addition)
+				print(orig_unit)
+				orig_ingred = Ingredient(name, amount=orig_amount, unit=orig_unit)
+				addition = ingred + orig_ingred
+				sd[name] = list(addition)
 			else:	
 				sd[name] = [amount, unit]
+				
 	
 
 	def write_to_xml(self):
@@ -650,13 +589,8 @@ class ShoppingList:
 
 		
 		# Print list	
-		print(sd)
 		for key, value in sd.items():
-			amount = value[0]
-			unit = value[1]
-			ingred = Ingredient(key, amount=amount, unit=unit)
-			print(str(ingred))
-			
+			print("{}, {} {}".format(key, value[0], value[1]))
 		# write the list to an xml file	
 		self.write_to_xml()
 
