@@ -11,10 +11,11 @@ from . import ureg, Q_
 class Ingredient(object):
 	"""The ingredient class is used to build an ingredietns object"""
 
-	def __init__(self, ingredient, amount=None, unit=None, size=None, prep=None, shop=False):
+	def __init__(self, ingredient, amount=None, unit=None, size=None, prep=None, str_format="normal"):
 		self.ingredient = ingredient
 		self.amount = amount
 		self.unit = unit
+		self.str_format = str_format
 		self.culinary_unit = False
 		self.shop = shop
 		if self.unit in CULINARY_UNITS:
@@ -32,8 +33,20 @@ class Ingredient(object):
 
 	def __str__(self):
 		
-		if self.shop:
-			return "success"
+		if self.str_format == 'shop':
+			if self.ingredient == 's&p':
+				pass
+			elif self.amount == 0 and self.unit == 'taste':
+				return "{} to taste".format(self.ingredient.capitalize())
+			elif self.prep is None:
+				if self.unit == 'each' or self.unit is None:
+					return "{} {}".format(self.get_amount(), self.get_ingredient())
+				else:
+					return "{} {} {}".format(self.get_amount(), self.get_unit(), self.get_ingredient())
+			elif self.unit == 'each' or self.unit is None:
+				return "{} {}, {}".format(self.get_amount(), self.get_ingredient(), self.prep)
+			else:
+				return "{} {} {}, {}".format(self.get_amount(), self.get_unit(), self.get_ingredient(), self.prep)
 		else:
 			if self.ingredient == 's&p':
 				return "Salt and pepper to taste"
@@ -48,19 +61,23 @@ class Ingredient(object):
 				return "{} {}, {}".format(self.get_amount(), self.get_ingredient(), self.prep)
 			else:
 				return "{} {} {}, {}".format(self.get_amount(), self.get_unit(), self.get_ingredient(), self.prep)
+		
 			
-
 
 	def __add__(self, other):
 		if self.culinary_unit and other.culinary_unit:
 			this_unit = self.amount * ureg[self.unit]
 			that_unit = other.amount * ureg[other.unit]
-
+			addition = this_unit + that_unit
+			#print(str(addition).split())
 			return this_unit + that_unit
 		else:
-			addition = int(self.amount) + int(other.amount)
-			return Ingredient(self.ingredient, addition, self.unit)
+			addition = Fraction(self.amount) + Fraction(other.amount)
+			return 2
+			#return Ingredient(self.ingredient, addition, self.unit)
 
+
+		
 
 	def get_ingredient(self):
 		if self.amount > 1 and self.unit == 'each':

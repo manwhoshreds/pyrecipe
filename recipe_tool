@@ -158,8 +158,6 @@ def main():
 		argfunc.version(args)
 		exit(0)
 	if hasattr(args, 'func'):
-
-
 		args.func(args)
 
 

@@ -489,14 +489,12 @@ class ShoppingList:
 			# check if name already in sd so we can add together
 			if name	in sd.keys():
 				orig_amount = sd[name][0]
-				print(orig_amount)
 				orig_unit   = sd[name][1]	
-				print(orig_unit)
 				orig_ingred = Ingredient(name, amount=orig_amount, unit=orig_unit)
 				addition = ingred + orig_ingred
-				sd[name] = list(addition)
-			else:	
-				sd[name] = [amount, unit]
+				sd[name] = str(addition).split()
+			else:
+				sd[name] = [ingred.get_amount(), ingred.get_unit()]
 				
 	
 
@@ -698,8 +696,8 @@ def version():
 	print("{} | '__/ _ \/ __| | '_ \ / _ \ | __/ _ \ / _ \| |{}  For any questions, contact me at {}".format(color.INFORM, color.NORMAL, __email__))
 	print("{} | | |  __/ (__| | |_) |  __/ | || (_) | (_) | |{}  or type recipe_tool --help for more info.".format(color.INFORM, color.NORMAL))
 	print("{} |_|  \___|\___|_| .__/ \___|  \__\___/ \___/|_|{}".format(color.INFORM, color.NORMAL))
-	print("{}                 | |                            {}  This program may be freely distributed under".format(color.INFORM, color.NORMAL))
-	print("{}                 |_|                            {}  the terms of the GNU General Public Liscense.".format(color.INFORM, color.NORMAL))
+	print("{}                 | |                            {}  This program may be freely redistributed under".format(color.INFORM, color.NORMAL))
+	print("{}                 |_|                            {}  the terms of the GNU General Public License.".format(color.INFORM, color.NORMAL))
 
 
 def stats(verb=0):
