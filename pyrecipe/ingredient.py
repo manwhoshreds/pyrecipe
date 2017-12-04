@@ -17,7 +17,6 @@ class Ingredient(object):
 		self.unit = unit
 		self.str_format = str_format
 		self.culinary_unit = False
-		self.shop = shop
 		if self.unit in CULINARY_UNITS:
 			self.culinary_unit = True
 		self.size = size

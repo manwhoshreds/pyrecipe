@@ -23,28 +23,29 @@ yields:
   - 5
   - 6
 ingredients:
-- name: apples
-  usda_num: 09003
-  amount: 4
-  unit: tablespoon
-- name: bananas
-  amount: 10
-  unit: each
-  prep: diced
-  size: small
-  substitutions:
-- name: pears
-  usda_nm: 09252
-  amount: 4
-  unit: each
-  amount: 10
+  - name: apples
+    usda_num: 09003
+    amounts:
+      - amount: 4
+        unit: tablespoon
+  - name: bananas
+    amounts:
+      - amount: 10
+        unit: each
+    prep: diced
+    size: small
+  - name: pears
+    usda_nm: 09252
+    amounts:
+      - amount: 4
+        unit: each
 alt_ingredients:
-  - ketchup sauce:
-      - name: ketchup
-        usda_num: 098098
-        amounts:
-          - amount: 1
-            unit: tablespoon
+  ketchup sauce:
+    - name: ketchup
+      usda_num: 098098
+      amounts:
+        - amount: 1
+          unit: tablespoon
 
 steps:
   - step: make sauce

@@ -38,9 +38,12 @@ class Recipe:
 		recipe source files such as print and save xml.
 	"""
 	
-	def __init__(self, recipe, checkfile=True):
-		
-		self.recipe = get_file_name(recipe)
+	def __init__(self, source, checkfile=True):
+		# TODO bad yaml breaks autocompletion for some reason
+		if os.path.isfile(source):
+			self.recipe = source
+
+		#self.recipe = get_file_name(recipe)
 		if not self.recipe.endswith(".recipe"):
 			print("{}ERROR: {} is not a recipe file. Exiting...".format(color.ERROR, source))
 			sys.exit(1)
@@ -50,10 +53,11 @@ class Recipe:
 					self.recipe_data = yaml.safe_load(stream)
 				except yaml.YAMLError as exc:
 					print(exc)
-					sys.exit(1)
+					#sys.exit(1)
 
 		self.failed = False
-		self._get_values()
+		self.checkfile = checkfile
+		self._scan_recipe()
 
 		
 		
@@ -71,7 +75,7 @@ class Recipe:
 		return self.recipe
 
 	
-	def _get_values(self):
+	def _scan_recipe(self):
 		"""used to extract all the values out of a recipe
 		source file while building xml at the same time
 
