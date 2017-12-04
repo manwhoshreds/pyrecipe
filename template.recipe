@@ -27,7 +27,7 @@ ingredients:
     usda_num: 09003
     amounts:
       - amount: 4
-        unit: tablespoon
+        unit: tablespoons
   - name: bananas
     amounts:
       - amount: 10

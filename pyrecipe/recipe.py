@@ -40,37 +40,32 @@ class Recipe:
 	
 	def __init__(self, source, checkfile=True):
 		# TODO bad yaml breaks autocompletion for some reason
-		if os.path.isfile(source):
-			self.recipe = source
-
-		#self.recipe = get_file_name(recipe)
-		if not self.recipe.endswith(".recipe"):
-			print("{}ERROR: {} is not a recipe file. Exiting...".format(color.ERROR, source))
-			sys.exit(1)
+		self.source = get_file_name(source)
+		if os.path.isfile(self.source):
+			pass
 		else:
-			with open(self.recipe, "r") as stream:
+			self.source = source
+
+		print(self.source)
+		
+		if not self.source.endswith(".recipe"):
+			sys.exit("{}ERROR: {} is not a recipe file. Exiting...".format(color.ERROR, self.source))
+		else:
+			with open(self.source, "r") as stream:
 				try:
 					self.recipe_data = yaml.safe_load(stream)
 				except yaml.YAMLError as exc:
 					print(exc)
-					#sys.exit(1)
+					sys.exit(1)
 
-		self.failed = False
-		self.checkfile = checkfile
 		self._scan_recipe()
-
-		
-		
-#		if checkfile:
-#			if self.check_file(silent=True): 
-#				sys.exit('Errors were found in {}, Please run'
-#						 ' recipe_tool check {} for more info'
-#						 .format(self.recipe, self.recipe_name))
-		self.check_file(silent=True)
-		if self.failed:
-			sys.exit('Errors were found in {}, Please run'
-					 ' recipe_tool check {} for more info'
-					 .format(self.recipe, self.recipe_name))
+		failed = self.check_file(silent=True)
+		#if failed:
+		#	sys.exit('Errors were found in {}, Please run'
+		#			 ' recipe_tool check <source> for more info'
+		#			 .format(self.source))
+	
+	
 	def __str__(self):
 		return self.recipe
 
@@ -185,6 +180,7 @@ class Recipe:
 		failure_prep_types = []
 		# amounts must be numbers
 		failure_amounts = []
+		failed = False
 		
 		for item in self.ingredient_data:
 			try:	
@@ -193,21 +189,21 @@ class Recipe:
 					pass
 				else:
 					failure_amounts.append(item['name'])
-					self.failed = True
+					failed = True
 			except KeyError:
 				continue
 		
 		for item in REQUIRED_ORD_KEYS:
 			if item not in self.mainkeys:
 				failure_keys.append(item)
-				self.failed = True
+				failed = True
 		
 		for item in self.ingredient_data:
 			try:
 				unit = item['amounts'][0]['unit']
 				if unit not in ALLOWED_INGRED_UNITS:
 					failure_units.append(unit)
-					self.failed = True
+					failed = True
 			except KeyError:
 				continue
 		
@@ -216,61 +212,61 @@ class Recipe:
 				prep = item['prep']
 				if prep not in PREP_TYPES and prep not in failure_prep_types:
 					failure_prep_types.append(prep)
-					self.failed = True
+					failed = True
 			except KeyError:
 				continue
 		
-		if silent == False:
-			if self.failed:
+		if failed:
+			if silent:
+				return True
+			else:
 				if len(failure_keys) > 0:
 					print(color.ERROR 
-						+ self.recipe
+						+ self.source
 						+ ": The following keys are required by the ORD spec: " 
 						+ ",".join(failure_keys) 
 						+ color.NORMAL)
 				
 				if len(failure_units) > 0:
 					print(color.ERROR 
-						+ self.recipe
+						+ self.source
 						+ ": The following units are not allowed by the ORD spec: " 
 						+ ", ".join(failure_units)
 						+ color.NORMAL)
 				
 				if len(failure_amounts) > 0:
 					print(color.ERROR 
-						+ self.recipe
+						+ self.source
 						+ ": The following ingredients have no integer amounts: " 
 						+ ", ".join(failure_amounts) 
 						+ color.NORMAL)
 				
 				if len (failure_prep_types) > 0:
 					print(color.ERROR 
-						+ self.recipe
+						+ self.source
 						+ ": The following prep types are not allowed by the ORD spec: " 
 						+ ", ".join(failure_prep_types) 
 						+ color.NORMAL)
 				
 				if self.recipe_data['dish_type'] not in DISH_TYPES:
 					print(color.ERROR 
-						+ self.recipe
+						+ self.source
 						+ ": The current dish type is not in the ORD spec: " 
 						+ self.recipe_data['dish_type'] 
 						+ color.NORMAL)
 				
 				if len(self.steps) < 1:
 					print(color.ERROR 
-						+ self.recipe
+						+ self.source
 						+ ": You must at least supply one step in the recipe." 
 						+ color.NORMAL)
-			else:	
-				print(color.TITLE 
-					+ self.recipe
-					+ " is a valid ORD file")
-		else:
-			if self.failed:
-				return True
-			else:
+		else:	
+			if silent:
 				return False
+			else:
+				print(color.TITLE 
+					+ self.source
+					+ " is a valid ORD file")
 
 		
 	
