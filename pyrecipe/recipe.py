@@ -30,7 +30,7 @@ from .config import __version__, __scriptname__, __email__
 
 # globals
 color = Color()
-date = datetime.date
+
 
 class Recipe:
 	"""
@@ -453,23 +453,23 @@ class ShoppingList:
 				
 			if name == "s&p":
 				continue
-			amount = item['amounts'][0].get('amount', 0)
-			unit = item['amounts'][0].get('unit', None)
-			ingred = Ingredient(name, amount=amount, unit=unit)
+			amount = item['amounts'][0].get('amount', '')
+			unit = item['amounts'][0].get('unit', '')
 			# check if name already in sd so we can add together
-			if name	in sd.keys():
-				orig_amount = sd[name][0]
-				orig_unit   = sd[name][1]	
-				orig_ingred = Ingredient(name, amount=orig_amount, unit=orig_unit)
-				addition = ingred + orig_ingred
-				sd[name] = str(addition).split()
+			if name in sd.keys():
+				orig = Q_(sd[name][0], sd[name][1])
+				current = Q_(amount, unit)
+				#orig + current
+				print(repr(orig))
+				print(current)
 			else:
-				sd[name] = [ingred.get_amount(), ingred.get_unit()]
+				sd[name] = [amount, unit]
 				
 	def write_to_xml(self):
 		"""Write the shopping list to an xml file after
 		   building.
 		"""
+		date = datetime.date
 		today = date.today()
 		root = etree.Element("shopping_list")	
 		sd = ShoppingList.shopping_dict
@@ -578,15 +578,14 @@ class Ingredient(object):
 	"""The ingredient class is used to build an ingredietns object"""
 
 	def __init__(self, ingredient, amount='', size='', unit='', prep=None, str_format="normal"):
-		self._ingredient = ingredient
-		self._amount = amount
+		self.ingredient = ingredient
+		self.amount = amount
 		self.size = size
-		self._unit = unit
+		self.unit = unit
 		self.prep = prep
 		self.culinary_unit = False
-		if self._unit in CULINARY_UNITS:
+		if self.unit in CULINARY_UNITS:
 			self.culinary_unit = True
-		self._after_init()
 	
 	def __repr__(self):
 		return "<Ingredient({}, '{}', '{}', '{}', '{}')>".format(self.amount, 
@@ -594,20 +593,25 @@ class Ingredient(object):
 														   self.unit, 
 														   self.ingredient,
 														   self.prep)
+		
+		
+			
 
-	def _after_init(self):
-		self.amount = self.get_amount()
-		self.unit = self.get_unit()
-		self.ingredient = self.get_ingredient()
 
 	def __str__(self):
 		
 		if self.ingredient == 's&p':
 			return "Salt and pepper to taste"
-		elif self.amount == 0 and self.unit == 'taste':
+		elif self.unit == 'taste':
 			return "{} to taste".format(self.ingredient.capitalize())
+		elif self.unit == 'pinch':
+			return "Pinch of {}".format(self.ingredient)
+		elif self.unit == 'splash':
+			return "Splash of {}".format(self.ingredient)
 		else:
-			string = "{} {} {} {}".format(self.amount, self.size, self.unit, self.ingredient)
+		
+			string = "{} {} {} {}".format(self._get_amount(), self.size, 
+											  self._get_unit(), self._get_ingredient())
 			# the previous line adds unwanted spaces if values are absent
 			# we simply clean that up here.
 			cleaned_string = " ".join(string.split())
@@ -624,9 +628,9 @@ class Ingredient(object):
 		elif self.amount == 0 and self.unit == 'taste':
 			pass
 		elif self.unit == 'each' or self.unit is None:
-			return "{} {}, {}".format(self.get_amount(), self.get_ingredient(), self._prep)
+			return "{} {}, {}".format(self._get_amount(), self._get_ingredient(), self._prep)
 		else:
-			return "{} {} {}, {}".format(self.get_amount(), self.get_unit(), self.get_ingredient(), self._prep)
+			return "{} {} {}, {}".format(self._get_amount(), self._get_unit(), self._get_ingredient(), self._prep)
 
 	def __add__(self, other):
 		if self.culinary_unit and other.culinary_unit:
@@ -642,40 +646,40 @@ class Ingredient(object):
 
 		
 
-	def get_ingredient(self):
-		if self._amount > 1 and self._unit == 'each':
-			return plural(self._ingredient)
+	def _get_ingredient(self):
+		if self.amount > 1 and self.unit == 'each':
+			return plural(self.ingredient)
 		else:
-			return self._ingredient
+			return self.ingredient
 
 	
-	def get_amount(self):
-		if self._amount == .3:
+	def _get_amount(self):
+		if self.amount == .3:
 			return '1/3'
-		elif self._amount == .6:
+		elif self.amount == .6:
 			return '1/6'
-		elif isinstance(self._amount, float) and self._amount < 1:
-			return Fraction(self._amount)
-		elif isinstance(self._amount, float) and self._amount > 1:
-			return improper_to_mixed(str(Fraction(self._amount)))
+		elif isinstance(self.amount, float) and self.amount < 1:
+			return Fraction(self.amount)
+		elif isinstance(self.amount, float) and self.amount > 1:
+			return improper_to_mixed(str(Fraction(self.amount)))
 		else:
-			return self._amount
+			return self.amount
 
-	def get_unit(self):
-		if self._unit == 'each':
+	def _get_unit(self):
+		if self.unit == 'each':
 			return ''
-		elif int(self._amount) > 1:
-			if self._unit in CAN_UNITS:
+		elif self.amount > 1:
+			if self.unit in CAN_UNITS:
 				return "({})".format(plural(self.unit))
 			else:
-				return plural(self._unit)
-		elif self._amount <= 1:
-			if self._unit in CAN_UNITS:
-				return "({})".format(self._unit)
+				return plural(self.unit)
+		elif self.amount <= 1:
+			if self.unit in CAN_UNITS:
+				return "({})".format(self.unit)
 			else:
-				return self._unit
+				return self.unit
 		else:
-			return self._unit
+			return self.unit
 
 
 class DataBase:

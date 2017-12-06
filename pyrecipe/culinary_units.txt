@@ -116,8 +116,7 @@ stere = meter ** 3
     UK_ton = long_ton
 @end
 
-# custom single units
-[single] = 1
+# custom units
 each = []
 can = []
 splash = []
