@@ -27,9 +27,10 @@ from . import ureg, Q_
 from .utils import *
 from .config import *
 from .config import __version__, __scriptname__, __email__
-from .ingredient import *
 
+# globals
 color = Color()
+date = datetime.date
 
 class Recipe:
 	"""
@@ -48,13 +49,16 @@ class Recipe:
 				sys.exit("{}ERROR: {} is not a recipe file. Exiting..."
 				         .format(color.ERROR, self.source))
 
-		
-		with open(self.source, "r") as stream:
-			try:
-				self.recipe_data = yaml.safe_load(stream)
-			except yaml.YAMLError as exc:
-				print(exc)
-				sys.exit(1)
+		try:	
+			with open(self.source, "r") as stream:
+				try:
+					self.recipe_data = yaml.safe_load(stream)
+				except yaml.YAMLError as exc:
+					print(exc)
+					sys.exit(1)
+		except FileNotFoundError:
+			sys.exit("{}ERROR: {} is not a file. Exiting..."
+			         .format(color.ERROR, self.source))
 		
 		# cache the xml data
 		self.xml_data = ''
@@ -74,6 +78,7 @@ class Recipe:
 			of the recipe data
 
 		"""
+		# TODO maybe
 		return self.recipe_string
 
 	def _scan_recipe(self):
@@ -288,10 +293,10 @@ class Recipe:
 				ingred = Ingredient('s&p')
 				ingredients.append(str(ingred))
 				continue
-			amount = item['amounts'][amount_level].get('amount', 0)
-			unit = item['amounts'][amount_level].get('unit', None)
-			size = item.get('size', None)
-			prep = item.get('prep', None)
+			amount = item['amounts'][amount_level].get('amount', '')
+			unit = item['amounts'][amount_level].get('unit', '')
+			size = item.get('size', '')
+			prep = item.get('prep', '')
 			ingred = Ingredient(name, unit=unit, amount=amount, size=size, prep=prep)
 			ingredients.append(str(ingred))
 		
@@ -426,10 +431,14 @@ class ShoppingList:
 	shopping_dict = {}
 	recipe_names = []
 	dressing_names = []
-	def _proc_ingreds(self, file_name, alt_ingred=""):
+	
+	def __init__(self):
+		self.xml_data = ''
+	
+	def _proc_ingreds(self, source, alt_ingred=""):
 		#TODO-> Serious flaw in this logic, work on it
 		sd = ShoppingList.shopping_dict
-		r = Recipe(file_name)
+		r = Recipe(source)
 		if alt_ingred:
 			ingreds = r.alt_ingredient_data[alt_ingred]
 		else:
@@ -461,7 +470,6 @@ class ShoppingList:
 		"""Write the shopping list to an xml file after
 		   building.
 		"""
-		date = datetime.date
 		today = date.today()
 		root = etree.Element("shopping_list")	
 		sd = ShoppingList.shopping_dict
@@ -569,16 +577,15 @@ class ShoppingList:
 class Ingredient(object):
 	"""The ingredient class is used to build an ingredietns object"""
 
-	def __init__(self, ingredient, amount='', size='', unit='', prep='', str_format="normal"):
+	def __init__(self, ingredient, amount='', size='', unit='', prep=None, str_format="normal"):
 		self._ingredient = ingredient
 		self._amount = amount
-		self._size = size
+		self.size = size
 		self._unit = unit
-		self._prep = prep
+		self.prep = prep
 		self.culinary_unit = False
 		if self._unit in CULINARY_UNITS:
 			self.culinary_unit = True
-		self.str_format = str_format
 		self._after_init()
 	
 	def __repr__(self):
@@ -590,30 +597,26 @@ class Ingredient(object):
 
 	def _after_init(self):
 		self.amount = self.get_amount()
-		self.size = self._size
 		self.unit = self.get_unit()
 		self.ingredient = self.get_ingredient()
 
 	def __str__(self):
-		# TODO try changing this to a one or two liner
 		
-		if self.str_format == "shop":
-			self._shop_str_formater()
-
+		if self.ingredient == 's&p':
+			return "Salt and pepper to taste"
+		elif self.amount == 0 and self.unit == 'taste':
+			return "{} to taste".format(self.ingredient.capitalize())
 		else:
-			if self.ingredient == 's&p':
-				return "Salt and pepper to taste"
-			elif self.amount == 0 and self.unit == 'taste':
-				return "{} to taste".format(self.ingredient.capitalize())
-			elif self._prep is None:
-				if self.unit == 'each' or self.unit is None:
-					return "{} {}".format(self.get_amount(), self.get_ingredient())
-				else:
-					return "{} {} {}".format(self.get_amount(), self.get_unit(), self.get_ingredient())
-			elif self.unit == 'each' or self.unit is None:
-				return "{} {}, {}".format(self.get_amount(), self.get_ingredient(), self._prep)
+			string = "{} {} {} {}".format(self.amount, self.size, self.unit, self.ingredient)
+			# the previous line adds unwanted spaces if values are absent
+			# we simply clean that up here.
+			cleaned_string = " ".join(string.split())
+			if self.prep is '':
+				return cleaned_string
 			else:
-				return "{} {} {}, {}".format(self.get_amount(), self.get_unit(), self.get_ingredient(), self._prep)
+				cleaned_string += ", " + self.prep
+				return cleaned_string
+			
 		
 	def _shop_str_formater(self):
 		if self.ingredient == 's&p':
