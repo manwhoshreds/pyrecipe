@@ -2,9 +2,10 @@
 	pyrecipe.argfuncts
 """
 
-import os
+#import os
 import sys
 import subprocess
+from .config import PP
 
 import pyrecipe.recipe as recipe
 
@@ -12,11 +13,12 @@ def dump_data(args):
 	r = recipe.Recipe(args.source)
 
 	if args.print_yaml:
-		r.print_yaml()
+		PP.pprint(r.recipe_data)
 		exit(0)
 	if args.print_xml:
-		r.process_xml()
+		print(r.xml_data)
 		exit(0)
+	
 	
 
 def print_shopping_list(args):
@@ -63,6 +65,7 @@ def show_stats(args):
 	recipe.stats(args.verbose)
 
 def delete_recipe(args):
+	import os
 	source = args.source
 	file_name = str(recipe.Recipe(source))
 	answer = input("Are you sure your want to delete {}? yes/no ".format(source))
@@ -97,4 +100,30 @@ def version(args):
 
 
 def export_recipes(args):
-	pass
+	if mode == "write":
+		# file name vaiables
+		recipe_name = self.recipe_name
+		new_name = recipe_name.replace(" ", "_")
+		lower_new_name  = new_name.lower() # I prefer file names to be all lower case
+		# check for output dir flag	and make dir if it does not exist
+		
+		output_dir = os.path.abspath(output_dir)
+		
+		if os.path.exists(output_dir):
+			if not os.path.isdir(output_dir):
+				print("Not a directory")
+				exit(1)
+		else:
+			try:
+				os.makedirs(output_dir)
+			except OSError:
+				print("couldnt create directory")
+				exit(1)
+			
+		print("{}Writing to file: {}/{}.xml{}".format(color.INFORM,
+													  output_dir,
+													  lower_new_name,
+													  color.NORMAL)
+		)
+		with open(os.path.join(output_dir, lower_new_name) + ".xml", "w") as file:
+			file.write(str(result.decode('utf-8')))

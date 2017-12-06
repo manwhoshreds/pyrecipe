@@ -5,8 +5,6 @@
 import argparse
 import sys
 
-#import pyrecipe.recipe as recipe
-#from pyrecipe.argfuncs import *
 import argcomplete
 from pyrecipe import __version__
 from pyrecipe.config import RAND_RECIPE_COUNT

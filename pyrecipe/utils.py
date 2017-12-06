@@ -37,7 +37,6 @@ def md5():
 	#TODO-> md5 funtion to check which yaml files have changed and then write the coresponding xml.
 	pass
 
-
 def improper_to_mixed(fraction):
 	str_frac = str(fraction)
 	x = str_frac.split('/')

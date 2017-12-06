@@ -23,7 +23,7 @@ yields:
   - 5
   - 6
 ingredients:
-  - name: apples
+  - name: apple
     usda_num: 09003
     amounts:
       - amount: 4

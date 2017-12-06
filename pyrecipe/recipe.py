@@ -11,7 +11,6 @@
 import os
 import sys
 import yaml
-import pprint
 import random
 import sys
 import subprocess
@@ -41,42 +40,47 @@ class Recipe:
 	def __init__(self, source, checkfile=True):
 		# TODO bad yaml breaks autocompletion for some reason
 		self.source = get_file_name(source)
-		if os.path.isfile(self.source):
+		if self.source in RECIPE_FILES:
 			pass
 		else:
 			self.source = source
+			if not self.source.endswith(".recipe"):
+				sys.exit("{}ERROR: {} is not a recipe file. Exiting..."
+				         .format(color.ERROR, self.source))
 
-		print(self.source)
 		
-		if not self.source.endswith(".recipe"):
-			sys.exit("{}ERROR: {} is not a recipe file. Exiting...".format(color.ERROR, self.source))
-		else:
-			with open(self.source, "r") as stream:
-				try:
-					self.recipe_data = yaml.safe_load(stream)
-				except yaml.YAMLError as exc:
-					print(exc)
-					sys.exit(1)
+		with open(self.source, "r") as stream:
+			try:
+				self.recipe_data = yaml.safe_load(stream)
+			except yaml.YAMLError as exc:
+				print(exc)
+				sys.exit(1)
+		
+		# cache the xml data
+		self.xml_data = ''
 
+		# complete string representation of the recipe
+		self.recipe_string = ''
+		
+		# scan the recipe to cache all data
 		self._scan_recipe()
-		failed = self.check_file(silent=True)
-		#if failed:
-		#	sys.exit('Errors were found in {}, Please run'
-		#			 ' recipe_tool check <source> for more info'
-		#			 .format(self.source))
-	
+		
+		# check file for syntax error before we can continue
+		self.check_file(silent=True)
 	
 	def __str__(self):
-		return self.recipe
+		"""
+			returns the complete string representation
+			of the recipe data
 
-	
+		"""
+		return self.recipe_string
+
 	def _scan_recipe(self):
 		"""used to extract all the values out of a recipe
 		source file while building xml at the same time
 
 		"""
-		
-		
 		self.root = etree.Element("recipe")
 		self.mainkeys = self.recipe_data.keys()
 		
@@ -170,108 +174,105 @@ class Recipe:
 		# steps	
 		if 'steps' in self.mainkeys:
 			self.steps = self.recipe_data['steps']
-
-
-	def check_file(self, silent=False):
-		"""function to validate Open Recipe Format files"""
 		
-		failure_keys = []
-		failure_units = []
-		failure_prep_types = []
-		# amounts must be numbers
-		failure_amounts = []
-		failed = False
-		
-		for item in self.ingredient_data:
-			try:	
-				amount = item['amounts'][0].get('amount', None)
-				if isinstance(amount, int) or isinstance(amount, float):
-					pass
-				else:
-					failure_amounts.append(item['name'])
-					failed = True
-			except KeyError:
-				continue
-		
-		for item in REQUIRED_ORD_KEYS:
-			if item not in self.mainkeys:
-				failure_keys.append(item)
-				failed = True
-		
-		for item in self.ingredient_data:
-			try:
-				unit = item['amounts'][0]['unit']
-				if unit not in ALLOWED_INGRED_UNITS:
-					failure_units.append(unit)
-					failed = True
-			except KeyError:
-				continue
-		
-		for item in self.ingredient_data:
-			try:
-				prep = item['prep']
-				if prep not in PREP_TYPES and prep not in failure_prep_types:
-					failure_prep_types.append(prep)
-					failed = True
-			except KeyError:
-				continue
-		
-		if failed:
-			if silent:
-				return True
-			else:
-				if len(failure_keys) > 0:
-					print(color.ERROR 
-						+ self.source
-						+ ": The following keys are required by the ORD spec: " 
-						+ ",".join(failure_keys) 
-						+ color.NORMAL)
-				
-				if len(failure_units) > 0:
-					print(color.ERROR 
-						+ self.source
-						+ ": The following units are not allowed by the ORD spec: " 
-						+ ", ".join(failure_units)
-						+ color.NORMAL)
-				
-				if len(failure_amounts) > 0:
-					print(color.ERROR 
-						+ self.source
-						+ ": The following ingredients have no integer amounts: " 
-						+ ", ".join(failure_amounts) 
-						+ color.NORMAL)
-				
-				if len (failure_prep_types) > 0:
-					print(color.ERROR 
-						+ self.source
-						+ ": The following prep types are not allowed by the ORD spec: " 
-						+ ", ".join(failure_prep_types) 
-						+ color.NORMAL)
-				
-				if self.recipe_data['dish_type'] not in DISH_TYPES:
-					print(color.ERROR 
-						+ self.source
-						+ ": The current dish type is not in the ORD spec: " 
-						+ self.recipe_data['dish_type'] 
-						+ color.NORMAL)
-				
-				if len(self.steps) < 1:
-					print(color.ERROR 
-						+ self.source
-						+ ": You must at least supply one step in the recipe." 
-						+ color.NORMAL)
-		else:	
-			if silent:
-				return False
-			else:
-				print(color.TITLE 
-					+ self.source
-					+ " is a valid ORD file")
-
-		
+		self._process_xml()
 	
-
+	def check_file(self, silent=False):
+			"""function to validate Open Recipe Format files"""
 			
+			failure_keys = []
+			failure_units = []
+			failure_prep_types = []
+			# amounts must be numbers
+			failure_amounts = []
+			failed = False
+			
+			for item in self.ingredient_data:
+				try:	
+					amount = item['amounts'][0].get('amount', None)
+					if isinstance(amount, int) or isinstance(amount, float):
+						pass
+					else:
+						failure_amounts.append(item['name'])
+						failed = True
+				except KeyError:
+					continue
+			
+			for item in REQUIRED_ORD_KEYS:
+				if item not in self.mainkeys:
+					failure_keys.append(item)
+					failed = True
+			
+			for item in self.ingredient_data:
+				try:
+					unit = item['amounts'][0]['unit']
+					if unit not in ALLOWED_INGRED_UNITS:
+						failure_units.append(unit)
+						failed = True
+				except KeyError:
+					continue
+			
+			for item in self.ingredient_data:
+				try:
+					prep = item['prep']
+					if prep not in PREP_TYPES and prep not in failure_prep_types:
+						failure_prep_types.append(prep)
+						failed = True
+				except KeyError:
+					continue
+			
+			if failed:
+				if silent:
+					return True
+				else:
+					if len(failure_keys) > 0:
+						print(color.ERROR 
+							+ self.source
+							+ ": The following keys are required by the ORD spec: " 
+							+ ",".join(failure_keys) 
+							+ color.NORMAL)
+					
+					if len(failure_units) > 0:
+						print(color.ERROR 
+							+ self.source
+							+ ": The following units are not allowed by the ORD spec: " 
+							+ ", ".join(failure_units)
+							+ color.NORMAL)
+					
+					if len(failure_amounts) > 0:
+						print(color.ERROR 
+							+ self.source
+							+ ": The following ingredients have no integer amounts: " 
+							+ ", ".join(failure_amounts) 
+							+ color.NORMAL)
+					
+					if len (failure_prep_types) > 0:
+						print(color.ERROR 
+							+ self.source
+							+ ": The following prep types are not allowed by the ORD spec: " 
+							+ ", ".join(failure_prep_types) 
+							+ color.NORMAL)
+					
+					if self.recipe_data['dish_type'] not in DISH_TYPES:
+						print(color.ERROR 
+							+ self.source
+							+ ": The current dish type is not in the ORD spec: " 
+							+ self.recipe_data['dish_type'] 
+							+ color.NORMAL)
+					
+					if len(self.steps) < 1:
+						print(color.ERROR 
+							+ self.source
+							+ ": You must at least supply one step in the recipe." 
+							+ color.NORMAL)
+			else:	
+				if silent:
+					return False
+				else:
+					print(color.TITLE 
+						+ self.source
+						+ " is a valid ORD file")
+	
 	def get_ingredients(self, amount_level=0, alt_ingred=None):	
 		"""Returns a list of ingredients."""
 
@@ -300,9 +301,11 @@ class Recipe:
 	def print_recipe(self, verb_level=0):
 		"""Print recipe to standard output."""
 	
-		print("")
-		print(color.RECIPENAME + self.recipe_name + color.NORMAL)
-		print("")
+		print("\n"
+			+ color.RECIPENAME 
+		    + self.recipe_name 
+			+ color.NORMAL
+			+ "\n")
 		
 		if verb_level >= 1:
 			try:
@@ -379,82 +382,42 @@ class Recipe:
 			print("{}{}.{} {}".format(color.NUMBER, index, color.NORMAL, step['step']))
 	
 	
-	def process_xml(self, mode="print", output_dir=RECIPE_XML_DIR):
-		if self.check_file(silent=True):	
-			# normal ingredients (i.e. not alternative ingredients as can be found below)
-			xml_ingredients = etree.SubElement(self.root, "ingredients")
-			for ingred in self.get_ingredients(): 	
-				xml_ingred = etree.SubElement(xml_ingredients, "ingred")
-				xml_ingred.text = ingred
-			
-			try:	
-				print("im here")
-				for item in self.alt_ingredients:
-					xml_alt_ingredients = etree.SubElement(self.root, "alt_ingredients")
-					xml_alt_ingredients.set('alt_name', item.title())
-					
-					for ingred in self.get_ingredients(alt_ingred=item):
-						xml_alt_ingred = etree.SubElement(xml_alt_ingredients, "alt_ingred")
-						xml_alt_ingred.text = ingred
-			except AttributeError:
-				print("but im also here and thats not good")
-				pass
-			
-			steps = etree.SubElement(self.root, "steps")
+	def _process_xml(self):
+		"""
+			process recipe data into xml
 
-			for step in self.steps:
-				steps_of = etree.SubElement(steps, "step")
-				steps_of.text = step['step']
-
-			
-			result = etree.tostring(self.root,
-								xml_declaration=True,
-								encoding='utf-8',
-								with_tail=False,
-								method='xml',
-								pretty_print=True)
-			
-			
-			if mode == "write":
-				# file name vaiables
-				recipe_name = self.recipe_name
-				new_name = recipe_name.replace(" ", "_")
-				lower_new_name  = new_name.lower() # I prefer file names to be all lower case
-				# check for output dir flag	and make dir if it does not exist
-				
-				output_dir = os.path.abspath(output_dir)
-				
-				if os.path.exists(output_dir):
-					if not os.path.isdir(output_dir):
-						print("Not a directory")
-						exit(1)
-				else:
-					try:
-						os.makedirs(output_dir)
-					except OSError:
-						print("couldnt create directory")
-						exit(1)
-					
-				print("{}Writing to file: {}/{}.xml{}".format(color.INFORM,
-				                                              output_dir,
-				                                              lower_new_name,
-															  color.NORMAL)
-				)
-				with open(os.path.join(output_dir, lower_new_name) + ".xml", "w") as file:
-					file.write(str(result.decode('utf-8')))
-			
-			if mode == "print":
-				print(result.decode('utf-8'))
-	
-	
-	def print_yaml(self):
-		"""Print the recipe's source yaml. This can be helpful in troubleshooting"""
+		"""
+		# normal ingredients (i.e. not alternative ingredients as can be found below)
+		xml_ingredients = etree.SubElement(self.root, "ingredients")
+		for ingred in self.get_ingredients(): 	
+			xml_ingred = etree.SubElement(xml_ingredients, "ingred")
+			xml_ingred.text = ingred
 		
-		PP.pprint(self.recipe_data)
+		try:	
+			for item in self.alt_ingredients:
+				xml_alt_ingredients = etree.SubElement(self.root, "alt_ingredients")
+				xml_alt_ingredients.set('alt_name', item.title())
+				
+				for ingred in self.get_ingredients(alt_ingred=item):
+					xml_alt_ingred = etree.SubElement(xml_alt_ingredients, "alt_ingred")
+					xml_alt_ingred.text = ingred
+		except AttributeError:
+			pass
+		
+		steps = etree.SubElement(self.root, "steps")
 
-
-
+		for step in self.steps:
+			steps_of = etree.SubElement(steps, "step")
+			steps_of.text = step['step']
 			
+		result = etree.tostring(self.root,
+							xml_declaration=True,
+							encoding='utf-8',
+							with_tail=False,
+							method='xml',
+							pretty_print=True)
+		
+		self.xml_data += result.decode('utf-8')
 
 
 class ShoppingList:
@@ -463,8 +426,6 @@ class ShoppingList:
 	shopping_dict = {}
 	recipe_names = []
 	dressing_names = []
-
-	
 	def _proc_ingreds(self, file_name, alt_ingred=""):
 		#TODO-> Serious flaw in this logic, work on it
 		sd = ShoppingList.shopping_dict
@@ -477,7 +438,7 @@ class ShoppingList:
 			name = item['name']
 			try:
 				link = item['link']
-				self.update(item)
+				self.update(link)
 			except KeyError:
 				pass
 				
@@ -496,8 +457,6 @@ class ShoppingList:
 			else:
 				sd[name] = [ingred.get_amount(), ingred.get_unit()]
 				
-	
-
 	def write_to_xml(self):
 		"""Write the shopping list to an xml file after
 		   building.
@@ -541,11 +500,9 @@ class ShoppingList:
 		#with open(SHOPPING_LIST_FILE, "w") as f:
 		#	f.write(result.decode("utf-8"))
 	
-	
 	def return_list(self):
 		return ShoppingList.shopping_dict
 
-	
 	def update(self, source):
 		"""Return a shopping list of ingredients from a 
 		   list of recipes. If duplicate entries are found,
@@ -556,9 +513,7 @@ class ShoppingList:
 			ShoppingList.dressing_names.append(r.recipe_name)
 		else:
 			ShoppingList.recipe_names.append(r.recipe_name)
-			
-
-
+		
 		self._proc_ingreds(source)
 		try:
 			alt_ingreds = r.alt_ingredients
@@ -567,13 +522,11 @@ class ShoppingList:
 		except AttributeError:
 			pass
 
-	
 	def	print_list(self):
 		mdn = ShoppingList.recipe_names
 		sd = ShoppingList.shopping_dict
 		dn = ShoppingList.dressing_names
-
-	
+		
 		print("Recipes:\n")
 		for item in mdn:
 			print(item)
@@ -585,14 +538,13 @@ class ShoppingList:
 				print(item)
 			print("\n{}".format(S_DIV))
 
-		
 		# Print list	
+		PP.pprint(sd)
 		for key, value in sd.items():
 			print("{}, {} {}".format(key, value[0], value[1]))
 		# write the list to an xml file	
 		self.write_to_xml()
-
-
+	
 	def random_recipes(self, random_count=RAND_RECIPE_COUNT):
 		"""Return random recipes and build a shopping list of ingredients needed"""	
 		#TODO-> Use the shopping list class to make this shopping list too.
@@ -612,8 +564,6 @@ class ShoppingList:
 			sl.update(dish)
 		
 		self.print_list()
-						
-
 
 
 class DataBase:
@@ -679,14 +629,6 @@ def template(recipe_name):
 	
 	subprocess.call([EDITOR, file_name])
 
-
-
-
-	
-def edit_recipe(recipe_name):
-	pass
-
-
 def version():
 	"""Print the current version of pyrecipe and exit."""
 
@@ -698,7 +640,6 @@ def version():
 	print("{} |_|  \___|\___|_| .__/ \___|  \__\___/ \___/|_|{}".format(color.INFORM, color.NORMAL))
 	print("{}                 | |                            {}  This program may be freely redistributed under".format(color.INFORM, color.NORMAL))
 	print("{}                 |_|                            {}  the terms of the GNU General Public License.".format(color.INFORM, color.NORMAL))
-
 
 def stats(verb=0):
 	"""Print statistics about your recipe database and exit."""
