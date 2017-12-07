@@ -7,11 +7,38 @@ from .config import *
 #from .recipe import *
 
 
+class Color:
+	"""
+	   The color class defines various colors for 
+	   use in pyrecipe output.
+	"""
+	
+	NORMAL = '\033[m'
+	ERROR = '\033[1;31m'
+	RECIPENAME = '\033[1;36m'
+	TITLE = '\033[36m'
+	NUMBER = '\033[1;33m'
+	REGULAR = '\033[1;35m'
+	LINE = '\033[1;37m'
+	INFORM = '\033[1;36m'
+
+color = Color()
 
 def get_file_name(recipe):
+	
 	file_name = recipe.replace(" ", "_").lower() + ".recipe"
 	abspath_name = RECIPE_DATA_DIR + file_name
-	return abspath_name
+	if abspath_name in RECIPE_FILES:
+		return abspath_name
+	else:
+		if not recipe.endswith(".recipe"):
+			sys.exit("{}ERROR: {} is not a recipe file. Exiting..."
+					 .format(color.ERROR, recipe))
+		else:
+			return recipe
+
+	
+
 
 def plural(word):
 	es_plurals = ['tomato',
@@ -50,20 +77,5 @@ def improper_to_mixed(fraction):
 	fract_part = num % den
 	return "{} {}/{}".format(whole_part, fract_part, den)
 
-
-class Color:
-	"""
-	   The color class defines various colors for 
-	   use in pyrecipe output.
-	"""
-	
-	NORMAL = '\033[m'
-	ERROR = '\033[1;31m'
-	RECIPENAME = '\033[1;36m'
-	TITLE = '\033[36m'
-	NUMBER = '\033[1;33m'
-	REGULAR = '\033[1;35m'
-	LINE = '\033[1;37m'
-	INFORM = '\033[1;36m'
 
 

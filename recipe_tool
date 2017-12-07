@@ -13,7 +13,8 @@ import pyrecipe.argfuncs as argfunc
 
 def recipe_completer(**kwargs):
 	recipe_list = list_recipes(ret=True)
-	return recipe_list
+	test = [x.lower() for x in recipe_list]
+	return test
 	
 
 def main():
@@ -141,13 +142,24 @@ def main():
 		"export",
 		help="Export recipes in xml format"
 	)
+	parser_export.add_argument(
+		"source",
+		help="Sorce file to export"
+	).completer = recipe_completer
+	parser_export.add_argument(
+		"-o",
+		"--output-dir",
+		dest="output_dir",
+		action="store_true",
+		help="Choose a directory to output xml file"
+	)
 	parser_export.set_defaults(func=argfunc.export_recipes)
 	
 	
 	# recipe_tool check
 	parser_check = subparser.add_parser("check", help="Check an ORD file for syntax errors")
 	parser_check.add_argument("source", type=str, help="Recipe to check").completer = recipe_completer
-	parser_check.add_argument("-a", "--all", dest="all", action="store_true", help="Check all files")
+	parser_check.add_argument("all", action="store_true", help="Check all files")
 	parser_check.set_defaults(func=argfunc.check_file)
 	
 

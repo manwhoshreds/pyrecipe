@@ -5,12 +5,15 @@
 #import os
 import sys
 import subprocess
+import os
 from .config import PP
+from .utils import *
 
 import pyrecipe.recipe as recipe
 import pyrecipe.gui as gui
 
 def dump_data(args):
+	
 	r = recipe.Recipe(args.source)
 
 	if args.print_yaml:
@@ -21,6 +24,7 @@ def dump_data(args):
 		exit(0)
 	
 def start_gui():
+	
 	gui.start()
 
 def print_shopping_list(args):
@@ -62,7 +66,6 @@ def print_recipe(args):
 	r = recipe.Recipe(args.source)
 	r.print_recipe(args.verbose)
 
-
 def show_stats(args):
 	recipe.stats(args.verbose)
 
@@ -76,15 +79,9 @@ def delete_recipe(args):
 	else:
 		print("{} not deleted".format(source))
 
-
-
 def edit_recipe(args):
-	if args.source.title() not in recipe.list_recipes(ret=True):
-		print("No recipe found for {}".format(args.source))
-	else:
-		file_name = args.source.replace(" ", "_").lower() + ".recipe"
-		abspath_file_name = recipe.RECIPE_DATA_DIR + file_name
-		subprocess.call([recipe.EDITOR, abspath_file_name])
+	source = get_file_name(args.source)
+	subprocess.call([recipe.EDITOR, source])
 
 def add_recipe(args):
 	if args.name.title() in recipe.list_recipes(ret=True):
@@ -94,38 +91,37 @@ def add_recipe(args):
 
 
 def print_list(args):
+	
 	recipe.list_recipes()
 
-
 def version(args):
-	recipe.version()
-
+	
+	print(recipe.version())
 
 def export_recipes(args):
-	if mode == "write":
-		# file name vaiables
-		recipe_name = self.recipe_name
-		new_name = recipe_name.replace(" ", "_")
-		lower_new_name  = new_name.lower() # I prefer file names to be all lower case
-		# check for output dir flag	and make dir if it does not exist
+	
+	recipe_name = args.source
+	new_name = recipe_name.replace(" ", "_")
+	lower_new_name  = new_name.lower() # I prefer file names to be all lower case
+	# check for output dir flag	and make dir if it does not exist
+	
+	#output_dir = os.path.abspath(args.output_dir)
+	
+	#if os.path.exists(output_dir):
+	#	if not os.path.isdir(output_dir):
+	#		print("Not a directory")
+	#		exit(1)
+	#else:
+	#	try:
+	#		os.makedirs(output_dir)
+	#	except OSError:
+	#		print("couldnt create directory")
+	#		exit(1)
 		
-		output_dir = os.path.abspath(output_dir)
-		
-		if os.path.exists(output_dir):
-			if not os.path.isdir(output_dir):
-				print("Not a directory")
-				exit(1)
-		else:
-			try:
-				os.makedirs(output_dir)
-			except OSError:
-				print("couldnt create directory")
-				exit(1)
-			
-		print("{}Writing to file: {}/{}.xml{}".format(color.INFORM,
-													  output_dir,
-													  lower_new_name,
-													  color.NORMAL)
-		)
-		with open(os.path.join(output_dir, lower_new_name) + ".xml", "w") as file:
-			file.write(str(result.decode('utf-8')))
+	print("{}Writing to file: {}/{}.xml{}".format(color.INFORM,
+												  output_dir,
+												  lower_new_name,
+												  color.NORMAL)
+	)
+	with open(os.path.join(output_dir, lower_new_name) + ".xml", "w") as file:
+		file.write(str(result.decode('utf-8')))

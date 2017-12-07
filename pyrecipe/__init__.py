@@ -1,6 +1,6 @@
 from pint import UnitRegistry
 import os
-from .config import __version__
+from .config import __version__, __scriptname__
 
 __all__ = ['config', 'utils', 'recipe']
 

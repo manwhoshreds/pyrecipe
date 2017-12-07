@@ -41,13 +41,7 @@ class Recipe:
 	def __init__(self, source, checkfile=True):
 		# TODO bad yaml breaks autocompletion for some reason
 		self.source = get_file_name(source)
-		if self.source in RECIPE_FILES:
-			pass
-		else:
-			self.source = source
-			if not self.source.endswith(".recipe"):
-				sys.exit("{}ERROR: {} is not a recipe file. Exiting..."
-				         .format(color.ERROR, self.source))
+
 
 		try:	
 			with open(self.source, "r") as stream:
@@ -82,20 +76,20 @@ class Recipe:
 		self.recipe_string += self.recipe_name + "\n"
 		
 
-		self.recipe_string += "Ingredients: \n\n"
+		self.recipe_string += "\nIngredients:\n"
 		# Put together all the ingredients
 		for ingred in self.get_ingredients():	
 			self.recipe_string += "{}\n".format(ingred)
 		try:	
 			for item in self.alt_ingredients:
-				self.recipe_string += "{}\n\n".format(item.title())
+				self.recipe_string += "\n{}\n".format(item.title())
 				
 				for ingred in self.get_ingredients(alt_ingred=item):
 					self.recipe_string += "{}\n".format(ingred)
 		except AttributeError:
 			pass
 		
-		self.recipe_string += "Method:\n\n"
+		self.recipe_string += "\nMethod:\n"
 		
 		# print steps	
 		for index, step in enumerate(self.steps, start=1):
@@ -201,7 +195,7 @@ class Recipe:
 		if 'steps' in self.mainkeys:
 			self.steps = self.recipe_data['steps']
 		
-		self._process_xml()
+		self._cache_xml()
 	
 	def check_file(self, silent=False):
 			"""function to validate Open Recipe Format files"""
@@ -408,10 +402,10 @@ class Recipe:
 			print("{}{}.{} {}".format(color.NUMBER, index, color.NORMAL, step['step']))
 	
 	
-	def _process_xml(self):
+	def _cache_xml(self):
 		"""
-			process recipe data into xml
-
+			save the xml representation of the recipe
+			for exportation later
 		"""
 		# normal ingredients (i.e. not alternative ingredients as can be found below)
 		xml_ingredients = etree.SubElement(self.root, "ingredients")
@@ -771,15 +765,17 @@ def template(recipe_name):
 
 def version():
 	"""Print the current version of pyrecipe and exit."""
-
-	print("{}                _              _              _ {}  {} v{}".format(color.INFORM, color.NORMAL, __scriptname__, __version__))
-	print("{}               (_)            | |            | |{}  The recipe management program.".format(color.INFORM, color.NORMAL))
-	print("{}  _ __ ___  ___ _ _ __   ___  | |_ ___   ___ | |{}".format(color.INFORM, color.NORMAL))
-	print("{} | '__/ _ \/ __| | '_ \ / _ \ | __/ _ \ / _ \| |{}  For any questions, contact me at {}".format(color.INFORM, color.NORMAL, __email__))
-	print("{} | | |  __/ (__| | |_) |  __/ | || (_) | (_) | |{}  or type recipe_tool --help for more info.".format(color.INFORM, color.NORMAL))
-	print("{} |_|  \___|\___|_| .__/ \___|  \__\___/ \___/|_|{}".format(color.INFORM, color.NORMAL))
-	print("{}                 | |                            {}  This program may be freely redistributed under".format(color.INFORM, color.NORMAL))
-	print("{}                 |_|                            {}  the terms of the GNU General Public License.".format(color.INFORM, color.NORMAL))
+	
+	ver_str = ''
+	ver_str +=   "                _              _              _   {} v{}".format(__scriptname__, __version__)
+	ver_str += "\n               (_)            | |            | |  The recipe management program."
+	ver_str += "\n  _ __ ___  ___ _ _ __   ___  | |_ ___   ___ | |"
+	ver_str += "\n | '__/ _ \/ __| | '_ \ / _ \ | __/ _ \ / _ \| |  For any questions, contact me at {}".format(__email__)
+	ver_str += "\n | | |  __/ (__| | |_) |  __/ | || (_) | (_) | |  or type recipe_tool --help for more info."
+	ver_str += "\n |_|  \___|\___|_| .__/ \___|  \__\___/ \___/|_|"
+	ver_str += "\n                 | |                              This program may be freely redistributed under"
+	ver_str += "\n                 |_|                              the terms of the GNU General Public License."
+	return ver_str
 
 def stats(verb=0):
 	"""Print statistics about your recipe database and exit."""
@@ -787,7 +783,7 @@ def stats(verb=0):
 	version()
 	print("Recipes: {}".format(len(RECIPE_FILES)))
 	if verb >= 1:
-		print("Recipe directory: {}".format(RECIPE_DATA_DIR))
+		print("Recipe data directory: {}".format(RECIPE_DATA_DIR))
 		print("Recipe xml directory: {}".format(RECIPE_XML_DIR))
 		print("Default random recipe: {}".format(RAND_RECIPE_COUNT))
 
