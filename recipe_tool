@@ -50,6 +50,13 @@ def main():
 		action="store_true", 
 		help="Print version and exit"
 	)
+	parser.add_argument(
+		"-g",
+		"--gui-mode",
+		dest="guimode",
+		action="store_true",
+		help="Start the gui frontend to pyrecipe"
+	)
 
 	# subparsers start here
 	subparser = parser.add_subparsers()
@@ -152,6 +159,8 @@ def main():
 	argcomplete.autocomplete(parser)
 	args = parser.parse_args()
 	
+	if args.guimode:
+		argfunc.start_gui()
 	if args.version:
 		argfunc.version(args)
 		exit(0)

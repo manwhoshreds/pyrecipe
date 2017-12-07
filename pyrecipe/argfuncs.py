@@ -8,6 +8,7 @@ import subprocess
 from .config import PP
 
 import pyrecipe.recipe as recipe
+import pyrecipe.gui as gui
 
 def dump_data(args):
 	r = recipe.Recipe(args.source)
@@ -19,7 +20,8 @@ def dump_data(args):
 		print(r.xml_data)
 		exit(0)
 	
-	
+def start_gui():
+	gui.start()
 
 def print_shopping_list(args):
 	

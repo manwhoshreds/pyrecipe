@@ -1,135 +1,21 @@
 # pyrecipe units file
 
+one = [single]
 
-# reference
-meter = [length] = m = metre
-second = [time] = s = sec
-ampere = [current] = A = amp
-candela = [luminosity] = cd = candle
-gram = [mass] = g
-mole = [substance] = mol
-kelvin = [temperature]; offset: 0 = K = degK
-radian = [] = rad
-bit = []
-count = []
-
-
-# Temperature
-degC = kelvin; offset: 273.15 = celsius
-degR = 5 / 9 * kelvin; offset: 0 = rankine
-degF = 5 / 9 * kelvin; offset: 255.372222 = fahrenheit
-
-# Time
-minute = 60 * second = min
-hour = 60 * minute = hr
-day = 24 * hour
-week = 7 * day
-fortnight = 2 * week
-year = 31556925.9747 * second
-month = year / 12
-shake = 1e-8 * second
-sidereal_day = day / 1.00273790935079524
-sidereal_hour = sidereal_day / 24
-sidereal_minute = sidereal_hour / 60
-sidereal_second = sidereal_minute / 60
-sidereal_year = 366.25636042 * sidereal_day
-sidereal_month = 27.321661 * sidereal_day
-tropical_month = 27.321661 * day
-synodic_month = 29.530589 * day = lunar_month
-common_year = 365 * day
-leap_year = 366 * day
-julian_year = 365.25 * day
-gregorian_year = 365.2425 * day
-millenium = 1000 * year = millenia = milenia = milenium
-eon = 1e9 * year
-work_year = 2056 * hour
-work_month = work_year / 12
-
-
-# Viscosity
-[viscosity] = [pressure] * [time]
-poise = 1e-1 * Pa * second = P
-stokes = 1e-4 * meter ** 2 / second = St
-rhe = 10 / (Pa * s)
-
-# Volume
-[volume] = [length] ** 3
-liter = 1e-3 * m ** 3 = l = L = litre
-cc = centimeter ** 3 = cubic_centimeter
-stere = meter ** 3
-
-
-
-
-@group USCSLiquidVolume
-    minim = liquid_pint / 7680
-    fluid_dram = liquid_pint / 128 = fldr = fluidram = US_fluid_dram
-    fluid_ounce = liquid_pint / 16 = floz = US_fluid_ounce = US_liquid_ounce
-    gill = liquid_pint / 4 = gi = liquid_gill = US_liquid_gill
-
-    pint = 28.875 cubic_inch = pt = liquid_pint = US_pint
-
-    quart = 2 liquid_pint = qt = liquid_quart = US_liquid_quart
-    gallon = 8 liquid_pint = gal = liquid_gallon = US_liquid_gallon
+@group custom units
+	each = 1 * one = ea
+	splash = 1 * one
+	stalk = 1 * one
+	whole = 1 * one
+	bottle = 1 * one
+	stick = 1 * one
+	taste = 1 * one
+	pinch = 1 * one
+	sprig = 1 * one
+	bag = 1 * one
+	box = 1 * one
+	cube = 1 * one
+	package = 1 * one
+	inch = 1 * one
+	piece = 1 * one
 @end
-
-@group USCSVolumeOther
-    teaspoon = tablespoon / 3 = tsp
-    tablespoon = floz / 2 = tbsp = Tbsp = Tblsp = tblsp = tbs = Tbl
-    shot = 3 * tablespoon = jig = US_shot
-    cup = 8 fluid_ounce = cp = liquid_cup = US_liquid_cup
-    barrel = 31.5 * gallon = bbl
-    oil_barrel = 42 * gallon = oil_bbl
-    beer_barrel = 31 * gallon = beer_bbl
-    hogshead = 63 * gallon
-@end
-
-@group Avoirdupois
-    grain = avdp_pound / 7000 = gr
-    drachm = pound / 256 = dr = avoirdupois_dram = avdp_dram = dram
-    ounce = pound / 16 = oz = avoirdupois_ounce = avdp_ounce
-    pound = 453.59237 gram = lb = avoirdupois_pound = avdp_pound
-
-    short_hunderdweight = 100 avoirdupois_pound = ch_cwt
-    long_hunderweight = 112 avoirdupois_pound = lg_cwt
-    short_ton = 2000 avoirdupois_pound
-    long_ton = 2240 avoirdupois_pound
-@end
-
-@group Troy
-    pennyweight = 24 grain = dwt
-    troy_ounce = 480 grain = toz
-    troy_pound = 12 troy_ounce = tlb
-@end
-
-@group Apothecary
-    scruple = 20 grain
-    apothecary_dram = 3 scruple = ap_dr
-    apothecary_ounce = 8 apothecary_dram = ap_oz
-    apothecary_pound = 12 apothecary_ounce = ap_lb
-@end
-
-@group AvoirdupoisUK using Avoirdupois
-    stone = 14 pound
-    quarter = 28 stone
-    UK_hundredweight = long_hunderweight = UK_cwt
-    UK_ton = long_ton
-@end
-
-# custom units
-each = []
-can = []
-splash = []
-stalk = []
-whole = []
-bottle = []
-stick = []
-taste = []
-pinch = []
-sprig = []
-bag = []
-box = []
-cube = []
-package = []
-inch = []
-piece = []

@@ -79,6 +79,27 @@ class Recipe:
 
 		"""
 		# TODO maybe
+		self.recipe_string += self.recipe_name + "\n"
+		
+
+		self.recipe_string += "Ingredients: \n\n"
+		# Put together all the ingredients
+		for ingred in self.get_ingredients():	
+			self.recipe_string += "{}\n".format(ingred)
+		try:	
+			for item in self.alt_ingredients:
+				self.recipe_string += "{}\n\n".format(item.title())
+				
+				for ingred in self.get_ingredients(alt_ingred=item):
+					self.recipe_string += "{}\n".format(ingred)
+		except AttributeError:
+			pass
+		
+		self.recipe_string += "Method:\n\n"
+		
+		# print steps	
+		for index, step in enumerate(self.steps, start=1):
+			self.recipe_string += "{}. {}\n".format(index, step['step'])
 		return self.recipe_string
 
 	def _scan_recipe(self):
@@ -453,15 +474,18 @@ class ShoppingList:
 				
 			if name == "s&p":
 				continue
-			amount = item['amounts'][0].get('amount', '')
+			amount = item['amounts'][0].get('amount', 0)
 			unit = item['amounts'][0].get('unit', '')
 			# check if name already in sd so we can add together
 			if name in sd.keys():
 				orig = Q_(sd[name][0], sd[name][1])
 				current = Q_(amount, unit)
-				#orig + current
-				print(repr(orig))
-				print(current)
+				try:
+					addition = orig + current
+					sd[name] = str(addition).split()
+				except (AttributeError):
+					print(name, sd[name][0], sd[name][1], unit)
+
 			else:
 				sd[name] = [amount, unit]
 				
@@ -504,9 +528,9 @@ class ShoppingList:
 								method='xml',
 								pretty_print=True)
 		
-		#print("\n{}Writing shopping list to {}{}".format(color.INFORM, SHOPPING_LIST_FILE, color.NORMAL))
-		#with open(SHOPPING_LIST_FILE, "w") as f:
-		#	f.write(result.decode("utf-8"))
+		print("\n{}Writing shopping list to {}{}".format(color.INFORM, SHOPPING_LIST_FILE, color.NORMAL))
+		with open(SHOPPING_LIST_FILE, "w") as f:
+			f.write(result.decode("utf-8"))
 	
 	def return_list(self):
 		return ShoppingList.shopping_dict

@@ -17,9 +17,13 @@ def plural(word):
 	es_plurals = ['tomato',
 				  'roma tomato',
 				  'potato']
+	v_plurals = {'bay leaf': 'bay leaves',
+	             'sage leaf': 'sage leaves'}
 	
 	if word in es_plurals:
 		return word + 'es'
+	elif word in list(v_plurals.keys()):
+		return v_plurals[word]
 	else:
 		return word + 's'
 
