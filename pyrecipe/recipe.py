@@ -470,15 +470,17 @@ class ShoppingList:
 				continue
 			amount = item['amounts'][0].get('amount', 0)
 			unit = item['amounts'][0].get('unit', '')
+			ingred = Ingredient(name, amount=amount, unit=unit)
+			print(ingred)
 			# check if name already in sd so we can add together
 			if name in sd.keys():
-				orig = Q_(sd[name][0], sd[name][1])
-				current = Q_(amount, unit)
-				try:
-					addition = orig + current
-					sd[name] = str(addition).split()
-				except (AttributeError):
-					print(name, sd[name][0], sd[name][1], unit)
+				orig = Q_((sd[name][0]), sd[name][1])
+				current = Q_(str(amount), unit)
+				#print(orig)
+				#print(current)
+				#print(amount, unit, sd[name][0], sd[name][1])
+				addition = orig + current
+				sd[name] = str(addition).split()
 
 			else:
 				sd[name] = [amount, unit]
@@ -548,7 +550,7 @@ class ShoppingList:
 		except AttributeError:
 			pass
 
-	def	print_list(self):
+	def	print_list(self, write=False):
 		mdn = ShoppingList.recipe_names
 		sd = ShoppingList.shopping_dict
 		dn = ShoppingList.dressing_names
@@ -568,8 +570,9 @@ class ShoppingList:
 		PP.pprint(sd)
 		for key, value in sd.items():
 			print("{}, {} {}".format(key, value[0], value[1]))
-		# write the list to an xml file	
-		self.write_to_xml()
+		# write the list to an xml file	if True
+		if write:	
+			self.write_to_xml()
 	
 	def random_recipes(self, random_count=RAND_RECIPE_COUNT):
 		"""Return random recipes and build a shopping list of ingredients needed"""	
@@ -593,9 +596,16 @@ class ShoppingList:
 
 
 class Ingredient(object):
-	"""The ingredient class is used to build an ingredietns object"""
+	"""The ingredient class is used to build an ingredietns object
+	
+	:param ingredient: name of the ingredient e.g onion
+	:param amount: amount of ingredient
+	:param size: size of ingredient
+	:param unit: ingredient unit such as tablespoon
+	:param prep: prep string if any, such as diced, chopped.. etc...
+	"""
 
-	def __init__(self, ingredient, amount='', size='', unit='', prep=None, str_format="normal"):
+	def __init__(self, ingredient, amount='', size='', unit='', prep='', str_format="normal"):
 		self.ingredient = ingredient
 		self.amount = amount
 		self.size = size
@@ -639,30 +649,20 @@ class Ingredient(object):
 				cleaned_string += ", " + self.prep
 				return cleaned_string
 			
-		
-	def _shop_str_formater(self):
-		if self.ingredient == 's&p':
-			pass
-		elif self.amount == 0 and self.unit == 'taste':
-			pass
-		elif self.unit == 'each' or self.unit is None:
-			return "{} {}, {}".format(self._get_amount(), self._get_ingredient(), self._prep)
-		else:
-			return "{} {} {}, {}".format(self._get_amount(), self._get_unit(), self._get_ingredient(), self._prep)
-
 	def __add__(self, other):
 		if self.culinary_unit and other.culinary_unit:
 			this_unit = self.amount * ureg[self.unit]
 			that_unit = other.amount * ureg[other.unit]
 			addition = this_unit + that_unit
 			#print(str(addition).split())
-			return this_unit + that_unit
+			return "test"
 		else:
 			addition = self.amount + other.amount
 			return Ingredient(self.ingredient, addition, self.unit)
 
-
-		
+	#@property
+	#def ingredient(self):
+	#	return self.ingredient
 
 	def _get_ingredient(self):
 		if self.amount > 1 and self.unit == 'each':

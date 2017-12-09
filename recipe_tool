@@ -22,9 +22,7 @@ def main():
 	
 
 	parser = argparse.ArgumentParser(
-		description="recipe_tool, the python recipe management program \
-		             reads recipe files written in yaml. Recipe_tool has \
-					 tab completion functionality. After adding a recipe, \
+		description="Recipe_tool has tab completion functionality. After adding a recipe, \
 					 simply run recipe_tool print <TAB><TAB>... to view whats avialable.",
 		add_help=False
 	)
@@ -102,6 +100,13 @@ def main():
 		metavar="NUM", 
 		dest="random", 
 		help="Pick n random recipes for the week"
+	)
+	parser_shop.add_argument(
+		"-w",
+		"--write",
+		dest="write",
+		action="store_true",
+		help="Write the shopping list to an xml file"
 	)
 	parser_shop.set_defaults(func=argfunc.print_shopping_list)
 

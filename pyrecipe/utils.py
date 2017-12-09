@@ -7,6 +7,7 @@ from .config import *
 #from .recipe import *
 
 
+
 class Color:
 	"""
 	   The color class defines various colors for 
@@ -62,7 +63,17 @@ def list_recipes(ret=False):
 	if ret:
 		return recipe_list
 	else:
-		for item in recipe_list: print(item)
+		for item in columnify(recipe_list):
+			PP.pprint(item)
+		#for item in recipe_list: print(item)
+
+def columnify(iterable):
+	# First convert everything to its repr
+    strings = [repr(x) for x in iterable]
+    # Now pad all the strings to match the widest
+    widest = max(len(x) for x in strings)
+    padded = [x.ljust(widest) for x in strings]
+    return padded
 
 def md5():
 	#TODO-> md5 funtion to check which yaml files have changed and then write the coresponding xml.

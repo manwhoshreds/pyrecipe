@@ -68,7 +68,7 @@ for item in RECIPE_FILES:
 		else:
 			continue
 
-PP                   = pprint.PrettyPrinter(indent=4)
+PP                   = pprint.PrettyPrinter(compact=True, indent=4)
 P_DIV                = "*" * 50
 S_DIV                = "~" * 50
 REQUIRED_ORD_KEYS    = ['recipe_name', 'dish_type', 'prep_time', 'ingredients', 'steps']
