@@ -155,7 +155,8 @@ def main():
 		"-o",
 		"--output-dir",
 		dest="output_dir",
-		action="store_true",
+		type=str,
+		nargs="?",
 		help="Choose a directory to output xml file"
 	)
 	parser_export.set_defaults(func=argfunc.export_recipes)

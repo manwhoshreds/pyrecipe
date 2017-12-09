@@ -101,27 +101,32 @@ def version(args):
 def export_recipes(args):
 	
 	recipe_name = args.source
+	r = recipe.Recipe(args.source)
+	xml = r.xml_data
 	new_name = recipe_name.replace(" ", "_")
-	lower_new_name  = new_name.lower() # I prefer file names to be all lower case
+	lower_new_name  = new_name.lower() + ".xml"# I prefer file names to be all lower case
 	# check for output dir flag	and make dir if it does not exist
+	if args.output_dir:	
+		output_dir = os.path.abspath(args.output_dir)
+		if os.path.exists(output_dir):
+			if not os.path.isdir(output_dir):
+				print("Not a directory")
+				exit(1)
+		else:
+			try:
+				os.makedirs(output_dir)
+			except OSError:
+				print("couldnt create directory")
+				exit(1)
+	else:
+		output_dir = RECIPE_XML_DIR
 	
-	#output_dir = os.path.abspath(args.output_dir)
 	
-	#if os.path.exists(output_dir):
-	#	if not os.path.isdir(output_dir):
-	#		print("Not a directory")
-	#		exit(1)
-	#else:
-	#	try:
-	#		os.makedirs(output_dir)
-	#	except OSError:
-	#		print("couldnt create directory")
-	#		exit(1)
 		
-	print("{}Writing to file: {}/{}.xml{}".format(color.INFORM,
+	print("{}Writing to file: {}{}{}".format(color.INFORM,
 												  output_dir,
 												  lower_new_name,
 												  color.NORMAL)
 	)
-	with open(os.path.join(output_dir, lower_new_name) + ".xml", "w") as file:
-		file.write(str(result.decode('utf-8')))
+	with open(os.path.join(output_dir, lower_new_name), "w") as file:
+		file.write(str(xml))
