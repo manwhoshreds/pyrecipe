@@ -25,6 +25,12 @@ class Color:
 
 color = Color()
 
+def num(n):
+	try:
+		return int(n)
+	except ValueError:
+		return float(n)
+
 def get_file_name(recipe):
 	
 	file_name = recipe.replace(" ", "_").lower() + ".recipe"

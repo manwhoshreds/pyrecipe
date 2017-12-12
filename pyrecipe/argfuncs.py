@@ -39,11 +39,12 @@ def print_shopping_list(args):
 					 ' to build your shopping list from!')
 		
 		sl = recipe.ShoppingList()
-		
 		for item in menu_items:
 			sl.update(item)
-				
-		sl.print_list()
+		if args.write:			
+			sl.print_list(write=True)
+		else:
+			sl.print_list()
 
 
 #def print_random_shopping_list(random_count):
@@ -121,12 +122,11 @@ def export_recipes(args):
 	else:
 		output_dir = RECIPE_XML_DIR
 	
-	
+	file_name = os.path.join(output_dir, lower_new_name)	
 		
-	print("{}Writing to file: {}{}{}".format(color.INFORM,
-												  output_dir,
-												  lower_new_name,
-												  color.NORMAL)
+	print("{}Writing to file: {}{}".format(color.INFORM,
+										   file_name,
+										   color.NORMAL)
 	)
-	with open(os.path.join(output_dir, lower_new_name), "w") as file:
+	with open(file_name, "w") as file:
 		file.write(str(xml))

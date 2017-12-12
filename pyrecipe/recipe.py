@@ -32,7 +32,7 @@ from .config import __version__, __scriptname__, __email__
 color = Color()
 
 
-class Recipe:
+class Recipe(object):
 	"""
 		The recipe class is used to perform operations on
 		recipe source files such as print and save xml.
@@ -308,7 +308,7 @@ class Recipe:
 				ingred = Ingredient('s&p')
 				ingredients.append(str(ingred))
 				continue
-			amount = item['amounts'][amount_level].get('amount', '')
+			amount = item['amounts'][amount_level].get('amount', 0)
 			unit = item['amounts'][amount_level].get('unit', '')
 			size = item.get('size', '')
 			prep = item.get('prep', '')
@@ -316,7 +316,6 @@ class Recipe:
 			ingredients.append(str(ingred))
 		
 		return ingredients
-	
 	
 	def print_recipe(self, verb_level=0):
 		"""Print recipe to standard output."""
@@ -444,6 +443,7 @@ class ShoppingList:
 	# TODO Lots of work to do in the ShoppingList cls in general
 	"""Class to create and display a shopping list"""
 	shopping_dict = {}
+	shopping_list = []
 	recipe_names = []
 	dressing_names = []
 	
@@ -469,19 +469,13 @@ class ShoppingList:
 			if name == "s&p":
 				continue
 			amount = item['amounts'][0].get('amount', 0)
-			unit = item['amounts'][0].get('unit', '')
+			unit = item['amounts'][0].get('unit', 'teaspoon')
 			ingred = Ingredient(name, amount=amount, unit=unit)
-			print(ingred)
 			# check if name already in sd so we can add together
 			if name in sd.keys():
-				orig = Q_((sd[name][0]), sd[name][1])
-				current = Q_(str(amount), unit)
-				#print(orig)
-				#print(current)
-				#print(amount, unit, sd[name][0], sd[name][1])
-				addition = orig + current
-				sd[name] = str(addition).split()
-
+				orig_ingred = Ingredient(name, amount=sd[name][0], unit=sd[name][1])	
+				addition = ingred + orig_ingred
+				sd[name] = addition
 			else:
 				sd[name] = [amount, unit]
 				
@@ -541,6 +535,7 @@ class ShoppingList:
 			ShoppingList.dressing_names.append(r.recipe_name)
 		else:
 			ShoppingList.recipe_names.append(r.recipe_name)
+
 		
 		self._proc_ingreds(source)
 		try:
@@ -569,7 +564,7 @@ class ShoppingList:
 		# Print list	
 		PP.pprint(sd)
 		for key, value in sd.items():
-			print("{}, {} {}".format(key, value[0], value[1]))
+			print("{}, {} {}".format(key, Fraction(value[0]), value[1]))
 		# write the list to an xml file	if True
 		if write:	
 			self.write_to_xml()
@@ -605,7 +600,7 @@ class Ingredient(object):
 	:param prep: prep string if any, such as diced, chopped.. etc...
 	"""
 
-	def __init__(self, ingredient, amount='', size='', unit='', prep='', str_format="normal"):
+	def __init__(self, ingredient, amount=0, size='', unit='', prep='', str_format="normal"):
 		self.ingredient = ingredient
 		self.amount = amount
 		self.size = size
@@ -615,13 +610,13 @@ class Ingredient(object):
 		if self.unit in CULINARY_UNITS:
 			self.culinary_unit = True
 	
-	def __repr__(self):
-		return "<Ingredient({}, '{}', '{}', '{}', '{}')>".format(self.amount, 
-														   self.size,
-														   self.unit, 
-														   self.ingredient,
-														   self.prep)
-		
+	#def __repr__(self):
+	#	return "<Ingredient({}, '{}', '{}', '{}', '{}')>".format(self.amount, 
+	#													   self.size,
+	#													   self.unit, 
+	#													   self.ingredient,
+	#													   self.prep)
+	#	
 		
 			
 
@@ -650,15 +645,24 @@ class Ingredient(object):
 				return cleaned_string
 			
 	def __add__(self, other):
-		if self.culinary_unit and other.culinary_unit:
-			this_unit = self.amount * ureg[self.unit]
-			that_unit = other.amount * ureg[other.unit]
-			addition = this_unit + that_unit
-			#print(str(addition).split())
-			return "test"
+		if self.unit == other.unit:
+			this = num(self.amount) * ureg[self.unit]
+			that = num(other.amount) * ureg[other.unit]
+			
+			#if isinstance(other.amount, str) or isinstance(self.amount, str):
+			#	print(self.ingredient, other.ingredient)
+			#	print(type(self.amount), type(other.amount))
+			#	print(self.amount, other.amount)
+			#	print(self.unit, other.unit)
+			#	exit(0)
+			addition = this + that
+			return str(addition).split()
 		else:
-			addition = self.amount + other.amount
-			return Ingredient(self.ingredient, addition, self.unit)
+		#	addition = self.amount + other.amount
+		#	#return "{}{}{}{}".format(self.ingredient, addition, self.unit, other.unit)
+		#	return "{} {}".format(addition)
+		#except DimensionalityError:
+			return [3, 'tablespoons']
 
 	#@property
 	#def ingredient(self):

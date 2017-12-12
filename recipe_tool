@@ -2,32 +2,29 @@
 # -*- encoding: UTF-8 -*-
 # PYTHON_ARGCOMPLETE_OK
 
-import argparse
-import sys
 
+import argparse
 import argcomplete
-from pyrecipe import __version__
-from pyrecipe.config import RAND_RECIPE_COUNT
-from pyrecipe.utils import list_recipes
+
+from pyrecipe.config import RAND_RECIPE_COUNT, RECIPE_NAMES
 import pyrecipe.argfuncs as argfunc
+import pdb
+#pdb.set_trace()
 
 def recipe_completer(**kwargs):
-	recipe_list = list_recipes(ret=True)
+	recipe_list = RECIPE_NAMES
 	test = [x.lower() for x in recipe_list]
 	return test
 	
 
-def main():
-	"""Main entry point of recipe_tool"""
-	
+def parse_args():
+	# TODO argcomplete is way to slow, figure out how to speed it up	
 
 	parser = argparse.ArgumentParser(
 		description="Recipe_tool has tab completion functionality. After adding a recipe, \
-					 simply run recipe_tool print <TAB><TAB>... to view whats avialable.",
+					 simply run recipe_tool print <TAB><TAB> to view whats avialable.",
 		add_help=False
 	)
-
-	
 	parser.add_argument(
 		"-h", "--help",
 		action='help',
@@ -168,15 +165,19 @@ def main():
 	parser_check.add_argument("all", action="store_true", help="Check all files")
 	parser_check.set_defaults(func=argfunc.check_file)
 	
-
-	
-	# Print help if no arguments given
-	if len(sys.argv) == 1:
-		parser.print_help()
-	
+	# auto completion	
 	argcomplete.autocomplete(parser)
-	args = parser.parse_args()
 	
+	import sys	
+	if len(sys.argv) == 1:
+		sys.exit(parser.print_help())
+	else:
+		return parser.parse_args()
+
+def main():
+	"""main entry point of recipe_tool"""
+
+	args = parse_args()
 	if args.guimode:
 		argfunc.start_gui()
 	if args.version:
@@ -184,8 +185,10 @@ def main():
 		exit(0)
 	if hasattr(args, 'func'):
 		args.func(args)
+		
 
 
 if __name__ == '__main__':
 	main()
-		
+	
+

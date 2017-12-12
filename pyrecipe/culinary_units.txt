@@ -18,4 +18,5 @@ one = [single]
 	package = 1 * one
 	inch = 1 * one
 	piece = 1 * one
+	can = 1 * one
 @end
