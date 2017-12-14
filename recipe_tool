@@ -12,13 +12,12 @@ import pdb
 #pdb.set_trace()
 
 def recipe_completer(**kwargs):
-	recipe_list = RECIPE_NAMES
-	test = [x.lower() for x in recipe_list]
-	return test
+	recipe_list = [x.lower() for x in RECIPE_NAMES]
+	return recipe_list
 	
 
 def parse_args():
-	# TODO argcomplete is way to slow, figure out how to speed it up	
+	# TODO argcomplete is way too slow, figure out how to speed it up	
 
 	parser = argparse.ArgumentParser(
 		description="Recipe_tool has tab completion functionality. After adding a recipe, \

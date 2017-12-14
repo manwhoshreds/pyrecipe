@@ -633,7 +633,7 @@ class Ingredient(object):
 			return "Splash of {}".format(self.ingredient)
 		else:
 		
-			string = "{} {} {} {}".format(self._get_amount(), self.size, 
+			string = "{} {} {} {}".format(self._get_amount(self.amount), self.size, 
 											  self._get_unit(), self._get_ingredient())
 			# the previous line adds unwanted spaces if values are absent
 			# we simply clean that up here.
@@ -645,24 +645,14 @@ class Ingredient(object):
 				return cleaned_string
 			
 	def __add__(self, other):
-		if self.unit == other.unit:
+		try:
 			this = num(self.amount) * ureg[self.unit]
 			that = num(other.amount) * ureg[other.unit]
-			
-			#if isinstance(other.amount, str) or isinstance(self.amount, str):
-			#	print(self.ingredient, other.ingredient)
-			#	print(type(self.amount), type(other.amount))
-			#	print(self.amount, other.amount)
-			#	print(self.unit, other.unit)
-			#	exit(0)
 			addition = this + that
-			return str(addition).split()
-		else:
-		#	addition = self.amount + other.amount
-		#	#return "{}{}{}{}".format(self.ingredient, addition, self.unit, other.unit)
-		#	return "{} {}".format(addition)
-		#except DimensionalityError:
-			return [3, 'tablespoons']
+			test = str(addition).split()
+			return [self._get_amount(test[0]), test[1]]
+		except DimensionalityError:
+			return [self.amount, self.unit]
 
 	#@property
 	#def ingredient(self):
@@ -675,17 +665,17 @@ class Ingredient(object):
 			return self.ingredient
 
 	
-	def _get_amount(self):
-		if self.amount == .3:
+	def _get_amount(self, amount):
+		if amount == .3:
 			return '1/3'
-		elif self.amount == .6:
+		elif amount == .6:
 			return '1/6'
-		elif isinstance(self.amount, float) and self.amount < 1:
-			return Fraction(self.amount)
-		elif isinstance(self.amount, float) and self.amount > 1:
-			return improper_to_mixed(str(Fraction(self.amount)))
+		elif isinstance(amount, float) and amount < 1:
+			return Fraction(amount)
+		elif isinstance(amount, float) and amount > 1:
+			return improper_to_mixed(str(Fraction(amount)))
 		else:
-			return self.amount
+			return amount
 
 	def _get_unit(self):
 		if self.unit == 'each':
@@ -767,19 +757,30 @@ def template(recipe_name):
 	
 	subprocess.call([EDITOR, file_name])
 
-def version():
+def version(text_only=False):
 	"""Print the current version of pyrecipe and exit."""
-	
-	ver_str = ''
-	ver_str +=   "                _              _              _   {} v{}".format(__scriptname__, __version__)
-	ver_str += "\n               (_)            | |            | |  The recipe management program."
-	ver_str += "\n  _ __ ___  ___ _ _ __   ___  | |_ ___   ___ | |"
-	ver_str += "\n | '__/ _ \/ __| | '_ \ / _ \ | __/ _ \ / _ \| |  For any questions, contact me at {}".format(__email__)
-	ver_str += "\n | | |  __/ (__| | |_) |  __/ | || (_) | (_) | |  or type recipe_tool --help for more info."
-	ver_str += "\n |_|  \___|\___|_| .__/ \___|  \__\___/ \___/|_|"
-	ver_str += "\n                 | |                              This program may be freely redistributed under"
-	ver_str += "\n                 |_|                              the terms of the GNU General Public License."
-	return ver_str
+	if text_only:
+		ver_str = ''
+		ver_str += "{} v{}".format(__scriptname__, __version__)
+		ver_str += "\nThe recipe management program."
+		ver_str += "\n"
+		ver_str += "\nFor any questions, contact me at {}".format(__email__)
+		ver_str += "\nor type recipe_tool --help for more info."
+		ver_str += "\n"
+		ver_str += "\nThis program may be freely redistributed under"
+		ver_str += "\nthe terms of the GNU General Public License."
+		return ver_str
+	else:
+		ver_str = ''
+		ver_str +=   "                _              _              _   {} v{}".format(__scriptname__, __version__)
+		ver_str += "\n               (_)            | |            | |  The recipe management program."
+		ver_str += "\n  _ __ ___  ___ _ _ __   ___  | |_ ___   ___ | |"
+		ver_str += "\n | '__/ _ \/ __| | '_ \ / _ \ | __/ _ \ / _ \| |  For any questions, contact me at {}".format(__email__)
+		ver_str += "\n | | |  __/ (__| | |_) |  __/ | || (_) | (_) | |  or type recipe_tool --help for more info."
+		ver_str += "\n |_|  \___|\___|_| .__/ \___|  \__\___/ \___/|_|"
+		ver_str += "\n                 | |                              This program may be freely redistributed under"
+		ver_str += "\n                 |_|                              the terms of the GNU General Public License."
+		return ver_str
 
 def stats(verb=0):
 	"""Print statistics about your recipe database and exit."""
