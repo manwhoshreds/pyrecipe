@@ -3,6 +3,7 @@
 
 import re
 from tkinter import *
+from tkinter.ttk import *
 from .config import *
 from . import *
 
@@ -15,12 +16,16 @@ class MainGUI(Tk):
 
 	def __init__(self, *args, **kwargs):
 		Tk.__init__(self, *args, **kwargs)
+		self.fleft = Frame()
+		self.fleft.pack(side=LEFT)
 		self.title('Pyrecipe - The python recipe management program')
+		new_recipe = Button(self.fleft, text="New", command=AddRecipe)
+		new_recipe.pack()
 		self._build_menubar()
-		recipe_listbox = Listbox(self, height=50, width=30, selectmode=SINGLE, bg='white', font=('ubuntu', 13))
-		entry = AutoEntry(RECIPE_NAMES, self)
-		entry.pack(side=TOP)
-		scrollb = Scrollbar(self, command=recipe_listbox.yview)
+		recipe_listbox = Listbox(self.fleft, height=50, width=30, selectmode=SINGLE, bg='white', font=('ubuntu', 13))
+		entry = AutoEntry(RECIPE_NAMES, self.fleft, width=30)
+		entry.pack(side=TOP, fill=Y)
+		scrollb = Scrollbar(self.fleft, command=recipe_listbox.yview)
 		scrollb.pack(side=RIGHT, fill=Y)
 		recipe_listbox.configure(yscrollcommand=scrollb.set)
 		recipe_listbox.pack(side=LEFT)
@@ -82,13 +87,17 @@ class MainGUI(Tk):
 		self.config(menu=menubar)
 
 	def show_version(self):
-		ver = Toplevel(self, width=100)
+		ver = Toplevel()
 		ver.title("Pyrecipe Version Information")
-		msg_body = recipe.version()	
-		msg = Message(ver, text=msg_body)
+
+		verframe = Frame(ver, width=500, height=500)
+		verframe.pack()
+		
+		msg_body = recipe.version(text_only=True)	
+		msg = Message(verframe, text=msg_body)
 		msg.pack()
 		
-		button = Button(ver, text="I am a version")
+		button = Button(ver, text="Ok", command=ver.destroy)
 		button.pack()
 
 	def donothing(self):
@@ -175,17 +184,47 @@ class AutoEntry(Entry):
         pattern = re.compile('.*' + self.var.get() + '.*')
         return [w for w in self.somelist if re.match(pattern, w)]
 
-#if __name__ == '__main__':
-#    root = Tk()
+class AddRecipe(Toplevel):
+	
+	
+	def __init__(self):
+		Toplevel.__init__(self)
+		self.title("Add a recipe")
+		self._init_notebook(width=500, height=500)
+		cancel = Button(self, text='cancel', command=self.destroy)
+		cancel.pack(side=RIGHT)
+		save = Button(self, text='save')
+		save.pack(side=RIGHT)
+		applyy = Button(self, text='apply')
+		applyy.pack(side=RIGHT)
+	
 
-#    entry = AutocompleteEntry(somelise, root)
-#    entry.grid(row=0, column=0)
-#    Button(text='nothing').grid(row=1, column=0)
-#    Button(text='nothing').grid(row=2, column=0)
-#    Button(text='nothing').grid(row=3, column=0)
-    #root.mainloop()
-
+	def _init_notebook(self, **kw):
+		notebook = Notebook(self)
 		
+		# metadata
+		metadata = Frame(notebook, **kw)
+		recipe_name = Label(metadata, text='Recipe Name')
+		rn_entry = Entry(metadata)
+		recipe_name.pack()
+		rn_entry.pack()
+		dish_type = Label(metadata, text='Dish Type')
+		dt_entry = Entry(metadata)
+		dish_type.pack()
+		dt_entry.pack()
+		
+		# ingredients	
+		ingredients = Frame(notebook, **kw)
+
+		# method
+		method = Frame(notebook, **kw)
+		
+		
+		notebook.add(metadata, text='Metadata')
+		notebook.add(ingredients, text='Ingredients')
+		notebook.add(method, text='Method')
+		notebook.pack()
+
 def start():
 	maingui = MainGUI()
 	maingui.mainloop()
