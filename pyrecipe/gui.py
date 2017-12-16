@@ -195,8 +195,9 @@ class AddRecipe(Toplevel):
 	
 	def __init__(self):
 		Toplevel.__init__(self)
+		self.geometry('700x700+400+400')
 		self.title("Add a recipe")
-		self._init_notebook(width=800, height=800)
+		self._init_notebook()
 		cancel = Button(self, text='Cancel', command=self.destroy)
 		cancel.pack(side=RIGHT)
 		save = Button(self, text='Save', command=self.save_recipe)
@@ -221,35 +222,35 @@ class AddRecipe(Toplevel):
 		
 		# ingredients	
 		ingredients = Frame(notebook, **kw)
-		ingred_label = Label(ingredients, text='Ingredient')
-		ingred_label.grid(row=1, column=1)
-		amount_label = Label(ingredients, text='Amount')
-		amount_label.grid(row=1, column=2)
-		unit_label = Label(ingredients, text='Unit')
-		unit_label.grid(row=1, column=3)
-		prep_label = Label(ingredients, text='Preparation')
-		prep_label.grid(row=1, column=4)
-
 		self.ingred_var = StringVar(ingredients)
 		self.amount_var = StringVar(ingredients)
 		self.unit_var = StringVar(ingredients)
 		self.prep_var = StringVar(ingredients)
 		
+
+		ingred_label = Label(ingredients, text='Ingredient')
+		ingred_label.grid(row=0, column=0)
 		self.ingred_entry = Entry(ingredients, textvariable=self.ingred_var)
-		self.ingred_entry.grid(row=2, column=1)
+		self.ingred_entry.grid(row=1, column=0)
+		amount_label = Label(ingredients, text='Amount')
+		amount_label.grid(row=2, column=0)
 		self.amount_entry = Entry(ingredients, textvariable=self.amount_var)
-		self.amount_entry.grid(row=2, column=2)
+		self.amount_entry.grid(row=3, column=0)
+		unit_label = Label(ingredients, text='Unit')
+		unit_label.grid(row=4, column=0)
 		self.unit_entry = Entry(ingredients, textvariable=self.unit_var)
-		self.unit_entry.grid(row=2, column=3)
+		self.unit_entry.grid(row=5, column=0)
+		prep_label = Label(ingredients, text='Preparation')
+		prep_label.grid(row=6, column=0)
 		self.prep_entry = Entry(ingredients, textvariable=self.prep_var)
-		self.prep_entry.grid(row=2, column=4)
+		self.prep_entry.grid(row=7, column=0)
 		prep_tooltip = ToolTip(self.prep_entry, "this is just a tip")
 		add_ingredient = Button(ingredients, text='add', command=self.add_ingredient)
-		add_ingredient.grid(row=2, column=5)
+		add_ingredient.grid(row=8, column=0)
 		
 		self.ingredient_textbox = Text(ingredients, 
 									   font=('ubuntu', 16))
-		self.ingredient_textbox.grid(row=3, columnspan=6)
+		self.ingredient_textbox.grid(row=0, rowspan=25, column=1)
 
 		# method
 		method = Frame(notebook, **kw)
@@ -275,6 +276,8 @@ class AddRecipe(Toplevel):
 				recipe_data += '\n    amounts:'
 				recipe_data += '\n      - amount: {}'.format(item['amounts'][0]['amount'])
 				recipe_data += '\n        unit: {}'.format(item['amounts'][0]['unit'])
+				if item['prep']:
+					pass
 			test = yaml.load(recipe_data)
 			PP.pprint(test)
 			self.destroy()
