@@ -1,133 +1,56 @@
 #!/usr/bin/env python
 #from pyrecipe.ingredient import Ingredient
-import re
-from pint import UnitRegistry
-from tkinter import *
-
-ureg = UnitRegistry()
-ok = ureg.__dict__
-#ingred = Ingredient(ingredient='mushroom',
-#					amount=1, 
-					#size='large', 
-#					unit='tablespoon',
-#					prep='diced')
-#ingred = ingred.__dict__
-#class Default(dict):
-#	def __missing__(self, key):
-#		return '{'+key+'}'
-
-#test = "{} {} {} {} {}".format(ingred['amount'], ingred['size'], ingred['unit'], 
-#						   ingred['ingredient'], ingred['_prep'])
-#test1 = "{amount} {size} {unit} {ingredient} {_prep}".format_map(Default(ingred))
 
 
-#def test():
-#	string  = "helllo"
-#	return string
-
-#print(test())
-#this = re.sub(' +', ' ', test)
-
-#print(str(ingred))
-
-#def gen():
-#	for i in range(10):
-#		yield i
-
-#for i in gen():	
-#	print(i)from Tkinter import *
-
-lista = ['a', 'actions', 'additional', 'also', 'an', 'and', 'angle', 'are', 'as', 'be', 'bind', 'bracket', 'brackets', 'button', 'can', 'cases', 'configure', 'course', 'detail', 'enter', 'event', 'events', 'example', 'field', 'fields', 'for', 'give', 'important', 'in', 'information', 'is', 'it', 'just', 'key', 'keyboard', 'kind', 'leave', 'left', 'like', 'manager', 'many', 'match', 'modifier', 'most', 'of', 'or', 'others', 'out', 'part', 'simplify', 'space', 'specifier', 'specifies', 'string;', 'that', 'the', 'there', 'to', 'type', 'unless', 'use', 'used', 'user', 'various', 'ways', 'we', 'window', 'wish', 'you']
 
 
-class AutocompleteEntry(Entry):
-    def __init__(self, lista, *args, **kwargs):
-        
-        Entry.__init__(self, *args, **kwargs)
-        self.lista = lista        
-        self.var = self["textvariable"]
-        if self.var == '':
-            self.var = self["textvariable"] = StringVar()
-
-        self.var.trace('w', self.changed)
-        self.bind("<Right>", self.selection)
-        self.bind("<Up>", self.up)
-        self.bind("<Down>", self.down)
-        
-        self.lb_up = False
-
-    def changed(self, name, index, mode):  
-
-        if self.var.get() == '':
-            self.lb.destroy()
-            self.lb_up = False
-        else:
-            words = self.comparison()
-            if words:            
-                if not self.lb_up:
-                    self.lb = Listbox()
-                    self.lb.bind("<Double-Button-1>", self.selection)
-                    self.lb.bind("<Right>", self.selection)
-                    self.lb.place(x=self.winfo_x(), y=self.winfo_y()+self.winfo_height())
-                    self.lb_up = True
-                
-                self.lb.delete(0, END)
-                for w in words:
-                    self.lb.insert(END,w)
-            else:
-                if self.lb_up:
-                    self.lb.destroy()
-                    self.lb_up = False
-        
-    def selection(self, event):
-
-        if self.lb_up:
-            self.var.set(self.lb.get(ACTIVE))
-            self.lb.destroy()
-            self.lb_up = False
-            self.icursor(END)
-
-    def up(self, event):
-
-        if self.lb_up:
-            if self.lb.curselection() == ():
-                index = '0'
-            else:
-                index = self.lb.curselection()[0]
-            if index != '0':                
-                self.lb.selection_clear(first=index)
-                index = str(int(index)-1)                
-                self.lb.selection_set(first=index)
-                self.lb.activate(index) 
-
-    def down(self, event):
-
-        if self.lb_up:
-            if self.lb.curselection() == ():
-                index = '0'
-            else:
-                index = self.lb.curselection()[0]
-            if index != END:                        
-                self.lb.selection_clear(first=index)
-                index = str(int(index)+1)        
-                self.lb.selection_set(first=index)
-                self.lb.activate(index) 
-
-    def comparison(self):
-        pattern = re.compile('.*' + self.var.get() + '.*')
-        return [w for w in self.lista if re.match(pattern, w)]
-
+''' tk_ToolTip_class101.py
+gives a Tkinter widget a tooltip as the mouse is above the widget
+tested with Python27 and Python34  by  vegaseat  09sep2014
+'''
+try:
+	# for Python2
+	import Tkinter as tk
+except ImportError:
+	# for Python3
+	import tkinter as tk
+class CreateToolTip(object):
+	'''
+	create a tooltip for a given widget
+	'''
+	def __init__(self, widget, text='widget info'):
+		self.widget = widget
+		self.text = text
+		self.widget.bind("<Enter>", self.enter)
+		self.widget.bind("<Leave>", self.close)
+	def enter(self, event=None):
+		x = y = 0
+		x, y, cx, cy = self.widget.bbox("insert")
+		x += self.widget.winfo_rootx() + 25
+		y += self.widget.winfo_rooty() + 20
+		# creates a toplevel window
+		self.tw = tk.Toplevel(self.widget)
+		# Leaves only the label and removes the app window
+		self.tw.wm_overrideredirect(True)
+		self.tw.wm_geometry("+%d+%d" % (x, y))
+		label = tk.Label(self.tw, text=self.text, justify='left',
+					   background='yellow', relief='solid', borderwidth=1,
+					   font=("times", "8", "normal"))
+		label.pack(ipadx=1)
+	def close(self, event=None):
+		if self.tw:
+			self.tw.destroy()
+# testing ...
 if __name__ == '__main__':
-    root = Tk()
+	root = tk.Tk()
+	btn1 = tk.Button(root, text="button 1")
+	btn1.pack(padx=10, pady=5)
+	button1_ttp = CreateToolTip(btn1, "mouse is over button 1")
+	btn2 = tk.Button(root, text="button 2")
+	btn2.pack(padx=10, pady=5)
+	button2_ttp = CreateToolTip(btn2, "mouse is over button 2")
+	root.mainloop()
 
-    entry = AutocompleteEntry(lista, root)
-    entry.grid(row=0, column=0)
-    Button(text='nothing').grid(row=1, column=0)
-    Button(text='nothing').grid(row=2, column=0)
-    Button(text='nothing').grid(row=3, column=0)
 
-    root.mainloop()
-
-	
 
 

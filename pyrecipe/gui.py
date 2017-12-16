@@ -2,6 +2,8 @@
 """
 
 import re
+import os
+
 from tkinter import *
 from tkinter.ttk import *
 from .config import *
@@ -34,15 +36,18 @@ class MainGUI(Tk):
 		recipe_listbox.bind("<Double-Button-1>", self.onDoubleClk)	
 		recipe = recipe_listbox.curselection()
 		
-		self.recipe_textbox = Text(self, height=50, width=200, font=('ubuntu', 15))
+		self.recipe_textbox = Text(self, height=50, width=200, font=('ubuntu', 16))
 		self.recipe_textbox.pack(side=LEFT, fill=X)
 	
 
 	def onDoubleClk(self, event):
+		# State Normal on click on disabled when we finish building text
+		# this is nescassary to for text to be read-only
+		self.recipe_textbox.config(state=NORMAL)
 		# delete text box so recipes dont keep appending inside
 		self.recipe_textbox.delete('1.0', END)
 		widget = event.widget
-		selection=widget.curselection()
+		selection = widget.curselection()
 		rec_selection = widget.get(selection[0])
 		r = recipe.Recipe(rec_selection)
 		self._build_recipe_text(r)
@@ -50,6 +55,7 @@ class MainGUI(Tk):
 	def _build_recipe_text(self, recipe):
 		recipe_name = recipe.recipe_name
 		self.recipe_textbox.insert(END, str(recipe))
+		self.recipe_textbox.config(state=DISABLED)
 
 	def _build_menubar(self):
 		# filemenu
@@ -87,10 +93,10 @@ class MainGUI(Tk):
 		self.config(menu=menubar)
 
 	def show_version(self):
-		ver = Toplevel()
+		ver = Toplevel(width=800, height=800)
 		ver.title("Pyrecipe Version Information")
 
-		verframe = Frame(ver, width=500, height=500)
+		verframe = Frame(ver, width=800, height=800)
 		verframe.pack()
 		
 		msg_body = recipe.version(text_only=True)	
@@ -100,10 +106,9 @@ class MainGUI(Tk):
 		button = Button(ver, text="Ok", command=ver.destroy)
 		button.pack()
 
-	def donothing(self):
-		filewin = Toplevel(self)
-		button = Button(filewin, text="Do nothing button")
-		button.pack()
+	def donothing():
+		pass
+
 
 
 class AutoEntry(Entry):
@@ -185,45 +190,170 @@ class AutoEntry(Entry):
         return [w for w in self.somelist if re.match(pattern, w)]
 
 class AddRecipe(Toplevel):
-	
+
+	ingredients = []
 	
 	def __init__(self):
 		Toplevel.__init__(self)
 		self.title("Add a recipe")
-		self._init_notebook(width=500, height=500)
-		cancel = Button(self, text='cancel', command=self.destroy)
+		self._init_notebook(width=800, height=800)
+		cancel = Button(self, text='Cancel', command=self.destroy)
 		cancel.pack(side=RIGHT)
-		save = Button(self, text='save')
+		save = Button(self, text='Save', command=self.save_recipe)
 		save.pack(side=RIGHT)
-		applyy = Button(self, text='apply')
-		applyy.pack(side=RIGHT)
-	
-
+		
 	def _init_notebook(self, **kw):
 		notebook = Notebook(self)
 		
-		# metadata
+		# recipe
 		metadata = Frame(notebook, **kw)
+		self.rn_var = StringVar(metadata)
 		recipe_name = Label(metadata, text='Recipe Name')
-		rn_entry = Entry(metadata)
-		recipe_name.pack()
-		rn_entry.pack()
+		recipe_name.grid(row=1, column=1)
+		rn_entry = Entry(metadata, textvariable=self.rn_var)
+		rn_entry.grid(row=1, column=2)
 		dish_type = Label(metadata, text='Dish Type')
-		dt_entry = Entry(metadata)
-		dish_type.pack()
-		dt_entry.pack()
+		dish_type.grid(row=2, column=1)
+		self.dt_var = StringVar(self)
+		self.dt_var.set('dish')
+		dt_options = OptionMenu(metadata, self.dt_var, *DISH_TYPES)
+		dt_options.grid(row=2, column=2)
 		
 		# ingredients	
 		ingredients = Frame(notebook, **kw)
+		ingred_label = Label(ingredients, text='Ingredient')
+		ingred_label.grid(row=1, column=1)
+		amount_label = Label(ingredients, text='Amount')
+		amount_label.grid(row=1, column=2)
+		unit_label = Label(ingredients, text='Unit')
+		unit_label.grid(row=1, column=3)
+		prep_label = Label(ingredients, text='Preparation')
+		prep_label.grid(row=1, column=4)
+
+		self.ingred_var = StringVar(ingredients)
+		self.amount_var = StringVar(ingredients)
+		self.unit_var = StringVar(ingredients)
+		self.prep_var = StringVar(ingredients)
+		
+		self.ingred_entry = Entry(ingredients, textvariable=self.ingred_var)
+		self.ingred_entry.grid(row=2, column=1)
+		self.amount_entry = Entry(ingredients, textvariable=self.amount_var)
+		self.amount_entry.grid(row=2, column=2)
+		self.unit_entry = Entry(ingredients, textvariable=self.unit_var)
+		self.unit_entry.grid(row=2, column=3)
+		self.prep_entry = Entry(ingredients, textvariable=self.prep_var)
+		self.prep_entry.grid(row=2, column=4)
+		prep_tooltip = ToolTip(self.prep_entry, "this is just a tip")
+		add_ingredient = Button(ingredients, text='add', command=self.add_ingredient)
+		add_ingredient.grid(row=2, column=5)
+		
+		self.ingredient_textbox = Text(ingredients, 
+									   font=('ubuntu', 16))
+		self.ingredient_textbox.grid(row=3, columnspan=6)
 
 		# method
 		method = Frame(notebook, **kw)
 		
 		
-		notebook.add(metadata, text='Metadata')
+		notebook.add(metadata, text='Recipe')
 		notebook.add(ingredients, text='Ingredients')
 		notebook.add(method, text='Method')
 		notebook.pack()
+	
+	def save_recipe(self):
+		recipe_data = ''
+		if not self.rn_var.get():
+			Warn(msg="You must supply a recipe name")
+		elif not self.dt_var.get():
+			Warn(msg="You must supply a dish type")
+		else:
+			recipe_data += 'recipe_name: {}'.format(self.rn_var.get())
+			recipe_data += '\ndish_type: {}'.format(self.dt_var.get())
+			recipe_data += '\ningredients:'
+			for item in AddRecipe.ingredients:
+				recipe_data += '\n  - name: {}'.format(item['name'])
+				recipe_data += '\n    amounts:'
+				recipe_data += '\n      - amount: {}'.format(item['amounts'][0]['amount'])
+				recipe_data += '\n        unit: {}'.format(item['amounts'][0]['unit'])
+			test = yaml.load(recipe_data)
+			PP.pprint(test)
+			self.destroy()
+
+	def add_ingredient(self):
+		if not self.ingred_var.get():
+			Warn(msg="You must supply an Ingredient")
+		elif not self.unit_var.get():
+			Warn(msg="You must supply a unit")
+		else:
+			ingred_string = "{} {} {} {}\n".format(self.amount_var.get(),
+												 self.unit_var.get(),
+												 self.ingred_var.get(),
+												 self.prep_var.get()
+												)
+			
+			ingred = {}
+			ingred['name'] = self.ingred_var.get()
+			ingred['amounts'] = [{'amount': self.amount_var.get(), 'unit': self.unit_var.get()}]
+			if self.prep_var.get():
+				ingred['prep'] = self.prep_var.get()
+
+
+			AddRecipe.ingredients.append(ingred)
+			print(AddRecipe.ingredients)
+			
+			self.ingred_entry.delete(0, 'end')
+			self.amount_entry.delete(0, 'end')
+			self.unit_entry.delete(0, 'end')
+			self.prep_entry.delete(0, 'end')
+			self.ingredient_textbox.insert(END, ingred_string)
+
+
+class Warn(Toplevel):
+	
+	def __init__(self, msg):
+		Toplevel.__init__(self)
+		self.title("Pyrecipe Information")
+		self.geometry('200x100+800+450')
+
+		message = Message(self, text=msg, width=200)
+		message.pack()
+		
+		button = Button(self, text="Ok", command=self.destroy)
+		button.pack(side=BOTTOM)
+		#self.sound()
+		
+	def sound(self):
+		os.system('play -q /usr/share/sounds/KDE-Sys-Warning.ogg')
+		
+
+class ToolTip(object):
+	'''
+		create a tooltip for a given widget
+	'''
+	def __init__(self, widget, text='widget info'):
+		self.widget = widget
+		self.text = " {} ".format(text)
+		self.widget.bind("<Enter>", self.enter)
+		self.widget.bind("<Leave>", self.close)
+
+	def enter(self, event=None):
+		x = y = 0
+		x, y, cx, cy = self.widget.bbox("insert")
+		x += self.widget.winfo_rootx() + 25
+		y += self.widget.winfo_rooty() + 20
+		# creates a toplevel window
+		self.tw = Toplevel(self.widget)
+		# Leaves only the label and removes the app window
+		self.tw.wm_overrideredirect(True)
+		self.tw.wm_geometry("+%d+%d" % (x, y))
+		label = Label(self.tw, text=self.text, justify='left',
+				background='yellow', relief='solid', borderwidth=1,
+				font=("unbuntu", "12", "normal"))
+		label.pack(ipadx=1)
+
+	def close(self, event=None):
+		if self.tw:
+			self.tw.destroy()
 
 def start():
 	maingui = MainGUI()
