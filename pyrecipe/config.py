@@ -10,7 +10,7 @@ import yaml
 import pprint
 
 
-__version__     = '0.7.0'
+__version__     = '0.7.1'
 __email__       = "m.k.miller@gmx.com"
 __scriptname__  = os.path.basename(sys.argv[0])
 

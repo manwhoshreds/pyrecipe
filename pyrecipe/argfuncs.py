@@ -30,8 +30,8 @@ def start_gui():
 def print_shopping_list(args):
 	
 	if args.random:
-		rr = recipe.ShoppingList()
-		rr.random_recipes(args.random)
+		rr = recipe.RandomShoppingList(args.random)
+		rr.print_random()
 	else:
 		menu_items = args.recipes	
 		if len(menu_items) == 0:

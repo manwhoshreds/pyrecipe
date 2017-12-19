@@ -44,23 +44,6 @@ def get_file_name(recipe):
 		else:
 			return recipe
 
-	
-
-
-def plural(word):
-	es_plurals = ['tomato',
-				  'roma tomato',
-				  'potato']
-	v_plurals = {'bay leaf': 'bay leaves',
-	             'sage leaf': 'sage leaves'}
-	
-	if word in es_plurals:
-		return word + 'es'
-	elif word in list(v_plurals.keys()):
-		return v_plurals[word]
-	else:
-		return word + 's'
-
 def list_recipes(ret=False):
 	"""List all recipes in the database"""
 	
@@ -94,5 +77,17 @@ def improper_to_mixed(fraction):
 	fract_part = num % den
 	return "{} {}/{}".format(whole_part, fract_part, den)
 
+class IngredientIterator:
+	
+	def __init__(self, iterable):
+		self.ingredients = iterable
+		pass
+
+	def __iter__(self):
+		pass
+
+	def __next__(self):
+		pass
+		raise StopIteration
 
 

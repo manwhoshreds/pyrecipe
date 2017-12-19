@@ -2,11 +2,9 @@
 from pyrecipe.recipe import *
 import pdb
 
-test = Ingredient("onion", 3, "teaspoon")
-test2 = Ingredient("onion", 3, "tablespoon", prep="diced", shop=True)
-print(str(test2))
 
-pdb.set_trace()
+
+
 def columnify(iterable):
     # First convert everything to its repr
     strings = [repr(x) for x in iterable]
@@ -26,4 +24,9 @@ def colprint(iterable, width=72):
     print(' ]')
 
 
-
+test = RandomShoppingList()
+ok = ShoppingList()
+ok.update('pesto')
+print(ok.__dict__)
+print(ok)
+print(test.__dict__)

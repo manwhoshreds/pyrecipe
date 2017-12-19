@@ -16,13 +16,14 @@ import sys
 import subprocess
 import sqlite3
 import datetime
+from numbers import Number
 # dubug
 import pdb
 
 from fractions import Fraction
 from lxml import etree
 from pint.errors import *
-from . import ureg, Q_
+from . import ureg, Q_, p
 
 from .utils import *
 from .config import *
@@ -32,7 +33,7 @@ from .config import __version__, __scriptname__, __email__
 color = Color()
 
 
-class Recipe(object):
+class Recipe:
 	"""
 		The recipe class is used to perform operations on
 		recipe source files such as print and save xml.
@@ -41,8 +42,6 @@ class Recipe(object):
 	def __init__(self, source, checkfile=True):
 		# TODO bad yaml breaks autocompletion for some reason
 		self.source = get_file_name(source)
-
-
 		try:	
 			with open(self.source, "r") as stream:
 				try:
@@ -54,14 +53,16 @@ class Recipe(object):
 			sys.exit("{}ERROR: {} is not a file. Exiting..."
 			         .format(color.ERROR, self.source))
 		
-		# cache the xml data
+		# cache the recipe data
 		self.xml_data = ''
+		self.xml_root = etree.Element('recipe')
+		self._scan_recipe()
+		
+		# mainkeys
+		self.mainkeys = self.recipe_data.keys()
 
 		# complete string representation of the recipe
 		self.recipe_string = ''
-		
-		# scan the recipe to cache all data
-		self._scan_recipe()
 		
 		# check file for syntax error before we can continue
 		self.check_file(silent=True)
@@ -96,55 +97,61 @@ class Recipe(object):
 			self.recipe_string += "{}. {}\n".format(index, step['step'])
 		return self.recipe_string
 
+	def __getitem__(self, key):
+		if key not in self.__dict__:
+			return ''
+		else:
+			return self.__dict__[key]
+
+			
 	def _scan_recipe(self):
 		"""used to extract all the values out of a recipe
 		source file while building xml at the same time
 
 		"""
-		self.root = etree.Element("recipe")
 		self.mainkeys = self.recipe_data.keys()
 		
 		# recipe name	
 		if 'recipe_name' in self.mainkeys:
 			self.recipe_name = self.recipe_data['recipe_name'] 
-			xml_recipe_name = etree.SubElement(self.root, "name")
+			xml_recipe_name = etree.SubElement(self.xml_root, "name")
 			xml_recipe_name.text = self.recipe_name
 
 		# recipe_uuid
 		if 'recipe_uuid' in self.mainkeys:
 			self.recipe_uuid = self.recipe_data['recipe_uuid']
-			xml_recipe_uuid = etree.SubElement(self.root, "uuid")
+			xml_recipe_uuid = etree.SubElement(self.xml_root, "uuid")
 			xml_recipe_uuid.text = self.recipe_uuid
 
 		# category
 		if 'category' in self.mainkeys:
 			self.category = self.recipe_data['category']
 			for entry in self.category:
-				xml_category = etree.SubElement(self.root, "category")
+				xml_category = etree.SubElement(self.xml_root, "category")
 				xml_category.text = str(entry)
 		
 		# author
 		if 'author' in self.mainkeys:
 			self.author = self.recipe_data['author']
-			xml_author = etree.SubElement(self.root, "author")
+			xml_author = etree.SubElement(self.xml_root, "author")
 			xml_author.text = self.author
 
 		# prep_time
 		if 'prep_time' in self.mainkeys:
 			self.prep_time = self.recipe_data['prep_time']
-			xml_prep_time = etree.SubElement(self.root, "prep_time")
+			xml_prep_time = etree.SubElement(self.xml_root, "prep_time")
 			xml_prep_time.text = str(self.prep_time)
 
 		# cook_time
 		if 'cook_time' in self.mainkeys:
 			self.cook_time = self.recipe_data['cook_time']
-			xml_cook_time = etree.SubElement(self.root, "cook_time")
+			xml_cook_time = etree.SubElement(self.xml_root, "cook_time")
 			xml_cook_time.text = str(self.cook_time)
 
 		# bake_time
 		if 'bake_time' in self.mainkeys:
 			self.bake_time = self.recipe_data['bake_time']
-			xml_bake_time = etree.SubElement(self.root, "bake_time")
+			xml_bake_time = etree.SubElement(self.xml_root, "bake_time")
 			xml_bake_time.text = str(self.bake_time)
 
 		# notes
@@ -154,7 +161,7 @@ class Recipe(object):
 		# price
 		if 'price' in self.mainkeys:
 			self.price = self.recipe_data['price']
-			xml_price = etree.SubElement(self.root, "price")
+			xml_price = etree.SubElement(self.xml_root, "price")
 			xml_price.text = str(self.price)
 		
 		# oven_temp
@@ -162,19 +169,19 @@ class Recipe(object):
 			self.oven_temp = self.recipe_data['oven_temp']
 			self.ot_amount = self.recipe_data['oven_temp']['amount']
 			self.ot_unit = self.recipe_data['oven_temp']['unit']
-			xml_oven_temp = etree.SubElement(self.root, "oven_temp")
+			xml_oven_temp = etree.SubElement(self.xml_root, "oven_temp")
 			xml_oven_temp.text = str(self.ot_amount) + " " + str(self.ot_unit)
 		
 		# dish_type
 		if 'dish_type' in self.mainkeys:
 			self.dish_type = self.recipe_data['dish_type']
-			xml_dish_type = etree.SubElement(self.root, "dish_type")
+			xml_dish_type = etree.SubElement(self.xml_root, "dish_type")
 			xml_dish_type.text = self.dish_type
 
 		# yields
 		if 'yields' in self.mainkeys:
 			self.yields = self.recipe_data['yields']
-			xml_yields = etree.SubElement(self.root, "yields")
+			xml_yields = etree.SubElement(self.xml_root, "yields")
 			for yeld in self.yields:
 				xml_servings = etree.SubElement(xml_yields, "servings")
 				xml_servings.text = str(yeld)
@@ -195,8 +202,37 @@ class Recipe(object):
 		if 'steps' in self.mainkeys:
 			self.steps = self.recipe_data['steps']
 		
-		self._cache_xml()
-	
+		xml_ingredients = etree.SubElement(self.xml_root, "ingredients")
+		for ingred in self.get_ingredients(): 	
+			xml_ingred = etree.SubElement(xml_ingredients, "ingred")
+			xml_ingred.text = ingred
+		
+		try:	
+			for item in self.alt_ingredients:
+				xml_alt_ingredients = etree.SubElement(self.xml_root, "alt_ingredients")
+				xml_alt_ingredients.set('alt_name', item.title())
+				
+				for ingred in self.get_ingredients(alt_ingred=item):
+					xml_alt_ingred = etree.SubElement(xml_alt_ingredients, "alt_ingred")
+					xml_alt_ingred.text = ingred
+		except AttributeError:
+			pass
+		
+		steps = etree.SubElement(self.xml_root, "steps")
+
+		for step in self.steps:
+			steps_of = etree.SubElement(steps, "step")
+			steps_of.text = step['step']
+			
+		result = etree.tostring(self.xml_root,
+							xml_declaration=True,
+							encoding='utf-8',
+							with_tail=False,
+							method='xml',
+							pretty_print=True).decode('utf-8')
+		
+		self.xml_data += result
+		
 	def check_file(self, silent=False):
 			"""function to validate Open Recipe Format files"""
 			
@@ -210,7 +246,7 @@ class Recipe(object):
 			for item in self.ingredient_data:
 				try:	
 					amount = item['amounts'][0].get('amount', None)
-					if isinstance(amount, int) or isinstance(amount, float):
+					if isinstance(amount, Number):
 						pass
 					else:
 						failure_amounts.append(item['name'])
@@ -399,60 +435,41 @@ class Recipe(object):
 		# print steps	
 		for index, step in enumerate(self.steps, start=1):
 			print("{}{}.{} {}".format(color.NUMBER, index, color.NORMAL, step['step']))
+
+
+class IngredDict(dict):
+	
+	def __init__(self, *args):
+		dict.__init__(self, *args)
+
+	def __getitem__(self):
+		return self.__dict__[key]
+
+	def __missing__(self):
+		print("say what????")
 	
 	
-	def _cache_xml(self):
-		"""
-			save the xml representation of the recipe
-			for exportation later
-		"""
-		# normal ingredients (i.e. not alternative ingredients as can be found below)
-		xml_ingredients = etree.SubElement(self.root, "ingredients")
-		for ingred in self.get_ingredients(): 	
-			xml_ingred = etree.SubElement(xml_ingredients, "ingred")
-			xml_ingred.text = ingred
-		
-		try:	
-			for item in self.alt_ingredients:
-				xml_alt_ingredients = etree.SubElement(self.root, "alt_ingredients")
-				xml_alt_ingredients.set('alt_name', item.title())
-				
-				for ingred in self.get_ingredients(alt_ingred=item):
-					xml_alt_ingred = etree.SubElement(xml_alt_ingredients, "alt_ingred")
-					xml_alt_ingred.text = ingred
-		except AttributeError:
-			pass
-		
-		steps = etree.SubElement(self.root, "steps")
-
-		for step in self.steps:
-			steps_of = etree.SubElement(steps, "step")
-			steps_of.text = step['step']
-			
-		result = etree.tostring(self.root,
-							xml_declaration=True,
-							encoding='utf-8',
-							with_tail=False,
-							method='xml',
-							pretty_print=True)
-		
-		self.xml_data += result.decode('utf-8')
-
-
 class ShoppingList:
-	# TODO Lots of work to do in the ShoppingList cls in general
 	"""Class to create and display a shopping list"""
-	shopping_dict = {}
-	shopping_list = []
-	recipe_names = []
-	dressing_names = []
 	
 	def __init__(self):
-		self.xml_data = ''
+		# Get xml ready
+		self.xml_root = etree.Element('shopping_list')
+		date = datetime.date
+		today = date.today()
+		date = etree.SubElement(self.xml_root, "date")
+		date.text = str(today)
+		self.xml_maindish_names = etree.SubElement(self.xml_root, "main_dishes")
+		self.xml_salad_dressing = etree.SubElement(self.xml_root, "salad_dressing")
+		self.xml_ingredients = etree.SubElement(self.xml_root, "ingredients")
+	
+		self.shopping_dict = {}
+		self.shopping_list = []
+		self.recipe_names = []
+		self.dressing_names = []
 	
 	def _proc_ingreds(self, source, alt_ingred=""):
-		#TODO-> Serious flaw in this logic, work on it
-		sd = ShoppingList.shopping_dict
+		sd = self.shopping_dict
 		r = Recipe(source)
 		if alt_ingred:
 			ingreds = r.alt_ingredient_data[alt_ingred]
@@ -483,24 +500,14 @@ class ShoppingList:
 		"""Write the shopping list to an xml file after
 		   building.
 		"""
-		date = datetime.date
-		today = date.today()
-		root = etree.Element("shopping_list")	
-		sd = ShoppingList.shopping_dict
-		
-		date = etree.SubElement(root, "date")
-		date.text = str(today)
-		xml_maindish_names = etree.SubElement(root, "main_dishes")
-		xml_salad_dressing = etree.SubElement(root, "salad_dressing")
-		xml_ingredients = etree.SubElement(root, "ingredients")
 		
 		# Add recipe names to the tree
-		for item in ShoppingList.recipe_names:
+		for item in self.recipe_names:
 			xml_main_dish = etree.SubElement(xml_maindish_names, "name")
 			xml_main_dish.text = str(item)
 		
 		# the salad dressing names
-		for item in ShoppingList.dressing_names:
+		for item in self.dressing_names:
 			xml_dressing_name = etree.SubElement(xml_salad_dressing, "name")
 			xml_dressing_name.text = str(item)
 
@@ -516,14 +523,14 @@ class ShoppingList:
 								encoding='utf-8',
 								with_tail=False,
 								method='xml',
-								pretty_print=True)
+								pretty_print=True).decode("utf-8")
 		
 		print("\n{}Writing shopping list to {}{}".format(color.INFORM, SHOPPING_LIST_FILE, color.NORMAL))
 		with open(SHOPPING_LIST_FILE, "w") as f:
 			f.write(result.decode("utf-8"))
 	
 	def return_list(self):
-		return ShoppingList.shopping_dict
+		return self.shopping_dict
 
 	def update(self, source):
 		"""Return a shopping list of ingredients from a 
@@ -532,9 +539,9 @@ class ShoppingList:
 		"""
 		r = Recipe(source)
 		if r.dish_type == "salad dressing":
-			ShoppingList.dressing_names.append(r.recipe_name)
+			self.dressing_names.append(r.recipe_name)
 		else:
-			ShoppingList.recipe_names.append(r.recipe_name)
+			self.recipe_names.append(r.recipe_name)
 
 		
 		self._proc_ingreds(source)
@@ -546,9 +553,9 @@ class ShoppingList:
 			pass
 
 	def	print_list(self, write=False):
-		mdn = ShoppingList.recipe_names
-		sd = ShoppingList.shopping_dict
-		dn = ShoppingList.dressing_names
+		mdn = self.recipe_names
+		sd = self.shopping_dict
+		dn = self.dressing_names
 		
 		print("Recipes:\n")
 		for item in mdn:
@@ -560,6 +567,14 @@ class ShoppingList:
 			for item in dn:
 				print(item)
 			print("\n{}".format(S_DIV))
+		
+		result = etree.tostring(self.xml_root,
+								xml_declaration=True,
+								encoding='utf-8',
+								with_tail=False,
+								method='xml',
+								pretty_print=True).decode("utf-8")
+		print(result)
 
 		# Print list	
 		PP.pprint(sd)
@@ -569,28 +584,38 @@ class ShoppingList:
 		if write:	
 			self.write_to_xml()
 	
-	def random_recipes(self, random_count=RAND_RECIPE_COUNT):
-		"""Return random recipes and build a shopping list of ingredients needed"""	
-		#TODO-> Use the shopping list class to make this shopping list too.
 
-		sl = ShoppingList()
+class RandomShoppingList(ShoppingList):
+	"""The Random Shopping List class
+
+	Used to create a shopping list from 
+	a random sample of recipes
+	given as an iterger argument.
+	"""
+	
+	def __init__(self, count=RAND_RECIPE_COUNT):
+		super().__init__()
+		self.count = count
 		try:
-			recipe_sample = random.sample(MAINDISH_NAMES, random_count)
-			salad_dressing_random = random.choice(DRESSING_NAMES)
+			self.recipe_sample = random.sample(MAINDISH_NAMES, self.count)
+			self.salad_dressing_random = random.choice(DRESSING_NAMES)
 		except ValueError:
 			sys.exit("{}ERROR: Random count is higher than "
 				     "the amount of recipes available ({}). "
 				     "Please enter a lower number."
 				     .format(color.ERROR, str(len(MAINDISH_NAMES))))
 		
-		sl.update(salad_dressing_random)
-		for dish in recipe_sample:
-			sl.update(dish)
-		
+		self.update(self.salad_dressing_random)
+		for dish in self.recipe_sample:
+			self.update(dish)
+	
+	def print_random(self):
 		self.print_list()
+	
+		
 
 
-class Ingredient(object):
+class Ingredient:
 	"""The ingredient class is used to build an ingredietns object
 	
 	:param ingredient: name of the ingredient e.g onion
@@ -600,72 +625,60 @@ class Ingredient(object):
 	:param prep: prep string if any, such as diced, chopped.. etc...
 	"""
 
-	def __init__(self, ingredient, amount=0, size='', unit='', prep='', str_format="normal"):
-		self.ingredient = ingredient
-		self.amount = amount
-		self.size = size
-		self.unit = unit
-		self.prep = prep
+	def __init__(self, ingredient, amount=1, size='', unit='', prep=''):
+		self._ingredient = ingredient
+		self._amount = amount
+		self._size = size
+		self._unit = unit
+		self._prep = prep
 		self.culinary_unit = False
-		if self.unit in CULINARY_UNITS:
+		if self._unit in CULINARY_UNITS:
 			self.culinary_unit = True
 	
-	#def __repr__(self):
-	#	return "<Ingredient({}, '{}', '{}', '{}', '{}')>".format(self.amount, 
-	#													   self.size,
-	#													   self.unit, 
-	#													   self.ingredient,
-	#													   self.prep)
-	#	
-		
-			
-
-
 	def __str__(self):
 		
-		if self.ingredient == 's&p':
+		if self._ingredient == 's&p':
 			return "Salt and pepper to taste"
-		elif self.unit == 'taste':
-			return "{} to taste".format(self.ingredient.capitalize())
-		elif self.unit == 'pinch':
-			return "Pinch of {}".format(self.ingredient)
-		elif self.unit == 'splash':
-			return "Splash of {}".format(self.ingredient)
+		elif self._unit == 'taste':
+			return "{} to taste".format(self._ingredient.capitalize())
+		elif self._unit == 'pinch':
+			return "Pinch of {}".format(self._ingredient)
+		elif self._unit == 'splash':
+			return "Splash of {}".format(self._ingredient)
 		else:
 		
-			string = "{} {} {} {}".format(self._get_amount(self.amount), self.size, 
-											  self._get_unit(), self._get_ingredient())
+			string = "{} {} {} {}".format(self.get_amount(self._amount), self._size, 
+											  self.get_unit(), self.get_ingredient())
 			# the previous line adds unwanted spaces if values are absent
 			# we simply clean that up here.
 			cleaned_string = " ".join(string.split())
-			if self.prep is '':
+			if self._prep is '':
 				return cleaned_string
 			else:
-				cleaned_string += ", " + self.prep
+				cleaned_string += ", " + self._prep
 				return cleaned_string
 			
 	def __add__(self, other):
 		try:
-			this = num(self.amount) * ureg[self.unit]
-			that = num(other.amount) * ureg[other.unit]
+			this = num(self._amount) * ureg[self._unit]
+			that = num(other._amount) * ureg[other._unit]
 			addition = this + that
 			test = str(addition).split()
-			return [self._get_amount(test[0]), test[1]]
+			return [self.get_amount(test[0]), test[1]]
 		except DimensionalityError:
-			return [self.amount, self.unit]
+			return [self._amount, self._unit]
 
-	#@property
-	#def ingredient(self):
-	#	return self.ingredient
+	def __getitem__(self, key):
+		#return self.__dict__[key]
+		pass
 
-	def _get_ingredient(self):
-		if self.amount > 1 and self.unit == 'each':
-			return plural(self.ingredient)
+	def get_ingredient(self):
+		if self._unit is '':
+			return p.plural(self._ingredient, self._amount)
 		else:
-			return self.ingredient
+			return self._ingredient
 
-	
-	def _get_amount(self, amount):
+	def get_amount(self, amount):
 		if amount == .3:
 			return '1/3'
 		elif amount == .6:
@@ -677,21 +690,21 @@ class Ingredient(object):
 		else:
 			return amount
 
-	def _get_unit(self):
-		if self.unit == 'each':
+	def get_unit(self):
+		if self._unit == 'each':
 			return ''
-		elif self.amount > 1:
-			if self.unit in CAN_UNITS:
-				return "({})".format(plural(self.unit))
+		elif self._amount > 1:
+			if self._unit in CAN_UNITS:
+				return "({})".format(p.plural(self._unit))
 			else:
-				return plural(self.unit)
-		elif self.amount <= 1:
-			if self.unit in CAN_UNITS:
-				return "({})".format(self.unit)
+				return p.plural(self._unit)
+		elif self._amount <= 1:
+			if self._unit in CAN_UNITS:
+				return "({})".format(self._unit)
 			else:
-				return self.unit
+				return self._unit
 		else:
-			return self.unit
+			return self._unit
 
 
 class DataBase:
@@ -791,6 +804,13 @@ def stats(verb=0):
 		print("Recipe data directory: {}".format(RECIPE_DATA_DIR))
 		print("Recipe xml directory: {}".format(RECIPE_XML_DIR))
 		print("Default random recipe: {}".format(RAND_RECIPE_COUNT))
+
+	r = Recipe('pesto')
+	test = r.ingredient_data
+	ok = IngredientIterator(test)
+	print(type(ok))
+	for item in ok:
+		print(item)
 
 
 

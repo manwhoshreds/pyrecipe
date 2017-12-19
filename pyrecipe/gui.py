@@ -34,12 +34,15 @@ class MainGUI(Tk):
 		for item in sorted(RECIPE_NAMES):
 			recipe_listbox.insert(END, item)
 		recipe_listbox.bind("<Double-Button-1>", self.onDoubleClk)	
+		recipe_listbox.bind("<Button-3>", self.onRightClk)
 		recipe = recipe_listbox.curselection()
 		
 		self.recipe_textbox = Text(self, height=50, width=200, font=('ubuntu', 16))
 		self.recipe_textbox.pack(side=LEFT, fill=X)
 	
-
+	def onRightClk(self, event):
+		Warn(msg="yup its working")
+	
 	def onDoubleClk(self, event):
 		# State Normal on click on disabled when we finish building text
 		# this is nescassary to for text to be read-only
@@ -195,9 +198,9 @@ class AddRecipe(Toplevel):
 	
 	def __init__(self):
 		Toplevel.__init__(self)
-		self.geometry('700x700+400+400')
+		self.geometry('700x700+200+200')
 		self.title("Add a recipe")
-		self._init_notebook()
+		self._init_notebook(width=690, height=600)
 		cancel = Button(self, text='Cancel', command=self.destroy)
 		cancel.pack(side=RIGHT)
 		save = Button(self, text='Save', command=self.save_recipe)
@@ -207,17 +210,18 @@ class AddRecipe(Toplevel):
 		notebook = Notebook(self)
 		
 		# recipe
-		metadata = Frame(notebook, **kw)
-		self.rn_var = StringVar(metadata)
-		recipe_name = Label(metadata, text='Recipe Name')
-		recipe_name.grid(row=1, column=1)
-		rn_entry = Entry(metadata, textvariable=self.rn_var)
-		rn_entry.grid(row=1, column=2)
-		dish_type = Label(metadata, text='Dish Type')
-		dish_type.grid(row=2, column=1)
+		recipe = Frame(notebook, relief=GROOVE)
+		recipe.grid(padx=5, pady=5)
+		self.rn_var = StringVar(recipe)
+		recipe_name = Label(recipe, text='Recipe Name')
+		recipe_name.grid(padx=5, pady=5, row=1, column=1)
+		rn_entry = Entry(recipe, textvariable=self.rn_var)
+		rn_entry.grid(padx=5, pady=5, row=1, column=2)
+		dish_type = Label(recipe, text='Dish Type')
+		dish_type.grid(padx=5, pady=5, row=2, column=1)
 		self.dt_var = StringVar(self)
 		self.dt_var.set('dish')
-		dt_options = OptionMenu(metadata, self.dt_var, *DISH_TYPES)
+		dt_options = OptionMenu(recipe, self.dt_var, *DISH_TYPES)
 		dt_options.grid(row=2, column=2)
 		
 		# ingredients	
@@ -228,35 +232,43 @@ class AddRecipe(Toplevel):
 		self.prep_var = StringVar(ingredients)
 		
 
-		ingred_label = Label(ingredients, text='Ingredient')
-		ingred_label.grid(row=0, column=0)
-		self.ingred_entry = Entry(ingredients, textvariable=self.ingred_var)
-		self.ingred_entry.grid(row=1, column=0)
-		amount_label = Label(ingredients, text='Amount')
-		amount_label.grid(row=2, column=0)
-		self.amount_entry = Entry(ingredients, textvariable=self.amount_var)
-		self.amount_entry.grid(row=3, column=0)
-		unit_label = Label(ingredients, text='Unit')
-		unit_label.grid(row=4, column=0)
-		self.unit_entry = Entry(ingredients, textvariable=self.unit_var)
-		self.unit_entry.grid(row=5, column=0)
-		prep_label = Label(ingredients, text='Preparation')
-		prep_label.grid(row=6, column=0)
-		self.prep_entry = Entry(ingredients, textvariable=self.prep_var)
-		self.prep_entry.grid(row=7, column=0)
-		prep_tooltip = ToolTip(self.prep_entry, "this is just a tip")
+		ingred_label = Label(ingredients, text='Add ingredient: ')
+		ingred_label.grid(padx=3, row=0, column=0)
+		self.ingred_entry = Entry(ingredients, width=60, textvariable=self.ingred_var)
+		self.ingred_entry.grid(padx=3, row=0, column=1)
+		#amount_label = Label(ingredients, text='Amount')
+		#amount_label.grid(row=2, column=0)
+		#self.amount_entry = Entry(ingredients, textvariable=self.amount_var)
+		#self.amount_entry.grid(row=3, column=0)
+		#unit_label = Label(ingredients, text='Unit')
+		#unit_label.grid(row=4, column=0)
+		#self.unit_entry = Entry(ingredients, textvariable=self.unit_var)
+		#self.unit_entry.grid(row=5, column=0)
+		#prep_label = Label(ingredients, text='Preparation')
+		#prep_label.grid(row=6, column=0)
+		#self.prep_entry = Entry(ingredients, textvariable=self.prep_var)
+		#self.prep_entry.grid(row=7, column=0)
+		#prep_tooltip = ToolTip(self.prep_entry, "this is just a tip")
 		add_ingredient = Button(ingredients, text='add', command=self.add_ingredient)
-		add_ingredient.grid(row=8, column=0)
+		add_ingredient.grid(row=0, column=2)
 		
-		self.ingredient_textbox = Text(ingredients, 
-									   font=('ubuntu', 16))
-		self.ingredient_textbox.grid(row=0, rowspan=25, column=1)
+		tree = Treeview(ingredients, columns=("A", "B", "C", "D"))
+		tree['show'] = 'headings'
+		tree.heading("A", text='Amount')
+		tree.column("A", minwidth=0, width=100, stretch=NO)
+		tree.heading("B", text='Unit')
+		tree.column("B", minwidth=0, width=100, stretch=NO)
+		tree.heading("C", text='Ingredients')
+		tree.column("C", minwidth=0, width=300, stretch=NO)
+		tree.heading("D", text='Prep')
+		tree.column("D", minwidth=0, width=100, stretch=NO)
+		tree.grid(row=1, column=0, columnspan=3)
 
 		# method
 		method = Frame(notebook, **kw)
 		
 		
-		notebook.add(metadata, text='Recipe')
+		notebook.add(recipe, text='Recipe')
 		notebook.add(ingredients, text='Ingredients')
 		notebook.add(method, text='Method')
 		notebook.pack()
