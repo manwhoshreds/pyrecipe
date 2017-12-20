@@ -618,44 +618,46 @@ class RandomShoppingList(ShoppingList):
 class Ingredient:
 	"""The ingredient class is used to build an ingredietns object
 	
-	:param ingredient: name of the ingredient e.g onion
+	:param name: name of the ingredient e.g onion
 	:param amount: amount of ingredient
 	:param size: size of ingredient
 	:param unit: ingredient unit such as tablespoon
 	:param prep: prep string if any, such as diced, chopped.. etc...
 	"""
 
-	def __init__(self, ingredient, amount=1, size='', unit='', prep=''):
-		self._ingredient = ingredient
+	def __init__(self, name, amount=1, size='', unit='', prep=''):
+		self._name = name
 		self._amount = amount
-		self._size = size
+		self.size = size
 		self._unit = unit
-		self._prep = prep
-		self.culinary_unit = False
-		if self._unit in CULINARY_UNITS:
-			self.culinary_unit = True
+		self.prep = prep
+		
+		self.name = self.get_name()
+		self.amount = self.get_amount()
+		self.unit = self.get_unit()
+		
 	
 	def __str__(self):
 		
-		if self._ingredient == 's&p':
+		if self._name == 's&p':
 			return "Salt and pepper to taste"
 		elif self._unit == 'taste':
-			return "{} to taste".format(self._ingredient.capitalize())
+			return "{} to taste".format(self._name.capitalize())
 		elif self._unit == 'pinch':
-			return "Pinch of {}".format(self._ingredient)
+			return "Pinch of {}".format(self._name)
 		elif self._unit == 'splash':
-			return "Splash of {}".format(self._ingredient)
+			return "Splash of {}".format(self._name)
 		else:
 		
-			string = "{} {} {} {}".format(self.get_amount(self._amount), self._size, 
-											  self.get_unit(), self.get_ingredient())
+			string = "{} {} {} {}".format(self.amount, self.size, 
+											  self.unit, self.name)
 			# the previous line adds unwanted spaces if values are absent
 			# we simply clean that up here.
 			cleaned_string = " ".join(string.split())
-			if self._prep is '':
+			if self.prep is '':
 				return cleaned_string
 			else:
-				cleaned_string += ", " + self._prep
+				cleaned_string += ", " + self.prep
 				return cleaned_string
 			
 	def __add__(self, other):
@@ -669,26 +671,25 @@ class Ingredient:
 			return [self._amount, self._unit]
 
 	def __getitem__(self, key):
-		#return self.__dict__[key]
-		pass
+		return self.__dict__[key]
 
-	def get_ingredient(self):
+	def get_name(self):
 		if self._unit is '':
-			return p.plural(self._ingredient, self._amount)
+			return p.plural(self._name, self._amount)
 		else:
-			return self._ingredient
+			return self._name
 
-	def get_amount(self, amount):
-		if amount == .3:
+	def get_amount(self):
+		if self._amount == .3:
 			return '1/3'
-		elif amount == .6:
+		elif self._amount == .6:
 			return '1/6'
-		elif isinstance(amount, float) and amount < 1:
-			return Fraction(amount)
-		elif isinstance(amount, float) and amount > 1:
-			return improper_to_mixed(str(Fraction(amount)))
+		elif isinstance(self._amount, float) and self._amount < 1:
+			return Fraction(self._amount)
+		elif isinstance(self._amount, float) and self._amount > 1:
+			return improper_to_mixed(str(Fraction(self._amount)))
 		else:
-			return amount
+			return self._amount
 
 	def get_unit(self):
 		if self._unit == 'each':
@@ -726,7 +727,8 @@ def template(recipe_name):
 		print("Interactive Template Builder. Press Ctrl-c to abort.\n")
 		template = ""
 		template += "recipe_name: {}\n".format(recipe_name)
-		# check if file exist, lets catch this early so we can exit before entering in all the info
+		# check if file exist, lets catch this early so we 
+		# can exit before entering in all the info
 		file_name = get_file_name(recipe_name)
 		if os.path.isfile(file_name):
 			print("File with this name already exist in directory exiting...")

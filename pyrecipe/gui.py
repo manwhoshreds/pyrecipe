@@ -8,6 +8,8 @@ from tkinter import *
 from tkinter.ttk import *
 from .config import *
 from . import *
+from numbers import Number
+
 
 import pyrecipe.recipe as recipe
 
@@ -18,16 +20,22 @@ class MainGUI(Tk):
 
 	def __init__(self, *args, **kwargs):
 		Tk.__init__(self, *args, **kwargs)
-		self.fleft = Frame()
-		self.fleft.pack(side=LEFT)
 		self.title('Pyrecipe - The python recipe management program')
-		new_recipe = Button(self.fleft, text="New", command=AddRecipe)
-		new_recipe.pack()
 		self._build_menubar()
-		recipe_listbox = Listbox(self.fleft, height=50, width=30, selectmode=SINGLE, bg='white', font=('ubuntu', 13))
-		entry = AutoEntry(RECIPE_NAMES, self.fleft, width=30)
-		entry.pack(side=TOP, fill=Y)
-		scrollb = Scrollbar(self.fleft, command=recipe_listbox.yview)
+
+		self.top_bar = Frame()
+		self.top_bar.pack(fill=X)
+		new_recipe = Button(self.top_bar, text="New", command=AddRecipe)
+		new_recipe.pack(side=LEFT)
+		
+		self.left_pane = Frame()
+		self.left_pane.pack(side=LEFT)
+		
+		recipe_listbox = Listbox(self.left_pane, height=50, width=30, selectmode=SINGLE, bg='white', font=('ubuntu', 13))
+
+		entry = AutoEntry(RECIPE_NAMES, self.left_pane)
+		entry.pack(side=TOP, fill=X)
+		scrollb = Scrollbar(self.left_pane, command=recipe_listbox.yview)
 		scrollb.pack(side=RIGHT, fill=Y)
 		recipe_listbox.configure(yscrollcommand=scrollb.set)
 		recipe_listbox.pack(side=LEFT)
@@ -149,6 +157,7 @@ class AutoEntry(Entry):
                 self.lb.delete(0, END)
                 for w in words:
                     self.lb.insert(END,w)
+                    recipe_listbox.insert(END, w)
             else:
                 if self.lb_up:
                     self.lb.destroy()
@@ -194,13 +203,13 @@ class AutoEntry(Entry):
 
 class AddRecipe(Toplevel):
 
-	ingredients = []
 	
 	def __init__(self):
 		Toplevel.__init__(self)
-		self.geometry('700x700+200+200')
+		self.ingredients = {}
+		self.geometry('800x700+150+150')
 		self.title("Add a recipe")
-		self._init_notebook(width=690, height=600)
+		self._init_notebook(width=700, height=600)
 		cancel = Button(self, text='Cancel', command=self.destroy)
 		cancel.pack(side=RIGHT)
 		save = Button(self, text='Save', command=self.save_recipe)
@@ -227,42 +236,25 @@ class AddRecipe(Toplevel):
 		# ingredients	
 		ingredients = Frame(notebook, **kw)
 		self.ingred_var = StringVar(ingredients)
-		self.amount_var = StringVar(ingredients)
-		self.unit_var = StringVar(ingredients)
-		self.prep_var = StringVar(ingredients)
 		
-
 		ingred_label = Label(ingredients, text='Add ingredient: ')
-		ingred_label.grid(padx=3, row=0, column=0)
+		ingred_label.grid(padx=5, row=0, column=0)
 		self.ingred_entry = Entry(ingredients, width=60, textvariable=self.ingred_var)
-		self.ingred_entry.grid(padx=3, row=0, column=1)
-		#amount_label = Label(ingredients, text='Amount')
-		#amount_label.grid(row=2, column=0)
-		#self.amount_entry = Entry(ingredients, textvariable=self.amount_var)
-		#self.amount_entry.grid(row=3, column=0)
-		#unit_label = Label(ingredients, text='Unit')
-		#unit_label.grid(row=4, column=0)
-		#self.unit_entry = Entry(ingredients, textvariable=self.unit_var)
-		#self.unit_entry.grid(row=5, column=0)
-		#prep_label = Label(ingredients, text='Preparation')
-		#prep_label.grid(row=6, column=0)
-		#self.prep_entry = Entry(ingredients, textvariable=self.prep_var)
-		#self.prep_entry.grid(row=7, column=0)
-		#prep_tooltip = ToolTip(self.prep_entry, "this is just a tip")
+		self.ingred_entry.grid(padx=5, row=0, column=1)
 		add_ingredient = Button(ingredients, text='add', command=self.add_ingredient)
 		add_ingredient.grid(row=0, column=2)
 		
-		tree = Treeview(ingredients, columns=("A", "B", "C", "D"))
-		tree['show'] = 'headings'
-		tree.heading("A", text='Amount')
-		tree.column("A", minwidth=0, width=100, stretch=NO)
-		tree.heading("B", text='Unit')
-		tree.column("B", minwidth=0, width=100, stretch=NO)
-		tree.heading("C", text='Ingredients')
-		tree.column("C", minwidth=0, width=300, stretch=NO)
-		tree.heading("D", text='Prep')
-		tree.column("D", minwidth=0, width=100, stretch=NO)
-		tree.grid(row=1, column=0, columnspan=3)
+		self.tree = Treeview(ingredients, height="25", columns=("A", "B", "C", "D"))
+		self.tree['show'] = 'headings'
+		self.tree.heading("A", text='Amount')
+		self.tree.column("A", minwidth=0, width=120, stretch=NO)
+		self.tree.heading("B", text='Unit')
+		self.tree.column("B", minwidth=0, width=120, stretch=NO)
+		self.tree.heading("C", text='Ingredients')
+		self.tree.column("C", minwidth=0, width=350, stretch=NO)
+		self.tree.heading("D", text='Prep')
+		self.tree.column("D", minwidth=0, width=150, stretch=NO)
+		self.tree.grid(padx=5, row=1, column=0, columnspan=3)
 
 		# method
 		method = Frame(notebook, **kw)
@@ -283,7 +275,7 @@ class AddRecipe(Toplevel):
 			recipe_data += 'recipe_name: {}'.format(self.rn_var.get())
 			recipe_data += '\ndish_type: {}'.format(self.dt_var.get())
 			recipe_data += '\ningredients:'
-			for item in AddRecipe.ingredients:
+			for item in self.ingredients:
 				recipe_data += '\n  - name: {}'.format(item['name'])
 				recipe_data += '\n    amounts:'
 				recipe_data += '\n      - amount: {}'.format(item['amounts'][0]['amount'])
@@ -295,32 +287,23 @@ class AddRecipe(Toplevel):
 			self.destroy()
 
 	def add_ingredient(self):
-		if not self.ingred_var.get():
-			Warn(msg="You must supply an Ingredient")
-		elif not self.unit_var.get():
-			Warn(msg="You must supply a unit")
-		else:
-			ingred_string = "{} {} {} {}\n".format(self.amount_var.get(),
-												 self.unit_var.get(),
-												 self.ingred_var.get(),
-												 self.prep_var.get()
-												)
-			
-			ingred = {}
-			ingred['name'] = self.ingred_var.get()
-			ingred['amounts'] = [{'amount': self.amount_var.get(), 'unit': self.unit_var.get()}]
-			if self.prep_var.get():
-				ingred['prep'] = self.prep_var.get()
+		ingred_string = self.ingred_var.get()
+		ingred_list = convert_ingred_string_to_list(ingred_string)
+		self.ingred_entry.delete(0, 'end')
+		self.tree.insert('', 'end', text='test', values=(ingred_list))
 
-
-			AddRecipe.ingredients.append(ingred)
-			print(AddRecipe.ingredients)
-			
-			self.ingred_entry.delete(0, 'end')
-			self.amount_entry.delete(0, 'end')
-			self.unit_entry.delete(0, 'end')
-			self.prep_entry.delete(0, 'end')
-			self.ingredient_textbox.insert(END, ingred_string)
+def convert_ingred_string_to_list(string):
+	amount = ''
+	unit = ''
+	name = ''
+	prep = ''
+	ingred_list = string.split()	
+	print(ingred_list[0])
+	if isinstance(ingred_list[0], Number):
+		amount = ingred_list[0]
+	if 'tablespoon' in ingred_list:
+		unit = 'tablespoon'
+	return [amount, unit, name, prep]
 
 
 class Warn(Toplevel):
@@ -335,7 +318,10 @@ class Warn(Toplevel):
 		
 		button = Button(self, text="Ok", command=self.destroy)
 		button.pack(side=BOTTOM)
-		#self.sound()
+		self.play_sound()
+
+	def play_sound(self):
+		self.sound()
 		
 	def sound(self):
 		os.system('play -q /usr/share/sounds/KDE-Sys-Warning.ogg')
