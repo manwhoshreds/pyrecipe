@@ -262,7 +262,7 @@ class Recipe:
 			for item in self.ingredient_data:
 				try:
 					unit = item['amounts'][0]['unit']
-					if unit not in ALLOWED_INGRED_UNITS:
+					if unit not in INGRED_UNITS:
 						failure_units.append(unit)
 						failed = True
 				except KeyError:
@@ -761,7 +761,7 @@ def template(recipe_name):
 		for item in range(ingred_amount):
 			template += "    - name:\n      amounts:\n        - amount:\n          unit:\n"
 		template += "steps:\n  - step: Coming soon"
-		template += "\n# vim: set expandtab ts=4 syntax=yaml:"
+		template += VIM_MODE_LINE
 		print("Writing to file... " + file_name)
 		with open(file_name, "w") as tmp:
 			tmp.write(str(template))

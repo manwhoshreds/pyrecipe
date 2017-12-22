@@ -24,6 +24,7 @@ CONFIG_FILE     = CONFIG_DIR + 'config'
 DB_FILE         = CONFIG_DIR + 'recipe.db'
 RECIPE_DATA_DIR = CONFIG_DIR + 'recipe_data/'
 EDITOR          = os.getenv('EDITOR', 'nano')
+VIM_MODE_LINE   = "\n# vim: set expandtab ts=4 syntax=yaml:"
 #HASH_FILE      = os.path.expanduser('~/.local/')
 
 with open(CONFIG_FILE, "r") as stream:
@@ -82,7 +83,8 @@ PINT_UNDEFINED_UNITS = ['box', 'taste', 'inch piece', 'stick', 'bottle', 'each',
 # its not considered professional recipe writing
 # to use two numbers in a row, for example "1 32 ounce can"
 CAN_UNITS            = ['32 ounce can', '16 ounce can', '15 ounce can', '8.5 ounce can', '8 ounce can', '2 pound package']
-ALLOWED_INGRED_UNITS = CAN_UNITS + CULINARY_UNITS + PINT_UNDEFINED_UNITS
+INGRED_UNITS         = CAN_UNITS + CULINARY_UNITS + PINT_UNDEFINED_UNITS
+SIZE_STRINGS         = ['large', 'medium', 'small']
 PREP_TYPES           = ['softened', 'diced', 'finely diced', 'shredded', 'tightly packed', 'drained', 'deviened', 
 						'cubed', 'chopped', 'finely chopped', 'freshly ground', 'very finely chopped', 'minced', 
 						'finely minced', 'peeled and finely minced', 'sliced', 'grated', 'squeezed', 'freshly grated', 
