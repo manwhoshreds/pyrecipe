@@ -12,182 +12,178 @@ import pdb
 #pdb.set_trace()
 
 def recipe_completer(**kwargs):
-	recipe_list = [x.lower() for x in RECIPE_NAMES]
-	return recipe_list
+    recipe_list = [x.lower() for x in RECIPE_NAMES]
+    return recipe_list
 	
-
 def parse_args():
-	# TODO argcomplete is way too slow, figure out how to speed it up	
+    # TODO argcomplete is way too slow, figure out how to speed it up	
 
-	parser = argparse.ArgumentParser(
-		description="Recipe_tool has tab completion functionality. After adding a recipe, \
-					 simply run recipe_tool print <TAB><TAB> to view whats avialable.",
-		add_help=False
-	)
-	parser.add_argument(
-		"-h", "--help",
-		action='help',
-		help='Show this help message and quit'
-		
-	)
-	parser.add_argument(
-		"-v", 
-		"--verbose", 
-		dest="verbose", 
-		action="count", 
-		default=0,
-		help="Verbose output. Use -vv to increase verbosity"
-	)
-	parser.add_argument(
-		"-V", 
-		"--version", 
-		dest="version", 
-		action="store_true", 
-		help="Print version and exit"
-	)
-	parser.add_argument(
-		"-g",
-		"--gui-mode",
-		dest="guimode",
-		action="store_true",
-		help="Start the gui frontend to pyrecipe"
-	)
+    parser = argparse.ArgumentParser(
+        description="Recipe_tool has tab completion functionality. After adding a recipe, \
+                     simply run recipe_tool print <TAB><TAB> to view whats available.",
+        add_help=False
+    )
+    parser.add_argument(
+        "-h", "--help",
+        action='help',
+        help='Show this help message and quit'
+    )
+    parser.add_argument(
+        "-v", 
+        "--verbose", 
+        dest="verbose", 
+        action="count", 
+        default=0,
+        help="Verbose output. Use -vv to increase verbosity"
+    )
+    parser.add_argument(
+        "-V", 
+        "--version", 
+        dest="version", 
+        action="store_true", 
+        help="Print version and exit"
+    )
+    parser.add_argument(
+        "-g",
+        "--gui-mode",
+        dest="guimode",
+        action="store_true",
+        help="Start the gui frontend to pyrecipe"
+    )
 
-	# subparsers start here
-	subparser = parser.add_subparsers()
+    # subparsers start here
+    subparser = parser.add_subparsers()
 
-	# recipe_tool print
-	parser_print = subparser.add_parser("print", help="Print the recipe to screen")
-	parser_print.add_argument("source", help="Recipe to print").completer = recipe_completer
-	parser_print.set_defaults(func=argfunc.print_recipe)
-	
-	# recipe_tool list
-	parser_list = subparser.add_parser("list", help="List recipes")
-	parser_list.set_defaults(func=argfunc.print_list)
+    # recipe_tool print
+    parser_print = subparser.add_parser("print", help="Print the recipe to screen")
+    parser_print.add_argument("source", help="Recipe to print").completer = recipe_completer
+    parser_print.set_defaults(func=argfunc.print_recipe)
+    
+    # recipe_tool list
+    parser_list = subparser.add_parser("list", help="List recipes")
+    parser_list.set_defaults(func=argfunc.print_list)
 
-	# recipe_tool edit	
-	parser_edit = subparser.add_parser("edit", help="Edit a recipe data file")
-	parser_edit.add_argument("source", type=str, help="Recipe to edit").completer = recipe_completer
-	parser_edit.set_defaults(func=argfunc.edit_recipe)
+    # recipe_tool edit	
+    parser_edit = subparser.add_parser("edit", help="Edit a recipe data file")
+    parser_edit.add_argument("source", type=str, help="Recipe to edit").completer = recipe_completer
+    parser_edit.set_defaults(func=argfunc.edit_recipe)
 
-	# recipe_tool add
-	parser_add = subparser.add_parser("add", help='Add a recipe')
-	parser_add.add_argument("name", help='Name of the recipe to add')
-	parser_add.set_defaults(func=argfunc.add_recipe)
+    # recipe_tool add
+    parser_add = subparser.add_parser("add", help='Add a recipe')
+    parser_add.add_argument("name", help='Name of the recipe to add')
+    parser_add.set_defaults(func=argfunc.add_recipe)
 
-	# recipe_tool remove
-	parser_remove = subparser.add_parser("remove", help='Delete a recipe')
-	parser_remove.add_argument("source", help='Recipe, to delete')
-	parser_remove.set_defaults(func=argfunc.delete_recipe)
+    # recipe_tool remove
+    parser_remove = subparser.add_parser("remove", help='Delete a recipe')
+    parser_remove.add_argument("source", help='Recipe, to delete')
+    parser_remove.set_defaults(func=argfunc.delete_recipe)
 
-	# recipe_tool shop
-	parser_shop = subparser.add_parser("shop", help='Make a shopping list')
-	parser_shop.add_argument(
-		"recipes",
-		nargs="*",
-		help='List of recipe to compile shopping list'
-	).completer = recipe_completer
-	parser_shop.add_argument(
-		"-r", 
-		"--random", 
-		nargs='?', 
-		const=RAND_RECIPE_COUNT, 
-		type=int , 
-		metavar="NUM", 
-		dest="random", 
-		help="Pick n random recipes for the week"
-	)
-	parser_shop.add_argument(
-		"-w",
-		"--write",
-		dest="write",
-		action="store_true",
-		help="Write the shopping list to an xml file"
-	)
-	parser_shop.set_defaults(func=argfunc.print_shopping_list)
+    # recipe_tool shop
+    parser_shop = subparser.add_parser("shop", help='Make a shopping list')
+    parser_shop.add_argument(
+        "recipes",
+        nargs="*",
+        help='List of recipe to compile shopping list'
+    ).completer = recipe_completer
+    parser_shop.add_argument(
+        "-r", 
+        "--random", 
+        nargs='?', 
+        const=RAND_RECIPE_COUNT, 
+        type=int , 
+        metavar="NUM", 
+        dest="random", 
+        help="Pick n random recipes for the week"
+    )
+    parser_shop.add_argument(
+        "-w",
+        "--write",
+        dest="write",
+        action="store_true",
+        help="Write the shopping list to an xml file"
+    )
+    parser_shop.set_defaults(func=argfunc.print_shopping_list)
 
-	# recipe_tool show
-	parser_show = subparser.add_parser(
-		"show",
-		help='Show information about recipes'
-	)
-	parser_show.set_defaults(func=argfunc.show_stats)
+    # recipe_tool show
+    parser_show = subparser.add_parser(
+        "show",
+        help='Show information about recipes'
+    )
+    parser_show.set_defaults(func=argfunc.show_stats)
 
-	# recipe_tool dump
-	parser_dump = subparser.add_parser(
-		"dump",
-		help="Dump yaml or xml representation of recipe"
-	) 
-	parser_dump.add_argument(
-		"source",
-		help="Recipe to dump data from"
-		).completer = recipe_completer
-	parser_dump.add_argument(
-		"-x", 
-		"--xml", 
-		dest="print_xml", 
-		action="store_true", 
-		help="Dump sorce xml tree to standard output"
-	)
-	parser_dump.add_argument(
-		"-y", 
-		"--yaml", 
-		dest="print_yaml", 
-		action="store_true", 
-		help="Dump source yaml to standard output"
-	)
-	parser_dump.set_defaults(func=argfunc.dump_data)
+    # recipe_tool dump
+    parser_dump = subparser.add_parser(
+        "dump",
+        help="Dump yaml or xml representation of recipe"
+    ) 
+    parser_dump.add_argument(
+        "source",
+        help="Recipe to dump data from"
+    ).completer = recipe_completer
+    parser_dump.add_argument(
+        "-x", 
+        "--xml", 
+        dest="print_xml", 
+        action="store_true", 
+        help="Dump sorce xml tree to standard output"
+    )
+    parser_dump.add_argument(
+        "-y", 
+        "--yaml", 
+        dest="print_yaml", 
+        action="store_true", 
+        help="Dump source yaml to standard output"
+    )
+    parser_dump.set_defaults(func=argfunc.dump_data)
 
-	# recipe_tool export
-	parser_export = subparser.add_parser(
-		"export",
-		help="Export recipes in xml format"
-	)
-	parser_export.add_argument(
-		"source",
-		help="Sorce file to export"
-	).completer = recipe_completer
-	parser_export.add_argument(
-		"-o",
-		"--output-dir",
-		dest="output_dir",
-		type=str,
-		nargs="?",
-		help="Choose a directory to output xml file"
-	)
-	parser_export.set_defaults(func=argfunc.export_recipes)
-	
-	
-	# recipe_tool check
-	parser_check = subparser.add_parser("check", help="Check an ORD file for syntax errors")
-	parser_check.add_argument("source", type=str, help="Recipe to check").completer = recipe_completer
-	parser_check.add_argument("all", action="store_true", help="Check all files")
-	parser_check.set_defaults(func=argfunc.check_file)
-	
-	# auto completion	
-	argcomplete.autocomplete(parser)
-	
-	import sys	
-	if len(sys.argv) == 1:
-		sys.exit(parser.print_help())
-	else:
-		return parser.parse_args()
+    # recipe_tool export
+    parser_export = subparser.add_parser(
+        "export",
+        help="Export recipes in xml format"
+    )
+    parser_export.add_argument(
+        "source",
+        help="Sorce file to export"
+    ).completer = recipe_completer
+    parser_export.add_argument(
+        "-o",
+        "--output-dir",
+        dest="output_dir",
+        type=str,
+        nargs="?",
+        help="Choose a directory to output xml file"
+    )
+    parser_export.set_defaults(func=argfunc.export_recipes)
+    
+    
+    # recipe_tool check
+    parser_check = subparser.add_parser("check", help="Check an ORD file for syntax errors")
+    parser_check.add_argument("source", type=str, help="Recipe to check").completer = recipe_completer
+    parser_check.add_argument("all", action="store_true", help="Check all files")
+    parser_check.set_defaults(func=argfunc.check_file)
+    
+    # auto completion	
+    argcomplete.autocomplete(parser)
+    
+    import sys	
+    if len(sys.argv) == 1:
+        sys.exit(parser.print_help())
+    else:
+        return parser.parse_args()
 
 def main():
-	"""main entry point of recipe_tool"""
+    """main entry point of recipe_tool"""
 
-	args = parse_args()
-	if args.guimode:
-		argfunc.start_gui()
-	if args.version:
-		argfunc.version(args)
-		exit(0)
-	if hasattr(args, 'func'):
-		args.func(args)
-		
-
-
+    args = parse_args()
+    if args.guimode:
+        argfunc.start_gui()
+    if args.version:
+        argfunc.version(args)
+        exit(0)
+    if hasattr(args, 'func'):
+        args.func(args)
+            
 if __name__ == '__main__':
-	main()
-	
+    main()
+    
 

@@ -6,10 +6,11 @@
 
 from tkinter import *
 from tkinter.ttk import *
+import ruamel.yaml as yaml
 
+import pyrecipe.recipe as recipe
 from pyrecipe.config import *
 from .tk_utils import *
-
 
 class AddRecipe(Toplevel):
 
@@ -22,7 +23,7 @@ class AddRecipe(Toplevel):
         cancel.pack(side=RIGHT)
         save = Button(self, text='Save', command=self.save_recipe)
         save.pack(side=RIGHT)
-
+        
     def _init_notebook(self, **kw):
         notebook = Notebook(self)
         
@@ -57,11 +58,11 @@ class AddRecipe(Toplevel):
         cook_time.grid(padx=5, pady=5, row=4, column=1)
         cook_time_entry = Entry(recipe, textvariable=self.cook_t_var)
         cook_time_entry.grid(padx=5, pady=5, row=4, column=2)
-        
+       
         # ingredients	
         ingredients = Frame(notebook, **kw)
         self.ingred_var = StringVar(ingredients)
-        
+       
         ingred_label = Label(ingredients, text='Add ingredient: ')
         ingred_label.grid(padx=5, row=0, column=0)
         self.ingred_entry = Entry(ingredients, width=60, textvariable=self.ingred_var)
@@ -70,7 +71,7 @@ class AddRecipe(Toplevel):
         ToolTip(self.ingred_entry, text="This is where to enter in some ingreds")
         add_ingredient = Button(ingredients, text='add', command=self.add_ingredient)
         add_ingredient.grid(row=0, column=2)
-        
+       
         self.ingred_tree = Treeview(ingredients, height="25", selectmode='browse', columns=("A", "B", "C", "D", "E"))
         self.ingred_tree.bind("<Double-Button-1>", self.edit_tree)	
         self.ingred_tree['show'] = 'headings'
@@ -103,8 +104,7 @@ class AddRecipe(Toplevel):
         ''' Executed, when a row is double-clicked. Opens
         read-only EntryPopup above the item's column, so it is possible
         to select text '''
-
-
+        
         # what row and column was clicked on
         rowid = self.ingred_tree.identify_row(event.y)
         column = self.ingred_tree.identify_column(event.x)
@@ -114,15 +114,16 @@ class AddRecipe(Toplevel):
 
         # y-axis offset
         pady = height // 2
-        
+       
         # place Entry popup properly
         text = self.ingred_tree.item(rowid, 'text')
         self.tree_entry = EntryPopup(self.ingred_tree, text)
         self.tree_entry.place( x=x, y=y+pady, anchor='w', width=width)
-        print(self.tree_entry)
+        print('damn tee im here')
 	
     def save_recipe(self):
         recipe_data = ''
+        test_recipe_data = {}
         method = self.method_text.get("1.0", END).replace('\n', ' ').split(';')
         if not self.rn_var.get():
             Warn(msg="You must supply a recipe name")
@@ -131,51 +132,56 @@ class AddRecipe(Toplevel):
         else:
             ingredients = []
             tree_entries = self.ingred_tree.get_children()
-            for each in tree_entries:
+            for item in tree_entries:
                 ingred = {}
-                this_list = self.ingred_tree.item(each)['values']
+                this_list = self.ingred_tree.item(item)['values']
                 ingred['amounts'] = [{'amount': this_list[0], 'unit': this_list[2]}]
                 ingred['size'] = this_list[1]
                 ingred['name'] = this_list[3]
                 ingred['prep'] = this_list[4]
                 ingredients.append(ingred)
                     
-                recipe_data += 'recipe_name: {}'.format(self.rn_var.get())
-                recipe_data += '\ndish_type: {}'.format(self.dt_var.get())
-                if self.prep_t_var.get():
-                    recipe_data += '\nprep_time: {}'.format(self.prep_t_var.get())
-                if self.cook_t_var.get():
-                    recipe_data += '\ncook_time: {}'.format(self.cook_t_var.get())
-                recipe_data += '\ningredients:'
-                for item in ingredients:
-                    recipe_data += '\n  - name: {}'.format(item['name'])
-                    recipe_data += '\n    amounts:'
-                    recipe_data += '\n      - amount: {}'.format(item['amounts'][0]['amount'])
-                    recipe_data += '\n        unit: {}'.format(item['amounts'][0]['unit'])
-                    if item['size']:
-                        recipe_data += '\n    size: {}'.format(item['size'])
-                    if item['prep']:
-                        recipe_data += '\n    prep: {}'.format(item['prep'])
-                
-                recipe_data += "\nsteps:"
-                for item in method:
-                    recipe_data += "\n  - step: {}".format(item)
-                
-                recipe_data += VIM_MODE_LINE
-                #TESTING	
-                test = yaml.load(recipe_data)
-                PP.pprint(test)
-                self.destroy()
+            recipe_data += 'recipe_name: {}'.format(self.rn_var.get())
+            test_recipe_data['recipe_name'] = self.rn_var.get()
+            recipe_data += '\ndish_type: {}'.format(self.dt_var.get())
+            test_recipe_data['dish_type'] = self.dt_var.get()
+
+            if self.prep_t_var.get():
+                recipe_data += '\nprep_time: {}'.format(self.prep_t_var.get())
+                test_recipe_data['prep_time'] = self.prep_t_var.get()
+            if self.cook_t_var.get():
+                recipe_data += '\ncook_time: {}'.format(self.cook_t_var.get())
+                test_recipe_data['cook_time'] = self.cook_t_var.get()
+            recipe_data += '\ningredients:'
+            for item in ingredients:
+                recipe_data += '\n  - name: {}'.format(item['name'])
+                recipe_data += '\n    amounts:'
+                recipe_data += '\n      - amount: {}'.format(item['amounts'][0]['amount'])
+                recipe_data += '\n        unit: {}'.format(item['amounts'][0]['unit'])
+                if item['size']:
+                    recipe_data += '\n    size: {}'.format(item['size'])
+                if item['prep']:
+                    recipe_data += '\n    prep: {}'.format(item['prep'])
+               
+            recipe_data += "\nsteps:"
+            for item in method:
+                recipe_data += "\n  - step: {}".format(item)
+               
+            recipe_data += VIM_MODE_LINE
+            #TESTING	
+            test = yaml.round_trip_load(recipe_data)
+            print(yaml.round_trip_dump(test))
+            self.destroy()
 
     def add_ingredient(self, event=''):
-        """
-        add ingredient button
+         """
+         add ingredient button
 
-        """
-        ingred_string = self.ingred_var.get()
-        ingred_list = ingred_str_to_list(ingred_string)
-        self.ingred_entry.delete(0, 'end')
-        self.ingred_tree.insert('', 'end', text='test', values=(ingred_list))
+         """
+         ingred_string = self.ingred_var.get()
+         ingred_list = ingred_str_to_list(ingred_string)
+         self.ingred_entry.delete(0, 'end')
+         self.ingred_tree.insert('', 'end', text='test', values=(ingred_list))
 
 def ingred_str_to_list(string):
     """given an ingredient as a string, we simply
