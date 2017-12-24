@@ -27,8 +27,11 @@ class MainGUI(Tk):
 
         self.top_bar = Frame()
         self.top_bar.pack(fill=X)
-        new_recipe = Button(self.top_bar, text="New", command=AddRecipe)
+        new_recipe = Button(self.top_bar, text="New", command=partial(AddRecipe))
         new_recipe.pack(side=LEFT)
+        self.edit_recipe = Button(self.top_bar, text="Edit", command=self.edit_recipe)
+        self.edit_recipe.pack(side=LEFT)
+
         
         self.left_pane = Frame()
         self.left_pane.pack(side=LEFT)
@@ -36,16 +39,15 @@ class MainGUI(Tk):
         search.pack()
         entry = AutoEntry(RECIPE_NAMES, self.left_pane)
         entry.pack(fill=X)
-        recipe_listbox = Listbox(self.left_pane, height=50, width=30, selectmode=SINGLE, bg='white', font=('ubuntu', 13))
-        scrollb = Scrollbar(self.left_pane, command=recipe_listbox.yview)
+        self.recipe_listbox = Listbox(self.left_pane, height=50, width=30, selectmode=SINGLE, bg='white', font=('ubuntu', 13))
+        scrollb = Scrollbar(self.left_pane, command=self.recipe_listbox.yview)
         scrollb.pack(side=RIGHT, fill=Y)
-        recipe_listbox.configure(yscrollcommand=scrollb.set)
-        recipe_listbox.pack(side=LEFT)
+        self.recipe_listbox.configure(yscrollcommand=scrollb.set)
+        self.recipe_listbox.pack(side=LEFT)
         for item in sorted(RECIPE_NAMES):
-            recipe_listbox.insert(END, item)
-        recipe_listbox.bind("<Double-Button-1>", self.onDoubleClk)	
-        recipe_listbox.bind("<Button-3>", self.onRightClk)
-        recipe = recipe_listbox.curselection()
+            self.recipe_listbox.insert(END, item)
+        self.recipe_listbox.bind("<Double-Button-1>", self.onDoubleClk)	
+        self.recipe_listbox.bind("<Button-3>", self.onRightClk)
         
         # listbox context menu
         self.popup_menu = Menu(self, tearoff=0)
@@ -63,7 +65,14 @@ class MainGUI(Tk):
         test.pack()
 
 
-    
+    def edit_recipe(self):
+        try:
+            self.recipe = self.recipe_listbox.curselection()
+            rec_selection = self.recipe_listbox.get(self.recipe[0])
+            print(rec_selection)
+        except IndexError:
+            Warn(msg="You must have a recipe selected from the list box")
+        
     def onRightClk(self, event):
         try:
             self.popup_menu.tk_popup(event.x_root, event.y_root, 0)

@@ -10,6 +10,7 @@
 
 import os
 import sys
+import re
 import random
 import sys
 import subprocess
@@ -38,7 +39,7 @@ class Recipe:
         recipe source files such as print and save xml.
     """
 
-    def __init__(self, source=None, checkfile=True):
+    def __init__(self, source, checkfile=True):
         # bad yaml breaks autocompletion for some reason
         self.source = get_source_path(source)
         try:	
@@ -426,22 +427,13 @@ class Recipe:
         for index, step in enumerate(self.steps, start=1):
             print("{}{}.{} {}".format(color.NUMBER, index, color.NORMAL, step['step']))
 
-class IngredDict(dict):
-	
-	def __init__(self, *args):
-            dict.__init__(self, *args)
-
-	def __getitem__(self):
-            return self.__dict__[key]
-
-	def __missing__(self):
-            print("say what????")
-	
 
 class ShoppingList:
-	"""Class to create and display a shopping list"""
-	
-	def __init__(self):
+        """Creates a shopping list of ingredients from a list of recipes. 
+        If duplicate entries are found, ingredients are added together.
+        """	
+        
+        def __init__(self):
             # Get xml ready
             self.xml_root = etree.Element('shopping_list')
             date = datetime.date
@@ -456,8 +448,8 @@ class ShoppingList:
             self.shopping_list = []
             self.recipe_names = []
             self.dressing_names = []
-	
-	def _proc_ingreds(self, source, alt_ingred=""):
+            
+        def _proc_ingreds(self, source, alt_ingred=""):
             sd = self.shopping_dict
             r = Recipe(source)
             if alt_ingred:
@@ -484,8 +476,8 @@ class ShoppingList:
                     sd[name] = addition
                 else:
                     sd[name] = [amount, unit]
-				
-	def write_to_xml(self):
+
+        def write_to_xml(self):
             """Write the shopping list to an xml file after
                building.
             """
@@ -518,14 +510,11 @@ class ShoppingList:
             with open(SHOPPING_LIST_FILE, "w") as f:
                 f.write(result.decode("utf-8"))
 	
-	def return_list(self):
+        def return_list(self):
             return self.shopping_dict
+        
+        def update(self, source):
 
-	def update(self, source):
-            """Return a shopping list of ingredients from a 
-               list of recipes. If duplicate entries are found,
-               ingredients are added together.
-            """
             r = Recipe(source)
             if r.dish_type == "salad dressing":
                 self.dressing_names.append(r.recipe_name)
@@ -540,8 +529,8 @@ class ShoppingList:
                     self._proc_ingreds(source, alt_ingred=item)
             except AttributeError:
                 pass
-
-	def print_list(self, write=False):
+            
+        def print_list(self, write=False):
             mdn = self.recipe_names
             sd = self.shopping_dict
             dn = self.dressing_names
@@ -572,7 +561,7 @@ class ShoppingList:
             # write the list to an xml file	if True
             if write:	
                 self.write_to_xml()
-	
+                
 
 class RandomShoppingList(ShoppingList):
     """The Random Shopping List class
@@ -600,10 +589,8 @@ class RandomShoppingList(ShoppingList):
     
     def print_random(self):
         self.print_list()
-	
-		
-
-
+        
+        
 class Ingredient:
     """The ingredient class is used to build an ingredietns object
     
@@ -696,12 +683,80 @@ class Ingredient:
         else:
             return self._unit
 
+class IngredientParser:
+    """Convert an ingredient string into a dict
 
-class DataBase:
-	
+    an excepted ingredient string is usually in the form of
+    
+    "<amount> <size> <unit> <ingredient>, <prep>"
+    
+    however, not all elements of an ingredient string may
+    be present in every case. It is the job of the ingredient
+    parser to identify what an ingredient string contains, and to 
+    return a list or dict populated with the relevant data.
+
+    """
+    def __init__(self, string, return_dict=False):
+        self.amount = ''
+        self.size = ''
+        self.unit = ''
+        self.name = ''
+        self.prep = ''
+        self.ingred_dict = {}
+        self.return_dict = return_dict
+        self.raw_list = string.split()	
+        self.ingred_list = [x.lower() for x in self.raw_list]
+        
+        for item in self.ingred_list:
+            if re.search(r'\d+', item):
+                self.amount = item
+                self.ingred_list.remove(item)
+                break
+        for item in SIZE_STRINGS:
+            if item in self.ingred_list:
+                size = item
+                self.ingred_list.remove(item)
+        for item in INGRED_UNITS:	
+            if item in self.ingred_list:
+                unit = item
+                self.ingred_list.remove(item)
+        for item in PREP_TYPES:
+            if item in self.ingred_list:
+                prep = item
+                self.ingred_list.remove(item)
+
+        if not self.unit:
+            self.unit = 'each'
+
+        self.name = ' '.join(self.ingred_list)
+        self.ingred_dict['amount'] = self.amount
+        self.ingred_dict['size'] = self.size
+        self.ingred_dict['unit'] = self.unit
+        self.ingred_dict['name'] = self.name
+        self.ingred_dict['prep'] = self.prep
+        
+        self.ingred_list = [self.amount, 
+                            self.size, 
+                            self.unit, 
+                            self.name, 
+                            self.prep]
+
+        self._return_list()
+
+    def __call__(self):
+        if self.return_dict:
+            return self.ingred_dict
+        else:
+            return self.ingred_list
+
+    def _return_list(self):
+        return self.ingred_list
+    
+class DataBase:	
+    
     def __init__(self, db_file):
         self.db_file =	db_file
-
+    
     def connect(self):
         conn = sqlite3.connect(db_file)
         c = conn.cursor()

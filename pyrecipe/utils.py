@@ -31,8 +31,15 @@ def num(n):
     except ValueError:
         return float(n)
 
+def get_file_name(source):
+    file_name = source.replace(" ", "_").lower() + ".recipe"
+    abspath_name = os.path.join(RECIPE_DATA_DIR, file_name)
+    return abspath_name
+    
 def get_source_path(source):
 
+    if not source:
+        return
     if os.path.isfile(source):
         if not source.endswith(".recipe"):
             sys.exit("{}ERROR: {} is not a recipe file. Exiting..."

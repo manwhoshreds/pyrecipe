@@ -10,19 +10,23 @@ import ruamel.yaml as yaml
 
 import pyrecipe.recipe as recipe
 from pyrecipe.config import *
+from pyrecipe.utils import *
 from .tk_utils import *
 
 class AddRecipe(Toplevel):
 
-    def __init__(self):
+    def __init__(self, source=''):
         Toplevel.__init__(self)
         self.geometry('800x700+150+150')
         self.title("Add a recipe")
+        if source:
+            self.recipe = recipe.Recipe(source)
         self._init_notebook(width=700, height=600)
         cancel = Button(self, text='Cancel', command=self.destroy)
         cancel.pack(side=RIGHT)
         save = Button(self, text='Save', command=self.save_recipe)
         save.pack(side=RIGHT)
+        r
         
     def _init_notebook(self, **kw):
         notebook = Notebook(self)
@@ -94,7 +98,6 @@ class AddRecipe(Toplevel):
         self.method_text = Text(method)
         self.method_text.pack()
 		
-        
         notebook.add(recipe, text='Recipe')
         notebook.add(ingredients, text='Ingredients')
         notebook.add(method, text='Method')
@@ -117,12 +120,20 @@ class AddRecipe(Toplevel):
        
         # place Entry popup properly
         text = self.ingred_tree.item(rowid, 'text')
-        self.tree_entry = EntryPopup(self.ingred_tree, text)
+        self.edit_tree_var = StringVar(self.ingred_tree)
+        self.edit_tree_var.trace("w", self.change_tree_entry)
+        self.tree_entry = EntryPopup(self.ingred_tree, text, textvariable=self.edit_tree_var)
         self.tree_entry.place( x=x, y=y+pady, anchor='w', width=width)
-        print('damn tee im here')
-	
+        self.tree_entry.wait_window()
+        updated_ingred = self.edit_tree_var.get()
+        print(updated_ingred)
+    
+    def change_tree_entry(self, *args, **kwargs):
+        print('im running this')
+
     def save_recipe(self):
         recipe_data = ''
+        recipe_name = self.rn_var.get()
         test_recipe_data = {}
         method = self.method_text.get("1.0", END).replace('\n', ' ').split(';')
         if not self.rn_var.get():
@@ -170,7 +181,9 @@ class AddRecipe(Toplevel):
             recipe_data += VIM_MODE_LINE
             #TESTING	
             test = yaml.round_trip_load(recipe_data)
-            print(yaml.round_trip_dump(test))
+            file_name = get_file_name(recipe_name)
+            with open(file_name, 'w') as file: 
+                yaml.round_trip_dump(test, file)
             self.destroy()
 
     def add_ingredient(self, event=''):
@@ -224,9 +237,7 @@ class EntryPopup(Entry):
         ''' If relwidth is set, then width is ignored '''
         super().__init__(parent, **kw)
         self.insert(0, text) 
-        self.var = StringVar(self)
         self['exportselection'] = False
-        self['textvariable'] = self.var
         self.focus_force()
         self.bind("<Control-a>", self.selectAll)
         self.bind("<Escape>", lambda *ignore: self.destroy())
@@ -241,8 +252,6 @@ class EntryPopup(Entry):
 
     def enter(self, event):
         self.destroy()
-        print(self.var.get())
-        return self.var.get()
 
 if __name__ == '__main__':
    AddRecipe()
