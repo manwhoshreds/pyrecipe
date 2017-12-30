@@ -4,6 +4,7 @@
 """
 import os
 from .config import *
+#from . import p
 #from .recipe import *
 
 
@@ -30,6 +31,8 @@ def num(n):
         return int(n)
     except ValueError:
         return float(n)
+    except ValueError:
+        return n
 
 def get_file_name(source):
     file_name = source.replace(" ", "_").lower() + ".recipe"
@@ -75,10 +78,6 @@ def columnify(iterable):
     padded = [x.ljust(widest) for x in strings]
     return padded
 
-def md5():
-    #TODO-> md5 funtion to check which yaml files have changed and then write the coresponding xml.
-    pass
-
 def improper_to_mixed(fraction):
     str_frac = str(fraction)
     x = str_frac.split('/')
@@ -88,17 +87,6 @@ def improper_to_mixed(fraction):
     fract_part = num % den
     return "{} {}/{}".format(whole_part, fract_part, den)
 
-class IngredientIterator:
-	
-    def __init__(self, iterable):
-        self.ingredients = iterable
-        pass
-
-    def __iter__(self):
-        pass
-
-    def __next__(self):
-        pass
-        raise StopIteration
-
-
+def all_singular(iterable):
+    words = [p.singular_noun(x) for x in iterable]
+    return words

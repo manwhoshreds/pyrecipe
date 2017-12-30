@@ -75,7 +75,7 @@ def parse_args():
 
     # recipe_tool remove
     parser_remove = subparser.add_parser("remove", help='Delete a recipe')
-    parser_remove.add_argument("source", help='Recipe, to delete')
+    parser_remove.add_argument("source", help='Recipe, to delete').completer = recipe_completer
     parser_remove.set_defaults(func=argfunc.delete_recipe)
 
     # recipe_tool shop

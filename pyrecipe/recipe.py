@@ -22,16 +22,17 @@ import pdb
 
 from fractions import Fraction
 from lxml import etree
-from pint.errors import *
-from . import ureg, Q_, p, yaml_load, yaml_dump
+from string import punctuation
 #from pyrecipe import yaml
+from pint.errors import *
 
-from .utils import *
+from pyrecipe import utils
+from . import ureg, Q_, p, yaml_load, yaml_dump
 from .config import *
 from .config import __version__, __scriptname__, __email__
 
 # globals
-color = Color()
+color = utils.Color()
 
 class Recipe:
     """
@@ -39,33 +40,37 @@ class Recipe:
         recipe source files such as print and save xml.
     """
 
-    def __init__(self, source, checkfile=True):
-        # bad yaml breaks autocompletion for some reason
-        self.source = get_source_path(source)
-        try:	
-            with open(self.source, "r") as stream:
-                try:
-                    self.recipe_data = yaml_load(stream)
-                except yaml.YAMLError as exc:
-                    sys.exit(exc)
-        except FileNotFoundError:
-            sys.exit("{}ERROR: {} is not a file. Exiting..."
-                     .format(color.ERROR, self.source))
-        
-        # cache the recipe data
-        self.xml_data = ''
-        self.xml_root = etree.Element('recipe')
-        self._scan_recipe()
-        
-        # mainkeys
-        self.mainkeys = list(self.recipe_data.keys())
+    def __init__(self, source='', checkfile=True):
+        if source: 
+            self.source = utils.get_source_path(source)
+            try:	
+                with open(self.source, "r") as stream:
+                    try:
+                        self.recipe_data = yaml_load(stream)
+                    except yaml.YAMLError as exc:
+                        sys.exit(exc)
+            except FileNotFoundError:
+                sys.exit("{}ERROR: {} is not a file. Exiting..."
+                         .format(color.ERROR, self.source))
+            
+            # mainkeys
+            self.xml_root = etree.Element('recipe')
+            self.mainkeys = list(self.recipe_data.keys())
+            
+            # complete string representation of the recipe
+            self.recipe_string = ''
+            
+            # cache the recipe data
+            self.xml_data = ''
+            
+            self._scan_recipe()
+            
+            # check file for syntax error before we can continue
+            self.check_file(silent=True)
 
-        # complete string representation of the recipe
-        self.recipe_string = ''
+        else:
+            pass
         
-        # check file for syntax error before we can continue
-        self.check_file(silent=True)
-    
     def __str__(self):
         """
             returns the complete string representation
@@ -93,10 +98,7 @@ class Recipe:
         return self.recipe_string
 
     def __getitem__(self, key):
-        if key not in self.__dict__:
-            return ''
-        else:
-            return self.__dict__[key]
+        return self.__dict__.get(key, '')
 
     def _scan_recipe(self):
         """used to extract all the values out of a recipe
@@ -650,7 +652,7 @@ class Ingredient:
         return self.__dict__[key]
 
     def get_name(self):
-        if self._unit is '':
+        if not self._unit or self._unit == 'each':
             return p.plural(self._name, self._amount)
         else:
             return self._name
@@ -663,7 +665,7 @@ class Ingredient:
         elif isinstance(self._amount, float) and self._amount < 1:
             return Fraction(self._amount)
         elif isinstance(self._amount, float) and self._amount > 1:
-            return improper_to_mixed(str(Fraction(self._amount)))
+            return utils.improper_to_mixed(str(Fraction(self._amount)))
         else:
             return self._amount
 
@@ -704,8 +706,13 @@ class IngredientParser:
         self.prep = ''
         self.ingred_dict = {}
         self.return_dict = return_dict
-        self.raw_list = string.split()	
-        self.ingred_list = [x.lower() for x in self.raw_list]
+        
+        # string preprocessing 
+        self.strip_punc = self.strip_punctuation(string)
+        self.raw_list = self.strip_punc.split()	
+        #self.lower_list = [singularize(x) for x in self.raw_list]
+        self.lower_list = [x.lower() for x in self.raw_list]
+        self.ingred_list = all_singular(self.lower_list)
         
         for item in self.ingred_list:
             if re.search(r'\d+', item):
@@ -714,15 +721,15 @@ class IngredientParser:
                 break
         for item in SIZE_STRINGS:
             if item in self.ingred_list:
-                size = item
+                self.size = item
                 self.ingred_list.remove(item)
         for item in INGRED_UNITS:	
             if item in self.ingred_list:
-                unit = item
+                self.unit = item
                 self.ingred_list.remove(item)
         for item in PREP_TYPES:
             if item in self.ingred_list:
-                prep = item
+                self.prep = item
                 self.ingred_list.remove(item)
 
         if not self.unit:
@@ -740,18 +747,17 @@ class IngredientParser:
                             self.unit, 
                             self.name, 
                             self.prep]
-
-        self._return_list()
-
+    
     def __call__(self):
         if self.return_dict:
             return self.ingred_dict
         else:
             return self.ingred_list
 
-    def _return_list(self):
-        return self.ingred_list
-    
+    def strip_punctuation(self, string):
+        return ''.join(c for c in string if c not in punctuation)
+
+
 class DataBase:	
     
     def __init__(self, db_file):
@@ -773,7 +779,7 @@ def template(recipe_name):
         template += "recipe_name: {}\n".format(recipe_name)
         # check if file exist, lets catch this early so we 
         # can exit before entering in all the info
-        file_name = get_source_path(recipe_name)
+        file_name = utils.get_source_path(recipe_name)
         if os.path.isfile(file_name):
             print("File with this name already exist in directory exiting...")
             exit(1)

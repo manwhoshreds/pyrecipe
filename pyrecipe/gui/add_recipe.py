@@ -18,31 +18,41 @@ class AddRecipe(Toplevel):
     def __init__(self, source=''):
         Toplevel.__init__(self)
         self.geometry('800x700+150+150')
-        self.title("Add a recipe")
-        if source:
-            self.recipe = recipe.Recipe(source)
-        self._init_notebook(width=700, height=600)
-        cancel = Button(self, text='Cancel', command=self.destroy)
-        cancel.pack(side=RIGHT)
-        save = Button(self, text='Save', command=self.save_recipe)
-        save.pack(side=RIGHT)
-        r
+        self['takefocus'] = True
+        # supplying a source turns this class into an recipe editor
+        # all fields are populated with the recipe data
+        self.source = source
+        if self.source:
+            self.title("Edit recipe")
+        else:
+            self.title("Add recipe")
+        self.recipe = recipe.Recipe(source)
+        #self._init_notebook(width=700, height=600)
+        self._init_notebook()
+        
+        # Cancel
+        self.cancel = Button(self, text='Cancel', command=self.destroy)
+        self.cancel.pack(side=RIGHT)
+        
+        # Save 
+        self.save = Button(self, text='Save', command=self.save_recipe)
+        self.save.pack(side=RIGHT)
         
     def _init_notebook(self, **kw):
-        notebook = Notebook(self)
+        self.notebook = Notebook(self)
         
         # recipe
-        recipe = Frame(notebook, relief=GROOVE)
-        recipe.grid(padx=5, pady=5)
-        self.rn_var = StringVar(recipe)
-        recipe_name = Label(recipe, text='Recipe Name')
-        recipe_name.grid(padx=5, pady=5, row=1, column=1)
-        rn_entry = Entry(recipe, textvariable=self.rn_var)
-        rn_entry.grid(padx=5, pady=5, row=1, column=2)
-        dish_type = Label(recipe, text='Dish Type')
-        dish_type.grid(padx=5, pady=5, row=2, column=1)
+        self.recipe_frame = Frame(self.notebook, relief=GROOVE)
+        self.recipe_frame.grid(padx=5, pady=5)
+        self.rn_var = StringVar(self.recipe_frame)
+        self.recipe_name = Label(self.recipe_frame, text='Recipe Name')
+        self.recipe_name.grid(padx=5, pady=5, row=1, column=1)
+        self.rn_entry = Entry(self.recipe_frame, textvariable=self.rn_var)
+        self.rn_entry.insert(0, self.recipe['recipe_name'])
+        self.rn_entry.grid(padx=5, pady=5, row=1, column=2)
+        self.dish_type = Label(self.recipe_frame, text='Dish Type')
+        self.dish_type.grid(padx=5, pady=5, row=2, column=1)
         self.dt_var = StringVar(self)
-        
         # workaround for tkinter optionmenus odd behaviour,
         # for a more detailed explanation, check out
         # https://stackoverflow.com/questions/19138534/tkinter-optionmenu-first-option-vanishes
@@ -50,33 +60,45 @@ class AddRecipe(Toplevel):
         # https://docs.python.org/3/library/collections.html#collections.deque
         prepend = ['']
         new_list = prepend + DISH_TYPES
-        dt_options = OptionMenu(recipe, self.dt_var, *new_list)
-        dt_options.grid(sticky="ew", row=2, column=2)
+        self.dt_var = StringVar(self)
+        if self.source:
+            self.dt_var.set(self.recipe['dish_type'])
+        else:
+            self.dt_var.set('main')
+        self.dt_options = OptionMenu(self.recipe_frame, self.dt_var, *new_list)
+        self.dt_options.grid(sticky="ew", row=2, column=2)
         self.prep_t_var = StringVar(self)
-        prep_time = Label(recipe, text='Prep time')
-        prep_time.grid(padx=5, pady=5, row=3, column=1)
-        prep_time_entry = Entry(recipe, textvariable=self.prep_t_var)
-        prep_time_entry.grid(padx=5, pady=5, row=3, column=2)
+        
+        # prep time 
+        self.prep_time = Label(self.recipe_frame, text='Prep time')
+        self.prep_time.grid(padx=5, pady=5, row=3, column=1)
+        self.prep_time_entry = Entry(self.recipe_frame, textvariable=self.prep_t_var)
+        self.prep_time_entry.insert(0, self.recipe['prep_time'])
+        self.prep_time_entry.grid(padx=5, pady=5, row=3, column=2)
+        
+        # cook time
         self.cook_t_var = StringVar(self)
-        cook_time = Label(recipe, text='Cook time')
-        cook_time.grid(padx=5, pady=5, row=4, column=1)
-        cook_time_entry = Entry(recipe, textvariable=self.cook_t_var)
-        cook_time_entry.grid(padx=5, pady=5, row=4, column=2)
+        self.cook_time = Label(self.recipe_frame, text='Cook time')
+        self.cook_time.grid(padx=5, pady=5, row=4, column=1)
+        self.cook_time_entry = Entry(self.recipe_frame, textvariable=self.cook_t_var)
+        self.cook_time_entry.insert(0, self.recipe['cook_time'])
+        self.cook_time_entry.grid(padx=5, pady=5, row=4, column=2)
        
         # ingredients	
-        ingredients = Frame(notebook, **kw)
-        self.ingred_var = StringVar(ingredients)
+        self.ingredients = Frame(self.notebook, **kw)
+        self.ingred_var = StringVar(self.ingredients)
        
-        ingred_label = Label(ingredients, text='Add ingredient: ')
-        ingred_label.grid(padx=5, row=0, column=0)
-        self.ingred_entry = Entry(ingredients, width=60, textvariable=self.ingred_var)
+        self.ingred_label = Label(self.ingredients, text='Add ingredient: ')
+        self.ingred_label.grid(padx=5, row=0, column=0)
+        
+        self.ingred_entry = Entry(self.ingredients, width=60, textvariable=self.ingred_var)
         self.ingred_entry.grid(padx=5, row=0, column=1)
         self.ingred_entry.bind("<Return>", self.add_ingredient)
         ToolTip(self.ingred_entry, text="This is where to enter in some ingreds")
-        add_ingredient = Button(ingredients, text='add', command=self.add_ingredient)
-        add_ingredient.grid(row=0, column=2)
+        self.add_ingredient = Button(self.ingredients, text='add', command=self.add_ingredient)
+        self.add_ingredient.grid(row=0, column=2)
        
-        self.ingred_tree = Treeview(ingredients, height="25", selectmode='browse', columns=("A", "B", "C", "D", "E"))
+        self.ingred_tree = Treeview(self.ingredients, height="25", selectmode='browse', columns=("A", "B", "C", "D", "E"))
         self.ingred_tree.bind("<Double-Button-1>", self.edit_tree)	
         self.ingred_tree['show'] = 'headings'
         self.ingred_tree.heading("A", text='Amount')
@@ -90,18 +112,37 @@ class AddRecipe(Toplevel):
         self.ingred_tree.heading("E", text='Prep')
         self.ingred_tree.column("E", minwidth=0, width=150, stretch=NO)
         self.ingred_tree.grid(padx=5, row=1, column=0, columnspan=3)
-
+        
+        if self.source:
+            if self.recipe['alt_ingredients']:
+                Warn(msg="This recipe contains alt ingredient data"
+                         "The pyrecipe gui is not able to handle this"
+                         "feature yet. Please use the cli if you wish"
+                         "to edit recipes with alt ingredients.")
+            ingreds = self.recipe.get_ingredients()
+            for item in ingreds:
+                ingred_list = recipe.IngredientParser(item)()
+                self.ingred_tree.insert('', 'end', text='test', values=(ingred_list))
+        
         # method
-        method = Frame(notebook, **kw)
-        method_label = Label(method, text="Enter method here:")
-        method_label.pack()
-        self.method_text = Text(method)
+        self.method = Frame(self.notebook, **kw)
+        self.method_label = Label(self.method, text="Enter method here:")
+        self.method_label.pack()
+        self.method_text = Text(self.method)
         self.method_text.pack()
+
+        if self.source:
+            recipe_method = self.recipe['steps']
+            method_list = []
+            for item in recipe_method:
+                method_list.append(item['step'])
+            joined_list = ";\n".join(method_list)      
+            self.method_text.insert(END, joined_list)
 		
-        notebook.add(recipe, text='Recipe')
-        notebook.add(ingredients, text='Ingredients')
-        notebook.add(method, text='Method')
-        notebook.pack()
+        self.notebook.add(self.recipe_frame, text='Recipe')
+        self.notebook.add(self.ingredients, text='Ingredients')
+        self.notebook.add(self.method, text='Method')
+        self.notebook.pack()
 
     def edit_tree(self, event):
         ''' Executed, when a row is double-clicked. Opens
@@ -127,6 +168,16 @@ class AddRecipe(Toplevel):
         self.tree_entry.wait_window()
         updated_ingred = self.edit_tree_var.get()
         print(updated_ingred)
+    
+    def add_ingredient(self, event=''):
+         """
+         add ingredient button
+
+         """
+         ingred_string = self.ingred_var.get()
+         ingred_list = recipe.IngredientParser(ingred_string)()
+         self.ingred_entry.delete(0, 'end')
+         self.ingred_tree.insert('', 'end', text='test', values=(ingred_list))
     
     def change_tree_entry(self, *args, **kwargs):
         print('im running this')
@@ -179,57 +230,12 @@ class AddRecipe(Toplevel):
                 recipe_data += "\n  - step: {}".format(item)
                
             recipe_data += VIM_MODE_LINE
-            #TESTING	
-            test = yaml.round_trip_load(recipe_data)
+            save_data = yaml.round_trip_load(recipe_data)
             file_name = get_file_name(recipe_name)
             with open(file_name, 'w') as file: 
-                yaml.round_trip_dump(test, file)
+                yaml.round_trip_dump(save_data, file)
             self.destroy()
 
-    def add_ingredient(self, event=''):
-         """
-         add ingredient button
-
-         """
-         ingred_string = self.ingred_var.get()
-         ingred_list = ingred_str_to_list(ingred_string)
-         self.ingred_entry.delete(0, 'end')
-         self.ingred_tree.insert('', 'end', text='test', values=(ingred_list))
-
-def ingred_str_to_list(string):
-    """given an ingredient as a string, we simply
-    return as alist
-    """
-    amount = ''
-    size = ''
-    unit = ''
-    name = ''
-    prep = ''
-    raw_list = string.split()	
-    ingred_list = [x.lower() for x in raw_list]
-    for item in ingred_list:
-        if re.search(r'\d+', item):
-            amount = item
-            ingred_list.remove(item)
-            break
-    for item in SIZE_STRINGS:
-        if item in ingred_list:
-            size = item
-            ingred_list.remove(item)
-    for item in INGRED_UNITS:	
-        if item in ingred_list:
-            unit = item
-            ingred_list.remove(item)
-    for item in PREP_TYPES:
-        if item in ingred_list:
-            prep = item
-            ingred_list.remove(item)
-    
-    if not unit:
-        unit = 'each'
-    
-    name = ' '.join(ingred_list)
-    return [amount, size, unit, name, prep]
 
 class EntryPopup(Entry):
 

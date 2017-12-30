@@ -2,16 +2,18 @@
 """
 import re
 import os
+import time
 
 from tkinter import *
 from tkinter.ttk import *
 from numbers import Number
-from functools import partial
 
 import pyrecipe.recipe as recipe
 from pyrecipe.gui.add_recipe import AddRecipe
+from pyrecipe.gui.settings import Settings
 from pyrecipe.gui.tk_utils import *
-from .config import *
+import pyrecipe.config as config
+#from .config import *
 from .utils import num
 from . import ureg, Q_, p
 
@@ -23,11 +25,12 @@ class MainGUI(Tk):
     def __init__(self, *args, **kwargs):
         Tk.__init__(self, *args, **kwargs)
         self.title('Pyrecipe - The python recipe management program')
+        self.screen_width = self.winfo_screenwidth()
+        self.screen_height = self.winfo_screenheight()
         self._build_menubar()
-
         self.top_bar = Frame()
         self.top_bar.pack(fill=X)
-        new_recipe = Button(self.top_bar, text="New", command=partial(AddRecipe))
+        new_recipe = Button(self.top_bar, text="New", command=self.add_recipe)
         new_recipe.pack(side=LEFT)
         self.edit_recipe = Button(self.top_bar, text="Edit", command=self.edit_recipe)
         self.edit_recipe.pack(side=LEFT)
@@ -37,24 +40,23 @@ class MainGUI(Tk):
         self.left_pane.pack(side=LEFT)
         search = Label(self.left_pane, text="Search Recipes")
         search.pack()
-        entry = AutoEntry(RECIPE_NAMES, self.left_pane)
+        entry = AutoEntry(config.RECIPE_NAMES, self.left_pane)
         entry.pack(fill=X)
         self.recipe_listbox = Listbox(self.left_pane, height=50, width=30, selectmode=SINGLE, bg='white', font=('ubuntu', 13))
         scrollb = Scrollbar(self.left_pane, command=self.recipe_listbox.yview)
         scrollb.pack(side=RIGHT, fill=Y)
         self.recipe_listbox.configure(yscrollcommand=scrollb.set)
         self.recipe_listbox.pack(side=LEFT)
-        for item in sorted(RECIPE_NAMES):
-            self.recipe_listbox.insert(END, item)
+        self.refresh_recipes()
         self.recipe_listbox.bind("<Double-Button-1>", self.onDoubleClk)	
+        self.recipe_listbox.bind("<Button-1>", self.onLeftClk)
         self.recipe_listbox.bind("<Button-3>", self.onRightClk)
+        self.selection = self.recipe_listbox.curselection()
         
         # listbox context menu
-        self.popup_menu = Menu(self, tearoff=0)
-        self.popup_menu.add_command(label="Delete",
-                                    command=self.donothing)
-        self.popup_menu.add_command(label="Select All",
-                                    command=self.donothing)
+        self.popup_menu = Menu(self.recipe_listbox, tearoff=0)
+        self.popup_menu.add_command(label="Edit", command=self.edit_recipe)
+        self.popup_menu.add_command(label="Select All", command=self.donothing)
         
         self.recipe_textbox = Text(self, height=50, width=100, font=('ubuntu', 16))
         self.recipe_textbox.pack(side=LEFT, fill=X)
@@ -63,21 +65,45 @@ class MainGUI(Tk):
         self.right_pane.pack(side=RIGHT, fill=BOTH)
         test = Button(self.right_pane, width=50, text="test", command=self.donothing)
         test.pack()
+    
+    def onLeftClk(self, event):
+        self.popup_menu.unpost()
 
-
-    def edit_recipe(self):
+    def get_selection(self):
         try:
             self.recipe = self.recipe_listbox.curselection()
             rec_selection = self.recipe_listbox.get(self.recipe[0])
-            print(rec_selection)
+            return rec_selection
         except IndexError:
-            Warn(msg="You must have a recipe selected from the list box")
+            pass
+
+    def refresh_recipes(self):
+        import pyrecipe.config as config
+        self.recipe_listbox.delete(0, END)
+        for item in sorted(config.RECIPE_NAMES):
+            self.recipe_listbox.insert(END, item)
+
+    def add_recipe(self):
+        recipe_add = AddRecipe()
+        recipe_add.wait_window()
+        self.refresh_recipes()
+
+    def edit_recipe(self):
+        try:
+            print('hello')
+            rec_selection = self.get_selection()
+            AddRecipe(rec_selection)
+        except IndexError:
+            Warn(msg="Select a recipe from the list box")
         
     def onRightClk(self, event):
-        try:
-            self.popup_menu.tk_popup(event.x_root, event.y_root, 0)
-        finally:
-            self.popup_menu.grab_release()
+        self.popup_menu.unpost()
+        self.recipe_listbox.select_clear(0, END)
+        y = event.y_root - 120
+        index = self.recipe_listbox.nearest(y)
+        self.recipe_listbox.select_set(index)
+        self.popup_menu.post(event.x_root, event.y_root)
+        self.get_selection()
     
     def onDoubleClk(self, event):
         # State Normal on click on disabled when we finish building text
@@ -87,8 +113,8 @@ class MainGUI(Tk):
         self.recipe_textbox.delete('1.0', END)
         widget = event.widget
         selection = widget.curselection()
-        rec_selection = widget.get(selection[0])
-        r = recipe.Recipe(rec_selection)
+        recipe_selection = widget.get(selection[0])
+        r = recipe.Recipe(recipe_selection)
         self._build_recipe_text(r)
     
     def _build_recipe_text(self, recipe):
@@ -105,10 +131,8 @@ class MainGUI(Tk):
         # filemenu
         menubar = Menu(self)
         filemenu = Menu(menubar, tearoff=0)
-        filemenu.add_command(label="New", command=self.donothing)
+        filemenu.add_command(label="New", command=self.add_recipe)
         filemenu.add_command(label="Open", command=self.donothing)
-        filemenu.add_command(label="Save", command=self.donothing)
-        filemenu.add_command(label="Save as...", command=self.donothing)
         filemenu.add_command(label="Close", command=self.donothing)
 
         filemenu.add_separator()
@@ -118,15 +142,7 @@ class MainGUI(Tk):
         
         # editmenu	
         editmenu = Menu(menubar, tearoff=0)
-        editmenu.add_command(label="Undo", command=self.donothing)
-
-        editmenu.add_separator()
-
-        editmenu.add_command(label="Cut", command=self.donothing)
-        editmenu.add_command(label="Copy", command=self.donothing)
-        editmenu.add_command(label="Paste", command=self.donothing)
-        editmenu.add_command(label="Delete", command=self.donothing)
-        editmenu.add_command(label="Select All", command=self.donothing)
+        editmenu.add_command(label="Settings", command=Settings)
         menubar.add_cascade(label="Edit", menu=editmenu)
         
         # helpmenu
