@@ -2,13 +2,12 @@
 	pyrecipe.argfuncts
 """
 
-#import os
 import sys
 import subprocess
 import os
-from .config import PP
-from .utils import *
 
+from .config import PP
+from pyrecipe import utils
 import pyrecipe.recipe as recipe
 import pyrecipe.maingui as gui
 
@@ -55,9 +54,6 @@ def check_file(args):
         r = recipe.Recipe(args.source)
         r.check_file()
 	
-
-
-
 def print_recipe(args):
     r = recipe.Recipe(args.source)
     r.print_recipe(args.verbose)
@@ -80,7 +76,7 @@ def edit_recipe(args):
     subprocess.call([recipe.EDITOR, source])
 
 def add_recipe(args):
-    if args.name.title() in recipe.list_recipes(ret=True):
+    if args.name.title() in utils.list_recipes(ret=True):
         sys.exit('A recipe with that name already exist in the recipe store')
     else:
         recipe.template(args.name)
@@ -88,7 +84,7 @@ def add_recipe(args):
 
 def print_list(args):
 	
-    recipe.list_recipes()
+    utils.list_recipes()
 
 def version(args):
 	

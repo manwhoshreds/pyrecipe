@@ -3,10 +3,29 @@
 
 """
 import os
-from .config import *
-#from . import p
-#from .recipe import *
 
+import inflect
+
+from .config import *
+
+
+# Inflects default behaviour for return the singular of words is
+# not very useful to this project because it returns false if
+# it comes across a non-noun word. Therfore, the following is a
+# functional work-a-round
+class InflectEngine(inflect.engine):
+
+    def __init__(self):
+        super().__init__()
+
+    def singular_noun(self, word):
+        singular = super().singular_noun(word)
+        if singular:
+            return singular
+        else:
+            return word
+
+p = InflectEngine()
 
 
 class Color:

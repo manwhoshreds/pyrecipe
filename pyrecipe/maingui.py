@@ -12,10 +12,10 @@ import pyrecipe.recipe as recipe
 from pyrecipe.gui.add_recipe import AddRecipe
 from pyrecipe.gui.settings import Settings
 from pyrecipe.gui.tk_utils import *
-import pyrecipe.config as config
+import pyrecipe.config as conf
 #from .config import *
-from .utils import num
-from . import ureg, Q_, p
+from .utils import *
+from . import ureg, Q_
 
 
 
@@ -40,7 +40,7 @@ class MainGUI(Tk):
         self.left_pane.pack(side=LEFT)
         search = Label(self.left_pane, text="Search Recipes")
         search.pack()
-        entry = AutoEntry(config.RECIPE_NAMES, self.left_pane)
+        entry = AutoEntry(conf.RECIPE_NAMES, self.left_pane)
         entry.pack(fill=X)
         self.recipe_listbox = Listbox(self.left_pane, height=50, width=30, selectmode=SINGLE, bg='white', font=('ubuntu', 13))
         scrollb = Scrollbar(self.left_pane, command=self.recipe_listbox.yview)
@@ -69,7 +69,7 @@ class MainGUI(Tk):
     def onLeftClk(self, event):
         self.popup_menu.unpost()
 
-    def get_selection(self):
+    def _get_selection(self):
         try:
             self.recipe = self.recipe_listbox.curselection()
             rec_selection = self.recipe_listbox.get(self.recipe[0])
@@ -78,9 +78,8 @@ class MainGUI(Tk):
             pass
 
     def refresh_recipes(self):
-        import pyrecipe.config as config
         self.recipe_listbox.delete(0, END)
-        for item in sorted(config.RECIPE_NAMES):
+        for item in sorted(conf.RECIPE_NAMES):
             self.recipe_listbox.insert(END, item)
 
     def add_recipe(self):
@@ -89,12 +88,20 @@ class MainGUI(Tk):
         self.refresh_recipes()
 
     def edit_recipe(self):
-        try:
-            print('hello')
-            rec_selection = self.get_selection()
-            AddRecipe(rec_selection)
-        except IndexError:
+        rec_selection = self._get_selection()
+        if not rec_selection:
             Warn(msg="Select a recipe from the list box")
+        else:
+            r = recipe.Recipe(rec_selection)
+            if r['alt_ingredients']:
+                warning = Warn(msg="This recipe contains alt ingredient data "
+                                   "The pyrecipe gui is not able to handle this "
+                                   "feature yet. Please use the cli if you wish "
+                                   "to edit recipes with alt ingredients.")
+                warning.wait_window()
+            else:
+                AddRecipe(rec_selection)
+
         
     def onRightClk(self, event):
         self.popup_menu.unpost()
@@ -103,7 +110,7 @@ class MainGUI(Tk):
         index = self.recipe_listbox.nearest(y)
         self.recipe_listbox.select_set(index)
         self.popup_menu.post(event.x_root, event.y_root)
-        self.get_selection()
+        self._get_selection()
     
     def onDoubleClk(self, event):
         # State Normal on click on disabled when we finish building text

@@ -23,11 +23,10 @@ import pdb
 from fractions import Fraction
 from lxml import etree
 from string import punctuation
-#from pyrecipe import yaml
 from pint.errors import *
 
 from pyrecipe import utils
-from . import ureg, Q_, p, yaml_load, yaml_dump
+from pyrecipe import ureg, Q_, yaml
 from .config import *
 from .config import __version__, __scriptname__, __email__
 
@@ -46,7 +45,7 @@ class Recipe:
             try:	
                 with open(self.source, "r") as stream:
                     try:
-                        self.recipe_data = yaml_load(stream)
+                        self.recipe_data = yaml.safe_load(stream)
                     except yaml.YAMLError as exc:
                         sys.exit(exc)
             except FileNotFoundError:
@@ -431,138 +430,129 @@ class Recipe:
 
 
 class ShoppingList:
-        """Creates a shopping list of ingredients from a list of recipes. 
-        If duplicate entries are found, ingredients are added together.
-        """	
-        
-        def __init__(self):
-            # Get xml ready
-            self.xml_root = etree.Element('shopping_list')
-            date = datetime.date
-            today = date.today()
-            date = etree.SubElement(self.xml_root, "date")
-            date.text = str(today)
-            self.xml_maindish_names = etree.SubElement(self.xml_root, "main_dishes")
-            self.xml_salad_dressing = etree.SubElement(self.xml_root, "salad_dressing")
-            self.xml_ingredients = etree.SubElement(self.xml_root, "ingredients")
+    """Creates a shopping list of ingredients from a list of recipes. 
+    If duplicate entries are found, ingredients are added together.
+    """	
     
-            self.shopping_dict = {}
-            self.shopping_list = []
-            self.recipe_names = []
-            self.dressing_names = []
-            
-        def _proc_ingreds(self, source, alt_ingred=""):
-            sd = self.shopping_dict
-            r = Recipe(source)
-            if alt_ingred:
-                ingreds = r.alt_ingredient_data[alt_ingred]
-            else:
-                ingreds = r.ingredient_data
-            for item in ingreds:
-                name = item['name']
-                try:
-                    link = item['link']
-                    self.update(link)
-                except KeyError:
-                    pass
-                        
-                if name == "s&p":
-                    continue
-                amount = item['amounts'][0].get('amount', 0)
-                unit = item['amounts'][0].get('unit', 'teaspoon')
-                ingred = Ingredient(name, amount=amount, unit=unit)
-                # check if name already in sd so we can add together
-                if name in sd.keys():
-                    orig_ingred = Ingredient(name, amount=sd[name][0], unit=sd[name][1])	
-                    addition = ingred + orig_ingred
-                    sd[name] = addition
-                else:
-                    sd[name] = [amount, unit]
+    def __init__(self):
+        # Get xml ready
+        self.xml_root = etree.Element('shopping_list')
+        date = datetime.date
+        today = date.today()
+        date = etree.SubElement(self.xml_root, "date")
+        date.text = str(today)
+        self.xml_maindish_names = etree.SubElement(self.xml_root, "main_dishes")
+        self.xml_salad_dressing = etree.SubElement(self.xml_root, "salad_dressing")
+        self.xml_ingredients = etree.SubElement(self.xml_root, "ingredients")
 
-        def write_to_xml(self):
-            """Write the shopping list to an xml file after
-               building.
-            """
-            
-            # Add recipe names to the tree
-            for item in self.recipe_names:
-                xml_main_dish = etree.SubElement(xml_maindish_names, "name")
-                xml_main_dish.text = str(item)
-            
-            # the salad dressing names
-            for item in self.dressing_names:
-                xml_dressing_name = etree.SubElement(xml_salad_dressing, "name")
-                xml_dressing_name.text = str(item)
-
-            # finally, ingreds
-            for key, value in sd.items():
-                ingred = "{} {} {}".format(key, str(value[0]), str(value[1]))
-                xml_shopping_list_item = etree.SubElement(xml_ingredients, "ingredient")
-                xml_shopping_list_item.text = str(ingred)
-                    
-            
-            result = etree.tostring(root,
-                                    xml_declaration=True,
-                                    encoding='utf-8',
-                                    with_tail=False,
-                                    method='xml',
-                                    pretty_print=True).decode("utf-8")
-            
-            print("\n{}Writing shopping list to {}{}".format(color.INFORM, SHOPPING_LIST_FILE, color.NORMAL))
-            with open(SHOPPING_LIST_FILE, "w") as f:
-                f.write(result.decode("utf-8"))
-	
-        def return_list(self):
-            return self.shopping_dict
+        self.shopping_dict = {}
+        self.shopping_list = []
+        self.recipe_names = []
+        self.dressing_names = []
         
-        def update(self, source):
-
-            r = Recipe(source)
-            if r.dish_type == "salad dressing":
-                self.dressing_names.append(r.recipe_name)
-            else:
-                self.recipe_names.append(r.recipe_name)
-
-            
-            self._proc_ingreds(source)
+    def _proc_ingreds(self, source, alt_ingred=""):
+        sd = self.shopping_dict
+        r = Recipe(source)
+        if alt_ingred:
+            ingreds = r.alt_ingredient_data[alt_ingred]
+        else:
+            ingreds = r.ingredient_data
+        for item in ingreds:
+            name = item['name']
             try:
-                alt_ingreds = r.alt_ingredients
-                for item in alt_ingreds:
-                    self._proc_ingreds(source, alt_ingred=item)
-            except AttributeError:
+                link = item['link']
+                self.update(link)
+            except KeyError:
                 pass
-            
-        def print_list(self, write=False):
-            mdn = self.recipe_names
-            sd = self.shopping_dict
-            dn = self.dressing_names
-            
-            print("Recipes:\n")
-            for item in mdn:
+                    
+            if name == "s&p":
+                continue
+            amount = item['amounts'][0].get('amount', 0)
+            unit = item['amounts'][0].get('unit', 'teaspoon')
+            ingred = Ingredient(name, amount=amount, unit=unit)
+            # check if name already in sd so we can add together
+            if name in sd.keys():
+                orig_ingred = Ingredient(name, amount=sd[name][0], unit=sd[name][1])	
+                addition = ingred + orig_ingred
+                sd[name] = addition
+            else:
+                sd[name] = [amount, unit]
+
+    def write_to_xml(self):
+        """Write the shopping list to an xml file after
+           building.
+        """
+        
+        # Add recipe names to the tree
+        for item in self.recipe_names:
+            xml_main_dish = etree.SubElement(self.xml_maindish_names, "name")
+            xml_main_dish.text = str(item)
+        
+        # the salad dressing names
+        for item in self.dressing_names:
+            xml_dressing_name = etree.SubElement(self.xml_salad_dressing, "name")
+            xml_dressing_name.text = str(item)
+
+        # finally, ingreds
+        for key, value in self.shopping_dict.items():
+            ingred = "{} {} {}".format(key, str(value[0]), str(value[1]))
+            xml_shopping_list_item = etree.SubElement(self.xml_ingredients, "ingredient")
+            xml_shopping_list_item.text = str(ingred)
+                
+        
+        result = etree.tostring(self.xml_root,
+                                xml_declaration=True,
+                                encoding='utf-8',
+                                with_tail=False,
+                                method='xml',
+                                pretty_print=True).decode("utf-8")
+        
+        print("\n{}Writing shopping list to {}{}".format(color.INFORM, SHOPPING_LIST_FILE, color.NORMAL))
+        with open(SHOPPING_LIST_FILE, "w") as f:
+            f.write(result)
+    
+    def return_list(self):
+        return self.shopping_dict
+    
+    def update(self, source):
+
+        r = Recipe(source)
+        if r.dish_type == "salad dressing":
+            self.dressing_names.append(r.recipe_name)
+        else:
+            self.recipe_names.append(r.recipe_name)
+
+        
+        self._proc_ingreds(source)
+        try:
+            alt_ingreds = r.alt_ingredients
+            for item in alt_ingreds:
+                self._proc_ingreds(source, alt_ingred=item)
+        except AttributeError:
+            pass
+        
+    def print_list(self, write=False):
+        mdn = self.recipe_names
+        sd = self.shopping_dict
+        dn = self.dressing_names
+        
+        print("Recipes:\n")
+        for item in mdn:
+            print(item)
+        print("\n" + S_DIV)
+
+        if len(dn) > 0:
+            print("Salad Dressings:\n")
+            for item in dn:
                 print(item)
-            print("\n" + S_DIV)
-
-            if len(dn) > 0:
-                print("Salad Dressings:\n")
-                for item in dn:
-                    print(item)
-                print("\n{}".format(S_DIV))
-            
-            result = etree.tostring(self.xml_root,
-                                    xml_declaration=True,
-                                    encoding='utf-8',
-                                    with_tail=False,
-                                    method='xml',
-                                    pretty_print=True).decode("utf-8")
-            print(result)
-
-            # Print list	
-            PP.pprint(sd)
-            for key, value in sd.items():
-                print("{}, {} {}".format(key, Fraction(value[0]), value[1]))
-            # write the list to an xml file	if True
-            if write:	
-                self.write_to_xml()
+            print("\n{}".format(S_DIV))
+        
+        # Print list	
+        for key, value in sd.items():
+            print("{}, {} {}".format(key, Fraction(value[0]), value[1]))
+        # write the list to an xml file	if True
+        if write:	
+            self.write_to_xml()
                 
 
 class RandomShoppingList(ShoppingList):
@@ -628,7 +618,7 @@ class Ingredient:
         else:
         
             string = "{} {} {} {}".format(self.amount, self.size, 
-                                                                              self.unit, self.name)
+                                          self.unit, self.name)
             # the previous line adds unwanted spaces if values are absent
             # we simply clean that up here.
             cleaned_string = " ".join(string.split())
@@ -640,11 +630,11 @@ class Ingredient:
                     
     def __add__(self, other):
         try:
-            this = num(self._amount) * ureg[self._unit]
-            that = num(other._amount) * ureg[other._unit]
+            this = utils.num(self._amount) * ureg[self._unit]
+            that = utils.num(other._amount) * ureg[other._unit]
             addition = this + that
             test = str(addition).split()
-            return [self.get_amount(test[0]), test[1]]
+            return [test[0], test[1]]
         except DimensionalityError:
             return [self._amount, self._unit]
 
@@ -653,7 +643,7 @@ class Ingredient:
 
     def get_name(self):
         if not self._unit or self._unit == 'each':
-            return p.plural(self._name, self._amount)
+            return utils.p.plural(self._name, self._amount)
         else:
             return self._name
 
@@ -674,9 +664,9 @@ class Ingredient:
             return ''
         elif self._amount > 1:
             if self._unit in CAN_UNITS:
-                return "({})".format(p.plural(self._unit))
+                return "({})".format(utils.p.plural(self._unit))
             else:
-                return p.plural(self._unit)
+                return utils.p.plural(self._unit)
         elif self._amount <= 1:
             if self._unit in CAN_UNITS:
                 return "({})".format(self._unit)
@@ -710,9 +700,8 @@ class IngredientParser:
         # string preprocessing 
         self.strip_punc = self.strip_punctuation(string)
         self.raw_list = self.strip_punc.split()	
-        #self.lower_list = [singularize(x) for x in self.raw_list]
         self.lower_list = [x.lower() for x in self.raw_list]
-        self.ingred_list = all_singular(self.lower_list)
+        self.ingred_list = utils.all_singular(self.lower_list)
         
         for item in self.ingred_list:
             if re.search(r'\d+', item):
@@ -779,7 +768,7 @@ def template(recipe_name):
         template += "recipe_name: {}\n".format(recipe_name)
         # check if file exist, lets catch this early so we 
         # can exit before entering in all the info
-        file_name = utils.get_source_path(recipe_name)
+        file_name = utils.get_file_name(recipe_name)
         if os.path.isfile(file_name):
             print("File with this name already exist in directory exiting...")
             exit(1)
@@ -813,13 +802,17 @@ def template(recipe_name):
         template += "steps:\n  - step: Coming soon"
         template += VIM_MODE_LINE
         print("Writing to file... " + file_name)
+        temp_yaml = yaml.load(template)
+        test = yaml.dump(temp_yaml)
+        print(test)
+        
         #with open(file_name, "w") as tmp:
         #    tmp.write(str(template))
     
     except KeyboardInterrupt:
         print("\nExiting...")
         sys.exit(0)
-    test = yaml.load(template)
+    
     #subprocess.call([EDITOR, file_name])
 
 def version(text_only=False):
