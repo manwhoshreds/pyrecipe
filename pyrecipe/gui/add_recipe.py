@@ -12,13 +12,18 @@ import pyrecipe.recipe as recipe
 from pyrecipe.config import *
 from pyrecipe.utils import *
 import pyrecipe.gui
-from .tk_utils import *
+from pyrecipe.gui.tk_utils import *
 
 class AddRecipe(tk.Toplevel):
-
+    """Add a recipe.
+    
+    The AddRecipe() class is a toplevel dialouge used to 
+    add a recipe to the recipe store. If a source argument
+    is passed with the class instance, a dialouge is produced
+    with fields aleady populated with the relavant information.
+    """
     def __init__(self, source=''):
         super().__init__()
-        #self.geometry('800x700+150+150')
         self['takefocus'] = True
         # supplying a source turns this class into a recipe editor
         # all fields are populated with the recipe data
@@ -46,32 +51,25 @@ class AddRecipe(tk.Toplevel):
         self.recipe_frame = tk.Frame(self.notebook)
         self.recipe_frame.grid(padx=5, pady=5)
         self.rn_var = tk.StringVar(self.recipe_frame)
-        self.recipe_name = tk.Label(self.recipe_frame, text='Recipe Name')
+        self.recipe_name = tk.Label(self.recipe_frame, text='Recipe Name:')
         self.recipe_name.grid(padx=5, pady=5, row=1, column=1)
         self.rn_entry = tk.Entry(self.recipe_frame, textvariable=self.rn_var)
         self.rn_entry.insert(0, self.recipe['recipe_name'])
         self.rn_entry.grid(padx=5, pady=5, row=1, column=2)
-        self.dish_type = tk.Label(self.recipe_frame, text='Dish Type')
+        self.dish_type = tk.Label(self.recipe_frame, text='Dish Type:')
         self.dish_type.grid(padx=5, pady=5, row=2, column=1)
         self.dt_var = tk.StringVar(self)
-        # workaround for tkinter optionmenus odd behaviour,
-        # for a more detailed explanation, check out
-        # https://stackoverflow.com/questions/19138534/tkinter-optionmenu-first-option-vanishes
-        # also, another post suggest using collections deque found here
-        # https://docs.python.org/3/library/collections.html#collections.deque
-        prepend = ['']
-        new_list = prepend + DISH_TYPES
         self.dt_var = tk.StringVar(self)
         if self.source:
             self.dt_var.set(self.recipe['dish_type'])
         else:
             self.dt_var.set('main')
-        self.dt_options = tk.OptionMenu(self.recipe_frame, self.dt_var, *new_list)
+        self.dt_options = ttk.Combobox(self.recipe_frame, values=DISH_TYPES, textvariable=self.dt_var)
         self.dt_options.grid(sticky="ew", row=2, column=2)
         self.prep_t_var = tk.StringVar(self)
         
         # prep time 
-        self.prep_time = tk.Label(self.recipe_frame, text='Prep time')
+        self.prep_time = tk.Label(self.recipe_frame, text='Prep time:')
         self.prep_time.grid(padx=5, pady=5, row=3, column=1)
         self.prep_time_entry = tk.Entry(self.recipe_frame, textvariable=self.prep_t_var)
         self.prep_time_entry.insert(0, self.recipe['prep_time'])
@@ -79,7 +77,7 @@ class AddRecipe(tk.Toplevel):
         
         # cook time
         self.cook_t_var = tk.StringVar(self)
-        self.cook_time = tk.Label(self.recipe_frame, text='Cook time')
+        self.cook_time = tk.Label(self.recipe_frame, text='Cook time:')
         self.cook_time.grid(padx=5, pady=5, row=4, column=1)
         self.cook_time_entry = tk.Entry(self.recipe_frame, textvariable=self.cook_t_var)
         self.cook_time_entry.insert(0, self.recipe['cook_time'])
@@ -128,10 +126,7 @@ class AddRecipe(tk.Toplevel):
         self.notebook.pack()
     
     def add_ingredient(self, event=''):
-        """
-        add ingredient button
-
-        """
+        """Add ingredient button"""
         ingred_string = self.ingred_var.get()
         if ingred_string:
             ingred_list = recipe.IngredientParser(ingred_string)()
@@ -141,6 +136,7 @@ class AddRecipe(tk.Toplevel):
             pass
          
     def save_recipe(self):
+        """Save the recipe"""
         recipe_data = ''
         recipe_name = self.rn_var.get()
         test_recipe_data = {}
@@ -202,16 +198,9 @@ class IngredTree(ttk.Treeview):
     
     It uses the following events from Treeview:
         <<TreviewSelect>>
-        <4>
-        <5>
-        <KeyRelease>
-        <Home>
-        <End>
-        <Configure>
         <Button-1>
         <ButtonRelease-1>
         <Motion>
-    If you need them use add=True when calling bind method.
     
     It Generates two virtual events:
         <<TreeviewInplaceEdit>>
@@ -226,10 +215,7 @@ class IngredTree(ttk.Treeview):
 
         self._curfocus = None
         self._inplace_widgets = {}
-        self._inplace_widgets_show = {}
         self._inplace_vars = {}
-        self._header_clicked = False
-        self._header_dragged = False
         self._event_info = ()
 
         self['height'] = "25"
@@ -251,19 +237,72 @@ class IngredTree(ttk.Treeview):
         # TreeviewSelect is a virtual event, it doesnt seem to
         # give me x and y info, may use later for something else
         #self.bind('<<TreeviewSelect>>', self._focus)
-        self.bind('<Button-1>', self._focus)
+        self.bind('<Button-1>', self._kill_widgets)
         self.bind('<Configure>',
             lambda e: self.after_idle(self.__updateWnds))
-        self.bind('<Double-Button-1>', self.test)
+        self.bind('<Double-Button-1>', self._edit)
+        self.bind('<<TreeviewCellEdited>>', self._edited)
+        #self.bind('<<TreeviewSelect>>', self._focus)
+    
+    def _edited(self, event):
+        pass
 
-    def _focus(self, event):
-        print(event)
-        self.item = self.focus()
+    def _kill_widgets(self, event=None):
+        try: 
+            # Delete other widget every time we click on the tree
+            # also updat last entry before moving on with next incase
+            # the user double clicks on another cell with out pressing
+            # enter on last cell
+            self.tree_entry.destroy()
+            self.updated_ingred = self._inplace_vars[self.cell_id].get()
+            self._set_value(self.item, self.col, self.updated_ingred)
+        except AttributeError:
+            pass
+    
+    def _edit(self, event):
+        """Executed, when a row is double-clicked. Opens
+        EntryPopup inplace of the cell entry."""
+        # position info 
+        self.item = self.selection()[0]
         self.col = self.identify_column(event.x)
         self._event_info = (self.item, self.col)
-        print(self.item)
-        print(self.col)
-        print(self._event_info)
+        self.cell_id = self.item + self.col
+        
+        # get cell box values
+        x,y,width,height = self.bbox(self.item, self.col)
+
+        # y-axis offset
+        pady = height // 2
+        
+        # get value
+        cell_value = self._get_value(self.item, self.col)
+        
+        # place Entry popup properly
+        self._inplace_vars[self.cell_id] = tk.StringVar()
+        edit_tree_var = self._inplace_vars[self.cell_id]
+        if self.col == '#2':
+            self.tree_entry = ttk.Combobox(self, values=SIZE_STRINGS, textvariable=edit_tree_var)
+            self.tree_entry.set(cell_value)
+            self.tree_entry.bind('<Return>', lambda e: self.tree_entry.destroy())
+        elif self.col == '#3':
+            self.tree_entry = ttk.Combobox(self, values=INGRED_UNITS, textvariable=edit_tree_var)
+            self.tree_entry.set(cell_value)
+            self.tree_entry.bind('<Return>', lambda e: self.tree_entry.destroy())
+        elif self.col == '#5':
+            self.tree_entry = ttk.Combobox(self, values=PREP_TYPES, textvariable=edit_tree_var)
+            self.tree_entry.set(cell_value)
+            self.tree_entry.bind('<Return>', lambda e: self.tree_entry.destroy())
+        else:
+            self.tree_entry = EntryPopup(self, cell_value, textvariable=edit_tree_var)
+        
+        self.tree_entry.place(x=x, y=y+pady, anchor='w', width=width)
+        self.tree_entry.wait_window()
+        
+        self.updated_ingred = self._inplace_vars[self.cell_id].get()
+        
+        # set
+        self._set_value(self.item, self.col, self.updated_ingred)
+
     
     def delete(self, *items):
         self.after_idle(self.__updateWnds)
@@ -295,37 +334,6 @@ class IngredTree(ttk.Treeview):
         self.after_idle(self.__updateWnds)
         ttk.Treeview.xview_moveto(self, fraction)
 
-    def __check_focus(self, event):
-        """Checks if the focus has changed"""
-        #print('Event:', event.type, event.x, event.y)
-
-        changed = False
-        if not self._curfocus:
-            changed = True
-        elif self._curfocus != self.focus():
-            self.__clear_inplace_widgets()
-            changed = True
-        newfocus = self.focus()
-        if changed:
-            if newfocus:
-                #print('Focus changed to:', newfocus)
-                self._curfocus = newfocus
-                self.__focus(newfocus)
-
-    def __focus(self, item):
-        """Called when focus item has changed"""
-        cols = self.__get_display_columns()
-        #for col in cols:
-            #self.inplace_entry(col, item)
-       #     self.__event_info = (col,item)
-       #     self.event_generate('<<TreeviewInplaceEdit>>')
-       #     if col in self._inplace_widgets:
-       #         w = self._inplace_widgets[col]
-       #         w.bind('<Key-Tab>',
-       #             lambda e: w.tk_focusNext().focus_set())
-       #         w.bind('<Shift-Key-Tab>',
-       #             lambda e: w.tk_focusPrev().focus_set())
-
     def __updateWnds(self, event=None):
         if not self._curfocus:
             return
@@ -354,85 +362,27 @@ class IngredTree(ttk.Treeview):
                 #widget.destroy()
                 #del self._inplace_widgets[c]
 
-    def __get_display_columns(self):
+    def _get_display_columns(self):
         cols = self.cget('displaycolumns')
         show = (str(s) for s in self.cget('show'))
-        if '#all' in cols:
-            cols = self.cget('columns') + ('#0',)
-        elif 'tree' in show:
-            cols = cols + ('#0',)
         return cols
 
     def get_event_info(self):
-        return self.__event_info;
+        return self._event_info
 
-    def __get_value(self, item, col):
+    def _get_value(self, item, col):
         return self.set(item, col)
 
-    def __set_value(self, item, col, value):
+    def _set_value(self, item, col, value):
         self.set(item, col, value)
         self.__event_info = (col,item)
         self.event_generate('<<TreeviewCellEdited>>')
-
-    def __update_value(self, item, col):
-        if not self.exists(item):
-            return
-        value = self.__get_value(item, col)
-        newvalue = self._inplace_vars[col].get()
-        if value != newvalue:
-            self.__set_value(col, item, newvalue)
-
-    def test(self, event):
-        item,col = self._event_info
-
-        rowid = self.focus()
-        column = self.identify_column(event.x)
-        
-        ''' Executed, when a row is double-clicked. Opens
-        read-only EntryPopup above the item's column, so it is possible
-        to select text '''
-        
-        # Delete other entry widget every time we click
-        # on the tree
-        #print(self._inplace_widgets)
-        #try: 
-        #    self.tree_entry.destroy()
-        #    self.edit_tree_var.set('')
-        #except AttributeError:
-        #    pass
-
-        
-        rowid = self.focus()
-        column = self.identify_column(event.x)
-
-        # get column position info
-        x,y,width,height = self.bbox(rowid, column)
-
-        # y-axis offset
-        pady = height // 2
-        
-        # get value
-        selected_item = self.selection()[0]
-        cell_value = self.__get_value(selected_item, column)
-        self.edit_tree_var = tk.StringVar() 
-        # place Entry popup properly
-        #self.tree_entry = EntryPopup(self, cell_value, textvariable=self.edit_tree_var)
-        test = ['', 'this', 'that']
-        self.tree_entry = tk.OptionMenu(self, self.edit_tree_var, *test)
-        #self.inplace_entry(col, item)
-        self.tree_entry.place(x=x, y=y+pady, anchor='w', width=width)
-        self.tree_entry.wait_window()
-        #self.tree_entry.place_forget()
-        updated_ingred = self.edit_tree_var.get()
-        
-        # set
-        self.__set_value(selected_item, column, updated_ingred)
 
     def inplace_entry(self, col, item):
         if col not in self._inplace_vars:
             self._inplace_vars[col] = tk.StringVar()
         svar = self._inplace_vars[col]
-        svar.set(self.__get_value(item, col))
+        svar.set(self._get_value(item, col))
         #if col not in self._inplace_widgets:
         self._inplace_widgets[col] = EntryPopup(self, 'enter', textvariable=svar)
         entry = self._inplace_widgets[col]
@@ -445,7 +395,7 @@ class IngredTree(ttk.Treeview):
         if col not in self._inplace_vars:
             self._inplace_vars[col] = tk.StringVar()
         svar = self._inplace_vars[col]
-        svar.set(self.__get_value(item, col))
+        svar.set(self._get_value(item, col))
         if col not in self._inplace_widgets:
             self._inplace_widgets[col] = ttk.Checkbutton(self,
             textvariable=svar, variable=svar, onvalue=onvalue, offvalue=offvalue)
@@ -459,7 +409,7 @@ class IngredTree(ttk.Treeview):
         if col not in self._inplace_vars:
             self._inplace_vars[col] = tk.StringVar()
         svar = self._inplace_vars[col]
-        svar.set(self.__get_value(item, col))
+        svar.set(self._get_value(item, col))
         if col not in self._inplace_widgets:
             self._inplace_widgets[col] = ttk.Combobox(self,
                 textvariable=svar, values=values, state=state)
@@ -472,7 +422,7 @@ class IngredTree(ttk.Treeview):
         if col not in self._inplace_vars:
             self._inplace_vars[col] = tk.StringVar()
         svar = self._inplace_vars[col]
-        svar.set(self.__get_value(item, col))
+        svar.set(self._get_value(item, col))
         if col not in self._inplace_widgets:
             self._inplace_widgets[col] = tk.Spinbox(self,
                 textvariable=svar, from_=min, to=max, increment=step)
@@ -485,12 +435,16 @@ class IngredTree(ttk.Treeview):
         if col not in self._inplace_vars:
             self._inplace_vars[col] = tk.StringVar()
         svar = self._inplace_vars[col]
-        svar.set(self.__get_value(item, col))
+        svar.set(self._get_value(item, col))
         self._inplace_widgets[col] = widget
         widget.bind('<Unmap>', lambda e: self.__update_value(col, item))
         widget.bind('<FocusOut>', lambda e: self.__update_value(col, item))
         self._inplace_widgets_show[col] = True
 
-
+# testing
 if __name__ == '__main__':
-   AddRecipe()
+    root = tk.Tk()
+    test = AddRecipe('pesto')
+    test.wait_window()
+    root.destroy()
+    root.mainloop()

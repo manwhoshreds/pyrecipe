@@ -9,7 +9,7 @@ import inflect
 from .config import *
 
 
-# Inflects default behaviour for return the singular of words is
+# Inflects default behaviour for returning the singular of a word is
 # not very useful to this project because it returns false if
 # it comes across a non-noun word. Therfore, the following is a
 # functional work-a-round
@@ -24,6 +24,18 @@ class InflectEngine(inflect.engine):
             return singular
         else:
             return word
+
+    def plural(self, word, count=None):
+        if count: 
+            if count <= 1:
+                return word
+            else:
+                word = super().plural(word)
+                return word
+        else:
+            word = super().plural(word)
+            return word
+
 
 p = InflectEngine()
 

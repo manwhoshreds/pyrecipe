@@ -11,7 +11,7 @@ import pprint
 
 import configparser
 
-__version__     = '0.7.2'
+__version__     = '0.7.3'
 __email__       = "m.k.miller@gmx.com"
 __scriptname__  = os.path.basename(sys.argv[0])
 
@@ -80,9 +80,10 @@ PINT_UNDEFINED_UNITS = ['box', 'taste', 'inch piece', 'stick', 'bottle', 'each',
 # its not considered professional recipe writing
 # to use two numbers in a row, for example "1 32 ounce can"
 CAN_UNITS            = ['32 ounce can', '16 ounce can', '15 ounce can', '8.5 ounce can', '8 ounce can', '2 pound package']
-INGRED_UNITS         = CAN_UNITS + CULINARY_UNITS + PINT_UNDEFINED_UNITS
-SIZE_STRINGS         = ['large', 'medium', 'small']
-PREP_TYPES           = ['softened', 'diced', 'finely diced', 'shredded', 
+
+_ingr_units          = CAN_UNITS + CULINARY_UNITS + PINT_UNDEFINED_UNITS
+_size_strs           = ['large', 'medium', 'small', 'heaping']
+_prp_typs            = ['softened', 'diced', 'finely diced', 'shredded', 
                         'tightly packed', 'drained', 'deviened', 'cubed', 
                         'chopped', 'finely chopped', 'freshly ground', 
                         'very finely chopped', 'minced', 'finely minced', 
@@ -93,3 +94,7 @@ PREP_TYPES           = ['softened', 'diced', 'finely diced', 'shredded',
                         'cut into 2 inch pieces', 'cut into 1 inch pieces', 
                         'cut into 1 inch lengths', 'uncooked', 'peeled and grated', 
                         'lightly packed', 'roasted']
+
+INGRED_UNITS          = sorted(_ingr_units)
+SIZE_STRINGS          = sorted(_size_strs)
+PREP_TYPES            = sorted(_prp_typs)

@@ -12,7 +12,7 @@
 import os
 
 from pint import UnitRegistry
-import inflect
+#import inflect
 from ruamel.yaml import YAML
 
 import pyrecipe.utils

@@ -17,8 +17,6 @@ import subprocess
 import sqlite3
 import datetime
 from numbers import Number
-# dubug
-import pdb
 
 from fractions import Fraction
 from lxml import etree
@@ -468,7 +466,7 @@ class ShoppingList:
             if name == "s&p":
                 continue
             amount = item['amounts'][0].get('amount', 0)
-            unit = item['amounts'][0].get('unit', 'teaspoon')
+            unit = item['amounts'][0].get('unit', '')
             ingred = Ingredient(name, amount=amount, unit=unit)
             # check if name already in sd so we can add together
             if name in sd.keys():
@@ -593,7 +591,7 @@ class Ingredient:
     :param prep: prep string if any, such as diced, chopped.. etc...
     """
 
-    def __init__(self, name, amount=1, size='', unit='', prep=''):
+    def __init__(self, name, amount=0, size='', unit='', prep=''):
         self._name = name
         self._amount = amount
         self.size = size
@@ -632,9 +630,20 @@ class Ingredient:
         try:
             this = utils.num(self._amount) * ureg[self._unit]
             that = utils.num(other._amount) * ureg[other._unit]
+            # the following is just is a workaround for pints addition behaviour
+            # if pint returns a float we have to switch the components of the addition
+            # statement in order to get back a whole number
             addition = this + that
-            test = str(addition).split()
-            return [test[0], test[1]]
+            if isinstance(addition.magnitude, float):
+                if addition.magnitude.is_integer():
+                    string = str(addition).split()
+                else:
+                    addition = that + this
+                    string = str(addition).split()
+                return [string[0], string[1]]
+            else:
+                string = str(addition).split()
+                return [string[0], string[1]]
         except DimensionalityError:
             return [self._amount, self._unit]
 
@@ -662,12 +671,12 @@ class Ingredient:
     def get_unit(self):
         if self._unit == 'each':
             return ''
-        elif self._amount > 1:
+        elif utils.num(self._amount) > 1:
             if self._unit in CAN_UNITS:
                 return "({})".format(utils.p.plural(self._unit))
             else:
                 return utils.p.plural(self._unit)
-        elif self._amount <= 1:
+        elif utils.num(self._amount) <= 1:
             if self._unit in CAN_UNITS:
                 return "({})".format(self._unit)
             else:
@@ -676,7 +685,7 @@ class Ingredient:
             return self._unit
 
 class IngredientParser:
-    """Convert an ingredient string into a dict
+    """Convert an ingredient string into a list or dict
 
     an excepted ingredient string is usually in the form of
     
