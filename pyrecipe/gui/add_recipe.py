@@ -17,7 +17,7 @@ from pyrecipe.gui.tk_utils import *
 class AddRecipe(tk.Toplevel):
     """Add a recipe.
     
-    The AddRecipe() class is a toplevel dialouge used to 
+    The AddRecipe class is a toplevel dialouge used to 
     add a recipe to the recipe store. If a source argument
     is passed with the class instance, a dialouge is produced
     with fields aleady populated with the relavant information.
@@ -34,8 +34,9 @@ class AddRecipe(tk.Toplevel):
             self.title("Add recipe")
         self.recipe = recipe.Recipe(source)
         #self._init_notebook(width=700, height=600)
+        self.ingred_parser = recipe.IngredientParser() 
         self._init_notebook()
-        
+
         # Cancel
         self.cancel = tk.Button(self, text='Cancel', command=self.destroy)
         self.cancel.pack(side=tk.RIGHT)
@@ -103,7 +104,7 @@ class AddRecipe(tk.Toplevel):
         if self.source:
             ingreds = self.recipe.get_ingredients()
             for item in ingreds:
-                ingred_list = recipe.IngredientParser(item)()
+                ingred_list = self.ingred_parser.parse(item)
                 self.ingred_tree.insert('', 'end', text='test', values=(ingred_list))
         
         # method
@@ -129,7 +130,7 @@ class AddRecipe(tk.Toplevel):
         """Add ingredient button"""
         ingred_string = self.ingred_var.get()
         if ingred_string:
-            ingred_list = recipe.IngredientParser(ingred_string)()
+            ingred_list = self.ingred_parser.parse(ingred_string)
             self.ingred_entry.delete(0, 'end')
             self.ingred_tree.insert('', 'end', text='test', values=(ingred_list))
         else:

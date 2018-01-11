@@ -145,17 +145,19 @@ class IngredientParser:
     return a list or dict populated with the relevant data.
 
     """
-    def __init__(self, string, return_dict=False):
+    def __init__(self, return_dict=False):
         self.amount = ''
         self.size = ''
         self.unit = ''
         self.name = ''
         self.prep = ''
+        self.ingred_list = []
         self.ingred_dict = {}
         self.return_dict = return_dict
-        
+    
+    def parse(self, string):
         # string preprocessing 
-        self.strip_punc = self.strip_punctuation(string)
+        self.strip_punc = self._strip_punctuation(string)
         self.raw_list = self.strip_punc.split()	
         self.lower_list = [x.lower() for x in self.raw_list]
         self.ingred_list = utils.all_singular(self.lower_list)
@@ -196,12 +198,11 @@ class IngredientParser:
                             self.unit, 
                             self.name, 
                             self.prep]
-    
-    def __call__(self):
+
         if self.return_dict:
             return self.ingred_dict
         else:
             return self.ingred_list
-
-    def strip_punctuation(self, string):
+    
+    def _strip_punctuation(self, string):
         return ''.join(c for c in string if c not in punctuation)

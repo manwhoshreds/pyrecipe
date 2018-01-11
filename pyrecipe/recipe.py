@@ -33,7 +33,6 @@ class Recipe:
         The recipe class is used to perform operations on
         recipe source files such as print and save xml.
     """
-
     def __init__(self, source='', checkfile=True):
         if source: 
             self.source = utils.get_source_path(source)
@@ -675,18 +674,8 @@ def stats(verb=0):
     """Print statistics about your recipe database and exit."""
     
     version()
-    print("Recipes: {}".format(len(RECIPE_FILES)))
+    print("Recipes: {}".format(len(RECIPE_DATA_FILES)))
     if verb >= 1:
         print("Recipe data directory: {}".format(RECIPE_DATA_DIR))
         print("Recipe xml directory: {}".format(RECIPE_XML_DIR))
         print("Default random recipe: {}".format(RAND_RECIPE_COUNT))
-
-    r = Recipe('pesto')
-    test = r.ingredient_data
-    ok = IngredientIterator(test)
-    print(type(ok))
-    for item in ok:
-        print(item)
-
-
-
