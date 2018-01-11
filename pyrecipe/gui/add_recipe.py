@@ -197,14 +197,8 @@ class IngredTree(ttk.Treeview):
     """A simple editable treeview
     
     It uses the following events from Treeview:
-        <<TreviewSelect>>
         <Button-1>
-        <ButtonRelease-1>
-        <Motion>
     
-    It Generates two virtual events:
-        <<TreeviewInplaceEdit>>
-        <<TreeviewCellEdited>>
     The first is used to configure cell editors.
     The second is called after a cell was changed.
     You can know wich cell is being configured or edited, using:
@@ -234,19 +228,9 @@ class IngredTree(ttk.Treeview):
         self.column("E", minwidth=0, width=150)
         self.grid(padx=5, row=1, column=0, columnspan=3)
         
-        # TreeviewSelect is a virtual event, it doesnt seem to
-        # give me x and y info, may use later for something else
-        #self.bind('<<TreeviewSelect>>', self._focus)
         self.bind('<Button-1>', self._kill_widgets)
-        self.bind('<Configure>',
-            lambda e: self.after_idle(self.__updateWnds))
         self.bind('<Double-Button-1>', self._edit)
-        self.bind('<<TreeviewCellEdited>>', self._edited)
-        #self.bind('<<TreeviewSelect>>', self._focus)
     
-    def _edited(self, event):
-        pass
-
     def _kill_widgets(self, event=None):
         try: 
             # Delete other widget every time we click on the tree
@@ -281,17 +265,12 @@ class IngredTree(ttk.Treeview):
         self._inplace_vars[self.cell_id] = tk.StringVar()
         edit_tree_var = self._inplace_vars[self.cell_id]
         if self.col == '#2':
-            self.tree_entry = ttk.Combobox(self, values=SIZE_STRINGS, textvariable=edit_tree_var)
-            self.tree_entry.set(cell_value)
-            self.tree_entry.bind('<Return>', lambda e: self.tree_entry.destroy())
+            self.tree_entry = ComboPopup(self, cell_value, values=SIZE_STRINGS, textvariable=edit_tree_var)
         elif self.col == '#3':
-            self.tree_entry = ttk.Combobox(self, values=INGRED_UNITS, textvariable=edit_tree_var)
-            self.tree_entry.set(cell_value)
-            self.tree_entry.bind('<Return>', lambda e: self.tree_entry.destroy())
+            self.tree_entry = ComboPopup(self, cell_value, values=INGRED_UNITS, textvariable=edit_tree_var)
         elif self.col == '#5':
-            self.tree_entry = ttk.Combobox(self, values=PREP_TYPES, textvariable=edit_tree_var)
-            self.tree_entry.set(cell_value)
-            self.tree_entry.bind('<Return>', lambda e: self.tree_entry.destroy())
+            self.tree_entry = ComboPopup(self, cell_value, values=PREP_TYPES, textvariable=edit_tree_var)
+            #self.tree_entry.set(cell_value)
         else:
             self.tree_entry = EntryPopup(self, cell_value, textvariable=edit_tree_var)
         

@@ -14,8 +14,7 @@ from pyrecipe.gui.settings import Settings
 from pyrecipe.gui.tk_utils import *
 import pyrecipe.config as conf
 #from .config import *
-from .utils import *
-from . import ureg, Q_
+from pyrecipe.utils import *
 
 
 

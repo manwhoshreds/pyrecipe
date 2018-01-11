@@ -9,7 +9,7 @@ import os
 from .config import PP
 from pyrecipe import utils
 import pyrecipe.recipe as recipe
-import pyrecipe.maingui as gui
+import pyrecipe.gui.maingui as gui
 
 def dump_data(args):
 	

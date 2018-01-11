@@ -39,6 +39,31 @@ class EntryPopup(tk.Entry):
         super().__init__(parent, **kw)
         self.insert(0, text) 
         self['exportselection'] = False
+        self['selectbackground'] = "orange"
+        self.focus_force()
+        self.bind("<Control-a>", self.selectAll)
+        self.bind("<Escape>", lambda *ignore: self.destroy())
+        self.bind("<Return>", self.enter)
+
+    def selectAll(self, *ignore):
+        ''' Set selection on the whole text '''
+        self.selection_range(0, 'end')
+
+        # returns 'break' to interrupt default key-bindings
+        return 'break'
+
+    def enter(self, event):
+        self.destroy()
+
+
+class ComboPopup(ttk.Combobox):
+
+    def __init__(self, parent, text, **kw):
+        ''' If relwidth is set, then width is ignored '''
+        super().__init__(parent, **kw)
+        self.insert(0, text)
+        self['exportselection'] = False
+        #self['selectbackground'] = "orange"
         self.focus_force()
         self.bind("<Control-a>", self.selectAll)
         self.bind("<Escape>", lambda *ignore: self.destroy())
