@@ -8,6 +8,7 @@ import os
 
 from .config import PP
 from pyrecipe import utils
+from pyrecipe import shopper
 import pyrecipe.recipe as recipe
 import pyrecipe.gui.maingui as gui
 
@@ -29,7 +30,7 @@ def start_gui():
 def print_shopping_list(args):
 	
     if args.random:
-        rr = recipe.RandomShoppingList(args.random)
+        rr = shopper.RandomShoppingList(args.random)
         rr.print_random()
     else:
         menu_items = args.recipes	
@@ -37,7 +38,7 @@ def print_shopping_list(args):
             sys.exit('You must supply at least one recipe'
                      ' to build your shopping list from!')
             
-        sl = recipe.ShoppingList()
+        sl = shopper.ShoppingList()
         for item in menu_items:
             sl.update(item)
         if args.write:			
@@ -59,7 +60,7 @@ def print_recipe(args):
     r.print_recipe(args.verbose)
 
 def show_stats(args):
-    recipe.stats(args.verbose)
+    utils.stats(args.verbose)
 
 def delete_recipe(args):
     import os
@@ -72,7 +73,7 @@ def delete_recipe(args):
         print("{} not deleted".format(source))
 
 def edit_recipe(args):
-    source = get_file_name(args.source)
+    source = utils.get_file_name(args.source)
     subprocess.call([recipe.EDITOR, source])
 
 def add_recipe(args):
@@ -88,7 +89,7 @@ def print_list(args):
 
 def version(args):
 	
-    print(recipe.version())
+    print(utils.version())
 
 def export_recipes(args):
 	

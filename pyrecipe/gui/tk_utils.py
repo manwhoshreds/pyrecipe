@@ -120,4 +120,7 @@ def center(toplevel):
     y = h/2 - size[1]/2
     toplevel.geometry("%dx%d+%d+%d" % (size + (x, y)))
 
+def remove_extra_space(string):
+    spaces_removed = ' '.join(string.split())
+    return spaces_removed
 

@@ -14,17 +14,17 @@ import os
 from pint import UnitRegistry
 #import inflect
 from ruamel.yaml import YAML
+yaml = YAML()
 
-import pyrecipe.utils
-from .config import __version__, __scriptname__
+from pyrecipe import utils
+from .config import __version__, __scriptname__, DB_FILE
 
 ureg = UnitRegistry()
 ureg.load_definitions(os.path.expanduser('~/.local/lib/python3.6/site-packages/pyrecipe/culinary_units.txt'))
 
 Q_ = ureg.Quantity
+color = utils.Color()
 
-# ruamel aliases because i prefer ruamel features with pyyaml syntax
-yaml = YAML()
 
 
 

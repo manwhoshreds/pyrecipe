@@ -3,7 +3,6 @@
 import re
 import os
 import time
-
 from tkinter import *
 from tkinter.ttk import *
 from numbers import Number
@@ -34,7 +33,6 @@ class MainGUI(Tk):
         self.edit_recipe = Button(self.top_bar, text="Edit", command=self.edit_recipe)
         self.edit_recipe.pack(side=LEFT)
 
-        
         self.left_pane = Frame()
         self.left_pane.pack(side=LEFT)
         search = Label(self.left_pane, text="Search Recipes")
@@ -124,12 +122,6 @@ class MainGUI(Tk):
         self._build_recipe_text(r)
     
     def _build_recipe_text(self, recipe):
-        recipe_name = recipe.recipe_name
-        test = len(recipe_name)
-        #self.recipe_textbox.insert(END, recipe_name)
-        #self.recipe_textbox.tag_add("recipe_name", "1.0", "1."+str(test))
-        #self.recipe_textbox.tag_config("recipe_name", background="yellow", foreground="blue")
-        
         self.recipe_textbox.insert(END, str(recipe))
         self.recipe_textbox.config(state=DISABLED)
 

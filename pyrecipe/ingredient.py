@@ -19,7 +19,9 @@ import re
 
 from string import punctuation
 from fractions import Fraction
+from pint.errors import (DimensionalityError)
 
+from pyrecipe import ureg, Q_
 from pyrecipe.config import (CAN_UNITS,
                              PREP_TYPES,
                              INGRED_UNITS,
@@ -146,63 +148,66 @@ class IngredientParser:
 
     """
     def __init__(self, return_dict=False):
-        self.amount = ''
-        self.size = ''
-        self.unit = ''
-        self.name = ''
-        self.prep = ''
-        self.ingred_list = []
-        self.ingred_dict = {}
         self.return_dict = return_dict
     
     def parse(self, string):
+        amount = ''
+        size = ''
+        unit = ''
+        name = ''
+        prep = ''
+        ingred_list = []
+        ingred_dict = {}
+        
         # string preprocessing 
         self.strip_punc = self._strip_punctuation(string)
-        self.raw_list = self.strip_punc.split()	
-        self.lower_list = [x.lower() for x in self.raw_list]
-        self.ingred_list = utils.all_singular(self.lower_list)
+        raw_list = self.strip_punc.split()	
+        lower_list = [x.lower() for x in raw_list]
+        ingred_list = utils.all_singular(lower_list)
         
-        for item in self.ingred_list:
+        for item in ingred_list:
             if re.search(r'\d+', item):
-                self.amount = item
-                self.ingred_list.remove(item)
+                amount = item
+                ingred_list.remove(item)
                 break
         
         for item in SIZE_STRINGS:
-            if item in self.ingred_list:
-                self.size = item
-                self.ingred_list.remove(item)
+            if item in ingred_list:
+                size = item
+                ingred_list.remove(item)
         
         for item in INGRED_UNITS:	
-            if item in self.ingred_list:
-                self.unit = item
-                self.ingred_list.remove(item)
+            if item in ingred_list:
+                unit = item
+                ingred_list.remove(item)
         
         for item in PREP_TYPES:
-            if item in self.ingred_list:
-                self.prep = item
-                self.ingred_list.remove(item)
+            if item in ingred_list:
+                prep = item
+                ingred_list.remove(item)
 
-        if not self.unit:
-            self.unit = 'each'
+        if not unit:
+            unit = 'each'
 
-        self.name = ' '.join(self.ingred_list)
-        self.ingred_dict['amount'] = self.amount
-        self.ingred_dict['size'] = self.size
-        self.ingred_dict['unit'] = self.unit
-        self.ingred_dict['name'] = self.name
-        self.ingred_dict['prep'] = self.prep
+        name = ' '.join(ingred_list)
+        ingred_dict['amount'] = amount
+        ingred_dict['size'] = size
+        ingred_dict['unit'] = unit
+        ingred_dict['name'] = name
+        ingred_dict['prep'] = prep
         
-        self.ingred_list = [self.amount, 
-                            self.size, 
-                            self.unit, 
-                            self.name, 
-                            self.prep]
+        ingred_list = [amount, size, unit, name, prep]
 
         if self.return_dict:
-            return self.ingred_dict
+            return ingred_dict
         else:
-            return self.ingred_list
+            return ingred_list
     
     def _strip_punctuation(self, string):
         return ''.join(c for c in string if c not in punctuation)
+
+# testing
+if __name__ == '__main__':
+    i = IngredientParser(return_dict=True)
+    test = i.parse('2 tablespoons onion, chopped')
+    print(test)

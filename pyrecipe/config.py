@@ -6,12 +6,13 @@
 
 import os
 import sys
-import ruamel.yaml as yaml
 import pprint
 
 import configparser
 
-__version__     = '0.7.3'
+from pyrecipe import yaml
+
+__version__     = '0.7.4'
 __email__       = "m.k.miller@gmx.com"
 __scriptname__  = os.path.basename(sys.argv[0])
 
@@ -37,33 +38,19 @@ RECIPE_DATA_FILES = []
 for item in os.listdir(RECIPE_DATA_DIR):
     RECIPE_DATA_FILES.append(RECIPE_DATA_DIR + item)
 
-# gather salad and main dish recipes	
-RECIPE_NAMES   = []
-MAINDISH_NAMES = []
-DRESSING_NAMES = []
-DESSERT_NAMES  = []
-SIDE_NAMES     = [] 
+RECIPE_NAMES = []
 for item in RECIPE_DATA_FILES:
-    with open(item, "r") as stream:
-        try:
-            _recipe = yaml.safe_load(stream)
-            recipe_name = _recipe['recipe_name']
-            dtype = _recipe['dish_type']
-        except yaml.YAMLError as exc:
-            print(exc)
-            sys.exit(0)
-        
-        RECIPE_NAMES.append(recipe_name)	
-        if dtype == "main":
-            MAINDISH_NAMES.append(recipe_name) 
-        elif dtype == "salad dressing":
-            DRESSING_NAMES.append(recipe_name)
-        elif dtype == "dessert":
-            DESSERT_NAMES.append(recipe_name)
-        elif dtype == "side":
-            SIDE_NAMES.append(recipe_name)
-        else:
-            continue
+    with open(item, 'r') as stream:
+        _recipe = yaml.load(stream)
+        RECIPE_NAMES.append(_recipe['recipe_name'])
+
+MAINDISH_NAMES = []
+for item in RECIPE_DATA_FILES:
+    with open(item, 'r') as stream:
+        _recipe = yaml.load(stream)
+        if _recipe['dish_type'] == 'main':
+            MAINDISH_NAMES.append(_recipe['recipe_name'])
+
 
 PP                   = pprint.PrettyPrinter(compact=True, indent=4)
 P_DIV                = "*" * 50

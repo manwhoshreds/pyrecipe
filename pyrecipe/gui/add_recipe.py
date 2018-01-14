@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
     The add_recipe module include classes to 
     add or edit a recipe
@@ -106,7 +105,7 @@ class AddRecipe(tk.Toplevel):
             for item in ingreds:
                 ingred_list = self.ingred_parser.parse(item)
                 self.ingred_tree.insert('', 'end', text='test', values=(ingred_list))
-        
+        print(self.ingred_parser.__dict__) 
         # method
         self.method = tk.Frame(self.notebook, **kw)
         self.method_label = tk.Label(self.method, text="Enter method here:")
