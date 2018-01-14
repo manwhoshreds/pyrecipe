@@ -15,6 +15,7 @@ from pint import UnitRegistry
 #import inflect
 from ruamel.yaml import YAML
 yaml = YAML()
+yaml.default_flow_style = False
 
 from pyrecipe import utils
 from .config import __version__, __scriptname__, DB_FILE
