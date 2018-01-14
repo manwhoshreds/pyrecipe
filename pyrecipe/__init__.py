@@ -14,7 +14,7 @@ import os
 from pint import UnitRegistry
 #import inflect
 from ruamel.yaml import YAML
-yaml = YAML()
+yaml = YAML(typ='safe')
 yaml.default_flow_style = False
 
 from pyrecipe import utils
@@ -26,6 +26,7 @@ ureg.load_definitions(os.path.expanduser('~/.local/lib/python3.6/site-packages/p
 Q_ = ureg.Quantity
 color = utils.Color()
 
+from .recipe import Recipe
 
 
 

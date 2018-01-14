@@ -27,16 +27,16 @@ class Recipe:
     """The recipe class is used to perform operations on
     recipe source files such as print and save xml.
     """
+    # All keys applicable to the Open Recipe Format
+    orf_keys = ['recipe_name', 'recipe_uuid', 'dish_type', 
+                'category',    'cook_time',   'prep_time',       
+                'author',      'oven_temp',   'bake_time',       
+                'yields',      'ingredients', 'alt_ingredients', 
+                'notes',       'url',         'steps']
+    
     def __init__(self, source=''):
         self.source = source
         
-        # All keys applicable to the Open Recipe Format
-        self.orf_keys = ['recipe_name', 'recipe_uuid', 'dish_type', 
-                         'category',    'cook_time',   'prep_time',       
-                         'author',      'oven_temp',   'bake_time',       
-                         'yields',      'ingredients', 'alt_ingredients', 
-                         'notes',       'steps']
-
         # Cache for the recipe data, if we start a class instance with a 
         # source, the data is cached in the next if statement
         self._recipe_data = {}
@@ -81,13 +81,13 @@ class Recipe:
         return recipe_string
 
     def __getitem__(self, key):
-        if key in self.orf_keys:
+        if key in __class__.orf_keys:
             return self.__dict__['_recipe_data'].get(key, '')
         else:
             return self.__dict__.get(key, '')
 
     def __setitem__(self, key, value):
-        if key in self.orf_keys:
+        if key in __class__.orf_keys:
             self.__dict__['_recipe_data'][key] = value
             self._build_xml_tree()
         else:
@@ -95,46 +95,46 @@ class Recipe:
 
     def _build_xml_tree(self):
         """Internal method used to build the xml tree"""
-        self.xml_root = etree.Element('recipe')
+        xml_root = etree.Element('recipe')
         # recipe name	
         if 'recipe_name' in self.yaml_root_keys:
-            xml_recipe_name = etree.SubElement(self.xml_root, "name")
+            xml_recipe_name = etree.SubElement(xml_root, "name")
             xml_recipe_name.text = self['recipe_name']
 
         # recipe_uuid
         if 'recipe_uuid' in self.yaml_root_keys:
-            xml_recipe_uuid = etree.SubElement(self.xml_root, "uuid")
-            xml_recipe_uuid.text = self['recipe_uuid']
+            xml_recipe_uuid = etree.SubElement(xml_root, "uuid")
+            xml_recipe_uuid.text = str(self['recipe_uuid'])
 
         # dish_type
         if 'dish_type' in self.yaml_root_keys:
-            xml_dish_type = etree.SubElement(self.xml_root, "dish_type")
+            xml_dish_type = etree.SubElement(xml_root, "dish_type")
             xml_dish_type.text = self['dish_type']
         
         # category
         if 'category' in self.yaml_root_keys:
             for entry in self['category']:
-                xml_category = etree.SubElement(self.xml_root, "category")
+                xml_category = etree.SubElement(xml_root, "category")
                 xml_category.text = str(entry)
         
         # author
         if 'author' in self.yaml_root_keys:
-            xml_author = etree.SubElement(self.xml_root, "author")
+            xml_author = etree.SubElement(xml_root, "author")
             xml_author.text = self['author']
 
         # prep_time
         if 'prep_time' in self.yaml_root_keys:
-            xml_prep_time = etree.SubElement(self.xml_root, "prep_time")
+            xml_prep_time = etree.SubElement(xml_root, "prep_time")
             xml_prep_time.text = str(self['prep_time'])
 
         # cook_time
         if 'cook_time' in self.yaml_root_keys:
-            xml_cook_time = etree.SubElement(self.xml_root, "cook_time")
+            xml_cook_time = etree.SubElement(xml_root, "cook_time")
             xml_cook_time.text = str(self['cook_time'])
 
         # bake_time
         if 'bake_time' in self.yaml_root_keys:
-            xml_bake_time = etree.SubElement(self.xml_root, "bake_time")
+            xml_bake_time = etree.SubElement(xml_root, "bake_time")
             xml_bake_time.text = str(self['bake_time'])
 
         # notes
@@ -143,7 +143,7 @@ class Recipe:
 
         # price
         if 'price' in self.yaml_root_keys:
-            xml_price = etree.SubElement(self.xml_root, "price")
+            xml_price = etree.SubElement(xml_root, "price")
             xml_price.text = str(self['price'])
         
         # oven_temp
@@ -151,18 +151,18 @@ class Recipe:
             self.oven_temp = self['oven_temp']
             self.ot_amount = self['oven_temp']['amount']
             self.ot_unit = self['oven_temp']['unit']
-            xml_oven_temp = etree.SubElement(self.xml_root, "oven_temp")
+            xml_oven_temp = etree.SubElement(xml_root, "oven_temp")
             xml_oven_temp.text = str(self.ot_amount) + " " + str(self.ot_unit)
         
         # yields
         if 'yields' in self.yaml_root_keys:
-            xml_yields = etree.SubElement(self.xml_root, "yields")
+            xml_yields = etree.SubElement(xml_root, "yields")
             for yeld in self['yields']:
                 xml_servings = etree.SubElement(xml_yields, "servings")
                 xml_servings.text = str(yeld)
         
         # ingredients
-        xml_ingredients = etree.SubElement(self.xml_root, "ingredients")
+        xml_ingredients = etree.SubElement(xml_root, "ingredients")
         for ingred in self.get_ingredients(): 	
             xml_ingred = etree.SubElement(xml_ingredients, "ingred")
             xml_ingred.text = ingred
@@ -176,7 +176,7 @@ class Recipe:
                 self.alt_ingredients.append(item)
         try:	
             for item in self['alt_ingredients']:
-                xml_alt_ingredients = etree.SubElement(self.xml_root, "alt_ingredients")
+                xml_alt_ingredients = etree.SubElement(xml_root, "alt_ingredients")
                 xml_alt_ingredients.set('alt_name', item.title())
                 for ingred in self.get_ingredients(alt_ingred=item):
                     xml_alt_ingred = etree.SubElement(xml_alt_ingredients, "alt_ingred")
@@ -185,12 +185,12 @@ class Recipe:
                 pass
         
         # steps	
-        xml_steps = etree.SubElement(self.xml_root, "steps")
+        xml_steps = etree.SubElement(xml_root, "steps")
         for step in self['steps']:
             steps_of = etree.SubElement(xml_steps, "step")
             steps_of.text = step['step']
                 
-        result = etree.tostring(self.xml_root,
+        result = etree.tostring(xml_root,
                                 xml_declaration=True,
                                 encoding='utf-8',
                                 with_tail=False,
@@ -223,7 +223,6 @@ class Recipe:
     
     def print_recipe(self, verb_level=0):
         """Print recipe to standard output."""
-
         print("\n"
             + color.RECIPENAME 
             + self['recipe_name']
@@ -291,7 +290,10 @@ class Recipe:
 
 # testing
 if __name__ == '__main__':
-    r = Recipe('pesto')
+    r = Recipe('egg rolls')
+    #print(r.__dict__)
+    print(r['url'])
+    print(r['kjklj'])
 
     r.dump(stream=sys.stdout)
 

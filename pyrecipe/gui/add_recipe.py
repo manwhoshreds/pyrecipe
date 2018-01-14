@@ -8,6 +8,7 @@ import ruamel.yaml as yaml
 import functools
 
 import pyrecipe.recipe as recipe
+from pyrecipe.ingredient import IngredientParser
 from pyrecipe.config import *
 from pyrecipe.utils import *
 import pyrecipe.gui
@@ -33,7 +34,7 @@ class AddRecipe(tk.Toplevel):
             self.title("Add recipe")
         self.recipe = recipe.Recipe(source)
         #self._init_notebook(width=700, height=600)
-        self.ingred_parser = recipe.IngredientParser() 
+        self.ingred_parser = IngredientParser() 
         self._init_notebook()
 
         # Cancel
@@ -83,6 +84,15 @@ class AddRecipe(tk.Toplevel):
         self.cook_time_entry.insert(0, self.recipe['cook_time'])
         self.cook_time_entry.grid(padx=5, pady=5, row=4, column=2)
        
+        # url
+        self.url_var = tk.StringVar(self)
+        self.url = tk.Label(self.recipe_frame, text='URL:')
+        self.url.grid(padx=5, pady=5, row=5, column=1)
+        self.url.entry = tk.Entry(self.recipe_frame, textvariable=self.url_var)
+        self.url.entry.insert(0, self.recipe['url'])
+        print(self.recipe['url'])
+        self.url.entry.grid(padx=5, pady=5, row=5, column=2)
+        
         # ingredients	
         self.ingredients = tk.Frame(self.notebook, **kw)
         self.ingred_var = tk.StringVar(self.ingredients)
@@ -140,7 +150,7 @@ class AddRecipe(tk.Toplevel):
         recipe_name = self.rn_var.get()
         test_recipe_data = {}
         method = self.method_text.get("1.0", tk.END).replace('\n', ' ').split(';')
-        if not self.rn_var.get():
+        if not recipe_name:
             center(Warn(msg="You must supply a recipe name"))
         elif not self.dt_var.get():
             center(Warn(msg="You must supply a dish type"))
@@ -149,9 +159,9 @@ class AddRecipe(tk.Toplevel):
             tree_entries = self.ingred_tree.get_children()
             if not tree_entries:
                 Warn(msg="You must add at least one ingredient")
-            for item in tree_entries:
+            for child in tree_entries:
                 ingred = {}
-                this_list = self.ingred_tree.item(item)['values']
+                this_list = self.ingred_tree.item(child)['values']
                 ingred['amounts'] = [{'amount': this_list[0], 'unit': this_list[2]}]
                 ingred['size'] = this_list[1]
                 ingred['name'] = this_list[3]
@@ -185,10 +195,10 @@ class AddRecipe(tk.Toplevel):
                 recipe_data += "\n  - step: {}".format(item)
                
             recipe_data += VIM_MODE_LINE
-            save_data = yaml.round_trip_load(recipe_data)
+            save_data = yaml.load(recipe_data)
             file_name = get_file_name(recipe_name)
             with open(file_name, 'w') as file: 
-                yaml.round_trip_dump(save_data, file)
+                yaml.dump(save_data, file)
             self.destroy()
 
 

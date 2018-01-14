@@ -3,6 +3,7 @@
 
 """
 import os
+import sys
 
 import inflect
 
@@ -88,7 +89,7 @@ def get_source_path(source):
     if abspath_name in RECIPE_DATA_FILES:
         return abspath_name
     else:
-        sys.exit('Cannot create new recipe')
+        sys.exit('{} does not exist in the recipe directory.'.format(abspath_name))
 
 
 #def list_recipes(ret=False):

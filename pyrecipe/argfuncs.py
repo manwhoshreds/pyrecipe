@@ -6,7 +6,7 @@ import sys
 import subprocess
 import os
 
-from .config import PP
+from .config import PP, EDITOR
 from pyrecipe import utils
 from pyrecipe import shopper
 import pyrecipe.recipe as recipe
@@ -17,7 +17,7 @@ def dump_data(args):
     r = recipe.Recipe(args.source)
 
     if args.print_yaml:
-        PP.pprint(r.recipe_data)
+        PP.pprint(r._recipe_data)
         exit(0)
     if args.print_xml:
         print(r.xml_data)
@@ -63,9 +63,9 @@ def show_stats(args):
     utils.stats(args.verbose)
 
 def delete_recipe(args):
-    import os
     source = args.source
-    file_name = str(recipe.Recipe(source))
+    r = recipe.Recipe(source) 
+    file_name = r['source']
     answer = input("Are you sure your want to delete {}? yes/no ".format(source))
     if answer.strip() == 'yes':
         os.remove(file_name)
@@ -74,7 +74,7 @@ def delete_recipe(args):
 
 def edit_recipe(args):
     source = utils.get_file_name(args.source)
-    subprocess.call([recipe.EDITOR, source])
+    subprocess.call([EDITOR, source])
 
 def add_recipe(args):
     if args.name.title() in utils.list_recipes(ret=True):
