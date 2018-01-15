@@ -12,7 +12,7 @@ import configparser
 
 from pyrecipe import yaml
 
-__version__     = '0.7.4'
+__version__     = '0.7.5'
 __email__       = "m.k.miller@gmx.com"
 __scriptname__  = os.path.basename(sys.argv[0])
 
@@ -53,8 +53,7 @@ for item in RECIPE_DATA_FILES:
 
 
 PP                   = pprint.PrettyPrinter(compact=True, indent=4)
-P_DIV                = "*" * 50
-S_DIV                = "~" * 50
+S_DIV                = "~" * 60
 REQUIRED_ORD_KEYS    = ['recipe_name', 'dish_type', 
                         'prep_time', 'ingredients', 'steps']
 DISH_TYPES           = ['main', 'side', 'dessert', 'condiment', 'dip', 
