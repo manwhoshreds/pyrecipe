@@ -10,23 +10,22 @@
                   the elments of ingredient data
         
     - IngredientParser: Converts an ingredient string into a list of ingredient
-                        data elements.
+                        data elements. 
 
     :copyright: 2018 by Michael Miller
     :license: GNU General Public License
 """
 import re
-
-from string import punctuation
 from fractions import Fraction
+
 from pint.errors import (DimensionalityError)
 
 from pyrecipe import ureg, Q_
+from pyrecipe import utils
 from pyrecipe.config import (CAN_UNITS,
                              PREP_TYPES,
                              INGRED_UNITS,
                              SIZE_STRINGS)
-from pyrecipe import utils
 
 
 class Ingredient:
@@ -146,10 +145,18 @@ class IngredientParser:
     parser to identify what an ingredient string contains, and to 
     return a list or dict populated with the relevant data.
 
+    params:
+    
+    - return_dict: return ingredient data in a dict in the form of
+                   {'name': <name>,
+                    'size': <size>,
+                    'amount': <amount>,
+                    'prep': <prep>}
     """
     def __init__(self, return_dict=False):
         self.return_dict = return_dict
-    
+        self.punctuation = "!\"#$%&'()*+,-/:;<=>?@[\]^_`{|}~"
+
     def parse(self, string):
         amount = ''
         size = ''
@@ -204,10 +211,10 @@ class IngredientParser:
             return ingred_list
     
     def _strip_punctuation(self, string):
-        return ''.join(c for c in string if c not in punctuation)
+        return ''.join(c for c in string if c not in self.punctuation)
 
 # testing
 if __name__ == '__main__':
-    i = IngredientParser(return_dict=True)
-    test = i.parse('2 tablespoons onion, chopped')
+    i = IngredientParser()
+    test = i.parse('.2 tablespoons onion, chopped')
     print(test)

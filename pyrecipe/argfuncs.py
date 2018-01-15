@@ -7,8 +7,7 @@ import subprocess
 import os
 
 from .config import PP, EDITOR
-from pyrecipe import utils
-from pyrecipe import shopper
+from pyrecipe import utils, shopper, manifest
 import pyrecipe.recipe as recipe
 import pyrecipe.gui.maingui as gui
 
@@ -84,8 +83,11 @@ def add_recipe(args):
 
 
 def print_list(args):
+    recipes = manifest.recipe_names
+    lower_recipes = [x.lower() for x in recipes]
+    for item in sorted(lower_recipes):
+        print(item.title())
 	
-    utils.list_recipes()
 
 def version(args):
 	
