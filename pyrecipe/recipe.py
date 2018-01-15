@@ -172,7 +172,7 @@ class Recipe:
             self.alt_ingredients = []
             # building a list of alternative ingredient names here helps later
             # in get_ingredients()
-            for item in self.alt_ingredient_data.keys():
+            for item in self['alt_ingredients'].keys():
                 self.alt_ingredients.append(item)
         try:	
             for item in self['alt_ingredients']:

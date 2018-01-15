@@ -1,8 +1,11 @@
 import random
 import datetime
 import sys
+from fractions import Fraction
 
-from pyrecipe.config import (RAND_RECIPE_COUNT, MAINDISH_NAMES)
+from pyrecipe.config import (RAND_RECIPE_COUNT, S_DIV)
+from pyrecipe.ingredient import Ingredient
+from pyrecipe import manifest, Recipe
 from lxml import etree
 
 class ShoppingList:
@@ -30,9 +33,9 @@ class ShoppingList:
         sd = self.shopping_dict
         r = Recipe(source)
         if alt_ingred:
-            ingreds = r.alt_ingredient_data[alt_ingred]
+            ingreds = r['alt_ingredients'][alt_ingred]
         else:
-            ingreds = r.ingredient_data
+            ingreds = r['ingredients']
         for item in ingreds:
             name = item['name']
             try:
@@ -93,15 +96,15 @@ class ShoppingList:
     def update(self, source):
 
         r = Recipe(source)
-        if r.dish_type == "salad dressing":
-            self.dressing_names.append(r.recipe_name)
+        if r['dish_type'] == "salad dressing":
+            self.dressing_names.append(r['recipe_name'])
         else:
-            self.recipe_names.append(r.recipe_name)
+            self.recipe_names.append(r['recipe_name'])
 
         
         self._proc_ingreds(source)
         try:
-            alt_ingreds = r.alt_ingredients
+            alt_ingreds = r['alt_ingredients']
             for item in alt_ingreds:
                 self._proc_ingreds(source, alt_ingred=item)
         except AttributeError:
@@ -143,13 +146,13 @@ class RandomShoppingList(ShoppingList):
         super().__init__()
         self.count = count
         try:
-            self.recipe_sample = random.sample(MAINDISH_NAMES, self.count)
-            self.salad_dressing_random = random.choice(DRESSING_NAMES)
+            self.recipe_sample = random.sample(manifest.maindish_names, self.count)
+            self.salad_dressing_random = random.choice(manifest.dressing_names)
         except ValueError:
             sys.exit("{}ERROR: Random count is higher than "
                      "the amount of recipes available ({}). "
                      "Please enter a lower number."
-                     .format(color.ERROR, str(len(MAINDISH_NAMES))))
+                     .format(color.ERROR, str(len(manifest.maindish_names))))
         
         self.update(self.salad_dressing_random)
         for dish in self.recipe_sample:
