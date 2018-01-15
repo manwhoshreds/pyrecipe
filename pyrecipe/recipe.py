@@ -16,6 +16,7 @@
 """
 
 import sys
+import textwrap
 from lxml import etree
 
 from pyrecipe import utils
@@ -275,9 +276,11 @@ class Recipe:
                 + "\nMethod:"
                 + color.NORMAL)	
         
-        # print steps	
+        # print steps
+        wrapper = textwrap.TextWrapper(subsequent_indent='   ', width=60)
         for index, step in enumerate(self['steps'], start=1):
-            print("{}{}.{} {}".format(color.NUMBER, index, color.NORMAL, step['step']))
+            wrap = wrapper.fill(step['step'])
+            print("{}{}.{} {}".format(color.NUMBER, index, color.NORMAL, wrap))
 
     def dump(self, stream=None):
         """Dump the yaml to a file or standard output""" 
