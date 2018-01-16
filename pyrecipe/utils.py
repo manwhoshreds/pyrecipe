@@ -4,6 +4,7 @@
 """
 import os
 import sys
+from fractions import Fraction
 
 import inflect
 
@@ -61,12 +62,19 @@ class Color:
 color = Color()
 
 def num(n):
-    try:
-        return int(n)
-    except ValueError:
-        return float(n)
-    except ValueError:
-        return n
+    #if isinstance(n, str):
+    if len(n.split('⁄')) == 2:
+        n = '/'.join(n.split('⁄'))
+        return float(Fraction(n))
+    
+        #float(sum(Fraction(s) for s in n.split()))
+    else: 
+        try:
+            return int(n)
+        except ValueError:
+            return float(n)
+        except ValueError:
+            return n
 
 def get_file_name(source):
     file_name = source.replace(" ", "_").lower() + ".recipe"

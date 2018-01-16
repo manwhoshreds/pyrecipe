@@ -16,6 +16,7 @@
     :license: GNU General Public License
 """
 import re
+from numbers import Number
 from fractions import Fraction
 
 from pint.errors import (DimensionalityError)
@@ -75,9 +76,14 @@ class Ingredient:
                 return cleaned_string
                     
     def __add__(self, other):
+        #TODO: FIX THIS FUNCTION
+        # as it currently stands, if this function encounters
+        # pints DimensionalityError, (the addition of two quantities whose
+        # units are incompatible and cannot be added together), we pretty
+        # mush abort and just send back the unaltered inputs from self.
         try:
-            this = utils.num(self._amount) * ureg[self._unit]
-            that = utils.num(other._amount) * ureg[other._unit]
+            this = self._amount * ureg[self._unit]
+            that = other._amount * ureg[other._unit]
             # the following is just is a workaround for pints addition behaviour
             # if pint returns a float we have to switch the components of the addition
             # statement in order to get back a whole number
@@ -119,12 +125,12 @@ class Ingredient:
     def get_unit(self):
         if self._unit == 'each':
             return ''
-        elif utils.num(self._amount) > 1:
+        elif self._amount > 1:
             if self._unit in CAN_UNITS:
                 return "({})".format(utils.p.plural(self._unit))
             else:
                 return utils.p.plural(self._unit)
-        elif utils.num(self._amount) <= 1:
+        elif self._amount <= 1:
             if self._unit in CAN_UNITS:
                 return "({})".format(self._unit)
             else:
@@ -155,7 +161,7 @@ class IngredientParser:
     """
     def __init__(self, return_dict=False):
         self.return_dict = return_dict
-        self.punctuation = "!\"#$%&'()*+,-/:;<=>?@[\]^_`{|}~"
+        self.punctuation = "!\"#$%&'()*+,-:;<=>?@[\]^_`{|}~"
 
     def parse(self, string):
         amount = ''
@@ -174,9 +180,9 @@ class IngredientParser:
         
         for item in ingred_list:
             if re.search(r'\d+', item):
-                amount = item
+                amount += item + ' '
                 ingred_list.remove(item)
-                break
+                #break
         
         for item in SIZE_STRINGS:
             if item in ingred_list:
@@ -197,9 +203,8 @@ class IngredientParser:
             unit = 'each'
 
         name = ' '.join(ingred_list)
-        ingred_dict['amount'] = amount
+        ingred_dict['amounts'] = [{'amount': utils.num(amount), 'unit': unit}]
         ingred_dict['size'] = size
-        ingred_dict['unit'] = unit
         ingred_dict['name'] = name
         ingred_dict['prep'] = prep
         
@@ -215,6 +220,6 @@ class IngredientParser:
 
 # testing
 if __name__ == '__main__':
-    i = IngredientParser()
-    test = i.parse('.2 tablespoons onion, chopped')
+    i = IngredientParser(return_dict=True)
+    test = i.parse('2 1/2 tablespoons onion, chopped')
     print(test)

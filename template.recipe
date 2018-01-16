@@ -8,6 +8,10 @@ dish_type: main # one of main dish, side, appetizer, desert, dip, sauce, salad d
 prep_time: 20 # |- in seconds
 cook_time: 90 # |
 author: Me
+tags:         # tags are one word descriptors to further describe the content
+  - yummy
+  - good
+  - tasty
 notes:
   - This is a note
   - This is another note

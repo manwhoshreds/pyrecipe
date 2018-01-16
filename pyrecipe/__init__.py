@@ -4,15 +4,15 @@
     ~~~~~~~~
 
     Pyrecipe is a python application that lets you manage recipes.
+    Recipe are saved in Yaml format.
 
-    :copyright: 2017 by Michael Miller
-    :license: GPL, see LICENSE for more details.
+    copyright: 2017 by Michael Miller
+    license: GPL, see LICENSE for more details.
 """
 
 import os
 
 from pint import UnitRegistry
-#import inflect
 from ruamel.yaml import YAML
 yaml = YAML(typ='safe')
 yaml.default_flow_style = False
@@ -28,6 +28,7 @@ Q_ = ureg.Quantity
 color = utils.Color()
 
 from .recipe import Recipe
+from .ingredient import IngredientParser
 
 class RecipeManifest:
 
@@ -45,7 +46,7 @@ class RecipeManifest:
                 self.recipe_names.append(_recipe['recipe_name'])
                 if _recipe['dish_type'] == 'main':
                     self.maindish_names.append(_recipe['recipe_name'])
-                if  _recipe['dish_type'] == 'salad dressing':
+                if _recipe['dish_type'] == 'salad dressing':
                     self.dressing_names.append(_recipe['recipe_name'])
                 if _recipe['dish_type'] == 'sauce':
                     self.sauce_names.append(_recipe['recipe_name'])

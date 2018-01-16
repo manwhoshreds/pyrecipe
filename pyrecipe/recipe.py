@@ -19,10 +19,11 @@ import sys
 import textwrap
 from lxml import etree
 
-from pyrecipe import utils
-from pyrecipe import ureg, Q_, yaml, color
+from pyrecipe.utils import get_source_path
+from pyrecipe import ureg, yaml, color
 from pyrecipe.ingredient import Ingredient
 from pyrecipe.config import (S_DIV)
+from ruamel.yaml import YAML
 
 class Recipe:
     """The recipe class is used to perform operations on
@@ -33,7 +34,8 @@ class Recipe:
                 'category',    'cook_time',   'prep_time',       
                 'author',      'oven_temp',   'bake_time',       
                 'yields',      'ingredients', 'alt_ingredients', 
-                'notes',       'url',         'steps']
+                'notes',       'url',         'steps',
+                'tags']
     
     def __init__(self, source=''):
         self.source = source
@@ -43,7 +45,7 @@ class Recipe:
         self._recipe_data = {}
         
         if self.source: 
-            self.source = utils.get_source_path(source)
+            self.source = get_source_path(source)
             try:	
                 with open(self.source, "r") as stream:
                     self._recipe_data = yaml.load(stream)
@@ -201,7 +203,7 @@ class Recipe:
         self.xml_data = result
 
     def get_ingredients(self, amount_level=0, alt_ingred=None):	
-        """Returns a list of ingredients."""
+        """Returns a list of ingredient strings."""
         ingredients = []
         if alt_ingred:	
             ingredient_data = self['alt_ingredients'][alt_ingred]
@@ -293,10 +295,9 @@ class Recipe:
 
 # testing
 if __name__ == '__main__':
-    r = Recipe('egg rolls')
-    #print(r.__dict__)
-    print(r['url'])
-    print(r['kjklj'])
+    r = Recipe('spinach and artichoke dip')
+    print(r)
+    print(r.__dict__)
 
     r.dump(stream=sys.stdout)
 
