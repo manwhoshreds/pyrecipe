@@ -79,7 +79,7 @@ def add_recipe(args):
     if args.name.title() in utils.list_recipes(ret=True):
         sys.exit('A recipe with that name already exist in the recipe store')
     else:
-        recipe.template(args.name)
+        utils.template(args.name)
 
 
 def print_list(args):

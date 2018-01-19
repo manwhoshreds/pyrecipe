@@ -13,22 +13,17 @@
 import os
 
 from pint import UnitRegistry
+ureg = UnitRegistry()
+ureg.load_definitions(os.path.expanduser('~/.local/lib/python3.6/site-packages/pyrecipe/culinary_units.txt'))
+Q_ = ureg.Quantity
+
 from ruamel.yaml import YAML
 yaml = YAML(typ='safe')
 yaml.default_flow_style = False
 
-from pyrecipe import utils
-from .config import (__version__, __scriptname__, 
+from pyrecipe.config import (__version__, __scriptname__, 
                      DB_FILE, RECIPE_DATA_FILES)
 
-ureg = UnitRegistry()
-ureg.load_definitions(os.path.expanduser('~/.local/lib/python3.6/site-packages/pyrecipe/culinary_units.txt'))
-
-Q_ = ureg.Quantity
-color = utils.Color()
-
-from .recipe import Recipe
-from .ingredient import IngredientParser
 
 class RecipeManifest:
 
@@ -43,7 +38,7 @@ class RecipeManifest:
         for item in RECIPE_DATA_FILES:
             with open(item, 'r') as stream:
                 _recipe = yaml.load(stream)
-                self.recipe_names.append(_recipe['recipe_name'])
+                self.recipe_names.append(_recipe['recipe_name'].lower())
                 if _recipe['dish_type'] == 'main':
                     self.maindish_names.append(_recipe['recipe_name'])
                 if _recipe['dish_type'] == 'salad dressing':
@@ -54,8 +49,3 @@ class RecipeManifest:
                     self.salad_names.append(_recipe['recipe_name'])
 
 manifest = RecipeManifest()
-
-                
-
-
-

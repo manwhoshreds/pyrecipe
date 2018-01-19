@@ -6,13 +6,14 @@
 import argparse
 import argcomplete
 
-from pyrecipe.config import RAND_RECIPE_COUNT, RECIPE_NAMES
+from pyrecipe.config import RAND_RECIPE_COUNT
 import pyrecipe.argfuncs as argfunc
+from pyrecipe import manifest
 import pdb
 #pdb.set_trace()
 
 def recipe_completer(**kwargs):
-    recipe_list = [x.lower() for x in RECIPE_NAMES]
+    recipe_list = [x.lower() for x in manifest.recipe_names]
     return recipe_list
 	
 def parse_args():
@@ -157,9 +158,20 @@ def parse_args():
     
     
     # recipe_tool check
-    parser_check = subparser.add_parser("check", help="Check an ORD file for syntax errors")
-    parser_check.add_argument("source", type=str, help="Recipe to check").completer = recipe_completer
-    parser_check.add_argument("all", action="store_true", help="Check all files")
+    parser_check = subparser.add_parser(
+        "check", 
+        help="Check an ORD file for syntax errors"
+    )
+    parser_check.add_argument(
+        "source", 
+        type=str, 
+        help="Recipe to check"
+    ).completer = recipe_completer
+    parser_check.add_argument(
+            "all", 
+            action="store_true", 
+            help="Check all files"
+    )
     parser_check.set_defaults(func=argfunc.check_file)
     
     # auto completion	
@@ -173,7 +185,6 @@ def parse_args():
 
 def main():
     """main entry point of recipe_tool"""
-
     args = parse_args()
     if args.guimode:
         argfunc.start_gui()

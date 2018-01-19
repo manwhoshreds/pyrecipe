@@ -41,14 +41,10 @@ class Ingredient:
     def __init__(self, name, amount=0, size='', unit='', prep=''):
         self._name = name
         self._amount = amount
-        self.size = size
+        self._size = size
         self._unit = unit
-        self.prep = prep
+        self._prep = prep
         
-        self.name = self.get_name()
-        self.amount = self.get_amount()
-        self.unit = self.get_unit()
-            
     def __str__(self):
         """Turn ingredient object into a string
         
@@ -64,15 +60,15 @@ class Ingredient:
         elif self._unit == 'splash':
                 return "Splash of {}".format(self._name)
         else:
-            string = "{} {} {} {}".format(self.amount, self.size, 
+            string = "{} {} {} {}".format(self.amount, self._size, 
                                           self.unit, self.name)
             # the previous line adds unwanted spaces if values are absent
             # we simply clean that up here.
             cleaned_string = " ".join(string.split())
-            if self.prep is '':
+            if self._prep is '':
                 return cleaned_string
             else:
-                cleaned_string += ", " + self.prep
+                cleaned_string += ", " + self._prep
                 return cleaned_string
                     
     def __add__(self, other):
@@ -103,26 +99,37 @@ class Ingredient:
 
     def __getitem__(self, key):
         return self.__dict__[key]
-
-    def get_name(self):
+    
+    @property
+    def name(self):
         if not self._unit or self._unit == 'each':
             return utils.p.plural(self._name, self._amount)
         else:
             return self._name
-
-    def get_amount(self):
-        if self._amount == .3:
+    
+    @property
+    def amount(self):
+        # cannont figure out how to let python handle irrational numbers. which are
+        # quite prevalant in recipe data. ( think 1/3, 1/6 etc... )
+        # here is a functional work-around
+        third = re.compile('^0.3|^.3')
+        sixth = re.compile('^0.6|^.6')
+        eighth = re.compile('^0.125|^.125')
+        if third.match(str(self._amount)):
             return '1/3'
-        elif self._amount == .6:
+        elif sixth.match(str(self._amount)):
             return '1/6'
+        elif eighth.match(str(self._amount)):
+            return '1/8'
         elif isinstance(self._amount, float) and self._amount < 1:
             return Fraction(self._amount)
         elif isinstance(self._amount, float) and self._amount > 1:
             return utils.improper_to_mixed(str(Fraction(self._amount)))
         else:
             return self._amount
-
-    def get_unit(self):
+    
+    @property 
+    def unit(self):
         if self._unit == 'each':
             return ''
         elif self._amount > 1:
@@ -164,7 +171,7 @@ class IngredientParser:
         self.punctuation = "!\"#$%&'()*+,-:;<=>?@[\]^_`{|}~"
 
     def parse(self, string):
-        amount = ''
+        amount = 0
         size = ''
         unit = ''
         name = ''
@@ -178,11 +185,21 @@ class IngredientParser:
         lower_list = [x.lower() for x in raw_list]
         ingred_list = utils.all_singular(lower_list)
         
+        amnt_list = [] 
         for item in ingred_list:
-            if re.search(r'\d+', item):
-                amount += item + ' '
+            #if re.search(r'\d+', item):
+            if isinstance(item, Number):
+                amnt_list.append(item)
+                if '⁄' in item:
+                    t, d = item.split('⁄')
+                    new_item = t + '/' + d
+                    amnt_list.append(new_item)
                 ingred_list.remove(item)
-                #break
+            elif isinstance(item, Fraction):
+                print('yep')
+        print(amnt_list)
+
+        #amount = ' '.join(amnt_list)
         
         for item in SIZE_STRINGS:
             if item in ingred_list:
@@ -201,14 +218,18 @@ class IngredientParser:
 
         if not unit:
             unit = 'each'
-
+            
+        # at this point we are assuming that all elements have been removed
+        # from list except for the name. Whatever is left gets joined together
         name = ' '.join(ingred_list)
+        if name.lower == 'salt and pepper':
+            name = 's&p'
         ingred_dict['amounts'] = [{'amount': utils.num(amount), 'unit': unit}]
         ingred_dict['size'] = size
         ingred_dict['name'] = name
         ingred_dict['prep'] = prep
         
-        ingred_list = [amount, size, unit, name, prep]
+        ingred_list = [utils.num(amount), size, unit, name, prep]
 
         if self.return_dict:
             return ingred_dict
@@ -223,3 +244,5 @@ if __name__ == '__main__':
     i = IngredientParser(return_dict=True)
     test = i.parse('2 1/2 tablespoons onion, chopped')
     print(test)
+    #ingred = Ingredient('onion', .3, 'large', 'tablespoon', 'chopped')
+    #print(str(ingred))

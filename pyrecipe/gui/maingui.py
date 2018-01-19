@@ -12,6 +12,7 @@ from pyrecipe.gui.add_recipe import AddRecipe
 from pyrecipe.gui.settings import Settings
 from pyrecipe.gui.tk_utils import *
 import pyrecipe.config as conf
+from pyrecipe import manifest
 #from .config import *
 from pyrecipe.utils import *
 
@@ -37,7 +38,8 @@ class MainGUI(Tk):
         self.left_pane.pack(side=LEFT)
         search = Label(self.left_pane, text="Search Recipes")
         search.pack()
-        entry = AutoEntry(conf.RECIPE_NAMES, self.left_pane)
+        self.rec_names = [x.title() for x in manifest.recipe_names]
+        entry = AutoEntry(self.rec_names, self.left_pane)
         entry.pack(fill=X)
         self.recipe_listbox = Listbox(self.left_pane, height=50, width=30, selectmode=SINGLE, bg='white', font=('ubuntu', 13))
         scrollb = Scrollbar(self.left_pane, command=self.recipe_listbox.yview)
@@ -76,7 +78,7 @@ class MainGUI(Tk):
 
     def refresh_recipes(self):
         self.recipe_listbox.delete(0, END)
-        for item in sorted(conf.RECIPE_NAMES):
+        for item in sorted(self.rec_names):
             self.recipe_listbox.insert(END, item)
 
     def add_recipe(self):

@@ -4,13 +4,15 @@
 """
 import os
 import sys
+import subprocess
 from fractions import Fraction
 
 import inflect
 
-
-from .config import (__version__, __scriptname__, __email__,
-                     RECIPE_DATA_DIR, RECIPE_DATA_FILES)
+from pyrecipe.config import (__version__, __scriptname__, __email__,
+                             RECIPE_DATA_DIR, RECIPE_DATA_FILES,
+                             DISH_TYPES, VIM_MODE_LINE)
+from pyrecipe import manifest, yaml
 
 
 # Inflects default behaviour for returning the singular of a word is
@@ -61,20 +63,27 @@ class Color:
 
 color = Color()
 
+def mins_to_hours(mins):
+    days = mins // 1440
+    hours = mins // 60
+    minutes = mins - hours * 60
+    if not hours:
+        return "{} m".format(mins)
+    else:
+        len = "%d h %02d m" % (hours, minutes)
+    return len
+
 def num(n):
-    #if isinstance(n, str):
-    if len(n.split('⁄')) == 2:
-        n = '/'.join(n.split('⁄'))
-        return float(Fraction(n))
-    
-        #float(sum(Fraction(s) for s in n.split()))
-    else: 
-        try:
-            return int(n)
-        except ValueError:
-            return float(n)
-        except ValueError:
-            return n
+    if '/' in n:
+        n = float(sum(Fraction(s) for s in n.split()))
+        return n
+    try:
+        return int(n)
+    except ValueError:
+        return float(n)
+    except ValueError:
+        return n
+
 
 def get_file_name(source):
     file_name = source.replace(" ", "_").lower() + ".recipe"
@@ -94,23 +103,22 @@ def get_source_path(source):
     
     file_name = source.replace(" ", "_").lower() + ".recipe"
     abspath_name = os.path.join(RECIPE_DATA_DIR, file_name)
-    if abspath_name in RECIPE_DATA_FILES:
-        return abspath_name
+    #if abspath_name in RECIPE_DATA_FILES:
+    return abspath_name
+    #else:
+    #    sys.exit('{} does not exist in the recipe directory.'.format(abspath_name))
+
+
+def list_recipes(ret=False):
+    """List all recipes in the database"""
+    
+    recipe_list = manifest.recipe_names
+    if ret:
+        return recipe_list
     else:
-        sys.exit('{} does not exist in the recipe directory.'.format(abspath_name))
-
-
-#def list_recipes(ret=False):
-#    """List all recipes in the database"""
-    
-    #recipe_list = sorted(RECIPE_NAMES)
-    
-#    if ret:
-#        return recipe_list
-#    else:
-#        for item in columnify(recipe_list):
-#            PP.pprint(item)
-        #for item in recipe_list: print(item)
+        for item in columnify(recipe_list):
+            PP.pprint(item)
+        for item in recipe_list: print(item)
 
 def columnify(iterable):
     # First convert everything to its repr
@@ -142,7 +150,7 @@ def template(recipe_name):
         template += "recipe_name: {}\n".format(recipe_name)
         # check if file exist, lets catch this early so we 
         # can exit before entering in all the info
-        file_name = utils.get_file_name(recipe_name)
+        file_name = get_file_name(recipe_name)
         if os.path.isfile(file_name):
             print("File with this name already exist in directory exiting...")
             exit(1)
@@ -177,17 +185,15 @@ def template(recipe_name):
         template += VIM_MODE_LINE
         print("Writing to file... " + file_name)
         temp_yaml = yaml.load(template)
-        test = yaml.dump(temp_yaml)
-        print(test)
         
-        #with open(file_name, "w") as tmp:
-        #    tmp.write(str(template))
+        with open(file_name, "w") as file:
+            yaml.dump(temp_yaml, file)
     
     except KeyboardInterrupt:
         print("\nExiting...")
         sys.exit(0)
     
-    #subprocess.call([EDITOR, file_name])
+    subprocess.call([EDITOR, file_name])
 
 def check_file(soruce, silent=False):
     """function to validate Open Recipe Format files"""
@@ -319,3 +325,9 @@ def stats(verb=0):
         print("Recipe data directory: {}".format(RECIPE_DATA_DIR))
         print("Recipe xml directory: {}".format(RECIPE_XML_DIR))
         print("Default random recipe: {}".format(RAND_RECIPE_COUNT))
+
+# testing
+if __name__ == '__main__':
+    x = mins_to_hours(500)
+    print(x)
+

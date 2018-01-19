@@ -38,20 +38,6 @@ RECIPE_DATA_FILES = []
 for item in os.listdir(RECIPE_DATA_DIR):
     RECIPE_DATA_FILES.append(RECIPE_DATA_DIR + item)
 
-RECIPE_NAMES = []
-for item in RECIPE_DATA_FILES:
-    with open(item, 'r') as stream:
-        _recipe = yaml.load(stream)
-        RECIPE_NAMES.append(_recipe['recipe_name'])
-
-MAINDISH_NAMES = []
-for item in RECIPE_DATA_FILES:
-    with open(item, 'r') as stream:
-        _recipe = yaml.load(stream)
-        if _recipe['dish_type'] == 'main':
-            MAINDISH_NAMES.append(_recipe['recipe_name'])
-
-
 PP                   = pprint.PrettyPrinter(compact=True, indent=4)
 S_DIV                = "~" * 60
 REQUIRED_ORD_KEYS    = ['recipe_name', 'dish_type', 
@@ -59,7 +45,7 @@ REQUIRED_ORD_KEYS    = ['recipe_name', 'dish_type',
 DISH_TYPES           = ['main', 'side', 'dessert', 'condiment', 'dip', 
 			'salad dressing', 'sauce', 'base', 'garnish', 'seasoning']
 CULINARY_UNITS       = ['teaspoon', 'tablespoon', 'ounce', 'fulid ounce', 
-                        'cup', 'quart', 'gallon', 'pound', 'pint']
+                        'cup', 'quart', 'gallon', 'pound', 'pint', 'gram', 'mililiter']
 PINT_UNDEFINED_UNITS = ['box', 'taste', 'inch piece', 'stick', 'bottle', 'each', 'bag',
                         'whole', 'link', 'sprig', 'stalk', 'can', 'pinch', 'cube', 'splash']
 # CAN_UNITS are checked later and put in parenthesis
@@ -79,7 +65,7 @@ _prp_typs            = ['softened', 'diced', 'finely diced', 'shredded',
                         'coarsely cracked', 'cut up', 'melted', 'seeded and deviened', 
                         'cut into 2 inch pieces', 'cut into 1 inch pieces', 
                         'cut into 1 inch lengths', 'uncooked', 'peeled and grated', 
-                        'lightly packed', 'roasted']
+                        'lightly packed', 'finely sliced', 'roasted']
 
 INGRED_UNITS          = sorted(_ingr_units)
 SIZE_STRINGS          = sorted(_size_strs)

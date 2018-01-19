@@ -2,11 +2,12 @@ import random
 import datetime
 import sys
 from fractions import Fraction
+from lxml import etree
 
 from pyrecipe.config import (RAND_RECIPE_COUNT, S_DIV)
 from pyrecipe.ingredient import Ingredient
-from pyrecipe import manifest, Recipe
-from lxml import etree
+from pyrecipe.recipe import Recipe
+from pyrecipe import manifest
 
 class ShoppingList:
     """Creates a shopping list of ingredients from a list of recipes. 
@@ -33,9 +34,14 @@ class ShoppingList:
         sd = self.shopping_dict
         r = Recipe(source)
         if alt_ingred:
-            ingreds = r['alt_ingredients'][alt_ingred]
+            for item in r['alt_ingredients']:
+                try:
+                    ingreds = item[alt_ingred]
+                except KeyError:
+                    pass
         else:
             ingreds = r['ingredients']
+        
         for item in ingreds:
             name = item['name']
             try:
@@ -104,7 +110,7 @@ class ShoppingList:
         
         self._proc_ingreds(source)
         try:
-            alt_ingreds = r['alt_ingredients']
+            alt_ingreds = r['alt_ingreds']
             for item in alt_ingreds:
                 self._proc_ingreds(source, alt_ingred=item)
         except AttributeError:
@@ -160,3 +166,14 @@ class RandomShoppingList(ShoppingList):
     
     def print_random(self):
         self.print_list()
+
+# testing
+if __name__ == '__main__':
+    shopper = ShoppingList()    
+    shopper.update('pesto')
+    shopper.update('pot sticker dumplings')
+
+
+
+
+

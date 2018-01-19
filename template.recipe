@@ -43,7 +43,7 @@ ingredients:
     amounts:
       - amount: 4
         unit: each
-alt_ingredients:
+labeled_ingredients:
   ketchup sauce:
     - name: ketchup
       usda_num: 098098
