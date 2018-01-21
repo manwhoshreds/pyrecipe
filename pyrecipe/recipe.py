@@ -13,6 +13,13 @@
               change current ones. Use the print_recipe() method to print
               the recipe to standard output and dump() to save the data
               back to the same file or one of your own choosing.
+
+              An instance of a recipe class contains all the information in
+              a recipe.
+
+              The current recipe data understood by the recipe class can be 
+              found in the class variable: orf_keys
+
 """
 
 import sys

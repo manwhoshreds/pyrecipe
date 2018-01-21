@@ -16,12 +16,11 @@
     :license: GNU General Public License
 """
 import re
-from numbers import Number
 from fractions import Fraction
 
 from pint.errors import (DimensionalityError)
 
-from pyrecipe import ureg, Q_
+from pyrecipe import ureg, Q_, RecipeNum
 from pyrecipe import utils
 from pyrecipe.config import (CAN_UNITS,
                              PREP_TYPES,
@@ -40,7 +39,7 @@ class Ingredient:
     """
     def __init__(self, name, amount=0, size='', unit='', prep=''):
         self._name = name
-        self._amount = amount
+        self._amount = RecipeNum(amount)
         self._size = size
         self._unit = unit
         self._prep = prep
@@ -78,8 +77,8 @@ class Ingredient:
         # units are incompatible and cannot be added together), we pretty
         # mush abort and just send back the unaltered inputs from self.
         try:
-            this = self._amount * ureg[self._unit]
-            that = other._amount * ureg[other._unit]
+            this = self._amount.value * ureg[self._unit]
+            that = other._amount.value * ureg[other._unit]
             # the following is just is a workaround for pints addition behaviour
             # if pint returns a float we have to switch the components of the addition
             # statement in order to get back a whole number
@@ -95,7 +94,7 @@ class Ingredient:
                 string = str(addition).split()
                 return [string[0], string[1]]
         except DimensionalityError:
-            return [self._amount, self._unit]
+            return [self._amount.value, self._unit]
 
     def __getitem__(self, key):
         return self.__dict__[key]
@@ -103,7 +102,7 @@ class Ingredient:
     @property
     def name(self):
         if not self._unit or self._unit == 'each':
-            return utils.p.plural(self._name, self._amount)
+            return utils.p.plural(self._name, self._amount.value)
         else:
             return self._name
     
@@ -115,29 +114,29 @@ class Ingredient:
         third = re.compile('^0.3|^.3')
         sixth = re.compile('^0.6|^.6')
         eighth = re.compile('^0.125|^.125')
-        if third.match(str(self._amount)):
+        if third.match(str(self._amount.value)):
             return '1/3'
-        elif sixth.match(str(self._amount)):
+        elif sixth.match(str(self._amount.value)):
             return '1/6'
-        elif eighth.match(str(self._amount)):
+        elif eighth.match(str(self._amount.value)):
             return '1/8'
-        elif isinstance(self._amount, float) and self._amount < 1:
-            return Fraction(self._amount)
-        elif isinstance(self._amount, float) and self._amount > 1:
-            return utils.improper_to_mixed(str(Fraction(self._amount)))
+        elif isinstance(self._amount.value, float) and self._amount.value < 1:
+            return Fraction(self._amount.value)
+        elif isinstance(self._amount.value, float) and self._amount.value > 1:
+            return utils.improper_to_mixed(str(Fraction(self._amount.value)))
         else:
-            return self._amount
+            return self._amount.value
     
     @property 
     def unit(self):
         if self._unit == 'each':
             return ''
-        elif self._amount > 1:
+        elif self._amount.value > 1:
             if self._unit in CAN_UNITS:
                 return "({})".format(utils.p.plural(self._unit))
             else:
                 return utils.p.plural(self._unit)
-        elif self._amount <= 1:
+        elif self._amount.value <= 1:
             if self._unit in CAN_UNITS:
                 return "({})".format(self._unit)
             else:
@@ -170,7 +169,7 @@ class IngredientParser:
         self.return_dict = return_dict
         self.punctuation = "!\"#$%&'()*+,-:;<=>?@[\]^_`{|}~"
 
-    def parse(self, string):
+    def parse(self, string=''):
         amount = 0
         size = ''
         unit = ''
@@ -178,6 +177,7 @@ class IngredientParser:
         prep = ''
         ingred_list = []
         ingred_dict = {}
+        #numbermatch = re.compile(r'[0-9]|[0-9]*[\/]*[0-9]')
         
         # string preprocessing 
         self.strip_punc = self._strip_punctuation(string)
@@ -186,20 +186,15 @@ class IngredientParser:
         ingred_list = utils.all_singular(lower_list)
         
         amnt_list = [] 
+        print(ingred_list)
         for item in ingred_list:
-            #if re.search(r'\d+', item):
-            if isinstance(item, Number):
+            if RecipeNum(item).isnumber:
+                print(item)
                 amnt_list.append(item)
-                if '⁄' in item:
-                    t, d = item.split('⁄')
-                    new_item = t + '/' + d
-                    amnt_list.append(new_item)
                 ingred_list.remove(item)
-            elif isinstance(item, Fraction):
-                print('yep')
-        print(amnt_list)
 
-        #amount = ' '.join(amnt_list)
+        amount = ' '.join(amnt_list)
+        print(amount)
         
         for item in SIZE_STRINGS:
             if item in ingred_list:
@@ -224,12 +219,12 @@ class IngredientParser:
         name = ' '.join(ingred_list)
         if name.lower == 'salt and pepper':
             name = 's&p'
-        ingred_dict['amounts'] = [{'amount': utils.num(amount), 'unit': unit}]
+        ingred_dict['amounts'] = [{'amount': amount, 'unit': unit}]
         ingred_dict['size'] = size
         ingred_dict['name'] = name
         ingred_dict['prep'] = prep
         
-        ingred_list = [utils.num(amount), size, unit, name, prep]
+        ingred_list = [amount, size, unit, name, prep]
 
         if self.return_dict:
             return ingred_dict
@@ -241,8 +236,11 @@ class IngredientParser:
 
 # testing
 if __name__ == '__main__':
-    i = IngredientParser(return_dict=True)
-    test = i.parse('2 1/2 tablespoons onion, chopped')
-    print(test)
+    #i = IngredientParser(return_dict=True)
+    #test = i.parse('2 1/2 tablespoons onion, chopped')
+    #print(test)
+    test = RecipeNum(2)
+    print(test.value)
+
     #ingred = Ingredient('onion', .3, 'large', 'tablespoon', 'chopped')
     #print(str(ingred))

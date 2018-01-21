@@ -6,6 +6,7 @@ import os
 import sys
 import subprocess
 from fractions import Fraction
+from numbers import Number
 
 import inflect
 
@@ -72,18 +73,6 @@ def mins_to_hours(mins):
     else:
         len = "%d h %02d m" % (hours, minutes)
     return len
-
-def num(n):
-    if '/' in n:
-        n = float(sum(Fraction(s) for s in n.split()))
-        return n
-    try:
-        return int(n)
-    except ValueError:
-        return float(n)
-    except ValueError:
-        return n
-
 
 def get_file_name(source):
     file_name = source.replace(" ", "_").lower() + ".recipe"
@@ -328,6 +317,7 @@ def stats(verb=0):
 
 # testing
 if __name__ == '__main__':
-    x = mins_to_hours(500)
-    print(x)
+    test = RecipeNum('.d')
+    print(test.is_number())
+
 

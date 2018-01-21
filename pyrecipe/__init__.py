@@ -11,6 +11,8 @@
 """
 
 import os
+from numbers import Number
+from fractions import Fraction
 
 from pint import UnitRegistry
 ureg = UnitRegistry()
@@ -49,3 +51,42 @@ class RecipeManifest:
                     self.salad_names.append(_recipe['recipe_name'])
 
 manifest = RecipeManifest()
+
+
+class RecipeNum:
+
+    def __init__(self, number=''):
+        if isinstance(number, str):
+            for slash in '/⁄':
+                if slash in number: 
+                    num, den = number.split(slash) 
+                    self.number = Fraction(int(num), int(den))
+                    break
+                elif '.' in number:
+                    self.number = float(number)
+                else:
+                    try:
+                        self.number = int(number)
+                    except ValueError:
+                        self.number = number
+        elif isinstance(number, int):
+            self.number = number
+        elif isinstance(number, float):
+            self.number = number
+        else:
+            self.number = number
+    
+    def __repr__(self):
+        return self.number
+
+    @property 
+    def isnumber(self):
+        if isinstance(self.number, Number):
+            return True
+        else:
+            return False
+    
+    @property
+    def value(self):
+        return self.number
+
