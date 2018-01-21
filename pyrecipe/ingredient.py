@@ -20,7 +20,7 @@ from fractions import Fraction
 
 from pint.errors import (DimensionalityError)
 
-from pyrecipe import ureg, Q_, RecipeNum
+from pyrecipe import ureg, Q_, RecipeNum, p
 from pyrecipe import utils
 from pyrecipe.config import (CAN_UNITS,
                              PREP_TYPES,
@@ -102,7 +102,7 @@ class Ingredient:
     @property
     def name(self):
         if not self._unit or self._unit == 'each':
-            return utils.p.plural(self._name, self._amount.value)
+            return p.plural(self._name, self._amount.value)
         else:
             return self._name
     
@@ -133,9 +133,9 @@ class Ingredient:
             return ''
         elif self._amount.value > 1:
             if self._unit in CAN_UNITS:
-                return "({})".format(utils.p.plural(self._unit))
+                return "({})".format(p.plural(self._unit))
             else:
-                return utils.p.plural(self._unit)
+                return p.plural(self._unit)
         elif self._amount.value <= 1:
             if self._unit in CAN_UNITS:
                 return "({})".format(self._unit)

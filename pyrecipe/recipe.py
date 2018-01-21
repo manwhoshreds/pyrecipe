@@ -20,18 +20,31 @@
               The current recipe data understood by the recipe class can be 
               found in the class variable: orf_keys
 
+
+    - RecipeWebScraper(Recipe): The pyrecipe web_scraper module is a web 
+                                scraping utility used to download and analyze 
+                                recipes found on websites in an attempt to 
+                                download and save the recipe data in the 
+                                format understood by pyrecipe.
+                    
+    Currently supported sites: www.geniuskitchen.com
+
+    copyright: 2017 by Michael Miller
+    license: GPL, see LICENSE for more details.
 """
 
 import sys
 import textwrap
 from lxml import etree
+from urllib.request import urlopen
 
-from pyrecipe import ureg, yaml
-from pyrecipe.ingredient import Ingredient
+import bs4
+
+from pyrecipe import ureg, yaml, color
+from pyrecipe.ingredient import Ingredient, IngredientParser
 from pyrecipe.config import (S_DIV, RECIPE_DATA_FILES, PP)
-from pyrecipe.utils import get_source_path, Color, mins_to_hours
+from pyrecipe.utils import get_source_path, mins_to_hours
 
-color = Color()
 
 class Recipe:
     """The recipe class is used to perform operations on
@@ -90,7 +103,10 @@ class Recipe:
         for index, step in enumerate(self['steps'], start=1):
             recipe_string += "{}. {}\n".format(index, step['step'])
         return recipe_string
-
+    
+    def __repr__(self):
+        return "<pyrecipe.recipe.Recipe object name='{}'>".format(self['recipe_name'])
+    
     def __getitem__(self, key):
         if key in __class__.orf_keys:
             return self.__dict__['_recipe_data'].get(key, '')
@@ -319,10 +335,72 @@ class Recipe:
             with open(strm, 'w') as file:
                 yaml.dump(self['_recipe_data'], file)
 
+
+class RecipeWebScraper(Recipe):
+    
+    def __init__(self):
+        self.req = None
+        self.soup = None
+        super().__init__()
+        #self.recipe = Recipe()
+
+    def scrape(self, url):
+        self['source_url'] = url
+        self.req = urlopen(url)
+        self.soup = bs4.BeautifulSoup(self.req, 'html.parser')
+        self._get_recipe_name() 
+        self._get_ingredients()
+        self._get_author()
+        self._get_method()
+        
+    def _get_recipe_name(self):
+        name_box = self.soup.find('h2', attrs={'class': 'modal-title'})
+        self['recipe_name'] = name_box.text.strip()
+
+    def _get_ingredients(self):
+        ingred_box = self.soup.find_all('ul', attrs={'class': 'ingredient-list'})
+        ingred_parser = IngredientParser(return_dict=True)
+        ingredients = []
+        for item in ingred_box:
+            for litag in item.find_all('li'):
+                ingred_text = ' '.join(litag.text.strip().split())
+                ingred = ingred_parser.parse(ingred_text)
+                ingredients.append(ingred)
+        self['ingredients'] = ingredients
+
+
+    def _get_method(self):
+        method_box = self.soup.find('div', attrs={'class': 'directions-inner container-xs'})
+        litags = method_box.find_all('li')
+        # last litag is "submit a correction", we dont need that
+        del litags[-1]
+        recipe_steps = []
+        for item in litags:
+            step_dict = {}
+            step_dict['step'] = item.text.strip()
+            recipe_steps.append(step_dict)
+
+        self['steps'] = recipe_steps
+    
+    def _get_author(self):
+        name_box = self.soup.find('h6', attrs={'class': 'byline'})
+        recipe_by = name_box.text.strip()
+        self['author'] = ' '.join(recipe_by.split(' ')[2:]).strip()
+        
+
 # testing
 if __name__ == '__main__':
-    r = Recipe('pot sticker dumplings')
-    another = Recipe('7 cheese mac and cheese')
-    another.print_recipe()
-
+    # recipe 
+    #r = Recipe('pot sticker dumplings')
+    #another = Recipe('7 cheese mac and cheese')
+    #another.print_recipe()
     #r.dump(stream='sys.stdout')
+    
+    # recipewebscraper
+    scraper = RecipeWebScraper()
+    #scraper.scrape('http://www.geniuskitchen.com/recipe/pot-sticker-dipping-sauce-446277')
+    #scraper.scrape('http://www.geniuskitchen.com/recipe/bourbon-chicken-45809')
+    scraper.scrape('http://www.geniuskitchen.com/recipe/chicken-parmesan-19135')
+    #scraper.scrape('http://www.geniuskitchen.com/recipe/stuffed-cabbage-rolls-29451')
+    scraper.print_recipe()
+    #scraper.recipe.dump()

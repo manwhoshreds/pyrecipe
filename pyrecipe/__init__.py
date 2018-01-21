@@ -15,17 +15,19 @@ from numbers import Number
 from fractions import Fraction
 
 from pint import UnitRegistry
-ureg = UnitRegistry()
-ureg.load_definitions(os.path.expanduser('~/.local/lib/python3.6/site-packages/pyrecipe/culinary_units.txt'))
-Q_ = ureg.Quantity
-
 from ruamel.yaml import YAML
-yaml = YAML(typ='safe')
-yaml.default_flow_style = False
+import inflect
 
 from pyrecipe.config import (__version__, __scriptname__, 
                      DB_FILE, RECIPE_DATA_FILES)
 
+
+ureg = UnitRegistry()
+ureg.load_definitions(os.path.expanduser('~/.local/lib/python3.6/site-packages/pyrecipe/culinary_units.txt'))
+Q_ = ureg.Quantity
+
+yaml = YAML(typ='safe')
+yaml.default_flow_style = False
 
 class RecipeManifest:
 
@@ -90,3 +92,50 @@ class RecipeNum:
     def value(self):
         return self.number
 
+
+class Color:
+    """
+       The color class defines various colors for 
+       use in pyrecipe output.
+    """
+    
+    NORMAL = '\033[m'
+    ERROR = '\033[1;31m'
+    RECIPENAME = '\033[1;36m'
+    TITLE = '\033[36m'
+    NUMBER = '\033[1;33m'
+    REGULAR = '\033[1;35m'
+    LINE = '\033[1;37m'
+    INFORM = '\033[1;36m'
+
+color = Color()
+
+
+# Inflects default behaviour for returning the singular of a word is
+# not very useful to this project because it returns false if
+# it comes across a non-noun word. Therfore, the following is a
+# functional work-a-round
+class InflectEngine(inflect.engine):
+
+    def __init__(self):
+        super().__init__()
+
+    def singular_noun(self, word):
+        singular = super().singular_noun(word)
+        if singular:
+            return singular
+        else:
+            return word
+
+    def plural(self, word, count=None):
+        if count: 
+            if count <= 1:
+                return word
+            else:
+                word = super().plural(word)
+                return word
+        else:
+            word = super().plural(word)
+            return word
+
+p = InflectEngine()

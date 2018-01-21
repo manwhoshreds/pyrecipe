@@ -1,13 +1,21 @@
+"""
+    pyrecipe.shopper
+    ~~~~~~~~~~~~~~~~
+
+    build a shopping list of ingredients from your recipes
+
+"""
 import random
 import datetime
 import sys
 from fractions import Fraction
 from lxml import etree
 
-from pyrecipe.config import (RAND_RECIPE_COUNT, S_DIV)
+from pyrecipe.config import (RAND_RECIPE_COUNT, S_DIV,
+                             SHOPPING_LIST_FILE)
 from pyrecipe.ingredient import Ingredient
 from pyrecipe.recipe import Recipe
-from pyrecipe import manifest
+from pyrecipe import manifest, color
 
 class ShoppingList:
     """Creates a shopping list of ingredients from a list of recipes. 

@@ -7,10 +7,8 @@
 import os
 import sys
 import pprint
-
 import configparser
 
-from pyrecipe import yaml
 
 __version__     = '0.7.5'
 __email__       = "m.k.miller@gmx.com"

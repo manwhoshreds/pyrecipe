@@ -156,6 +156,23 @@ def parse_args():
     )
     parser_export.set_defaults(func=argfunc.export_recipes)
     
+    # recipe_tool fetch
+    parser_fetch = subparser.add_parser(
+        "fetch",
+        help="Fetch a recipe from a website. \
+              (currently only supports www.geniuskitch.com, more to come)"
+    )
+    parser_fetch.add_argument(
+        "url",
+        help="url of recipe to fetch"
+    )
+    parser_fetch.add_argument(
+        "-s",
+        "--save",
+        action="store_true",
+        help="Save file, default behaviour just prints recipe to stdout"
+    )
+    parser_fetch.set_defaults(func=argfunc.fetch_recipe)
     
     # recipe_tool check
     parser_check = subparser.add_parser(

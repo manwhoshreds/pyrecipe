@@ -8,61 +8,11 @@ import subprocess
 from fractions import Fraction
 from numbers import Number
 
-import inflect
-
 from pyrecipe.config import (__version__, __scriptname__, __email__,
                              RECIPE_DATA_DIR, RECIPE_DATA_FILES,
                              DISH_TYPES, VIM_MODE_LINE)
-from pyrecipe import manifest, yaml
+from pyrecipe import manifest, yaml, p
 
-
-# Inflects default behaviour for returning the singular of a word is
-# not very useful to this project because it returns false if
-# it comes across a non-noun word. Therfore, the following is a
-# functional work-a-round
-class InflectEngine(inflect.engine):
-
-    def __init__(self):
-        super().__init__()
-
-    def singular_noun(self, word):
-        singular = super().singular_noun(word)
-        if singular:
-            return singular
-        else:
-            return word
-
-    def plural(self, word, count=None):
-        if count: 
-            if count <= 1:
-                return word
-            else:
-                word = super().plural(word)
-                return word
-        else:
-            word = super().plural(word)
-            return word
-
-
-p = InflectEngine()
-
-
-class Color:
-    """
-       The color class defines various colors for 
-       use in pyrecipe output.
-    """
-    
-    NORMAL = '\033[m'
-    ERROR = '\033[1;31m'
-    RECIPENAME = '\033[1;36m'
-    TITLE = '\033[36m'
-    NUMBER = '\033[1;33m'
-    REGULAR = '\033[1;35m'
-    LINE = '\033[1;37m'
-    INFORM = '\033[1;36m'
-
-color = Color()
 
 def mins_to_hours(mins):
     days = mins // 1440

@@ -54,6 +54,9 @@ def check_file(args):
         r = recipe.Recipe(args.source)
         r.check_file()
 	
+def fetch_recipe(args):
+    pass
+
 def print_recipe(args):
     r = recipe.Recipe(args.source)
     r.print_recipe(args.verbose)
