@@ -6,8 +6,8 @@
     Pyrecipe is a python application that lets you manage recipes.
     Recipe are saved in Yaml format.
 
-    copyright: 2017 by Michael Miller
-    license: GPL, see LICENSE for more details.
+    :copyright: 2017 by Michael Miller
+    :license: GPL, see LICENSE for more details.
 """
 
 import os
@@ -70,20 +70,24 @@ class RecipeNum:
                     try:
                         self.number = int(number)
                     except ValueError:
-                        self.number = number
+                        raise ValueError(number)
         elif isinstance(number, int):
             self.number = number
         elif isinstance(number, float):
             self.number = number
         else:
-            self.number = number
+            raise ValueError('hello')
     
-    def __repr__(self):
-        return self.number
-
     @property 
     def isnumber(self):
         if isinstance(self.number, Number):
+            return True
+        else:
+            return False
+    
+    @property
+    def isfloat(self):
+        if isinstance(self.number, float):
             return True
         else:
             return False

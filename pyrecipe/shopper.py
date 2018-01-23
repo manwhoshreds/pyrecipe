@@ -92,7 +92,6 @@ class ShoppingList:
             xml_shopping_list_item = etree.SubElement(self.xml_ingredients, "ingredient")
             xml_shopping_list_item.text = str(ingred)
                 
-        
         result = etree.tostring(self.xml_root,
                                 xml_declaration=True,
                                 encoding='utf-8',
@@ -180,6 +179,8 @@ if __name__ == '__main__':
     shopper = ShoppingList()    
     shopper.update('pesto')
     shopper.update('pot sticker dumplings')
+    test = shopper.return_list()
+    print(test)
 
 
 

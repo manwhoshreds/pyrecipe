@@ -186,15 +186,12 @@ class IngredientParser:
         ingred_list = utils.all_singular(lower_list)
         
         amnt_list = [] 
-        print(ingred_list)
         for item in ingred_list:
             if RecipeNum(item).isnumber:
-                print(item)
                 amnt_list.append(item)
                 ingred_list.remove(item)
 
         amount = ' '.join(amnt_list)
-        print(amount)
         
         for item in SIZE_STRINGS:
             if item in ingred_list:
@@ -239,8 +236,7 @@ if __name__ == '__main__':
     #i = IngredientParser(return_dict=True)
     #test = i.parse('2 1/2 tablespoons onion, chopped')
     #print(test)
-    test = RecipeNum(2)
-    print(test.value)
+    test = RecipeNum('test')
 
     #ingred = Ingredient('onion', .3, 'large', 'tablespoon', 'chopped')
     #print(str(ingred))

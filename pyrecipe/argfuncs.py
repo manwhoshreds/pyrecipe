@@ -8,12 +8,12 @@ import os
 
 from .config import PP, EDITOR
 from pyrecipe import utils, shopper, manifest
-import pyrecipe.recipe as recipe
+from pyrecipe.recipe import Recipe, RecipeWebScraper
 import pyrecipe.gui.maingui as gui
 
 def dump_data(args):
 	
-    r = recipe.Recipe(args.source)
+    r = Recipe(args.source)
 
     if args.print_yaml:
         PP.pprint(r._recipe_data)
@@ -48,17 +48,22 @@ def print_shopping_list(args):
 def check_file(args):
     if args.source == "all":
         for item in recipe.RECIPE_NAMES:
-            r = recipe.Recipe(item)
+            r = Recipe(item)
             r.check_file()
     else:
-        r = recipe.Recipe(args.source)
+        r = Recipe(args.source)
         r.check_file()
 	
 def fetch_recipe(args):
-    pass
+    scraper = RecipeWebScraper()
+    scraper.scrape(args.url)
+    if args.save:
+        scraper.dump()
+    else:
+        scraper.print_recipe()
 
 def print_recipe(args):
-    r = recipe.Recipe(args.source)
+    r = Recipe(args.source)
     r.print_recipe(args.verbose)
 
 def show_stats(args):
@@ -66,7 +71,7 @@ def show_stats(args):
 
 def delete_recipe(args):
     source = args.source
-    r = recipe.Recipe(source) 
+    r = Recipe(source) 
     file_name = r['source']
     answer = input("Are you sure your want to delete {}? yes/no ".format(source))
     if answer.strip() == 'yes':
@@ -99,7 +104,7 @@ def version(args):
 def export_recipes(args):
 	
     recipe_name = args.source
-    r = recipe.Recipe(args.source)
+    r = Recipe(args.source)
     xml = r.xml_data
     new_name = recipe_name.replace(" ", "_")
     lower_new_name  = new_name.lower() + ".xml"# I prefer file names to be all lower case

@@ -319,8 +319,13 @@ class Recipe:
                 + color.NORMAL)
 
         # print steps
-        wrapper = textwrap.TextWrapper(subsequent_indent='   ', width=60)
+        wrapper = textwrap.TextWrapper(width=60)#(subsequent_indent='    ', width=60)
+        wrapper.subsequent_indent = '   '
         for index, step in enumerate(self['steps'], start=1):
+            if index >= 10:
+                wrapper.subsequent_indent = '    '
+
+            
             wrap = wrapper.fill(step['step'])
             print("{}{}.{} {}".format(color.NUMBER, index, color.NORMAL, wrap))
 
@@ -338,27 +343,41 @@ class Recipe:
 
 class RecipeWebScraper(Recipe):
     
-    def __init__(self):
-        self.req = None
-        self.soup = None
+    def __init__(self, url):
         super().__init__()
-        #self.recipe = Recipe()
+        self.scrapeable = False
 
-    def scrape(self, url):
+        with open('web_scrapers.yaml', 'r') as stream:
+            _scrapers = yaml.load(stream)
+        
+        self.scrapeable_sites = list(_scrapers.keys())
+        for item in self.scrapeable_sites:
+            if url.startswith(item):
+                self.scrapeable = True
+                self.site = item
+        
+        if not self.scrapeable: 
+            sys.exit('Site is not supported. Exiting...')
+
+        self.rnt = _scrapers[self.site]['recipe_name_tag']
+        self.rna = _scrapers[self.site]['recipe_name_attr']
+        self.ilt = _scrapers[self.site]['ingred_list_tag']
+        self.ila = _scrapers[self.site]['ingred_list_attr']
+        
         self['source_url'] = url
         self.req = urlopen(url)
         self.soup = bs4.BeautifulSoup(self.req, 'html.parser')
         self._get_recipe_name() 
         self._get_ingredients()
-        self._get_author()
-        self._get_method()
+        #self._get_author()
+        #self._get_method()
         
     def _get_recipe_name(self):
-        name_box = self.soup.find('h2', attrs={'class': 'modal-title'})
+        name_box = self.soup.find(self.rnt, attrs=self.rna)
         self['recipe_name'] = name_box.text.strip()
 
     def _get_ingredients(self):
-        ingred_box = self.soup.find_all('ul', attrs={'class': 'ingredient-list'})
+        ingred_box = self.soup.find_all(self.ilt, attrs=self.ila)
         ingred_parser = IngredientParser(return_dict=True)
         ingredients = []
         for item in ingred_box:
@@ -367,8 +386,7 @@ class RecipeWebScraper(Recipe):
                 ingred = ingred_parser.parse(ingred_text)
                 ingredients.append(ingred)
         self['ingredients'] = ingredients
-
-
+        
     def _get_method(self):
         method_box = self.soup.find('div', attrs={'class': 'directions-inner container-xs'})
         litags = method_box.find_all('li')
@@ -394,13 +412,16 @@ if __name__ == '__main__':
     #r = Recipe('pot sticker dumplings')
     #another = Recipe('7 cheese mac and cheese')
     #another.print_recipe()
+    #r.print_recipe()
+    #print(r)
+    #print(r.xml_data)
     #r.dump(stream='sys.stdout')
     
     # recipewebscraper
-    scraper = RecipeWebScraper()
-    #scraper.scrape('http://www.geniuskitchen.com/recipe/pot-sticker-dipping-sauce-446277')
+    #scraper = RecipeWebScraper('http://www.geniuskitchen.com/recipe/pot-sticker-dipping-sauce-446277')
+    scraper = RecipeWebScraper('https://tasty.co/recipe/chicken-alfredo-lasagna')
     #scraper.scrape('http://www.geniuskitchen.com/recipe/bourbon-chicken-45809')
-    scraper.scrape('http://www.geniuskitchen.com/recipe/chicken-parmesan-19135')
+    #scraper.scrape('http://www.geniuskitchen.com/recipe/chicken-parmesan-19135')
     #scraper.scrape('http://www.geniuskitchen.com/recipe/stuffed-cabbage-rolls-29451')
     scraper.print_recipe()
     #scraper.recipe.dump()
