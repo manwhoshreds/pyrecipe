@@ -107,8 +107,8 @@ class Recipe:
         return recipe_string
 
     def __repr__(self):
-        return "<pyrecipe.recipe.Recipe object name='{}'>"
-               .format(self['recipe_name'])
+        return "<pyrecipe.recipe.Recipe object name='{}'>"\
+                .format(self['recipe_name'])
 
     def __getitem__(self, key):
         if key in __class__.orf_keys:
@@ -355,9 +355,11 @@ class Recipe:
     def dump(self, stream=None):
         """Dump the yaml to a file or standard output"""
         strm = self.source if stream is None else stream
-        if strm == 'sys.stdout':
+        if strm == 'screen':
             yaml.dump(self['_recipe_data'], sys.stdout)
         else:
+            if not self.source:
+                raise RuntimeError('Recipe has no source to save to')
             if self.source in RECIPE_DATA_FILES:
                 sys.exit('Recipe already exist with that file name.')
             with open(strm, 'w') as file:
@@ -432,7 +434,9 @@ class RecipeWebScraper(Recipe):
 # testing
 if __name__ == '__main__':
     # recipe
-    #r = Recipe('pot sticker dumplings')
+    r = Recipe('pot sticker dumplings')
+    #r = Recipe()
+    r.dump('screen')
     #another = Recipe('7 cheese mac and cheese')
     #another.print_recipe()
     #r.print_recipe()
@@ -442,9 +446,9 @@ if __name__ == '__main__':
 
     # recipewebscraper
     #scraper = RecipeWebScraper('http://www.geniuskitchen.com/recipe/pot-sticker-dipping-sauce-446277')
-    scraper = RecipeWebScraper('https://tasty.co/recipe/chicken-alfredo-lasagna')
+    #scraper = RecipeWebScraper('https://tasty.co/recipe/chicken-alfredo-lasagna')
     #scraper.scrape('http://www.geniuskitchen.com/recipe/bourbon-chicken-45809')
     #scraper.scrape('http://www.geniuskitchen.com/recipe/chicken-parmesan-19135')
     #scraper.scrape('http://www.geniuskitchen.com/recipe/stuffed-cabbage-rolls-29451')
-    scraper.print_recipe()
+    #scraper.print_recipe()
     #scraper.recipe.dump()

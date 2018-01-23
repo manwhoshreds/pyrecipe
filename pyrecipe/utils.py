@@ -122,15 +122,13 @@ def template(recipe_name):
             template += "    - name:\n      amounts:\n        - amount:\n          unit:\n"
         template += "steps:\n  - step: Coming soon"
         template += VIM_MODE_LINE
-        print("Writing to file... " + file_name)
         temp_yaml = yaml.load(template)
-        
+        print("Writing to file... " + file_name)
         with open(file_name, "w") as file:
             yaml.dump(temp_yaml, file)
     
     except KeyboardInterrupt:
-        print("\nExiting...")
-        sys.exit(0)
+        sys.exit("\nExiting...")
     
     subprocess.call([EDITOR, file_name])
 
