@@ -17,17 +17,18 @@
               An instance of a recipe class contains all the information in
               a recipe.
 
-              The current recipe data understood by the recipe class can be 
+              The current recipe data understood by the recipe class can be
               found in the class variable: orf_keys
 
 
-    - RecipeWebScraper(Recipe): The pyrecipe web_scraper module is a web 
-                                scraping utility used to download and analyze 
-                                recipes found on websites in an attempt to 
-                                download and save the recipe data in the 
-                                format understood by pyrecipe.
-                    
-    Currently supported sites: www.geniuskitchen.com
+    - RecipeWebScraper: The pyrecipe web_scraper module is a web
+                        scraping utility used to download and analyze
+                        recipes found on websites in an attempt to
+                        download and save the recipe data in the
+                        format understood by pyrecipe.
+                        Currently supported sites: www.geniuskitchen.com
+    * Inherits from Recipe
+
 
     copyright: 2017 by Michael Miller
     license: GPL, see LICENSE for more details.
@@ -35,6 +36,7 @@
 
 import sys
 import textwrap
+from numbers import Number
 from lxml import etree
 from urllib.request import urlopen
 
@@ -103,10 +105,11 @@ class Recipe:
         for index, step in enumerate(self['steps'], start=1):
             recipe_string += "{}. {}\n".format(index, step['step'])
         return recipe_string
-    
+
     def __repr__(self):
-        return "<pyrecipe.recipe.Recipe object name='{}'>".format(self['recipe_name'])
-    
+        return "<pyrecipe.recipe.Recipe object name='{}'>"
+               .format(self['recipe_name'])
+
     def __getitem__(self, key):
         if key in __class__.orf_keys:
             return self.__dict__['_recipe_data'].get(key, '')
@@ -129,35 +132,43 @@ class Recipe:
         if self['recipe_name']:
             xml_recipe_name = etree.SubElement(xml_root, "name")
             xml_recipe_name.text = self['recipe_name']
+
         # recipe_uuid
         if self['recipe_uuid']:
             xml_recipe_uuid = etree.SubElement(xml_root, "uuid")
             xml_recipe_uuid.text = str(self['recipe_uuid'])
+
         # dish_type
         if self['dish_type']:
             xml_dish_type = etree.SubElement(xml_root, "dish_type")
             xml_dish_type.text = self['dish_type']
+
         # category
         if self['category']:
             for entry in self['category']:
                 xml_category = etree.SubElement(xml_root, "category")
                 xml_category.text = str(entry)
+
         # author
         if self['author']:
             xml_author = etree.SubElement(xml_root, "author")
             xml_author.text = self['author']
+
         # prep_time
         if self['prep_time']:
             xml_prep_time = etree.SubElement(xml_root, "prep_time")
             xml_prep_time.text = str(self['prep_time'])
+
         # cook_time
         if self['cook_time']:
             xml_cook_time = etree.SubElement(xml_root, "cook_time")
             xml_cook_time.text = str(self['cook_time'])
+
         # bake_time
         if self['bake_time']:
             xml_bake_time = etree.SubElement(xml_root, "bake_time")
             xml_bake_time.text = str(self['bake_time'])
+
         # ready_in
         # not actually an ord tag, so is not read from recipe file
         # it is simply calculated within the class
@@ -167,13 +178,16 @@ class Recipe:
             self['ready_in'] = self['prep_time'] + self['bake_time']
         else:
             self['ready_in'] = self['prep_time']
+
         # notes
         if self['notes']:
             pass
+
         # price
         if self['price']:
             xml_price = etree.SubElement(xml_root, "price")
             xml_price.text = str(self['price'])
+
         # oven_temp
         if self['oven_temp']:
             self.oven_temp = self['oven_temp']
@@ -181,18 +195,21 @@ class Recipe:
             self.ot_unit = self['oven_temp']['unit']
             xml_oven_temp = etree.SubElement(xml_root, "oven_temp")
             xml_oven_temp.text = str(self.ot_amount) + " " + str(self.ot_unit)
+
         # yields
         if self['yields']:
             xml_yields = etree.SubElement(xml_root, "yields")
             for yeld in self['yields']:
                 xml_servings = etree.SubElement(xml_yields, "servings")
                 xml_servings.text = str(yeld)
+
         # ingredients
         if self['ingredients']:
             xml_ingredients = etree.SubElement(xml_root, "ingredients")
             for ingred in self.get_ingredients():
                 xml_ingred = etree.SubElement(xml_ingredients, "ingred")
                 xml_ingred.text = ingred
+
         # alt_ingredients
         if self['alt_ingredients']:
             self.alt_ingreds = []
@@ -210,7 +227,7 @@ class Recipe:
                         xml_alt_ingred.text = ingred
             except AttributeError:
                     pass
-        
+
         # steps
         xml_steps = etree.SubElement(xml_root, "steps")
         for step in self['steps']:
@@ -228,13 +245,13 @@ class Recipe:
 
     def get_ingredients(self, amount_level=0, alt_ingred=None):
         """Returns a list of ingredient strings.
-        
+
         params:
-        
+
         - amount_level: in aticipation of a future feature, this is for multiple
-                        recipe yields. 
-        
-        - alt_ingred: If an alt ingredient is given, it returns the ingredients 
+                        recipe yields.
+
+        - alt_ingred: If an alt ingredient is given, it returns the ingredients
                       associated with the particular alt ingredient.
         """
         ingredients = []
@@ -254,10 +271,17 @@ class Recipe:
                 ingredients.append(str(ingred))
                 continue
             amount = item['amounts'][amount_level].get('amount', 0)
+            if not isinstance(amount, Number):
+                raise ValueError('Amount must be int or float, not {}'
+                                 .format(amount))
             unit = item['amounts'][amount_level].get('unit', '')
             size = item.get('size', '')
             prep = item.get('prep', '')
-            ingred = Ingredient(name, amount=amount, size=size, unit=unit, prep=prep)
+            ingred = Ingredient(name,
+                                amount=amount,
+                                size=size,
+                                unit=unit,
+                                prep=prep)
             ingredients.append(str(ingred))
         return ingredients
 
@@ -269,30 +293,27 @@ class Recipe:
             + color.NORMAL
             + "\n")
 
-        if self['dish_type']:
-            print("Dish Type: {}".format(str(self['dish_type'])))
-        if self['prep_time']:
-            print("Prep time: {}".format(mins_to_hours(self['prep_time'])))
-        if self['cook_time']:
-            print("Cook time: {}".format(mins_to_hours(self['cook_time'])))
-        if self['bake_time']:
-            print("Bake time: {}".format(mins_to_hours(self['bake_time'])))
-        if self['ready_in']:
-            print("Ready in: {}".format(mins_to_hours(self['ready_in'])))
-        if self['oven_temp']:
-            print("Oven temp: {} {}".format(str(self['oven_temp']['amount']), self['oven_temp']['unit']))
+        self['dish_type'] and print("Dish Type: {}"
+                                    .format(str(self['dish_type'])))
+        self['prep_time'] and print("Prep time: {}"
+                                    .format(mins_to_hours(self['prep_time'])))
+        self['cook_time'] and print("Cook time: {}"
+                                    .format(mins_to_hours(self['cook_time'])))
+        self['bake_time'] and print("Bake time: {}"
+                                    .format(mins_to_hours(self['bake_time'])))
+        self['ready_in'] and print("Ready in: {}"
+                                   .format(mins_to_hours(self['ready_in'])))
+        self['oven_temp'] and print("Oven temp: {} {}"
+                                    .format(str(self['oven_temp']['amount']),
+                                                self['oven_temp']['unit']))
 
         if verb_level >= 1:
-            if self['price']:
-                print("Price: {}".format(self['price']))
-            if self['author']:
-                print("Author: {}".format(self['author']))
-            if self['source_url']:
-                print("URL: {}".format(self['source_url']))
-            if self['category']:
-                print("Category(s): " + ", ".join(self['category']))
-            if self['yields']:
-                print("Yields: " + str(self['yeilds']))
+            self['price'] and print("Price: {}".format(self['price']))
+            self['author'] and print("Author: {}".format(self['author']))
+            self['source_url'] and print("URL: {}".format(self['source_url']))
+            self['category'] and print("Category(s): "
+                                     + ", ".join(self['category']))
+            self['yields'] and print("Yields: " + str(self['yeilds']))
             if self['notes']:
                 print(S_DIV)
                 print("NOTES:")
@@ -325,7 +346,7 @@ class Recipe:
             if index >= 10:
                 wrapper.subsequent_indent = '    '
 
-            
+
             wrap = wrapper.fill(step['step'])
             print("{}{}.{} {}".format(color.NUMBER, index, color.NORMAL, wrap))
 
@@ -342,36 +363,36 @@ class Recipe:
 
 
 class RecipeWebScraper(Recipe):
-    
+
     def __init__(self, url):
         super().__init__()
         self.scrapeable = False
 
         with open('web_scrapers.yaml', 'r') as stream:
             _scrapers = yaml.load(stream)
-        
+
         self.scrapeable_sites = list(_scrapers.keys())
         for item in self.scrapeable_sites:
             if url.startswith(item):
                 self.scrapeable = True
                 self.site = item
-        
-        if not self.scrapeable: 
+
+        if not self.scrapeable:
             sys.exit('Site is not supported. Exiting...')
 
         self.rnt = _scrapers[self.site]['recipe_name_tag']
         self.rna = _scrapers[self.site]['recipe_name_attr']
         self.ilt = _scrapers[self.site]['ingred_list_tag']
         self.ila = _scrapers[self.site]['ingred_list_attr']
-        
+
         self['source_url'] = url
         self.req = urlopen(url)
         self.soup = bs4.BeautifulSoup(self.req, 'html.parser')
-        self._get_recipe_name() 
+        self._get_recipe_name()
         self._get_ingredients()
         #self._get_author()
         #self._get_method()
-        
+
     def _get_recipe_name(self):
         name_box = self.soup.find(self.rnt, attrs=self.rna)
         self['recipe_name'] = name_box.text.strip()
@@ -386,7 +407,7 @@ class RecipeWebScraper(Recipe):
                 ingred = ingred_parser.parse(ingred_text)
                 ingredients.append(ingred)
         self['ingredients'] = ingredients
-        
+
     def _get_method(self):
         method_box = self.soup.find('div', attrs={'class': 'directions-inner container-xs'})
         litags = method_box.find_all('li')
@@ -399,16 +420,16 @@ class RecipeWebScraper(Recipe):
             recipe_steps.append(step_dict)
 
         self['steps'] = recipe_steps
-    
+
     def _get_author(self):
         name_box = self.soup.find('h6', attrs={'class': 'byline'})
         recipe_by = name_box.text.strip()
         self['author'] = ' '.join(recipe_by.split(' ')[2:]).strip()
-        
+
 
 # testing
 if __name__ == '__main__':
-    # recipe 
+    # recipe
     #r = Recipe('pot sticker dumplings')
     #another = Recipe('7 cheese mac and cheese')
     #another.print_recipe()
@@ -416,7 +437,7 @@ if __name__ == '__main__':
     #print(r)
     #print(r.xml_data)
     #r.dump(stream='sys.stdout')
-    
+
     # recipewebscraper
     #scraper = RecipeWebScraper('http://www.geniuskitchen.com/recipe/pot-sticker-dipping-sauce-446277')
     scraper = RecipeWebScraper('https://tasty.co/recipe/chicken-alfredo-lasagna')
