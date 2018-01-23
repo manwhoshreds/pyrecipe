@@ -14,11 +14,11 @@
               the recipe to standard output and dump() to save the data
               back to the same file or one of your own choosing.
 
-              An instance of a recipe class contains all the information in
-              a recipe.
+              An instance of a recipe class contains all the information
+              in a recipe.
 
-              The current recipe data understood by the recipe class can be
-              found in the class variable: orf_keys
+              The current recipe data understood by the recipe class can
+              be found in the class variable: orf_keys
 
 
     - RecipeWebScraper: The pyrecipe web_scraper module is a web
