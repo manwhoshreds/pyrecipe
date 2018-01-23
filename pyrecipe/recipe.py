@@ -220,10 +220,12 @@ class Recipe:
                 self.alt_ingreds += test
             try:
                 for item in self.alt_ingreds:
-                    xml_alt_ingredients = etree.SubElement(xml_root, "alt_ingredients")
+                    xml_alt_ingredients = etree.SubElement(xml_root,
+                                                           "alt_ingredients")
                     xml_alt_ingredients.set('alt_name', item.title())
                     for ingred in self.get_ingredients(alt_ingred=item):
-                        xml_alt_ingred = etree.SubElement(xml_alt_ingredients, "alt_ingred")
+                        xml_alt_ingred = etree.SubElement(xml_alt_ingredients,
+                                                          "alt_ingred")
                         xml_alt_ingred.text = ingred
             except AttributeError:
                     pass
