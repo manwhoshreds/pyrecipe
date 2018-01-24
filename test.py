@@ -3,14 +3,15 @@
 import argparse
 import argcomplete
 
-def stuf(**kw):
-    return ['onee', 'thow', 'why']
+from urllib.request import urlopen
+import bs4
 
-parser = argparse.ArgumentParser(description='test parser')
 
-parser.add_argument('stuff').completer = stuf
+request = urlopen('https://tasty.co/recipe/honey-soy-glazed-salmon')
 
-argcomplete.autocomplete(parser)
+soup = bs4.BeautifulSoup(request, 'html.parser')
 
-args = parser.parse_args()
-print(args)
+test = soup.find_all('script', attr={'type': 'application/ld+json'})
+print(test)
+
+

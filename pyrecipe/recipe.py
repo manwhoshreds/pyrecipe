@@ -72,7 +72,6 @@ class Recipe:
                          .format(color.ERROR, self.source))
         else:
             self._recipe_data = {}
-            self.yaml_root_keys = list(self._recipe_data.keys())
             # dish type should default to main
             self['dish_type'] = 'main'
 
@@ -82,7 +81,7 @@ class Recipe:
 
         # Scan the recipe to build the xml
         self._scan_recipe()
-
+    
     def __str__(self):
         """Returns the complete string representation of the recipe data."""
         recipe_string = ''
@@ -248,7 +247,7 @@ class Recipe:
     def get_ingredients(self, amount_level=0, alt_ingred=None):
         """Returns a list of ingredient strings.
 
-        params:
+        args:
 
         - amount_level: in aticipation of a future feature, this is for multiple
                         recipe yields.
@@ -307,7 +306,7 @@ class Recipe:
                                    .format(mins_to_hours(self['ready_in'])))
         self['oven_temp'] and print("Oven temp: {} {}"
                                     .format(str(self['oven_temp']['amount']),
-                                                self['oven_temp']['unit']))
+                                            self['oven_temp']['unit']))
 
         if verb_level >= 1:
             self['price'] and print("Price: {}".format(self['price']))
@@ -328,7 +327,9 @@ class Recipe:
             print(ingred)
         try:
             for item in self.alt_ingreds:
-                print("\n{}{}{}".format(color.TITLE, item.title(), color.NORMAL))
+                print("\n{}{}{}".format(color.TITLE, 
+                                        item.title(), 
+                                        color.NORMAL))
 
                 for ingred in self.get_ingredients(alt_ingred=item):
                     print(ingred)
@@ -342,13 +343,11 @@ class Recipe:
                 + color.NORMAL)
 
         # print steps
-        wrapper = textwrap.TextWrapper(width=60)#(subsequent_indent='    ', width=60)
+        wrapper = textwrap.TextWrapper(width=60)
         wrapper.subsequent_indent = '   '
         for index, step in enumerate(self['steps'], start=1):
             if index >= 10:
                 wrapper.subsequent_indent = '    '
-
-
             wrap = wrapper.fill(step['step'])
             print("{}{}.{} {}".format(color.NUMBER, index, color.NORMAL, wrap))
 
