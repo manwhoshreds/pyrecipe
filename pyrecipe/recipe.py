@@ -21,11 +21,11 @@
               be found in the class variable: orf_keys
 
 
-    - RecipeWebScraper: The pyrecipe web_scraper module is a web
+    - RecipeWebScraper: The pyrecipe web_scraper class is a web
                         scraping utility used to download and analyze
                         recipes found on websites in an attempt to
-                        download and save the recipe data in the
-                        format understood by pyrecipe.
+                        save the recipe data in the format understood 
+                        by pyrecipe.
                         Currently supported sites: www.geniuskitchen.com
     * Inherits from Recipe
 
@@ -244,6 +244,10 @@ class Recipe:
 
         self.xml_data = result
 
+    @property
+    def recipe_data(self):
+        return self['_recipe_data']
+
     def get_ingredients(self, amount_level=0, alt_ingred=None):
         """Returns a list of ingredient strings.
 
@@ -435,7 +439,10 @@ if __name__ == '__main__':
     # recipe
     r = Recipe('pot sticker dumplings')
     #r = Recipe()
-    r.dump('screen')
+    test = r.recipe_data
+    print(test)
+    r.print_recipe()
+    #r.dump('screen')
     #another = Recipe('7 cheese mac and cheese')
     #another.print_recipe()
     #r.print_recipe()
