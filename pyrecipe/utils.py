@@ -5,6 +5,7 @@
 import os
 import sys
 import subprocess
+import string
 from fractions import Fraction
 from numbers import Number
 
@@ -24,30 +25,12 @@ def mins_to_hours(mins):
         len = "%d h %02d m" % (hours, minutes)
     return len
 
-def get_file_name(source):
-    file_name = source.replace(" ", "_").lower() + ".recipe"
-    abspath_name = os.path.join(RECIPE_DATA_DIR, file_name)
-    return abspath_name
-    
 def get_source_path(source):
-
-    if not source:
-        return
-    if os.path.isfile(source):
-        if not source.endswith(".recipe"):
-            sys.exit("{}ERROR: {} is not a recipe file. Exiting..."
-                     .format(color.ERROR, source))
-        else:
-            return source
-    
-    file_name = source.replace(" ", "_").lower() + ".recipe"
+    strip_punc = ''.join(c for c in source if c not in string.punctuation)
+    file_name = strip_punc.replace(" ", "_").lower() + ".recipe"
     abspath_name = os.path.join(RECIPE_DATA_DIR, file_name)
-    #if abspath_name in RECIPE_DATA_FILES:
     return abspath_name
-    #else:
-    #    sys.exit('{} does not exist in the recipe directory.'.format(abspath_name))
-
-
+    
 def list_recipes(ret=False):
     """List all recipes in the database"""
     
@@ -265,7 +248,8 @@ def stats(verb=0):
 
 # testing
 if __name__ == '__main__':
-    test = RecipeNum('.d')
-    print(test.is_number())
+    test = 'i am a super, dup, awsome.*&^%'
+    ok = get_file_name(test)
+    print(ok)
 
 

@@ -115,7 +115,7 @@ def parse_args():
     # recipe_tool dump
     parser_dump = subparser.add_parser(
         "dump",
-        help="Dump yaml or xml representation of recipe"
+        help="Dump yaml or xml representation of recipe stdout"
     ) 
     parser_dump.add_argument(
         "source",
@@ -134,6 +134,13 @@ def parse_args():
         dest="print_yaml", 
         action="store_true", 
         help="Dump source yaml to standard output"
+    )
+    parser_dump.add_argument(
+        "-r",
+        "--raw",
+        dest="print_raw",
+        action="store_true",
+        help="Dump source data in its raw format"
     )
     parser_dump.set_defaults(func=argfunc.dump_data)
 

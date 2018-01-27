@@ -187,7 +187,7 @@ class IngredientParser:
         
         amnt_list = [] 
         for item in ingred_list:
-            if RecipeNum(item).isnumber:
+            if re.match(r'\d+', item):
                 amnt_list.append(item)
                 ingred_list.remove(item)
 
@@ -233,10 +233,10 @@ class IngredientParser:
 
 # testing
 if __name__ == '__main__':
-    #i = IngredientParser(return_dict=True)
-    #test = i.parse('2 1/2 tablespoons onion, chopped')
-    #print(test)
-    test = RecipeNum('test')
+    i = IngredientParser(return_dict=True)
+    test = i.parse('2 1/2 tablespoons onion, chopped')
+    print(test)
+
 
     #ingred = Ingredient('onion', .3, 'large', 'tablespoon', 'chopped')
     #print(str(ingred))

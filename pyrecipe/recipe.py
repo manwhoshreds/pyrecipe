@@ -42,7 +42,7 @@ from urllib.request import urlopen
 
 import bs4
 
-from pyrecipe import ureg, yaml, color
+from pyrecipe import ureg, color, RecipeNum, yaml
 from pyrecipe.ingredient import Ingredient, IngredientParser
 from pyrecipe.config import (S_DIV, RECIPE_DATA_FILES, PP)
 from pyrecipe.utils import get_source_path, mins_to_hours
@@ -64,6 +64,7 @@ class Recipe:
         self.source = source
         if self.source:
             self.source = get_source_path(source)
+
             try:
                 with open(self.source, "r") as stream:
                     self._recipe_data = yaml.load(stream)
@@ -275,15 +276,12 @@ class Recipe:
                 ingred = Ingredient('s&p')
                 ingredients.append(str(ingred))
                 continue
-            amount = item['amounts'][amount_level].get('amount', 0)
-            if not isinstance(amount, Number):
-                raise ValueError('Amount must be int or float, not {}'
-                                 .format(amount))
+            amount = RecipeNum(item['amounts'][amount_level].get('amount', 0))
             unit = item['amounts'][amount_level].get('unit', '')
             size = item.get('size', '')
             prep = item.get('prep', '')
             ingred = Ingredient(name,
-                                amount=amount,
+                                amount=amount.value,
                                 size=size,
                                 unit=unit,
                                 prep=prep)
@@ -354,7 +352,15 @@ class Recipe:
                 wrapper.subsequent_indent = '    '
             wrap = wrapper.fill(step['step'])
             print("{}{}.{} {}".format(color.NUMBER, index, color.NORMAL, wrap))
-
+    
+    def dump_yaml(self):
+        """Dump the yaml data to standard output"""
+        yaml.dump(self['_recipe_data'], sys.stdout)     
+    
+    def dump_xml(self):
+        """Dump the xml data to standard output"""
+        print(self['xml_data'])
+    
     def dump(self, stream=None):
         """Dump the yaml to a file or standard output"""
         strm = self.source if stream is None else stream
@@ -397,8 +403,8 @@ class RecipeWebScraper(Recipe):
         self.soup = bs4.BeautifulSoup(self.req, 'html.parser')
         self._get_recipe_name()
         self._get_ingredients()
-        #self._get_author()
-        #self._get_method()
+        self._get_author()
+        self._get_method()
 
     def _get_recipe_name(self):
         name_box = self.soup.find(self.rnt, attrs=self.rna)
@@ -440,8 +446,9 @@ if __name__ == '__main__':
     r = Recipe('pot sticker dumplings')
     #r = Recipe()
     test = r.recipe_data
-    print(test)
-    r.print_recipe()
+    #print(test)
+    #r.dump_xml()
+    r.dump_yaml()
     #r.dump('screen')
     #another = Recipe('7 cheese mac and cheese')
     #another.print_recipe()

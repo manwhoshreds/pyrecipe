@@ -70,13 +70,13 @@ class RecipeNum:
                     try:
                         self.number = int(number)
                     except ValueError:
-                        raise ValueError(number)
+                        self.number = number
         elif isinstance(number, int):
             self.number = number
         elif isinstance(number, float):
             self.number = number
         else:
-            raise ValueError('hello')
+            self.number = number
     
     @property 
     def isnumber(self):

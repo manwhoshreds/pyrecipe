@@ -16,11 +16,14 @@ def dump_data(args):
     r = Recipe(args.source)
 
     if args.print_yaml:
-        PP.pprint(r._recipe_data)
-        exit(0)
+        r.dump_yaml()
+        sys.exit(0)
     if args.print_xml:
-        print(r.xml_data)
-        exit(0)
+        r.dump_xml()
+        sys.exit(0)
+    if args.print_raw:
+        PP.pprint(r.recipe_data) 
+        sys.exit(0)
 	
 def start_gui():
 	
@@ -55,12 +58,11 @@ def check_file(args):
         r.check_file()
 	
 def fetch_recipe(args):
-    scraper = RecipeWebScraper()
-    scraper.scrape(args.url)
+    scraper = RecipeWebScraper(args.url)
     if args.save:
         scraper.dump()
     else:
-        scraper.print_recipe()
+        scraper.print_recipe(verb_level=2)
 
 def print_recipe(args):
     r = Recipe(args.source)
@@ -96,7 +98,6 @@ def print_list(args):
     for item in sorted(lower_recipes):
         print(item.title())
 	
-
 def version(args):
 	
     print(utils.version())
