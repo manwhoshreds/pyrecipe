@@ -3,8 +3,8 @@
     module
     ~~~~~~
 
-    copyright: 2017 by Michael Miller
-    license: GPL, see LICENSE for more details.
+    :copyright: 2017 by Michael Miller
+    :license: GPL, see LICENSE for more details.
 """
 
 if __name__ == '__main__':

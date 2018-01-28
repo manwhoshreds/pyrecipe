@@ -5,14 +5,12 @@
     The recipe_numbers module handle various task related to numbers,
     fractions, mixed numbers, etc.. as they are applicable to recipes.
 
-    - Mixed: Handles mixed numbers like 1 1/2. Credit for the creation
-             of this class goes to JB0x2D1, found on this post:
+    - Mixed: Does well with any numbers we are likely to encounter in pyrecipe. 
+             Credit for the creation of this class goes to JB0x2D1, found at this post:
              https://codereview.stackexchange.com/questions/35274/mixed-number-fractions-class
 
-    - RecipeNum: Handle numbers in general
-
-    copyright: 2017 by Michael Miller
-    license: GPL, see LICENSE for more details.
+    :copyright: 2017 by Michael Miller
+    :license: GPL, see LICENSE for more details.
 """
 
 from decimal import Decimal
@@ -323,55 +321,10 @@ class Mixed(Fraction):
         return self.__class__(self.numerator, self.denominator)
 
 
-class RecipeNum:
-
-    def __init__(self, number=''):
-        if isinstance(number, str):
-            for slash in '/⁄':
-                if slash in number: 
-                    num, den = number.split(slash) 
-                    self.number = Fraction(int(num), int(den))
-                    break
-                elif '.' in number:
-                    self.number = float(number)
-                else:
-                    try:
-                        self.number = int(number)
-                    except ValueError:
-                        self.number = number
-        elif isinstance(number, int):
-            self.number = number
-        elif isinstance(number, float):
-            self.number = number
-        else:
-            self.number = number
-    
-    @property 
-    def isnumber(self):
-        if isinstance(self.number, Number):
-            return True
-        else:
-            return False
-    
-    @property
-    def isfloat(self):
-        if isinstance(self.number, float):
-            return True
-        else:
-            return False
-    
-    @property
-    def value(self):
-        return self.number
-
-
 if __name__ == '__main__':
     # testing goes here
     #import doctest
     #doctest.testmod()
-    
-    
-    
     test = Mixed('23 1/3')
     anon = Mixed('3849')
     print(test)

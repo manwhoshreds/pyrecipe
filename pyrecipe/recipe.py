@@ -45,7 +45,7 @@ from urllib.request import urlopen
 import bs4
 
 from pyrecipe import ureg, color, yaml
-from pyrecipe.recipe_numbers import RecipeNum
+from pyrecipe.recipe_numbers import Mixed
 from pyrecipe.ingredient import Ingredient, IngredientParser
 from pyrecipe.config import (S_DIV, RECIPE_DATA_FILES, 
                              SCRIPT_DIR, PP)
@@ -281,12 +281,15 @@ class Recipe:
                 ingred = Ingredient('s&p')
                 ingredients.append(str(ingred))
                 continue
-            amount = RecipeNum(item['amounts'][amount_level].get('amount', 0))
+            try: 
+                amount = Mixed(item['amounts'][amount_level]['amount'])
+            except ValueError:
+                amount = ''
             unit = item['amounts'][amount_level].get('unit', '')
             size = item.get('size', '')
             prep = item.get('prep', '')
             ingred = Ingredient(name,
-                                amount=amount.value,
+                                amount=str(amount),
                                 size=size,
                                 unit=unit,
                                 prep=prep)

@@ -22,7 +22,7 @@ from pint.errors import (DimensionalityError)
 
 from pyrecipe import ureg, Q_, p
 from pyrecipe import utils
-from pyrecipe.recipe_numbers import Mixed, RecipeNum
+from pyrecipe.recipe_numbers import Mixed
 from pyrecipe.config import (CAN_UNITS,
                              PREP_TYPES,
                              INGRED_UNITS,
