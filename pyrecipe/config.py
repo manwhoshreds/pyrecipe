@@ -10,7 +10,7 @@ import pprint
 import configparser
 
 
-__version__     = '0.7.7'
+__version__     = '0.7.8'
 __email__       = "m.k.miller@gmx.com"
 __scriptname__  = os.path.basename(sys.argv[0])
 
@@ -20,6 +20,7 @@ config = configparser.ConfigParser()
 CONFIG_DIR         = os.path.expanduser('~/.config/pyrecipe/')
 RECIPE_DATA_DIR    = CONFIG_DIR + 'recipe_data/'
 CONFIG_FILE        = CONFIG_DIR + 'config'
+SCRIPT_DIR         = os.path.dirname(__file__)
 
 # parse config
 config.read(CONFIG_FILE)
@@ -63,7 +64,7 @@ _prp_typs            = ['softened', 'diced', 'finely diced', 'shredded',
                         'coarsely cracked', 'cut up', 'melted', 'seeded and deviened', 
                         'cut into 2 inch pieces', 'cut into 1 inch pieces', 
                         'cut into 1 inch lengths', 'uncooked', 'peeled and grated', 
-                        'lightly packed', 'finely sliced', 'roasted']
+                        'lightly packed', 'thinly sliced', 'finely sliced', 'roasted']
 
 INGRED_UNITS          = sorted(_ingr_units)
 SIZE_STRINGS          = sorted(_size_strs)

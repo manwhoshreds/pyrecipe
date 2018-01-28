@@ -35,6 +35,7 @@
 """
 
 import sys
+import os
 import textwrap
 from zipfile import ZipFile
 from numbers import Number
@@ -46,7 +47,8 @@ import bs4
 from pyrecipe import ureg, color, yaml
 from pyrecipe.recipe_numbers import RecipeNum
 from pyrecipe.ingredient import Ingredient, IngredientParser
-from pyrecipe.config import (S_DIV, RECIPE_DATA_FILES, PP)
+from pyrecipe.config import (S_DIV, RECIPE_DATA_FILES, 
+                             SCRIPT_DIR, PP)
 from pyrecipe.utils import get_source_path, mins_to_hours
 
 
@@ -363,19 +365,20 @@ class Recipe:
     def dump_xml(self):
         """Dump the xml data to standard output"""
         print(self['xml_data'])
+
+    def dump_raw(self):
+        """Dump raw recipe data"""
+        PP.pprint(self['_recipe_data'])
     
     def dump(self, stream=None):
         """Dump the yaml to a file or standard output"""
         strm = self.source if stream is None else stream
-        if strm == 'screen':
-            yaml.dump(self['_recipe_data'], sys.stdout)
-        else:
-            if not strm:
-                raise RuntimeError('Recipe has no source to save to')
-            if strm in RECIPE_DATA_FILES:
-                raise RuntimeError('Recipe already exist with that file name.')
-            with open(strm, 'w') as recipe_file:
-                yaml.dump(self['_recipe_data'], recipe_file)
+        if not strm:
+            raise RuntimeError('Recipe has no source to save to')
+        if strm in RECIPE_DATA_FILES:
+            raise RuntimeError('Recipe already exist with that file name.')
+        with open(strm, 'w') as recipe_file:
+            yaml.dump(self['_recipe_data'], recipe_file)
 
 
 class RecipeWebScraper(Recipe):
@@ -383,8 +386,8 @@ class RecipeWebScraper(Recipe):
     def __init__(self, url):
         super().__init__()
         self.scrapeable = False
-
-        with open('web_scrapers.yaml', 'r') as stream:
+        scraper_file = os.path.join(SCRIPT_DIR, 'web_scrapers.yaml')
+        with open(scraper_file, 'r') as stream:
             _scrapers = yaml.load(stream)
 
         self.scrapeable_sites = list(_scrapers.keys())

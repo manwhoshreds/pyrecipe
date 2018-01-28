@@ -367,6 +367,15 @@ class RecipeNum:
 
 if __name__ == '__main__':
     # testing goes here
-    test = Mixed('5/3')
-    print(str(test))
+    #import doctest
+    #doctest.testmod()
+    
+    
+    
+    test = Mixed('23 1/3')
+    anon = Mixed('3849')
+    print(test)
+    print(anon)
+    #ok = test + anon
+    #print(ok)
 

@@ -54,10 +54,6 @@ class RecipeManifest:
 
 manifest = RecipeManifest()
 
-
-
-
-
 class Color:
     """
        The color class defines various colors for 
@@ -84,8 +80,12 @@ class InflectEngine(inflect.engine):
 
     def __init__(self):
         super().__init__()
+        self.ignored = ['roma', 'hummus']
 
     def singular_noun(self, word):
+        if word in self.ignored:
+            return word
+
         singular = super().singular_noun(word)
         if singular:
             return singular

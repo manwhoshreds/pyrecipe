@@ -17,13 +17,10 @@ def dump_data(args):
 
     if args.print_yaml:
         r.dump_yaml()
-        sys.exit(0)
     if args.print_xml:
         r.dump_xml()
-        sys.exit(0)
     if args.print_raw:
-        PP.pprint(r.recipe_data) 
-        sys.exit(0)
+        r.dump_raw()
 	
 def start_gui():
 	
@@ -82,7 +79,7 @@ def delete_recipe(args):
         print("{} not deleted".format(source))
 
 def edit_recipe(args):
-    source = utils.get_file_name(args.source)
+    source = utils.get_source_path(args.source)
     subprocess.call([EDITOR, source])
 
 def add_recipe(args):
