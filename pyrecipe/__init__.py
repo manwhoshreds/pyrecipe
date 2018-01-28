@@ -55,46 +55,7 @@ class RecipeManifest:
 manifest = RecipeManifest()
 
 
-class RecipeNum:
 
-    def __init__(self, number=''):
-        if isinstance(number, str):
-            for slash in '/⁄':
-                if slash in number: 
-                    num, den = number.split(slash) 
-                    self.number = Fraction(int(num), int(den))
-                    break
-                elif '.' in number:
-                    self.number = float(number)
-                else:
-                    try:
-                        self.number = int(number)
-                    except ValueError:
-                        self.number = number
-        elif isinstance(number, int):
-            self.number = number
-        elif isinstance(number, float):
-            self.number = number
-        else:
-            self.number = number
-    
-    @property 
-    def isnumber(self):
-        if isinstance(self.number, Number):
-            return True
-        else:
-            return False
-    
-    @property
-    def isfloat(self):
-        if isinstance(self.number, float):
-            return True
-        else:
-            return False
-    
-    @property
-    def value(self):
-        return self.number
 
 
 class Color:

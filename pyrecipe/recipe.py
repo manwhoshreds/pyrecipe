@@ -36,13 +36,15 @@
 
 import sys
 import textwrap
+from zipfile import ZipFile
 from numbers import Number
 from lxml import etree
 from urllib.request import urlopen
 
 import bs4
 
-from pyrecipe import ureg, color, RecipeNum, yaml
+from pyrecipe import ureg, color, yaml
+from pyrecipe.recipe_numbers import RecipeNum
 from pyrecipe.ingredient import Ingredient, IngredientParser
 from pyrecipe.config import (S_DIV, RECIPE_DATA_FILES, PP)
 from pyrecipe.utils import get_source_path, mins_to_hours
@@ -64,13 +66,14 @@ class Recipe:
         self.source = source
         if self.source:
             self.source = get_source_path(source)
-
-            try:
-                with open(self.source, "r") as stream:
-                    self._recipe_data = yaml.load(stream)
-            except FileNotFoundError:
-                sys.exit("{}ERROR: {} is not a file. Exiting..."
-                         .format(color.ERROR, self.source))
+            #zipf = ZipFile(self.source)
+            #try:
+            with open(self.source, 'r') as stream:
+                self._recipe_data = yaml.load(stream)
+            #except KeyError:
+            #    sys.exit("{}ERROR: Can not find recipe.yaml."
+            #             " Is this really a recipe file?"
+            #             .format(color.ERROR, self.source))
         else:
             self._recipe_data = {}
             # dish type should default to main
@@ -367,12 +370,12 @@ class Recipe:
         if strm == 'screen':
             yaml.dump(self['_recipe_data'], sys.stdout)
         else:
-            if not self.source:
+            if not strm:
                 raise RuntimeError('Recipe has no source to save to')
-            if self.source in RECIPE_DATA_FILES:
-                sys.exit('Recipe already exist with that file name.')
-            with open(strm, 'w') as file:
-                yaml.dump(self['_recipe_data'], file)
+            if strm in RECIPE_DATA_FILES:
+                raise RuntimeError('Recipe already exist with that file name.')
+            with open(strm, 'w') as recipe_file:
+                yaml.dump(self['_recipe_data'], recipe_file)
 
 
 class RecipeWebScraper(Recipe):

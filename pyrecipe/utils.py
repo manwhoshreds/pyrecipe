@@ -26,10 +26,13 @@ def mins_to_hours(mins):
     return len
 
 def get_source_path(source):
-    strip_punc = ''.join(c for c in source if c not in string.punctuation)
-    file_name = strip_punc.replace(" ", "_").lower() + ".recipe"
-    abspath_name = os.path.join(RECIPE_DATA_DIR, file_name)
-    return abspath_name
+    if os.path.isfile(source):
+        return source
+    else:
+        strip_punc = ''.join(c for c in source if c not in string.punctuation)
+        file_name = strip_punc.replace(" ", "_").lower() + ".recipe"
+        abspath_name = os.path.join(RECIPE_DATA_DIR, file_name)
+        return abspath_name
     
 def list_recipes(ret=False):
     """List all recipes in the database"""

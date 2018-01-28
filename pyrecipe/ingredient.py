@@ -20,12 +20,14 @@ from fractions import Fraction
 
 from pint.errors import (DimensionalityError)
 
-from pyrecipe import ureg, Q_, RecipeNum, p
+from pyrecipe import ureg, Q_, p
 from pyrecipe import utils
+from pyrecipe.recipe_numbers import Mixed, RecipeNum
 from pyrecipe.config import (CAN_UNITS,
                              PREP_TYPES,
                              INGRED_UNITS,
                              SIZE_STRINGS)
+
 
 
 class Ingredient:
@@ -123,7 +125,7 @@ class Ingredient:
         elif isinstance(self._amount.value, float) and self._amount.value < 1:
             return Fraction(self._amount.value)
         elif isinstance(self._amount.value, float) and self._amount.value > 1:
-            return utils.improper_to_mixed(str(Fraction(self._amount.value)))
+            return str(Mixed(str(Fraction(self._amount.value))))
         else:
             return self._amount.value
     
@@ -168,30 +170,36 @@ class IngredientParser:
     def __init__(self, return_dict=False):
         self.return_dict = return_dict
         self.punctuation = "!\"#$%&'()*+,-:;<=>?@[\]^_`{|}~"
-
+        self._OUNCE_CAN_RE = re.compile(r'\d+ (ounce|pound) (can|bag)')
+        self._AMOUNTS_RE = re.compile(r'\d+')#' \d+[/⁄]\d+')
+    
     def parse(self, string=''):
-        amount = 0
+        amount = RecipeNum(0)
         size = ''
         unit = ''
         name = ''
         prep = ''
         ingred_list = []
         ingred_dict = {}
-        #numbermatch = re.compile(r'[0-9]|[0-9]*[\/]*[0-9]')
         
         # string preprocessing 
-        self.strip_punc = self._strip_punctuation(string)
-        raw_list = self.strip_punc.split()	
-        lower_list = [x.lower() for x in raw_list]
-        ingred_list = utils.all_singular(lower_list)
+        stripd_punc = self._strip_punctuation(string).lower()
+        singular_string = ' '.join(utils.all_singular(stripd_punc.split()))
+        match = self._OUNCE_CAN_RE.search(singular_string)
+        if match:
+            singular_string = singular_string.replace(match.group(), '')
+            unit = match.group()
         
-        amnt_list = [] 
+        ingred_list = singular_string.split() 
+        #amnt_list = [] 
         for item in ingred_list:
-            if re.match(r'\d+', item):
-                amnt_list.append(item)
+            if self._AMOUNTS_RE.search(item):
+                #amnt_list.append(item)
+                amount = RecipeNum(item)
+                print(amount.value)
                 ingred_list.remove(item)
 
-        amount = ' '.join(amnt_list)
+        #amount = ' '.join(amnt_list)
         
         for item in SIZE_STRINGS:
             if item in ingred_list:
@@ -204,9 +212,9 @@ class IngredientParser:
                 ingred_list.remove(item)
         
         for item in PREP_TYPES:
-            if item in ingred_list:
+            if re.search(item, string):
                 prep = item
-                ingred_list.remove(item)
+                #ingred_list.remove(item)
 
         if not unit:
             unit = 'each'
@@ -216,12 +224,12 @@ class IngredientParser:
         name = ' '.join(ingred_list)
         if name.lower == 'salt and pepper':
             name = 's&p'
-        ingred_dict['amounts'] = [{'amount': amount, 'unit': unit}]
-        ingred_dict['size'] = size
+        ingred_dict['amounts'] = [{'amount': amount.value, 'unit': unit}]
+        if size: ingred_dict['size'] = size
         ingred_dict['name'] = name
-        ingred_dict['prep'] = prep
+        if prep: ingred_dict['prep'] = prep
         
-        ingred_list = [amount, size, unit, name, prep]
+        ingred_list = [amount.value, size, unit, name, prep]
 
         if self.return_dict:
             return ingred_dict
@@ -234,7 +242,7 @@ class IngredientParser:
 # testing
 if __name__ == '__main__':
     i = IngredientParser(return_dict=True)
-    test = i.parse('2 1/2 tablespoons onion, chopped')
+    test = i.parse('2 1/2 12 ouNce cans onion, chopped')
     print(test)
 
 

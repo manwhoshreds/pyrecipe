@@ -10,7 +10,7 @@ import pprint
 import configparser
 
 
-__version__     = '0.7.6'
+__version__     = '0.7.7'
 __email__       = "m.k.miller@gmx.com"
 __scriptname__  = os.path.basename(sys.argv[0])
 
@@ -54,8 +54,8 @@ CAN_UNITS            = ['32 ounce can', '16 ounce can', '15 ounce can', '8.5 oun
 _ingr_units          = CAN_UNITS + CULINARY_UNITS + PINT_UNDEFINED_UNITS
 _size_strs           = ['large', 'medium', 'small', 'heaping']
 _prp_typs            = ['softened', 'diced', 'finely diced', 'shredded', 
-                        'tightly packed', 'drained', 'deviened', 'cubed', 
-                        'chopped', 'finely chopped', 'freshly ground', 
+                        'tightly packed', 'drained', 'drained and rinsed', 
+                        'deviened', 'cubed', 'chopped', 'finely chopped', 'freshly ground', 
                         'very finely chopped', 'minced', 'finely minced', 
                         'peeled and finely minced', 'sliced', 'grated', 
                         'squeezed', 'freshly grated', 'peeled', 'quartered', 
