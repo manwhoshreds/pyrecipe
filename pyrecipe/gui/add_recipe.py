@@ -8,7 +8,6 @@ import ruamel.yaml as yaml
 import functools
 
 import pyrecipe.recipe as recipe
-from pyrecipe.ingredient import IngredientParser
 from pyrecipe.config import *
 from pyrecipe.utils import *
 import pyrecipe.gui
@@ -34,7 +33,7 @@ class AddRecipe(tk.Toplevel):
             self.title("Add recipe")
         self.recipe = recipe.Recipe(source)
         #self._init_notebook(width=700, height=600)
-        self.ingred_parser = IngredientParser() 
+        self.ingred_parser = recipe.IngredientParser() 
         self._init_notebook()
 
         # Cancel

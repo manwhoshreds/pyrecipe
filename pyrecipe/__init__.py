@@ -20,6 +20,7 @@ import inflect
 
 from pyrecipe.config import (__version__, __scriptname__, 
                      DB_FILE, RECIPE_DATA_FILES)
+from .recipe_numbers import RecipeNum
 
 
 ureg = UnitRegistry()

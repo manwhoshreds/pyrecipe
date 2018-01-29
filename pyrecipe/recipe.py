@@ -24,11 +24,16 @@
     - RecipeWebScraper: The pyrecipe web_scraper class is a web
                         scraping utility used to download and analyze
                         recipes found on websites in an attempt to
-                        save the recipe data in the format understood 
+                        save the recipe data in the format understood
                         by pyrecipe.
                         Currently supported sites: www.geniuskitchen.com
     * Inherits from Recipe
 
+    - Ingredient: Returns a gramatically correct ingredient string given
+                  the elments of ingredient data
+
+    - IngredientParser: Converts an ingredient string into a list or dict
+                        of ingredient data elements.
 
     copyright: 2017 by Michael Miller
     license: GPL, see LICENSE for more details.
@@ -36,7 +41,9 @@
 
 import sys
 import os
+import re
 import textwrap
+from fractions import Fraction
 from zipfile import ZipFile
 from numbers import Number
 from lxml import etree
@@ -44,12 +51,12 @@ from urllib.request import urlopen
 
 import bs4
 
-from pyrecipe import ureg, color, yaml
-from pyrecipe.recipe_numbers import Mixed
-from pyrecipe.ingredient import Ingredient, IngredientParser
-from pyrecipe.config import (S_DIV, RECIPE_DATA_FILES, 
-                             SCRIPT_DIR, PP)
-from pyrecipe.utils import get_source_path, mins_to_hours
+from pyrecipe import ureg, Q_, p, color, yaml, RecipeNum
+from pyrecipe.config import (S_DIV, RECIPE_DATA_FILES,
+                             SCRIPT_DIR, PP, CAN_UNITS,
+                             INGRED_UNITS, SIZE_STRINGS,
+                             PREP_TYPES)
+from pyrecipe.utils import get_source_path, mins_to_hours, all_singular
 
 
 class Recipe:
@@ -73,7 +80,7 @@ class Recipe:
             with open(self.source, 'r') as stream:
                 self._recipe_data = yaml.load(stream)
             #except KeyError:
-            #    sys.exit("{}ERROR: Can not find recipe.yaml."
+            #  )  sys.exit("{}ERROR: Can not find recipe.yaml."
             #             " Is this really a recipe file?"
             #             .format(color.ERROR, self.source))
         else:
@@ -87,7 +94,7 @@ class Recipe:
 
         # Scan the recipe to build the xml
         self._scan_recipe()
-    
+
     def __str__(self):
         """Returns the complete string representation of the recipe data."""
         recipe_string = ''
@@ -254,6 +261,10 @@ class Recipe:
     def recipe_data(self):
         return self['_recipe_data']
 
+    @property
+    def ingredients(self):
+        return self['ingredients']
+
     def get_ingredients(self, amount_level=0, alt_ingred=None):
         """Returns a list of ingredient strings.
 
@@ -281,8 +292,8 @@ class Recipe:
                 ingred = Ingredient('s&p')
                 ingredients.append(str(ingred))
                 continue
-            try: 
-                amount = Mixed(item['amounts'][amount_level]['amount'])
+            try:
+                amount = RecipeNum(item['amounts'][amount_level].get('amount', 0))
             except ValueError:
                 amount = ''
             unit = item['amounts'][amount_level].get('unit', '')
@@ -337,8 +348,8 @@ class Recipe:
             print(ingred)
         try:
             for item in self.alt_ingreds:
-                print("\n{}{}{}".format(color.TITLE, 
-                                        item.title(), 
+                print("\n{}{}{}".format(color.TITLE,
+                                        item.title(),
                                         color.NORMAL))
 
                 for ingred in self.get_ingredients(alt_ingred=item):
@@ -354,17 +365,19 @@ class Recipe:
 
         # print steps
         wrapper = textwrap.TextWrapper(width=60)
-        wrapper.subsequent_indent = '   '
+        wrapper.initial_indent = ' '
+        wrapper.subsequent_indent = '    '
         for index, step in enumerate(self['steps'], start=1):
             if index >= 10:
+                wrapper.initial_indent = ''
                 wrapper.subsequent_indent = '    '
             wrap = wrapper.fill(step['step'])
             print("{}{}.{} {}".format(color.NUMBER, index, color.NORMAL, wrap))
-    
+
     def dump_yaml(self):
         """Dump the yaml data to standard output"""
-        yaml.dump(self['_recipe_data'], sys.stdout)     
-    
+        yaml.dump(self['_recipe_data'], sys.stdout)
+
     def dump_xml(self):
         """Dump the xml data to standard output"""
         print(self['xml_data'])
@@ -372,7 +385,7 @@ class Recipe:
     def dump_raw(self):
         """Dump raw recipe data"""
         PP.pprint(self['_recipe_data'])
-    
+
     def dump(self, stream=None):
         """Dump the yaml to a file or standard output"""
         strm = self.source if stream is None else stream
@@ -410,16 +423,16 @@ class RecipeWebScraper(Recipe):
         self['source_url'] = url
         self.req = urlopen(url)
         self.soup = bs4.BeautifulSoup(self.req, 'html.parser')
-        self._get_recipe_name()
-        self._get_ingredients()
-        self._get_author()
-        self._get_method()
+        self._fetch_recipe_name()
+        self._fetch_ingredients()
+        self._fetch_author()
+        self._fetch_method()
 
-    def _get_recipe_name(self):
+    def _fetch_recipe_name(self):
         name_box = self.soup.find(self.rnt, attrs=self.rna)
         self['recipe_name'] = name_box.text.strip()
 
-    def _get_ingredients(self):
+    def _fetch_ingredients(self):
         ingred_box = self.soup.find_all(self.ilt, attrs=self.ila)
         ingred_parser = IngredientParser(return_dict=True)
         ingredients = []
@@ -430,7 +443,7 @@ class RecipeWebScraper(Recipe):
                 ingredients.append(ingred)
         self['ingredients'] = ingredients
 
-    def _get_method(self):
+    def _fetch_method(self):
         method_box = self.soup.find('div', attrs={'class': 'directions-inner container-xs'})
         litags = method_box.find_all('li')
         # last litag is "submit a correction", we dont need that
@@ -443,14 +456,244 @@ class RecipeWebScraper(Recipe):
 
         self['steps'] = recipe_steps
 
-    def _get_author(self):
+    def _fetch_author(self):
         name_box = self.soup.find('h6', attrs={'class': 'byline'})
         recipe_by = name_box.text.strip()
         self['author'] = ' '.join(recipe_by.split(' ')[2:]).strip()
 
 
+class Ingredient:
+    """The ingredient class is used to build an ingredietns object
+
+    :param name: name of the ingredient e.g onion
+    :param amount: amount of ingredient
+    :param size: size of ingredient
+    :param unit: ingredient unit such as tablespoon
+    :param prep: prep string if any, such as diced, chopped.. etc...
+    """
+    def __init__(self, name, amount=0, size='', unit='', prep=''):
+        self._name = name
+        try:
+            self._amount = RecipeNum(amount)
+        except ValueError:
+            self._amount = 0
+        self._size = size
+        self._unit = unit
+        self._prep = prep
+
+    def __str__(self):
+        """Turn ingredient object into a string
+
+        Calling string on an ingredient object returns the gramatically
+        correct representation of the ingredient object.
+        """
+        if self._name == 's&p':
+                return "Salt and pepper to taste"
+        elif self._unit == 'taste':
+                return "{} to taste".format(self._name.capitalize())
+        elif self._unit == 'pinch':
+                return "Pinch of {}".format(self._name)
+        elif self._unit == 'splash':
+                return "Splash of {}".format(self._name)
+        else:
+            string = "{} {} {} {}".format(self.amount, self._size,
+                                          self.unit, self.name)
+            # the previous line adds unwanted spaces if values are absent
+            # we simply clean that up here.
+            cleaned_string = " ".join(string.split())
+            if self._prep is '':
+                return cleaned_string
+            else:
+                cleaned_string += ", " + self._prep
+                return cleaned_string
+
+    @property
+    def name(self):
+        if not self._unit or self._unit == 'each':
+            return p.plural(self._name, self._amount)
+        else:
+            return self._name
+
+    @property
+    def amount(self):
+        # cannont figure out how to let python handle irrational numbers. which are
+        # quite prevalant in recipe data. ( think 1/3, 1/6 etc... )
+        # here is a functional work-around
+        third = re.compile('^0.3|^.3')
+        sixth = re.compile('^0.6|^.6')
+        eighth = re.compile('^0.125|^.125')
+        if third.match(str(self._amount)):
+            return '1/3'
+        elif sixth.match(str(self._amount)):
+            return '1/6'
+        elif eighth.match(str(self._amount)):
+            return '1/8'
+        elif isinstance(self._amount, float) and self._amoun < 1:
+            return Fraction(self._amount)
+        elif isinstance(self._amount, float) and self._amount > 1:
+            return str(RecipeNum(str(Fraction(self._amount))))
+        else:
+            return self._amount
+
+    @property
+    def unit(self):
+        if self._unit == 'each':
+            return ''
+        elif self._amount > 1:
+            if self._unit in CAN_UNITS:
+                return "({})".format(p.plural(self._unit))
+            else:
+                return p.plural(self._unit)
+        elif self._amount <= 1:
+            if self._unit in CAN_UNITS:
+                return "({})".format(self._unit)
+            else:
+                return self._unit
+        else:
+            return self._unit
+
+    @property
+    def quantity(self):
+        return self._amount * ureg
+
+
+class IngredientParser:
+    """Convert an ingredient string into a list or dict
+
+    an excepted ingredient string is usually in the form of
+
+    "<amount> <size> <unit> <ingredient>, <prep>"
+
+    however, not all elements of an ingredient string may
+    be present in every case. It is the job of the ingredient
+    parser to identify what an ingredient string contains, and to
+    return a list or dict populated with the relevant data.
+
+    params:
+
+    - return_dict: return ingredient data in a dict in the form of
+                   {'name': <name>,
+                    'size': <size>,
+                    'amounts': [{'amount': <amount>, 'uniit': <unit>}]
+                    'prep': <prep>}
+
+    examples:
+
+    >>> parser = IngredientParser()
+    >>> parser.parse('1 tablespoon onion, chopped')
+    [1, '', 'tablespoon', 'onion chopped', 'chopped']
+    >>> parser.parse('3 large carrots, finely diced')
+    ['3', 'large', 'carrot', 'finely diced']
+    >>> parser = IngredientParser(return_dict=True)
+    >>> parser.parse('1 tablespoon onion chopped')
+    {'amounts': [{'amount': 1, 'unit': 'tablespoon'}],\
+     'name': 'onion chopped', 'prep': 'chopped'}
+    """
+    def __init__(self, return_dict=False):
+
+        self.return_dict = return_dict
+        self.punctuation = "!\"#$%&'()*+,-:;<=>?@[\]^_`{|}~"
+        self._OUNCE_CAN_RE = re.compile(r'\d+ (ounce|pound) (can|bag)')
+        self._PAREN_RE = re.compile(r'\((.*?)\)')
+
+    def _preprocess_string(self, string):
+        """preprocess the string"""
+        # this special forward slash character (differs from '/') is encounterd
+        # on some sites througout the web. There maybe others
+        if '⁄' in string:
+            string = string.replace('⁄', '/')
+        test = self._PAREN_RE.search(string)
+        if test:
+            print(test.group())
+        stripd_punc = self._strip_punctuation(string).lower()
+        singular_string = ' '.join(all_singular(stripd_punc.split()))
+        return singular_string
+
+
+    def parse(self, string=''):
+        """parse the ingredient string"""
+        amount = ''
+        size = ''
+        unit = ''
+        name = ''
+        prep = ''
+        ingred_list = []
+        ingred_dict = {}
+
+        # string preprocessing
+        pre_string = self._preprocess_string(string)
+        match = self._OUNCE_CAN_RE.search(pre_string)
+        if match:
+            pre_string = pre_string.replace(match.group(), '')
+            unit = match.group()
+
+        ingred_list = pre_string.split()
+        amnt_list = []
+        for item in ingred_list:
+            try:
+                RecipeNum(item)
+                amnt_list.append(item)
+            except ValueError:
+                continue
+
+        try:
+            amount = str(RecipeNum(' '.join(amnt_list)))
+        except ValueError:
+            amount = ''
+
+        ingred_list = [x for x in ingred_list if x not in amnt_list]
+        ingred_string = ' '.join(ingred_list)
+
+
+        for item in SIZE_STRINGS:
+            if item in ingred_string:
+                size = item
+                ingred_string = ingred_string.replace(item, '')
+
+        for item in INGRED_UNITS:
+            if item in ingred_string:
+                unit = item
+                ingred_string = ingred_string.replace(item, '')
+
+        for item in PREP_TYPES:
+            if item in ingred_string:
+                prep = item
+                ingred_string = ingred_string.replace(item, '')
+
+        if not unit:
+            unit = 'each'
+
+        # at this point we are assuming that all elements have been removed
+        # from list except for the name. Whatever is left gets joined together
+        name = ' '.join(ingred_string.split())
+        if name.lower == 'salt and pepper':
+            name = 's&p'
+        ingred_dict['amounts'] = [{'amount': amount, 'unit': unit}]
+        if size: ingred_dict['size'] = size
+        ingred_dict['name'] = name
+        if prep: ingred_dict['prep'] = prep
+
+        ingred_list = [amount, size, unit, name, prep]
+
+        if self.return_dict:
+            return ingred_dict
+        else:
+            return ingred_list
+
+    def _strip_punctuation(self, string):
+        return ''.join(c for c in string if c not in self.punctuation)
+
 # testing
 if __name__ == '__main__':
+    #import doctest
+    #doctest.testmod()
+    #i = IngredientParser(return_dict=True)
+    #test = i.parse('2 1/2 12 ouNce cans onion, chopped')
+    #test = RecipeNum('1 1/2')
+    #print(test)
+    ingred = Ingredient('onion', '3', 'large', 'tablespoon', 'chopped')
+    ingred2 = Ingredient('onion', '3', 'large', 'tablespoon')
+    print(ingred2 + ingred)
     # recipe
     r = Recipe('pot sticker dumplings')
     #r = Recipe()

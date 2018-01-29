@@ -5,9 +5,10 @@
     The recipe_numbers module handle various task related to numbers,
     fractions, mixed numbers, etc.. as they are applicable to recipes.
 
-    - Mixed: Does well with any numbers we are likely to encounter in pyrecipe. 
-             Credit for the creation of this class goes to JB0x2D1, found at this post:
-             https://codereview.stackexchange.com/questions/35274/mixed-number-fractions-class
+    - RecipeNum: Does well with any numbers we are likely to encounter in
+                 pyrecipe. Credit for the creation of this class goes to
+                 JB0x2D1 oringialy named RecipeNum and can found at this post:
+                 https://codereview.stackexchange.com/questions/35274/mixed-number-fractions-class
 
     :copyright: 2017 by Michael Miller
     :license: GPL, see LICENSE for more details.
@@ -20,9 +21,9 @@ import operator
 from fractions import Fraction
 
 
-class Mixed(Fraction):
+class RecipeNum(Fraction):
     """This class implements Fraction, which implements rational numbers."""
-    
+
         # We're immutable, so use __new__ not __init__
     def __new__(cls, whole=0, numerator=None, denominator=None):
         """Constructs a Rational.
@@ -37,42 +38,42 @@ class Mixed(Fraction):
         Examples
         --------
 
-        >>> Mixed(Mixed(-1,1,2), Mixed(0,1,2), Mixed(0,1,2))
-        Mixed(-2, 1, 2)
-        >>> Mixed('-1 2/3')
-        Mixed(-1, 2, 3)
-        >>> Mixed(10,-8)
-        Mixed(-1, 1, 4)
-        >>> Mixed(Fraction(1,7), 5)
-        Mixed(0, 1, 35)
-        >>> Mixed(Mixed(1, 7), Fraction(2, 3))
-        Mixed(0, 3, 14)
-        >>> Mixed(Mixed(0, 3, 2), Fraction(2, 3), 2)
-        Mixed(1, 5, 6)
-        >>> Mixed('314')
-        Mixed(314, 0, 1)
-        >>> Mixed('-35/4')
-        Mixed(-8, 3, 4)
-        >>> Mixed('3.1415')
-        Mixed(3, 283, 2000)
-        >>> Mixed('-47e-2')
-        Mixed(0, -47, 100)
-        >>> Mixed(1.47)
-        Mixed(1, 2116691824864133, 4503599627370496)
-        >>> Mixed(2.25)
-        Mixed(2, 1, 4)
-        >>> Mixed(Decimal('1.47'))
-        Mixed(1, 47, 100)
+        >>> RecipeNum(RecipNum(-1,1,2), RecipeNum(0,1,2), RecipeNum(0,1,2))
+        RecipeNum(-2, 1, 2)
+        >>> RecipeNum('-1 2/3')
+        RecipeNum(-1, 2, 3)
+        >>> RecipeNum(10,-8)
+        RecipeNum(-1, 1, 4)
+        >>> RecipeNum(Fraction(1,7), 5)
+        RecipeNum(0, 1, 35)
+        >>> RecipeNum(RecipeNum(1, 7), Fraction(2, 3))
+        RecipeNum(0, 3, 14)
+        >>> RecipeNum(RecipeNum(0, 3, 2), Fraction(2, 3), 2)
+        RecipeNum(1, 5, 6)
+        >>> RecipeNum('314')
+        RecipeNum(314, 0, 1)
+        >>> RecipeNum('-35/4')
+        RecipeNum(-8, 3, 4)
+        >>> RecipeNum('3.1415')
+        RecipeNum(3, 283, 2000)
+        >>> RecipeNum('-47e-2')
+        RecipeNum(0, -47, 100)
+        >>> RecipeNum(1.47)
+        RecipeNum(1, 2116691824864133, 4503599627370496)
+        >>> RecipeNum(2.25)
+        RecipeNum(2, 1, 4)
+        >>> RecipeNum(Decimal('1.47'))
+        RecipeNum(1, 47, 100)
 
         """
-        self = super(Mixed, cls).__new__(cls)
+        self = super(RecipeNum, cls).__new__(cls)
 
         attempt_failed = False
         zerodiv = False
         if denominator is None: #if two arguments or less, pass to Fraction
             try:
                 f1 = Fraction(0)
-                f2 = Fraction(whole, numerator)                
+                f2 = Fraction(whole, numerator)
             except ValueError: #Fraction creation from args failed
                 attempt_failed = True
                 pass
@@ -81,8 +82,8 @@ class Mixed(Fraction):
                 zerodiv = True
                 pass
             if zerodiv:
-                raise ZeroDivisionError('Mixed(%s, 0)' % whole)
-            if attempt_failed: 
+                raise ZeroDivisionError('RecipeNum(%s, 0)' % whole)
+            if attempt_failed:
                 #if str, split and pass to Fraction
                 if (numerator is None) and isinstance(whole, str):
                     n = whole.split()
@@ -103,15 +104,15 @@ class Mixed(Fraction):
                     else: #split string items != 2 therefore invalid
                         attempt_failed = True
             if attempt_failed:
-                raise ValueError('Invalid literal for Mixed: %r' %
+                raise ValueError('Invalid literal for RecipeNum: %r' %
                                          whole)
             if zerodiv:
-                raise ZeroDivisionError('Mixed(\'%s\')' % whole)
+                raise ZeroDivisionError('RecipeNum(\'%s\')' % whole)
         elif (isinstance(whole, numbers.Rational) and #three arguments
               isinstance(numerator, numbers.Rational) and
               isinstance(denominator, numbers.Rational)):
             if denominator == 0:
-                raise ZeroDivisionError('Mixed(%s, %s, 0)' % (whole, numerator))
+                raise ZeroDivisionError('RecipeNum(%s, %s, 0)' % (whole, numerator))
             f1 = Fraction(whole)
             f2 = Fraction(numerator, denominator)
         else:
@@ -131,10 +132,10 @@ class Mixed(Fraction):
     def __repr__(self):
         """repr(self)"""
         if (self._numerator < 0) and (self.whole !=0):
-            return ('Mixed(%s, %s, %s)' % (self.whole, -self.fnumerator,
-                                           self._denominator))        
+            return ('RecipeNum(%s, %s, %s)' % (self.whole, -self.fnumerator,
+                                           self._denominator))
         else:
-            return ('Mixed(%s, %s, %s)' % (self.whole, self.fnumerator,
+            return ('RecipeNum(%s, %s, %s)' % (self.whole, self.fnumerator,
                                            self._denominator))
 
     def __str__(self):
@@ -161,20 +162,20 @@ class Mixed(Fraction):
     def limit_denominator(self, max_denominator=1000000):
         """Closest Fraction to self with denominator at most max_denominator.
 
-        >>> Mixed('3.141592653589793').limit_denominator(10)
-        Mixed(3, 1, 7)
-        >>> Mixed('3.141592653589793').limit_denominator(100)
-        Mixed(3, 14, 99)
-        >>> Mixed(4321, 8765).limit_denominator(10000)
-        Mixed(0, 4321, 8765)
+        >>> RecipeNum('3.141592653589793').limit_denominator(10)
+        RecipeNum(3, 1, 7)
+        >>> RecipeNum('3.141592653589793').limit_denominator(100)
+        RecipeNum(3, 14, 99)
+        >>> RecipeNum(4321, 8765).limit_denominator(10000)
+        RecipeNum(0, 4321, 8765)
         """
-        return Mixed(self.to_fraction().limit_denominator(max_denominator))
+        return RecipeNum(self.to_fraction().limit_denominator(max_denominator))
 
     @property
     def numerator(a):
         """Fraction(a).numerator
-        e.g. Mixed(1,2,3).numerator ==> Fraction(5,2).numerator
-        >>> Mixed(1,2,3).numerator 
+        e.g. RecipeNum(1,2,3).numerator ==> Fraction(5,2).numerator
+        >>> RecipeNum(1,2,3).numerator
         5
         """
         return a._numerator
@@ -188,7 +189,7 @@ class Mixed(Fraction):
         """a % 1
         returns the whole number only
         e.g. 10/3 == 3 1/3 .whole ==> 3
-        >>> Mixed(10,3).whole
+        >>> RecipeNum(10,3).whole
         3
         """
         if a._numerator < 0:
@@ -199,7 +200,7 @@ class Mixed(Fraction):
     @property
     def fnumerator(a):
         """ returns the fractional portion's numerator.
-        >>> Mixed('1 3/4').fnumerator
+        >>> RecipeNum('1 3/4').fnumerator
         3
         """
         if a._numerator < 0:
@@ -209,14 +210,14 @@ class Mixed(Fraction):
 
     def _add(a, b):
         """a + b"""
-        return Mixed(a.numerator * b.denominator +
+        return RecipeNum(a.numerator * b.denominator +
                      b.numerator * a.denominator,
                      a.denominator * b.denominator)
     __add__, __radd__ = Fraction._operator_fallbacks(_add, operator.add)
 
     def _sub(a, b):
         """a - b"""
-        return Mixed(a.numerator * b.denominator -
+        return RecipeNum(a.numerator * b.denominator -
                         b.numerator * a.denominator,
                         a.denominator * b.denominator)
 
@@ -224,14 +225,14 @@ class Mixed(Fraction):
 
     def _mul(a, b):
         """a * b"""
-        return Mixed(a.numerator * b.numerator, a.denominator * b.denominator)
+        return RecipeNum(a.numerator * b.numerator, a.denominator * b.denominator)
 
     __mul__, __rmul__ = Fraction._operator_fallbacks(_mul, operator.mul)
 
 
     def _div(a, b):
         """a / b"""
-        return Mixed(a.numerator * b.denominator,
+        return RecipeNum(a.numerator * b.denominator,
                         a.denominator * b.numerator)
 
     __truediv__, __rtruediv__ = Fraction._operator_fallbacks(_div, operator.truediv)
@@ -246,14 +247,14 @@ class Mixed(Fraction):
         """
         if isinstance(b, numbers.Rational):
             if b.denominator == 1:
-                return Mixed(Fraction(a) ** b)
+                return RecipeNum(Fraction(a) ** b)
             else:
                 # A fractional power will generally produce an
                 # irrational number.
                 return float(a) ** float(b)
         else:
             return float(a) ** b
-        
+
     def __rpow__(b, a):
         """a ** b"""
         if b._denominator == 1 and b._numerator >= 0:
@@ -261,7 +262,7 @@ class Mixed(Fraction):
             return a ** b.numerator
 
         if isinstance(a, numbers.Rational):
-            return Mixed(a.numerator, a.denominator) ** b
+            return RecipeNum(a.numerator, a.denominator) ** b
 
         if b._denominator == 1:
             return a ** b.numerator
@@ -270,15 +271,15 @@ class Mixed(Fraction):
 
     def __pos__(a):
         """+a: Coerces a subclass instance to Fraction"""
-        return Mixed(a.numerator, a.denominator)
+        return RecipeNum(a.numerator, a.denominator)
 
     def __neg__(a):
         """-a"""
-        return Mixed(-a.numerator, a.denominator)
+        return RecipeNum(-a.numerator, a.denominator)
 
     def __abs__(a):
         """abs(a)"""
-        return Mixed(abs(a.numerator), a.denominator)
+        return RecipeNum(abs(a.numerator), a.denominator)
 
     def __trunc__(a):
         """trunc(a)"""
@@ -311,12 +312,12 @@ class Mixed(Fraction):
         return (self.__class__, (str(self),))
 
     def __copy__(self):
-        if type(self) == Mixed:
+        if type(self) == RecipeNum:
             return self     # I'm immutable; therefore I am my own clone
         return self.__class__(self.numerator, self.denominator)
 
     def __deepcopy__(self, memo):
-        if type(self) == Mixed:
+        if type(self) == RecipeNum:
             return self     # My components are also immutable
         return self.__class__(self.numerator, self.denominator)
 
@@ -325,10 +326,9 @@ if __name__ == '__main__':
     # testing goes here
     #import doctest
     #doctest.testmod()
-    test = Mixed('23 1/3')
-    anon = Mixed('3849')
+    test = RecipeNum('23 1/3')
+    anon = RecipeNum('.3849')
     print(test)
     print(anon)
     #ok = test + anon
     #print(ok)
-

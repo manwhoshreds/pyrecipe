@@ -11,11 +11,12 @@ import sys
 from fractions import Fraction
 from lxml import etree
 
+from pint.errors import (DimensionalityError)
+
 from pyrecipe.config import (RAND_RECIPE_COUNT, S_DIV,
                              SHOPPING_LIST_FILE)
-from pyrecipe.ingredient import Ingredient
-from pyrecipe.recipe import Recipe
-from pyrecipe import manifest, color
+from pyrecipe.recipe import Recipe, Ingredient
+from pyrecipe import manifest, color, RecipeNum, Q_
 
 class ShoppingList:
     """Creates a shopping list of ingredients from a list of recipes. 
@@ -53,29 +54,49 @@ class ShoppingList:
         for item in ingreds:
             name = item['name']
             try:
+                # links are recipe ingredients that are also 
+                # recipes so we add it to the list here.
                 link = item['link']
                 self.update(link)
+                if link:
+                    continue
             except KeyError:
                 pass
                     
             if name == "s&p":
                 continue
-            amount = item['amounts'][0].get('amount', 0)
+            amount = RecipeNum(item['amounts'][0].get('amount', 0))
             unit = item['amounts'][0].get('unit', '')
-            ingred = Ingredient(name, amount=amount, unit=unit)
+            try: 
+                quant = Q_(amount, unit)
+            except ValueError:
+                quant = Q_('1', 'teaspoon')
+                print("%s is not a good unit!" % unit)
             # check if name already in sd so we can add together
             if name in sd.keys():
-                orig_ingred = Ingredient(name, amount=sd[name][0], unit=sd[name][1])	
-                addition = ingred + orig_ingred
-                sd[name] = addition
+                try:
+                    print("look out for: " + name) 
+                    try:
+                        orig_ingred = Q_(RecipeNum(sd[name][0]), sd[name][1])
+                    except ValueError:
+                        orig_ingred = Q_('1', 'teaspoon')
+                        print("%s is not a good unit!" % unit)
+
+                    addition = orig_ingred + quant
+                    sd[name] = str(addition).split()
+                except DimensionalityError:
+                    sd[name] = [orig_ingred, quant]
+                    print("canot add: " + repr(orig_ingred) + " + " + repr(quant))
             else:
-                sd[name] = [amount, unit]
+                try:
+                    sd[name] = str(quant).split()
+                except ValueError:
+                    print("offenders: " + name, amount, unit)
 
     def write_to_xml(self):
         """Write the shopping list to an xml file after
            building.
         """
-        
         # Add recipe names to the tree
         for item in self.recipe_names:
             xml_main_dish = etree.SubElement(self.xml_maindish_names, "name")
@@ -126,6 +147,7 @@ class ShoppingList:
     def print_list(self, write=False):
         mdn = self.recipe_names
         sd = self.shopping_dict
+        #print(sd)
         dn = self.dressing_names
         
         print("Recipes:\n")
@@ -141,7 +163,7 @@ class ShoppingList:
         
         # Print list	
         for key, value in sd.items():
-            print("{}, {} {}".format(key, Fraction(value[0]), value[1]))
+            print("{}, {} {}".format(key, value[0], value[1]))
         # write the list to an xml file	if True
         if write:	
             self.write_to_xml()
