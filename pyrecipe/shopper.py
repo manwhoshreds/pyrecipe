@@ -1,20 +1,30 @@
 """
     pyrecipe.shopper
     ~~~~~~~~~~~~~~~~
+    The shopper module allows you to build a shopping list of ingredients 
+    from your recipes.
 
-    build a shopping list of ingredients from your recipes
+    - ShoppingList: The main shopper class 
 
+    - RandomShoppingList: A ShoppingList subclass that chooses recipes at 
+                          random an builds a shopping list.
+    
+    - MultiQuantity: A pint Quantity container that holds Quantities of
+                     differing dimensionalities.
+    
 """
+
 import random
 import datetime
 import sys
 from fractions import Fraction
 from lxml import etree
+from math import ceil
 
-from pint.errors import (DimensionalityError)
+from pint.errors import DimensionalityError
 
 from pyrecipe.config import (RAND_RECIPE_COUNT, S_DIV,
-                             SHOPPING_LIST_FILE)
+                             SHOPPING_LIST_FILE, PP)
 from pyrecipe.recipe import Recipe, Ingredient
 from pyrecipe import manifest, color, RecipeNum, Q_
 
@@ -34,13 +44,12 @@ class ShoppingList:
         self.xml_salad_dressing = etree.SubElement(self.xml_root, "salad_dressing")
         self.xml_ingredients = etree.SubElement(self.xml_root, "ingredients")
 
-        self.shopping_dict = {}
-        self.shopping_list = []
+        self.shopping_list = {}
         self.recipe_names = []
         self.dressing_names = []
         
     def _proc_ingreds(self, source, alt_ingred=""):
-        sd = self.shopping_dict
+        sd = self.shopping_list
         r = Recipe(source)
         if alt_ingred:
             for item in r['alt_ingredients']:
@@ -70,29 +79,42 @@ class ShoppingList:
             try: 
                 quant = Q_(amount, unit)
             except ValueError:
-                quant = Q_('1', 'teaspoon')
-                print("%s is not a good unit!" % unit)
+                quant = Q_(RecipeNum('1'), 'teaspoon')
             # check if name already in sd so we can add together
             if name in sd.keys():
+                orig_ingred = sd[name]
                 try:
-                    print("look out for: " + name) 
-                    try:
-                        orig_ingred = Q_(RecipeNum(sd[name][0]), sd[name][1])
-                    except ValueError:
-                        orig_ingred = Q_('1', 'teaspoon')
-                        print("%s is not a good unit!" % unit)
-
                     addition = orig_ingred + quant
-                    sd[name] = str(addition).split()
+                    sd[name] = addition
                 except DimensionalityError:
-                    sd[name] = [orig_ingred, quant]
-                    print("canot add: " + repr(orig_ingred) + " + " + repr(quant))
+                    sd[name] = MultiQuantity(orig_ingred, quant)
             else:
-                try:
-                    sd[name] = str(quant).split()
-                except ValueError:
-                    print("offenders: " + name, amount, unit)
+                sd[name] = quant
 
+    def print_list(self, write=False):
+        mdn = self.recipe_names
+        sd = self.shopping_list
+        PP.pprint(sd)
+        dn = self.dressing_names
+        
+        print("Recipes:\n")
+        for item in mdn:
+            print(item)
+        print("\n" + S_DIV)
+
+        if len(dn) > 0:
+            print("Salad Dressings:\n")
+            for item in dn:
+                print(item)
+            print("\n{}".format(S_DIV))
+        
+        # Print list	
+        for key, value in sd.items():
+            print("{}, {}".format(key, value))
+        # write the list to an xml file	if True
+        if write:	
+            self.write_to_xml()
+    
     def write_to_xml(self):
         """Write the shopping list to an xml file after
            building.
@@ -108,7 +130,7 @@ class ShoppingList:
             xml_dressing_name.text = str(item)
 
         # finally, ingreds
-        for key, value in self.shopping_dict.items():
+        for key, value in self.shopping_list.items():
             ingred = "{} {} {}".format(key, str(value[0]), str(value[1]))
             xml_shopping_list_item = etree.SubElement(self.xml_ingredients, "ingredient")
             xml_shopping_list_item.text = str(ingred)
@@ -125,7 +147,7 @@ class ShoppingList:
             f.write(result)
     
     def return_list(self):
-        return self.shopping_dict
+        return self.shopping_list
     
     def update(self, source):
 
@@ -143,31 +165,7 @@ class ShoppingList:
                 self._proc_ingreds(source, alt_ingred=item)
         except AttributeError:
             pass
-        
-    def print_list(self, write=False):
-        mdn = self.recipe_names
-        sd = self.shopping_dict
-        #print(sd)
-        dn = self.dressing_names
-        
-        print("Recipes:\n")
-        for item in mdn:
-            print(item)
-        print("\n" + S_DIV)
 
-        if len(dn) > 0:
-            print("Salad Dressings:\n")
-            for item in dn:
-                print(item)
-            print("\n{}".format(S_DIV))
-        
-        # Print list	
-        for key, value in sd.items():
-            print("{}, {} {}".format(key, value[0], value[1]))
-        # write the list to an xml file	if True
-        if write:	
-            self.write_to_xml()
-                
 
 class RandomShoppingList(ShoppingList):
     """The Random Shopping List class
@@ -196,13 +194,54 @@ class RandomShoppingList(ShoppingList):
     def print_random(self):
         self.print_list()
 
+
+class MultiQuantity:
+    """Class to deal with quantities of different dimentions"""
+
+    def __init__(self, *args):
+        self.quants = []
+        self.type_test = type(Q_('1', 'teaspoon'))
+        for item in args:
+            if not isinstance(item, self.type_test):
+                raise TypeError('arguments must be of type Quantity, '
+                                'not ' + str(item))
+            else:
+                self.quants.append(item)
+
+    
+    def __str__(self):
+        test = [str(x) for x in self.quants] 
+        return ' + '.join(test)
+
+    def __repr__(self):
+        return '<MultiQuantity({})>'.format(self.quants)
+
+    def __add__(self, other):
+        if not isinstance(other, self.type_test):
+            raise TypeError('Quantity types can only be added to MultiQuantity')
+        for item in self.quants:
+            try:
+                addition = item + other
+                self.quants.remove(item)
+                self.quants.append(addition)
+                break
+            except DimensionalityError:
+                continue
+        return self
+
+
 # testing
 if __name__ == '__main__':
-    shopper = ShoppingList()    
-    shopper.update('pesto')
-    shopper.update('pot sticker dumplings')
-    test = shopper.return_list()
-    print(test)
+    #shopper = ShoppingList()    
+    #shopper.update('pesto')
+    #shopper.update('pot sticker dumplings')
+    #test = shopper.return_list()
+    #print(test)
+    Quant = Q_(2, 'pound')
+    Quant_2 = Q_(3, 'cup')
+    test = MultiQuantity(Quant, Quant_2)
+    ok = test + Quant_2
+    print(ok)
 
 
 
