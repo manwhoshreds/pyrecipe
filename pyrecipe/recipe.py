@@ -77,8 +77,11 @@ class Recipe:
             self.source = get_source_path(source)
             #zipf = ZipFile(self.source)
             #try:
-            with open(self.source, 'r') as stream:
-                self._recipe_data = yaml.load(stream)
+            try:
+                with open(self.source, 'r') as stream:
+                    self._recipe_data = yaml.load(stream)
+            except FileNotFoundError:
+                sys.exit("{}ERROR: No such file exist{}".format(color.ERROR, self.source))
             #except KeyError:
             #  )  sys.exit("{}ERROR: Can not find recipe.yaml."
             #             " Is this really a recipe file?"
@@ -364,6 +367,8 @@ class Recipe:
                 + color.NORMAL)
 
         # print steps
+        # set the indents of the wrapper before an after the for block allows
+        # the numbers and steps to line up nicely
         wrapper = textwrap.TextWrapper(width=60)
         wrapper.initial_indent = ' '
         wrapper.subsequent_indent = '    '
