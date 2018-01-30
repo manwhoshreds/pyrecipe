@@ -30,7 +30,6 @@ def get_source_path(source):
         return source
     else:
         strip_punc = ''.join(c for c in source if c not in string.punctuation)
-        print(strip_punc)
         file_name = strip_punc.replace(" ", "_").lower() + ".recipe"
         abspath_name = os.path.join(RECIPE_DATA_DIR, file_name)
         return abspath_name
