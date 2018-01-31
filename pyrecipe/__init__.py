@@ -13,6 +13,7 @@
 import os
 from numbers import Number
 from fractions import Fraction
+from math import ceil
 
 from pint import UnitRegistry
 from ruamel.yaml import YAML
@@ -23,12 +24,31 @@ from pyrecipe.config import (__version__, __scriptname__,
 from .recipe_numbers import RecipeNum
 
 
-ureg = UnitRegistry()
-ureg.load_definitions(os.path.expanduser('~/.local/lib/python3.6/site-packages/pyrecipe/culinary_units.txt'))
-Q_ = ureg.Quantity
-
 yaml = YAML(typ='safe')
 yaml.default_flow_style = False
+
+ureg = UnitRegistry()
+ureg.load_definitions(os.path.expanduser('~/.local/lib/python3.6/site-packages/pyrecipe/culinary_units.txt'))
+#Q_ = ureg.Quantity
+
+class Q_(ureg.Quantity):
+    """subclass to implement a few custom behaviors
+    
+    Capabilities include alway rounding up to the nearest whole
+    an printing plural units dependent upon the objects magnitude
+    """
+
+    def round_up(self):
+        return self.__class__(ceil(self._magnitude), self._units)
+
+    def __str__(self):
+        if str(self.units) == 'each':
+            return format(self)
+        elif self.magnitude > 1:
+            return '{} {}'.format(self.magnitude, p.plural(str(self.units)))
+        else:
+            return format(self)
+        
 
 class RecipeManifest:
 

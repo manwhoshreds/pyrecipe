@@ -367,11 +367,14 @@ class Recipe:
                 + color.NORMAL)
 
         # print steps
-        # set the indents of the wrapper before an after the for block allows
-        # the numbers and steps to line up nicely
+        # lots of conditional wrapper mods for pretty steps output
         wrapper = textwrap.TextWrapper(width=60)
-        wrapper.initial_indent = ' '
-        wrapper.subsequent_indent = '    '
+        if len(self['steps']) > 9:
+            wrapper.initial_indent = ' '
+            wrapper.subsequent_indent = '    '
+        else:
+            wrapper.subsequent_indent = '   '
+
         for index, step in enumerate(self['steps'], start=1):
             if index >= 10:
                 wrapper.initial_indent = ''

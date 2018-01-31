@@ -150,7 +150,10 @@ class RecipeNum(Fraction):
                                  self._denominator)
         else:
             return '%s/%s' % (self.fnumerator, self._denominator)
-
+    
+    def __len__(self):
+        return len(self.__str__())
+    
     def to_fraction(self):
         n = self.fnumerator
         if self.whole != 0:

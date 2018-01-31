@@ -10,7 +10,7 @@ import pprint
 import configparser
 
 
-__version__     = '0.7.8'
+__version__     = '0.8.0'
 __email__       = "m.k.miller@gmx.com"
 __scriptname__  = os.path.basename(sys.argv[0])
 
@@ -64,7 +64,8 @@ _prp_typs            = ['softened', 'diced', 'finely diced', 'shredded',
                         'coarsely cracked', 'cut up', 'melted', 'seeded and deviened', 
                         'cut into 2 inch pieces', 'cut into 1 inch pieces', 
                         'cut into 1 inch lengths', 'uncooked', 'peeled and grated', 
-                        'lightly packed', 'thinly sliced', 'finely sliced', 'roasted']
+                        'lightly packed', 'thinly sliced', 'finely sliced', 'roasted',
+                        'boiling']
 
 INGRED_UNITS          = sorted(_ingr_units)
 SIZE_STRINGS          = sorted(_size_strs)

@@ -17,7 +17,6 @@
 import random
 import datetime
 import sys
-from fractions import Fraction
 from lxml import etree
 from math import ceil
 
@@ -25,7 +24,7 @@ from pint.errors import DimensionalityError
 
 from pyrecipe.config import (RAND_RECIPE_COUNT, S_DIV,
                              SHOPPING_LIST_FILE, PP)
-from pyrecipe.recipe import Recipe, Ingredient
+from pyrecipe.recipe import Recipe
 from pyrecipe import manifest, color, RecipeNum, Q_
 
 class ShoppingList:
@@ -49,7 +48,7 @@ class ShoppingList:
         self.dressing_names = []
         
     def _proc_ingreds(self, source, alt_ingred=""):
-        sd = self.shopping_list
+        sl = self.shopping_list
         r = Recipe(source)
         if alt_ingred:
             for item in r['alt_ingredients']:
@@ -76,25 +75,27 @@ class ShoppingList:
                 continue
             amount = RecipeNum(item['amounts'][0].get('amount', 0))
             unit = item['amounts'][0].get('unit', '')
-            try: 
-                quant = Q_(amount, unit)
-            except ValueError:
-                quant = Q_(RecipeNum('1'), 'teaspoon')
-            # check if name already in sd so we can add together
-            if name in sd.keys():
-                orig_ingred = sd[name]
+            
+            # FIXME:
+            # pint cannot handle units such as '16 ounce can' etc....
+            # this is a workaround until a better solution is found
+            if 'can' in unit:
+                unit = 'can'
+            quant = Q_(amount, unit)
+            
+            if name in sl.keys():
+                orig_ingred = sl[name]
                 try:
                     addition = orig_ingred + quant
-                    sd[name] = addition
+                    sl[name] = addition
                 except DimensionalityError:
-                    sd[name] = MultiQuantity(orig_ingred, quant)
+                    sl[name] = MultiQuantity(orig_ingred, quant)
             else:
-                sd[name] = quant
+                sl[name] = quant
 
     def print_list(self, write=False):
         mdn = self.recipe_names
-        sd = self.shopping_list
-        PP.pprint(sd)
+        sl = self.shopping_list
         dn = self.dressing_names
         
         print("Recipes:\n")
@@ -109,8 +110,13 @@ class ShoppingList:
             print("\n{}".format(S_DIV))
         
         # Print list	
-        for key, value in sd.items():
-            print("{}, {}".format(key, value))
+        padding = max(len(x) for x in sl.keys()) + 2
+        for key, value in sl.items():
+            try:
+                print("{} {}".format(key.ljust(padding, '.'), str(value.round_up())))
+            except AttributeError:
+                print("{} {}".format(key.ljust(padding, '.'), value))
+
         # write the list to an xml file	if True
         if write:	
             self.write_to_xml()
@@ -131,7 +137,10 @@ class ShoppingList:
 
         # finally, ingreds
         for key, value in self.shopping_list.items():
-            ingred = "{} {} {}".format(key, str(value[0]), str(value[1]))
+            try: 
+                ingred = "{} {}".format(key, str(value.round_up()))
+            except AttributeError:
+                ingred = "{} {}".format(key, str(value))
             xml_shopping_list_item = etree.SubElement(self.xml_ingredients, "ingredient")
             xml_shopping_list_item.text = str(ingred)
                 
@@ -159,12 +168,10 @@ class ShoppingList:
 
         
         self._proc_ingreds(source)
-        try:
-            alt_ingreds = r['alt_ingreds']
+        alt_ingreds = r['alt_ingreds']
+        if alt_ingreds:
             for item in alt_ingreds:
                 self._proc_ingreds(source, alt_ingred=item)
-        except AttributeError:
-            pass
 
 
 class RandomShoppingList(ShoppingList):
@@ -208,7 +215,6 @@ class MultiQuantity:
             else:
                 self.quants.append(item)
 
-    
     def __str__(self):
         test = [str(x) for x in self.quants] 
         return ' + '.join(test)
@@ -237,11 +243,11 @@ if __name__ == '__main__':
     #shopper.update('pot sticker dumplings')
     #test = shopper.return_list()
     #print(test)
-    Quant = Q_(2, 'pound')
-    Quant_2 = Q_(3, 'cup')
-    test = MultiQuantity(Quant, Quant_2)
-    ok = test + Quant_2
-    print(ok)
+    foo = Q_(RecipeNum(1), 'teaspoon')
+    bar = Q_(RecipeNum(2), 'tablespoon')
+    ok = bar + foo
+    print(ok.round_up())
+
 
 
 
