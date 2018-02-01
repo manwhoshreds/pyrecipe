@@ -81,11 +81,7 @@ def delete_recipe(args):
 
 def edit_recipe(args):
     source = utils.get_source_path(args.source)
-    with ZipFile(source, 'w') as zfile:
-        item = zfile.open('recipe.yaml', 'w')
-
-
-        #subprocess.call([EDITOR, 'recipe.yaml'])
+    subprocess.call([EDITOR, source])
 
 def add_recipe(args):
     if args.name.title() in utils.list_recipes(ret=True):

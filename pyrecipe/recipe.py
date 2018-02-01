@@ -94,10 +94,9 @@ class Recipe:
 
         # Scan the recipe to build the xml
         self._scan_recipe()
-
+    
     def __str__(self):
         """Returns the complete string representation of the recipe data."""
-        spec = ''
         recipe_string = ''
         recipe_string += self['recipe_name'] + "\n"
         recipe_string += "\nIngredients:\n"
@@ -120,7 +119,7 @@ class Recipe:
         return recipe_string
 
     def __repr__(self):
-        return "<pyrecipe.recipe.Recipe object name='{}'>"\
+        return "<pyrecipe.recipe.Recipe name='{}'>"\
                 .format(self['recipe_name'])
 
     def __getitem__(self, key):
@@ -327,7 +326,7 @@ class Recipe:
                 for note in self['notes']:
                     print(note)
 
-        print(S_DIV + color.TITLE + "\nIngredients:" + color.NORMAL)
+        print(color.LINE + S_DIV + color.TITLE + "\nIngredients:" + color.NORMAL)
         # Put together all the ingredients
         for ingred in self.get_ingredients(color=True):
             print(ingred)
@@ -343,6 +342,7 @@ class Recipe:
             pass
 
         print("\n"
+                + color.LINE
                 + S_DIV
                 + color.TITLE
                 + "\nMethod:"
@@ -464,11 +464,12 @@ class Ingredient:
     def __init__(self, ingredients={}, amount_level=0, color=False):
         self.color = color
         self._name = ingredients['name']
-        try:
-            self._amount = RecipeNum(ingredients['amounts'][amount_level].get('amount', 0))
-        except ValueError:
-            self._amount = 0
-        self._unit = ingredients['amounts'][amount_level]['unit']
+        self._unit = ''
+        self._amount = 0
+        self._amounts = ingredients.get('amounts', '')
+        if self._amounts:
+            self._amount = RecipeNum(self._amounts[amount_level].get('amount', 0))
+            self._unit = self._amounts[amount_level]['unit']
         self._size = ingredients.get('size', '')
         self._prep = ingredients.get('prep', '')
 
@@ -493,11 +494,11 @@ class Ingredient:
         elif self._unit == 'splash':
                 return "Splash of {}".format(self._name)
         else:
-            string = "{}{} {}{} {} {}".format(color_number, self.amount, 
-                                              color_normal, self._size, 
-                                              self.unit, self.name)
-            # the previous line adds unwanted spaces if values are absent
-            # we simply clean that up here.
+            string = "{}{}{} {} {} {}".format(color_number, self.amount, 
+                                                color_normal, self._size, 
+                                                self.unit, self.name)
+            # the previous line adds unwanted spaces if 
+            # values are absent we simply clean that up here.
             cleaned_string = " ".join(string.split())
             if self._prep is '':
                 return cleaned_string
@@ -514,24 +515,7 @@ class Ingredient:
 
     @property
     def amount(self):
-        # cannont figure out how to let python handle irrational numbers. which are
-        # quite prevalant in recipe data. ( think 1/3, 1/6 etc... )
-        # here is a functional work-around
-        third = re.compile('^0.3|^.3')
-        sixth = re.compile('^0.6|^.6')
-        eighth = re.compile('^0.125|^.125')
-        if third.match(str(self._amount)):
-            return '1/3'
-        elif sixth.match(str(self._amount)):
-            return '1/6'
-        elif eighth.match(str(self._amount)):
-            return '1/8'
-        elif isinstance(self._amount, float) and self._amoun < 1:
-            return Fraction(self._amount)
-        elif isinstance(self._amount, float) and self._amount > 1:
-            return str(RecipeNum(str(Fraction(self._amount))))
-        else:
-            return self._amount
+        return self._amount
 
     @property
     def unit(self):
@@ -691,9 +675,9 @@ if __name__ == '__main__':
     #print(test)
     #ingred2 = Ingredient('onion', '3', 'large', 'tablespoon')
     # recipe
-    r = Recipe('pesto')
-    ingreds = r.get_ingredients(color=True)
-    print(ingreds)
+    r = Recipe('korean pork tacos')
+    #ingreds = r.get_ingredients(color=True)
+    print(r)
     #test = r.recipe_data
     #print(test)
     #r.dump_xml()
