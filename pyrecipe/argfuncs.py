@@ -5,6 +5,7 @@
 import sys
 import subprocess
 import os
+from zipfile import ZipFile
 
 from .config import PP, EDITOR
 from pyrecipe import utils, shopper, manifest
@@ -80,7 +81,11 @@ def delete_recipe(args):
 
 def edit_recipe(args):
     source = utils.get_source_path(args.source)
-    subprocess.call([EDITOR, source])
+    with ZipFile(source, 'w') as zfile:
+        item = zfile.open('recipe.yaml', 'w')
+
+
+        #subprocess.call([EDITOR, 'recipe.yaml'])
 
 def add_recipe(args):
     if args.name.title() in utils.list_recipes(ret=True):

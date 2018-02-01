@@ -10,7 +10,7 @@ import pprint
 import configparser
 
 
-__version__     = '0.8.0'
+__version__     = '0.8.1'
 __email__       = "m.k.miller@gmx.com"
 __scriptname__  = os.path.basename(sys.argv[0])
 
@@ -18,13 +18,13 @@ config = configparser.ConfigParser()
 
 #---GLOBALS--------
 CONFIG_DIR         = os.path.expanduser('~/.config/pyrecipe/')
-RECIPE_DATA_DIR    = CONFIG_DIR + 'recipe_data/'
 CONFIG_FILE        = CONFIG_DIR + 'config'
 SCRIPT_DIR         = os.path.dirname(__file__)
 
 # parse config
 config.read(CONFIG_FILE)
 RECIPE_XML_DIR     = os.path.expanduser(config['paths']['recipe_xml_dir'])
+RECIPE_DATA_DIR    = os.path.expanduser(config['paths']['recipe_data_dir'])
 DB_FILE            = os.path.expanduser(config['paths']['recipe_db_file'])
 SHOPPING_LIST_FILE = os.path.expanduser(config['paths']['shopping_list_file'])
 RAND_RECIPE_COUNT  = config['pyrecipe']['rand_recipe_count']

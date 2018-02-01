@@ -75,17 +75,14 @@ class Recipe:
         self.source = source
         if self.source:
             self.source = get_source_path(source)
-            #zipf = ZipFile(self.source)
-            #try:
-            try:
-                with open(self.source, 'r') as stream:
-                    self._recipe_data = yaml.load(stream)
-            except FileNotFoundError:
-                sys.exit("{}ERROR: No such file exist{}".format(color.ERROR, self.source))
-            #except KeyError:
-            #  )  sys.exit("{}ERROR: Can not find recipe.yaml."
-            #             " Is this really a recipe file?"
-            #             .format(color.ERROR, self.source))
+            #with ZipFile(self.source, 'r') as zfile:
+            #    try: 
+            with open(self.source, 'r') as stream:
+                self._recipe_data = yaml.load(stream)
+            #    except KeyError:
+            #        sys.exit("{}ERROR: Can not find recipe.yaml."
+            #                 " Is this really a recipe file?"
+            #                 .format(color.ERROR, self.source))
         else:
             self._recipe_data = {}
             # dish type should default to main
@@ -100,6 +97,7 @@ class Recipe:
 
     def __str__(self):
         """Returns the complete string representation of the recipe data."""
+        spec = ''
         recipe_string = ''
         recipe_string += self['recipe_name'] + "\n"
         recipe_string += "\nIngredients:\n"
@@ -268,7 +266,7 @@ class Recipe:
     def ingredients(self):
         return self['ingredients']
 
-    def get_ingredients(self, amount_level=0, alt_ingred=None):
+    def get_ingredients(self, amount_level=0, alt_ingred=None, color=False):
         """Returns a list of ingredient strings.
 
         args:
@@ -290,23 +288,7 @@ class Recipe:
             ingredient_data = self['ingredients']
 
         for item in ingredient_data:
-            name = item['name']
-            if name == 's&p':
-                ingred = Ingredient('s&p')
-                ingredients.append(str(ingred))
-                continue
-            try:
-                amount = RecipeNum(item['amounts'][amount_level].get('amount', 0))
-            except ValueError:
-                amount = ''
-            unit = item['amounts'][amount_level].get('unit', '')
-            size = item.get('size', '')
-            prep = item.get('prep', '')
-            ingred = Ingredient(name,
-                                amount=str(amount),
-                                size=size,
-                                unit=unit,
-                                prep=prep)
+            ingred = Ingredient(item, color=color)
             ingredients.append(str(ingred))
         return ingredients
 
@@ -347,7 +329,7 @@ class Recipe:
 
         print(S_DIV + color.TITLE + "\nIngredients:" + color.NORMAL)
         # Put together all the ingredients
-        for ingred in self.get_ingredients():
+        for ingred in self.get_ingredients(color=True):
             print(ingred)
         try:
             for item in self.alt_ingreds:
@@ -355,7 +337,7 @@ class Recipe:
                                         item.title(),
                                         color.NORMAL))
 
-                for ingred in self.get_ingredients(alt_ingred=item):
+                for ingred in self.get_ingredients(alt_ingred=item, color=True):
                     print(ingred)
         except AttributeError:
             pass
@@ -392,17 +374,17 @@ class Recipe:
 
     def dump_raw(self):
         """Dump raw recipe data"""
-        PP.pprint(self['_recipe_data'])
+        PP.pprint(self.recipe_data)
 
     def dump(self, stream=None):
-        """Dump the yaml to a file or standard output"""
+        """Dump the yaml to a file"""
         strm = self.source if stream is None else stream
         if not strm:
             raise RuntimeError('Recipe has no source to save to')
         if strm in RECIPE_DATA_FILES:
             raise RuntimeError('Recipe already exist with that file name.')
         with open(strm, 'w') as recipe_file:
-            yaml.dump(self['_recipe_data'], recipe_file)
+            yaml.dump(self.recipe_data, recipe_file)
 
 
 class RecipeWebScraper(Recipe):
@@ -479,15 +461,16 @@ class Ingredient:
     :param unit: ingredient unit such as tablespoon
     :param prep: prep string if any, such as diced, chopped.. etc...
     """
-    def __init__(self, name, amount=0, size='', unit='', prep=''):
-        self._name = name
+    def __init__(self, ingredients={}, amount_level=0, color=False):
+        self.color = color
+        self._name = ingredients['name']
         try:
-            self._amount = RecipeNum(amount)
+            self._amount = RecipeNum(ingredients['amounts'][amount_level].get('amount', 0))
         except ValueError:
             self._amount = 0
-        self._size = size
-        self._unit = unit
-        self._prep = prep
+        self._unit = ingredients['amounts'][amount_level]['unit']
+        self._size = ingredients.get('size', '')
+        self._prep = ingredients.get('prep', '')
 
     def __str__(self):
         """Turn ingredient object into a string
@@ -495,6 +478,12 @@ class Ingredient:
         Calling string on an ingredient object returns the gramatically
         correct representation of the ingredient object.
         """
+        color_number = ''
+        color_normal = ''
+        if self.color:
+            color_number = color.NUMBER
+            color_normal = color.NORMAL
+
         if self._name == 's&p':
                 return "Salt and pepper to taste"
         elif self._unit == 'taste':
@@ -504,8 +493,9 @@ class Ingredient:
         elif self._unit == 'splash':
                 return "Splash of {}".format(self._name)
         else:
-            string = "{} {} {} {}".format(self.amount, self._size,
-                                          self.unit, self.name)
+            string = "{}{} {}{} {} {}".format(color_number, self.amount, 
+                                              color_normal, self._size, 
+                                              self.unit, self.name)
             # the previous line adds unwanted spaces if values are absent
             # we simply clean that up here.
             cleaned_string = " ".join(string.split())
@@ -699,16 +689,15 @@ if __name__ == '__main__':
     #test = i.parse('2 1/2 12 ouNce cans onion, chopped')
     #test = RecipeNum('1 1/2')
     #print(test)
-    ingred = Ingredient('onion', '3', 'large', 'tablespoon', 'chopped')
-    ingred2 = Ingredient('onion', '3', 'large', 'tablespoon')
-    print(ingred2 + ingred)
+    #ingred2 = Ingredient('onion', '3', 'large', 'tablespoon')
     # recipe
-    r = Recipe('pot sticker dumplings')
-    #r = Recipe()
-    test = r.recipe_data
+    r = Recipe('pesto')
+    ingreds = r.get_ingredients(color=True)
+    print(ingreds)
+    #test = r.recipe_data
     #print(test)
     #r.dump_xml()
-    r.dump_yaml()
+    #r.dump_yaml()
     #r.dump('screen')
     #another = Recipe('7 cheese mac and cheese')
     #another.print_recipe()

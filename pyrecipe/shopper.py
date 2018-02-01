@@ -112,10 +112,13 @@ class ShoppingList:
         # Print list	
         padding = max(len(x) for x in sl.keys()) + 2
         for key, value in sl.items():
-            try:
-                print("{} {}".format(key.ljust(padding, '.'), str(value.round_up())))
-            except AttributeError:
-                print("{} {}".format(key.ljust(padding, '.'), value))
+            if value.units in ['splash', 'taste', 'pinch']:
+                print("{} {}".format(key.ljust(padding, '.'), 'N/A'))
+            else:    
+                try:
+                    print("{} {}".format(key.ljust(padding, '.'), str(value.round_up())))
+                except AttributeError:
+                    print("{} {}".format(key.ljust(padding, '.'), value))
 
         # write the list to an xml file	if True
         if write:	
@@ -234,7 +237,10 @@ class MultiQuantity:
             except DimensionalityError:
                 continue
         return self
-
+    
+    @property
+    def units(self):
+        return 'n/a'
 
 # testing
 if __name__ == '__main__':

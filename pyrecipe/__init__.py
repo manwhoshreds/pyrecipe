@@ -11,9 +11,11 @@
 """
 
 import os
+import sys
 from numbers import Number
 from fractions import Fraction
 from math import ceil
+from zipfile import ZipFile
 
 from pint import UnitRegistry
 from ruamel.yaml import YAML
@@ -61,6 +63,8 @@ class RecipeManifest:
         self.recipe_authors = []
         self.urls = []
         for item in RECIPE_DATA_FILES:
+            #with ZipFile(item, 'r') as zfile:
+            #    try: 
             with open(item, 'r') as stream:
                 _recipe = yaml.load(stream)
                 self.recipe_names.append(_recipe['recipe_name'].lower())
@@ -72,6 +76,8 @@ class RecipeManifest:
                     self.sauce_names.append(_recipe['recipe_name'])
                 if _recipe['dish_type'] == 'salad':
                     self.salad_names.append(_recipe['recipe_name'])
+            #    except KeyError:
+            #        sys.exit('cannot find recipe.yaml')
 
 manifest = RecipeManifest()
 
