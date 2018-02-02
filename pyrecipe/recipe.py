@@ -137,6 +137,15 @@ class Recipe:
         else:
             self.__dict__[key] = value
 
+    def __delitem__(self, key):
+        if key == 'recipe_name':
+            self.source = ''
+        if key in __class__.orf_keys:
+            del self.__dict__['_recipe_data'][key]
+            self._scan_recipe()
+        else:
+            del self.__dict__[key]
+
     def _scan_recipe(self):
         """Internal method used to build the xml tree"""
         xml_root = etree.Element('recipe')
@@ -293,8 +302,7 @@ class Recipe:
 
     def print_recipe(self, verb_level=0):
         """Print recipe to standard output."""
-        print("\n"
-            + color.RECIPENAME
+        print(color.RECIPENAME
             + self['recipe_name']
             + color.NORMAL
             + "\n")
@@ -302,13 +310,13 @@ class Recipe:
         self['dish_type'] and print("Dish Type: {}"
                                     .format(str(self['dish_type'])))
         self['prep_time'] and print("Prep time: {}"
-                                    .format(mins_to_hours(self['prep_time'])))
+                                    .format(mins_to_hours(RecipeNum(self['prep_time']))))
         self['cook_time'] and print("Cook time: {}"
-                                    .format(mins_to_hours(self['cook_time'])))
+                                    .format(mins_to_hours(RecipeNum(self['cook_time']))))
         self['bake_time'] and print("Bake time: {}"
-                                    .format(mins_to_hours(self['bake_time'])))
+                                    .format(mins_to_hours(RecipeNum(self['bake_time']))))
         self['ready_in'] and print("Ready in: {}"
-                                   .format(mins_to_hours(self['ready_in'])))
+                                   .format(mins_to_hours(RecipeNum(self['ready_in']))))
         self['oven_temp'] and print("Oven temp: {} {}"
                                     .format(str(self['oven_temp']['amount']),
                                             self['oven_temp']['unit']))
@@ -677,7 +685,10 @@ if __name__ == '__main__':
     # recipe
     r = Recipe('korean pork tacos')
     #ingreds = r.get_ingredients(color=True)
-    print(r)
+    PP.pprint(r.recipe_data)
+    r['source_url'] = 'test url'
+    PP.pprint(r.recipe_data)
+    r.print_recipe(verb_level=2)
     #test = r.recipe_data
     #print(test)
     #r.dump_xml()
