@@ -9,8 +9,4 @@ https://tasty.co:
   recipe_name_attr: {'class': 'recipe-name extra-bold xs-mb05 md-mb1 xs-text-center'}
   ingred_list_tag: ul
   ingred_list_attr: {'class': 'list-unstyled xs-text-3'}
-
-
-
-
 # vim: set expandtab ts=2 syntax=yaml:

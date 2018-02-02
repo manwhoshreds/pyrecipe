@@ -11,7 +11,7 @@ from numbers import Number
 
 from pyrecipe.config import (__version__, __scriptname__, __email__,
                              RECIPE_DATA_DIR, RECIPE_DATA_FILES,
-                             DISH_TYPES, VIM_MODE_LINE)
+                             DISH_TYPES, VIM_MODE_LINE, EDITOR)
 from pyrecipe import manifest, yaml, p
 
 
@@ -76,10 +76,9 @@ def template(recipe_name):
         template += "recipe_name: {}\n".format(recipe_name)
         # check if file exist, lets catch this early so we 
         # can exit before entering in all the info
-        file_name = get_file_name(recipe_name)
+        file_name = get_source_path(recipe_name)
         if os.path.isfile(file_name):
-            print("File with this name already exist in directory exiting...")
-            exit(1)
+            sys.exit("File with this name already exist in directory exiting...")
         while True:
             dish_type = input("Enter dish type: ")
             if dish_type not in DISH_TYPES:

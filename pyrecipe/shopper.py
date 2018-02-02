@@ -110,7 +110,7 @@ class ShoppingList:
             print("\n{}".format(S_DIV))
         
         # Print list	
-        padding = max(len(x) for x in sl.keys()) + 2
+        padding = max(len(x) for x in sl.keys()) + 1
         for key, value in sl.items():
             if value.units in ['splash', 'taste', 'pinch']:
                 print("{} {}".format(key.ljust(padding, '.'), 'N/A'))

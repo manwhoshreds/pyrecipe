@@ -1,8 +1,15 @@
-#!/usr/bin/env python 
+from curses import wrapper
+from pyrecipe.recipe import Recipe
 
-from zipfile import ZipFile
+def main(stdscr):
+    # Clear screen
+    stdscr.clear()
+    r = Recipe('pesto') 
 
+    stdscr.addstr(str(r))
 
-with ZipFile('test.recipe', 'w') as myzip:
-    myzip.write('hello')
+    stdscr.refresh()
+    stdscr.getkey()
+    
 
+wrapper(main)
