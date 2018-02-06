@@ -9,7 +9,7 @@ import sys
 import pprint
 import configparser
 
-__version__     = '0.8.1'
+__version__     = '0.8.10'
 __email__       = "m.k.miller@gmx.com"
 __scriptname__  = os.path.basename(sys.argv[0])
 

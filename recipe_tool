@@ -124,22 +124,25 @@ def parse_args():
     parser_dump.add_argument(
         "-x", 
         "--xml", 
-        dest="print_xml", 
-        action="store_true", 
+        dest="data_type", 
+        action="store_const", 
+        const="xml",
         help="Dump sorce xml tree to standard output"
     )
     parser_dump.add_argument(
         "-y", 
         "--yaml", 
-        dest="print_yaml", 
-        action="store_true", 
+        dest="data_type", 
+        action="store_const", 
+        const="yaml",
         help="Dump source yaml to standard output"
     )
     parser_dump.add_argument(
         "-r",
         "--raw",
-        dest="print_raw",
-        action="store_true",
+        dest="data_type",
+        action="store_const",
+        const="raw",
         help="Dump source data in its raw format"
     )
     parser_dump.set_defaults(func=argfunc.dump_data)

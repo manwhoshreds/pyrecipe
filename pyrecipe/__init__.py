@@ -107,7 +107,7 @@ class InflectEngine(inflect.engine):
 
     def __init__(self):
         super().__init__()
-        self.ignored = ['roma', 'hummus']
+        self.ignored = ['roma', 'canola', 'hummus']
 
     def singular_noun(self, word):
         if word in self.ignored:

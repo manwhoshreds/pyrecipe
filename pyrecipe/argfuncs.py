@@ -11,20 +11,13 @@ from .config import PP, EDITOR
 from pyrecipe import utils, shopper, manifest
 from pyrecipe.recipe import Recipe, RecipeWebScraper
 import pyrecipe.gui.maingui as gui
+from pyrecipe.console_gui.add_recipe import RecipeEditor
 
 def dump_data(args):
-	
     r = Recipe(args.source)
+    r.dump_to_screen(args.data_type)
 
-    if args.print_yaml:
-        r.dump_yaml()
-    if args.print_xml:
-        r.dump_xml()
-    if args.print_raw:
-        r.dump_raw()
-	
 def start_gui():
-	
     gui.start()
 
 def print_shopping_list(args):
@@ -80,14 +73,13 @@ def delete_recipe(args):
         print("{} not deleted".format(source))
 
 def edit_recipe(args):
-    source = utils.get_source_path(args.source)
-    subprocess.call([EDITOR, source])
+    RecipeEditor(args.source).start()
 
 def add_recipe(args):
     if args.name.title() in utils.list_recipes(ret=True):
         sys.exit('A recipe with that name already exist in the recipe store')
     else:
-        utils.template(args.name)
+        RecipeEditor().start()
 
 
 def print_list(args):
