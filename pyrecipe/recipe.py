@@ -280,21 +280,19 @@ class Recipe:
                       associated with the particular alt ingredient.
         """
         ingredients = []
-        for item in self['ingredients']:
+        if alt_ingred:
+            for item in self['alt_ingredients']:
+                try:
+                    ingredient_data = item[alt_ingred]
+                except KeyError:
+                    pass
+        else:
+            ingredient_data = self['ingredients']
+
+        for item in ingredient_data:
             ingred = Ingredient(item, color=color)
             ingredients.append(str(ingred))
-        
-        alt_ingredients = []
-        print(self['alt_ingredients'])
-        for item in self['alt_ingredients']:
-            #print(item.values())
-            pass
-        if self._has_alt_ingreds:
-            for name in self.alt_ingreds:
-                for ingred in self['alt_ingredients'][0]:
-                    pass
-        #return ingredients, alt_ingredients
-        return ingredients, 
+        return ingredients
     
     def print_recipe(self, verb_level=0):
         """Print recipe to standard output."""
