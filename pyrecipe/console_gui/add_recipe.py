@@ -48,7 +48,10 @@ class IngredBlock(WidgetWrap):
         add_button = Button('Add Ingredient',
                 on_press=self.add_ingredient)
         self.ingred_widgets.append(GridFlow([add_button], 18, 0, 0, 'left'))
-
+        if alt_ingred:
+            self.alt_name = AttrMap(Edit('* ', alt_ingred), 'title')
+            self.ingred_widgets.append(self.alt_name)
+        
         if len(self.ingredients) < 1:
             ingred_entry = Edit("- ", 'add ingredient')
             self.ingred_widgets.append(ingred_entry)
@@ -120,7 +123,7 @@ class MethodBlock(WidgetWrap):
         
         add_button = Button('Add Method',
                 on_press=self.add_method)
-        self.method_widgets.append(add_button)
+        self.method_widgets.append(GridFlow([add_button], 14, 0, 0, 'left'))
         
         wrapper = textwrap.TextWrapper(width=70)
         if len(self.method) > 9:
@@ -133,34 +136,84 @@ class MethodBlock(WidgetWrap):
             if index >= 10:
                 wrapper.initial_indent = ''
                 wrapper.subsequent_indent = '    '
-            wrap = wrapper.fill(step)
-            method_entry = AttrMap(Edit(str(index) + ". ", wrap), 'entry')
+            wrap = wrapper.fill(step['step'])
+            method_entry = Edit(str(index) + ". ", wrap)
             self.method_widgets.append(method_entry)
             
         if len(self.method_widgets) > 0:
             method_pile = Pile(self.method_widgets)
         else:
             method_pile = BLANK
-        
-        if len(self.method) < 1:
-            method_entry = AttrMap(Edit("- ", 'add method'), 'entry')
-            self.method_widgets.append(method_entry)
-        else:
-            for item in self.method:
-                method_entry = AttrMap(Edit("- ", item), 'entry')
-                self.method_widgets.append(method_entry)
         self._after_init()
 
-    def _after_init(self):
-        self.pile = Pile(self.method_widgets)
-        self.pile.set_focus(1)
+    def _after_init(self, focus_item=1):
+        try:
+            self.pile = Pile(self.method_widgets, focus_item=focus_item)
+        except IndexError:
+            self.pile = Pile(self.method_widgets, focus_item=focus_item-1)
+        self.num_widgets = len(self.method_widgets)
         super().__init__(self.pile)
 
-    def add_method(self, key):
-        method_entry = AttrMap(Edit("- ", 'Add'), 'entry')
-        self.method_widgets.append(method_entry)
-        self._after_init()
+    def _renumber(self):
+        wrapper = textwrap.TextWrapper(width=70)
+        if len(self.method) > 9:
+            wrapper.initial_indent = ' '
+            wrapper.subsequent_indent = '    '
+        else:
+            wrapper.subsequent_indent = '   '
 
+        for index, step in enumerate(self.method, start=1):
+            if index >= 10:
+                wrapper.initial_indent = ''
+                wrapper.subsequent_indent = '    '
+            wrap = wrapper.fill(step['step'])
+            method_entry = Edit(str(index) + ". ", wrap)
+            self.method_widgets.append(method_entry)
+        return  Pile(self.method_widgets)
+
+    def add_method(self, key):
+        caption = str(len(self.method_widgets))
+        method_entry = Edit(cpation, ". ", 'Add')
+        self.ingred_widgets.append(ingred_entry)
+        new_focus = len(self.ingred_widgets) - 1
+        self._after_init(focus_item=new_focus)
+
+    def del_method(self, size):
+        # dont let the user delete the add button at pos 0
+        if self.focus_pos == 0:
+            return
+        if self.num_widgets == 2:
+            self.method_widgets[1].edit_text = 'add ingred'
+            return
+        try: 
+            row = self.focus_pos + 1
+            col = len(self.method_widgets[row].edit_text) + 2
+        except IndexError:
+            row = self.focus_pos - 1
+            col = len(self.method_widgets[row].edit_text) + 2
+
+        self.pile.move_cursor_to_coords(size, col, row)
+        try: 
+            self.method_widgets.pop(self.focus_pos)
+        except IndexError:
+            pass
+        self._after_init(self.focus_pos)
+
+    def keypress(self, size, key):
+        self.focus_pos = self.pile.focus_position
+        key = super().keypress(size, key)
+        if key == 'enter':
+            self.on_enter(key)
+        elif key == 'ctrl d':
+            self.del_method(size)
+        else:
+            return key
+
+    def on_enter(self, key):
+        try:
+            self.pile.set_focus(self.focus_pos + 1)
+        except IndexError:
+            pass
 
 class RecipeEditor:
     
@@ -205,19 +258,6 @@ class RecipeEditor:
             if item.get_label() == self.r['dish_type']:
                 item.set_state(True)
 
-        alt_ingred_widgets = []
-        if self.r['alt_ingreds']:
-            for item in self.r['alt_ingreds']:
-                alt_ingred_widgets.append(BLANK)
-                alt_ingred_widgets.append(AttrMap(Text(item), 'title'))
-                for ingred in self.r.get_ingredients(alt_ingred=item):
-                    this = AttrMap(Edit("- ", ingred), 'entry')
-                    alt_ingred_widgets.append(this)
-
-        if len(self.ingred_widgets) or len(alt_ingred_widgets) > 1:
-            ingred_pile = Padding(Pile(self.ingred_widgets + alt_ingred_widgets), align='left', left=2)
-        else:
-            ingred_pile = BLANK
 
         wrapper = textwrap.TextWrapper(width=70)
         if len(self.r['steps']) > 9:
@@ -234,10 +274,6 @@ class RecipeEditor:
             method_entry = AttrMap(Edit(str(index) + ". ", wrap), 'entry')
             self.method_widgets.append(method_entry)
             
-        if len(self.method_widgets) > 0:
-            method_pile = Pile(self.method_widgets)
-        else:
-            method_pile = BLANK
 
         self.general_info = [AttrMap(Edit('Enter recipe name: ', self.r['recipe_name']), 'recipe_name'),
                              AttrMap(IntEdit('Enter prep time: ', self.r['prep_time']), 'prep_time'),
@@ -247,16 +283,27 @@ class RecipeEditor:
                              AttrMap(Edit('Enter source url: ', self.r['source_url'], wrap='clip'), 'source_url'),
                              AttrMap(Edit('Enter author: ', self.r['author']), 'author')]
 
-        general_pile = Padding(Pile(self.general_info), align='left', left=2)
+        self.general_info = Padding(Pile(self.general_info), align='left', left=2)
         headings_general_and_dish_types = GridFlow(
                     [HEADINGS['general_info'], HEADINGS['dish_types']], 79, 0, 2, 'left'
                 )
         headings_ingred_and_method = GridFlow(
                     [HEADINGS['ingredients'], HEADINGS['method']], 79, 0, 2, 'left'
                 )
-        self.ingred_block = IngredBlock(self.r.get_ingredients())
-        ingred_and_method = GridFlow([self.ingred_block, method_pile], 79, 0, 2, 'left')
-        general_and_dish = GridFlow([general_pile, radio_dish_types], 79, 0, 2, 'left')
+        self.ingred_blocks = []
+        self.ingred_block = self.ingred_blocks.append(AttrMap(IngredBlock(self.r.get_ingredients()), 'regular_ingredients'))
+        self.ingred_block = Pile(self.ingred_blocks)
+        
+        if self.r.has_alt_ingredients: 
+            for item in self.r.alt_ingreds:
+                self.ingred_blocks.append(BLANK)
+                self.ingred_block = self.ingred_blocks.append(AttrMap(IngredBlock(self.r.get_ingredients(alt_ingred=item), alt_ingred=item), 'alt_ingredients'))
+        
+        self.method_block = MethodBlock(self.r['steps'])
+        self.ingred_block = Pile(self.ingred_blocks)
+        
+        ingred_and_method = GridFlow([self.ingred_block, self.method_block], 79, 0, 2, 'left')
+        general_and_dish = GridFlow([self.general_info, radio_dish_types], 79, 0, 2, 'left')
         
         listbox_content = [
                 BLANK,
@@ -349,7 +396,7 @@ class ThingWithAPopUp(PopUpLauncher):
 
 if __name__ == '__main__':
     
-    RecipeEditor('7 cheese mac and cheese').start()
+    RecipeEditor('pesto').start()
     #test = AttrMap(Edit('enter stuff', 'hell'), 'hell')
     #print(test.original_widget.get_edit_text())
     #r = Recipe('7 cheese mac and cheese')
