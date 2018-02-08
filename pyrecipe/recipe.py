@@ -73,6 +73,7 @@ class Recipe:
 
     def __init__(self, source=''):
         self.source = source
+        self.xml_root = etree.Element('recipe')
         if self.source:
             self.source = get_source_path(source)
             #with ZipFile(self.source, 'r') as zfile:
@@ -104,8 +105,7 @@ class Recipe:
                 self.alt_ingreds += name
         
         # Scan the recipe to build the xml
-        self.xml_root = etree.Element('recipe')
-        #self._scan_recipe()
+        self._scan_recipe()
     
     def _scan_recipe(self):
         """Internal method used to build the xml tree"""
@@ -201,7 +201,7 @@ class Recipe:
                     xml_alt_ingred = etree.SubElement(xml_alt_ingredients,
                                                       "alt_ingred")
                     xml_alt_ingred.text = ingred
-        except AttributeError:
+        except (AttributeError, TypeError):
                 pass
         # steps
         xml_steps = etree.SubElement(self.xml_root, "steps")
@@ -340,7 +340,7 @@ class Recipe:
 
                 for ingred in self.get_ingredients(alt_ingred=item, color=True):
                     print(ingred)
-        except AttributeError:
+        except (AttributeError, TypeError):
             pass
 
         print("\n"
@@ -372,13 +372,13 @@ class Recipe:
             steps.append(step['step'])
         return steps
     
-    def dump_to_screen(self, data_type='raw'):
+    def dump_to_screen(self, data_type=None):
         """Dump a data format to screen.
         
         This method is mostly helpful for troubleshooting
         and development
         """ 
-        if data_type == 'raw': 
+        if data_type in ('raw', None): 
             PP.pprint(self.recipe_data)
         elif data_type == 'yaml':
             yaml.dump(self['_recipe_data'], sys.stdout)
