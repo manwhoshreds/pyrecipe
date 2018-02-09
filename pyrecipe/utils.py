@@ -25,7 +25,7 @@ def mins_to_hours(mins):
         len = "%d h %02d m" % (hours, minutes)
     return len
 
-def get_source_path(source):
+def check_source(source):
     if os.path.isdir(source):
         return sys.exit('{}ERROR: {} is a directory'
                         .format(color.ERROR, source))
@@ -38,15 +38,19 @@ def get_source_path(source):
             return source
     # must be a string name a recipe that exist in the data dir
     else:
-        strip_punc = ''.join(c for c in source if c not in string.punctuation)
-        file_name = strip_punc.replace(" ", "_").lower() + ".recipe"
-        abspath_name = os.path.join(RECIPE_DATA_DIR, file_name)
+        abspath_name = get_file_name(source)
         try:
             assert open(abspath_name)
             return abspath_name
         except FileNotFoundError:
             return sys.exit("{}ERROR: {} does not exist."
                             .format(color.ERROR, file_name))
+    
+def get_file_name(source):
+    strip_punc = ''.join(c for c in source if c not in string.punctuation)
+    file_name = strip_punc.replace(" ", "_").lower() + ".recipe"
+    abspath_name = os.path.join(RECIPE_DATA_DIR, file_name)
+    return abspath_name
 
 def list_recipes(ret=False):
     """List all recipes in the database"""

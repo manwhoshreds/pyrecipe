@@ -56,7 +56,7 @@ from pyrecipe.config import (S_DIV, RECIPE_DATA_FILES,
                              SCRIPT_DIR, PP, CAN_UNITS,
                              INGRED_UNITS, SIZE_STRINGS,
                              PREP_TYPES)
-from pyrecipe.utils import get_source_path, mins_to_hours, all_singular
+from pyrecipe.utils import check_source, get_file_name, mins_to_hours, all_singular
 
 
 class Recipe:
@@ -75,7 +75,7 @@ class Recipe:
         self.source = source
         self.xml_root = etree.Element('recipe')
         if self.source:
-            self.source = get_source_path(source)
+            self.source = check_source(source)
             try:
                 with ZipFile(self.source, 'r') as zfile:
                     try: 
@@ -249,7 +249,7 @@ class Recipe:
 
     def __setitem__(self, key, value):
         if key == 'recipe_name':
-            self.source = get_source_path(value)
+            self.source = get_file_name(value)
         if key in __class__.orf_keys:
             self.__dict__['_recipe_data'][key] = value
             self._scan_recipe()
