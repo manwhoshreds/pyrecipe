@@ -63,21 +63,21 @@ class RecipeManifest:
         self.recipe_authors = []
         self.urls = []
         for item in RECIPE_DATA_FILES:
-            #with ZipFile(item, 'r') as zfile:
-            #    try: 
-            with open(item, 'r') as stream:
-                _recipe = yaml.load(stream)
-                self.recipe_names.append(_recipe['recipe_name'].lower())
-                if _recipe['dish_type'] == 'main':
-                    self.maindish_names.append(_recipe['recipe_name'])
-                if _recipe['dish_type'] == 'salad dressing':
-                    self.dressing_names.append(_recipe['recipe_name'])
-                if _recipe['dish_type'] == 'sauce':
-                    self.sauce_names.append(_recipe['recipe_name'])
-                if _recipe['dish_type'] == 'salad':
-                    self.salad_names.append(_recipe['recipe_name'])
-            #    except KeyError:
-            #        sys.exit('cannot find recipe.yaml')
+            with ZipFile(item, 'r') as zfile:
+                try: 
+                    with zfile.open('recipe.yaml', 'r') as stream:
+                        _recipe = yaml.load(stream)
+                        self.recipe_names.append(_recipe['recipe_name'].lower())
+                        if _recipe['dish_type'] == 'main':
+                            self.maindish_names.append(_recipe['recipe_name'])
+                        if _recipe['dish_type'] == 'salad dressing':
+                            self.dressing_names.append(_recipe['recipe_name'])
+                        if _recipe['dish_type'] == 'sauce':
+                            self.sauce_names.append(_recipe['recipe_name'])
+                        if _recipe['dish_type'] == 'salad':
+                            self.salad_names.append(_recipe['recipe_name'])
+                except KeyError:
+                    sys.exit('cannot find recipe.yaml')
 
 manifest = RecipeManifest()
 
