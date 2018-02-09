@@ -12,7 +12,7 @@ from numbers import Number
 from pyrecipe.config import (__version__, __scriptname__, __email__,
                              RECIPE_DATA_DIR, RECIPE_DATA_FILES,
                              DISH_TYPES, VIM_MODE_LINE, EDITOR)
-from pyrecipe import manifest, yaml, p
+from pyrecipe import manifest, yaml, p, color
 
 
 def mins_to_hours(mins):
@@ -26,15 +26,28 @@ def mins_to_hours(mins):
     return len
 
 def get_source_path(source):
-    if os.path.isfile(source):
-        return source
+    if os.path.isdir(source):
+        return sys.exit('{}ERROR: {} is a directory'
+                        .format(color.ERROR, source))
+    elif os.path.isfile(source):
+        if not source.endswith('.recipe'):
+            return sys.exit("{}ERROR: Pyrecipe can only read "
+                            "files with a .recipe extention"
+                            .format(color.ERROR))
+        else:
+            return source
+    # must be a string name a recipe that exist in the data dir
     else:
         strip_punc = ''.join(c for c in source if c not in string.punctuation)
         file_name = strip_punc.replace(" ", "_").lower() + ".recipe"
         abspath_name = os.path.join(RECIPE_DATA_DIR, file_name)
-        return abspath_name
+        try:
+            assert open(abspath_name)
+            return abspath_name
+        except FileNotFoundError:
+            return sys.exit("{}ERROR: {} does not exist."
+                            .format(color.ERROR, file_name))
 
-    
 def list_recipes(ret=False):
     """List all recipes in the database"""
     

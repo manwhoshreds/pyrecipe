@@ -250,7 +250,7 @@ class MethodBlock(WidgetWrap):
         self.num_widgets = len(self.method_widgets)
         super().__init__(self.pile)
 
-    def _renumber(self):
+    def _renumber(self, focus):
         wrapper = textwrap.TextWrapper(width=70)
         if len(self.method) > 9:
             wrapper.initial_indent = ' '
@@ -265,7 +265,8 @@ class MethodBlock(WidgetWrap):
             wrap = wrapper.fill(step)
             method_entry = Edit(str(index) + ". ", wrap)
             self.method_widgets.append(method_entry)
-        return  Pile(self.method_widgets)
+
+        super().__init__(Pile(self.method_widgets, focus))
 
     def add_method(self, button):
         caption = str(len(self.method_widgets))
@@ -279,7 +280,7 @@ class MethodBlock(WidgetWrap):
         if self.focus_pos == 0:
             return
         if self.num_widgets == 2:
-            self.method_widgets[1].edit_text = 'add ingred'
+            self.method_widgets[1].edit_text = 'add method'
             return
         try: 
             row = self.focus_pos + 1
@@ -293,7 +294,7 @@ class MethodBlock(WidgetWrap):
             self.method_widgets.pop(self.focus_pos)
         except IndexError:
             pass
-        self._after_init(self.focus_pos)
+        self._after_init(self.focus)
 
     def keypress(self, size, key):
         self.focus_pos = self.pile.focus_position
@@ -477,12 +478,13 @@ class RecipeEditor:
 
     def _testing(self, button):
         self.ingred_blocks.append(IngredBlock(['hello']))
-        self.loop.draw_screen()
+        #self.loop = self.setup_view()
+        self.lop.draw_screen()
         
     
     def start(self):
-        self.loop = self.setup_view()
-        self.loop.run()
+        loop = self.setup_view()
+        loop.run()
 
 class PopUpDialog(WidgetWrap):
     """A dialog that appears with nothing but a close button """
@@ -516,7 +518,7 @@ class ThingWithAPopUp(PopUpLauncher):
 
 if __name__ == '__main__':
     
-    RecipeEditor('korean pork tacos').start()
+    RecipeEditor('7 cheese mac and cheese').start()
     #test = AttrMap(Edit('enter stuff', 'hell'), 'hell')
     #print(test.original_widget.get_edit_text())
     #r = Recipe('7 cheese mac and cheese')

@@ -44,7 +44,7 @@ import os
 import re
 import textwrap
 from fractions import Fraction
-from zipfile import ZipFile
+from zipfile import ZipFile, BadZipFile
 from numbers import Number
 from lxml import etree
 from urllib.request import urlopen
@@ -76,14 +76,19 @@ class Recipe:
         self.xml_root = etree.Element('recipe')
         if self.source:
             self.source = get_source_path(source)
-            #with ZipFile(self.source, 'r') as zfile:
-            #    try: 
-            with open(self.source, 'r') as stream:
-                self._recipe_data = yaml.load(stream)
-            #    except KeyError:
-            #        sys.exit("{}ERROR: Can not find recipe.yaml."
-            #                 " Is this really a recipe file?"
-            #                 .format(color.ERROR, self.source))
+            try:
+                with ZipFile(self.source, 'r') as zfile:
+                    try: 
+                        with zfile.open('recipe.yaml', 'r') as stream:
+                            self._recipe_data = yaml.load(stream)
+                    except KeyError:
+                        sys.exit("{}ERROR: Can not find recipe.yaml."
+                                 " Is this really a recipe file?"
+                                 .format(color.ERROR, self.source))
+            except BadZipFile:
+                    sys.exit("{}ERROR: This file is not a zipfile."
+                             .format(color.ERROR, self.source))
+
         else:
             self._recipe_data = {}
             # dish type should default to main
@@ -493,7 +498,10 @@ class Ingredient:
         self._amount = 0
         self._amounts = ingredients.get('amounts', '')
         if self._amounts:
-            self._amount = RecipeNum(self._amounts[amount_level].get('amount', 0))
+            try: 
+                self._amount = RecipeNum(self._amounts[amount_level].get('amount', 0))
+            except ValueError:
+                self._amount = 0
             self._unit = self._amounts[amount_level]['unit']
         self._size = ingredients.get('size', '')
         self._prep = ingredients.get('prep', '')
