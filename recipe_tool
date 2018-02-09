@@ -184,23 +184,6 @@ def parse_args():
     )
     parser_fetch.set_defaults(func=argfunc.fetch_recipe)
     
-    # recipe_tool check
-    parser_check = subparser.add_parser(
-        "check", 
-        help="Check an ORD file for syntax errors"
-    )
-    parser_check.add_argument(
-        "source", 
-        type=str, 
-        help="Recipe to check"
-    ).completer = recipe_completer
-    parser_check.add_argument(
-            "all", 
-            action="store_true", 
-            help="Check all files"
-    )
-    parser_check.set_defaults(func=argfunc.check_file)
-    
     # auto completion	
     argcomplete.autocomplete(parser)
     
