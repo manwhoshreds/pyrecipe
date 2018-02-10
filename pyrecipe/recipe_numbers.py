@@ -7,7 +7,7 @@
 
     - RecipeNum: Does well with any numbers we are likely to encounter in
                  pyrecipe. Credit for the creation of this class goes to
-                 JB0x2D1 oringialy named RecipeNum and can found at this post:
+                 JB0x2D1 oringialy named Mixed and can found at this post:
                  https://codereview.stackexchange.com/questions/35274/mixed-number-fractions-class
 
     :copyright: 2017 by Michael Miller

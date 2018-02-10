@@ -409,11 +409,12 @@ class Recipe:
         wants to edit a file in which case we intend to overwrite the file with
         changes.
         """
-        if not self.source:
-            raise RuntimeError('Recipe has no source to save to')
-        elif save_as:
+        if save_as:
             if self.source in RECIPE_DATA_FILES:
                 raise RuntimeError('Recipe already exist with that filename')
+        
+        if not self.source:
+            raise RuntimeError('Recipe has no source to save to')
         else:
             source = os.path.join(RECIPE_DATA_DIR, self.source)
             stream = io.StringIO()

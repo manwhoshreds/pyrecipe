@@ -7,8 +7,8 @@ import subprocess
 import os
 from zipfile import ZipFile
 
-from .config import PP, EDITOR
-from pyrecipe import utils, shopper, manifest
+from .config import PP, EDITOR, RECIPE_DATA_FILES
+from pyrecipe import utils, shopper, manifest, color
 from pyrecipe.recipe import Recipe, RecipeWebScraper
 import pyrecipe.gui.maingui as gui
 from pyrecipe.console_gui.add_recipe import RecipeEditor
@@ -39,21 +39,14 @@ def print_shopping_list(args):
         else:
             sl.print_list()
 
-def check_file(args):
-    if args.source == "all":
-        for item in recipe.RECIPE_NAMES:
-            r = Recipe(item)
-            r.check_file()
-    else:
-        r = Recipe(args.source)
-        r.check_file()
-	
 def fetch_recipe(args):
     scraper = RecipeWebScraper(args.url)
-    if args.save:
-        scraper.dump()
-    else:
-        scraper.print_recipe(verb_level=2)
+    RecipeEditor(scraper, add=True).start()
+
+    #if args.save:
+    #    scraper.dump()
+    #else:
+    #    scraper.print_recipe(verb_level=2)
 
 def print_recipe(args):
     r = Recipe(args.source)
@@ -69,6 +62,7 @@ def delete_recipe(args):
     answer = input("Are you sure your want to delete {}? yes/no ".format(source))
     if answer.strip() == 'yes':
         os.remove(file_name)
+        print("{} has been deleted".format(source))
     else:
         print("{} not deleted".format(source))
 
@@ -76,10 +70,11 @@ def edit_recipe(args):
     RecipeEditor(args.source).start()
 
 def add_recipe(args):
-    if args.name.title() in utils.list_recipes(ret=True):
-        sys.exit('A recipe with that name already exist in the recipe store')
+    name = utils.get_file_name(args.name)
+    if name in RECIPE_DATA_FILES:
+        sys.exit('{}ERROR: A recipe with that name already exist.'.format(color.ERROR))
     else:
-        RecipeEditor().start()
+        RecipeEditor(args.name, add=True).start()
 
 
 def print_list(args):
@@ -93,30 +88,30 @@ def version(args):
     print(utils.version())
 
 def export_recipes(args):
-	
-    recipe_name = args.source
-    r = Recipe(args.source)
-    xml = r.xml_data
-    new_name = recipe_name.replace(" ", "_")
-    lower_new_name  = new_name.lower() + ".xml"# I prefer file names to be all lower case
+    print(args.__dict__)	
+    #recipe_name = args.source
+    #r = Recipe(args.source)
+    #xml = r.xml_data
+    #new_name = recipe_name.replace(" ", "_")
+    #lower_new_name  = new_name.lower() + ".xml"# I prefer file names to be all lower case
     # check for output dir flag	and make dir if it does not exist
-    if args.output_dir:	
-        output_dir = os.path.abspath(args.output_dir)
-        if os.path.exists(output_dir):
-            if not os.path.isdir(output_dir):
-                print("Not a directory")
-                exit(1)
-        else:
-            try:
-                os.makedirs(output_dir)
-            except OSError:
-                print("couldnt create directory")
-                exit(1)
-    else:
-        output_dir = RECIPE_XML_DIR
+    #if args.output_dir:	
+    #    output_dir = os.path.abspath(args.output_dir)
+    #    if os.path.exists(output_dir):
+    #        if not os.path.isdir(output_dir):
+    #            print("Not a directory")
+    #            exit(1)
+    #    else:
+    #        try:
+    #            os.makedirs(output_dir)
+    #        except OSError:
+    #            print("couldnt create directory")
+    #            exit(1)
+    #else:
+    #    output_dir = RECIPE_XML_DIR
     
-    file_name = os.path.join(output_dir, lower_new_name)	
+    #file_name = os.path.join(output_dir, lower_new_name)	
             
-    print("{}Writing to file: {}{}".format(color.INFORM, file_name, color.NORMAL))
-    with open(file_name, "w") as file:
-            file.write(str(xml))
+    #print("{}Writing to file: {}{}".format(color.INFORM, file_name, color.NORMAL))
+    #with open(file_name, "w") as file:
+    #        file.write(str(xml))

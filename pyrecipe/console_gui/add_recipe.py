@@ -181,12 +181,12 @@ class IngredBlock(WidgetWrap):
                 return key
             self.del_ingredient(size)
         elif key == 'f5':
-            self.entry_down(size)
-        elif key == 'f6':
             widget = self.widgets[self.focus_pos-1]
-            if isinstance(widget, (AttrMap, Padding)):
+            if isinstance(widget, (AttrMap, Padding, Columns)):
                 return key
             self.entry_up(size)
+        elif key == 'f6':
+            self.entry_down(size)
         else:
             return key
 
@@ -319,19 +319,22 @@ class RecipeEditor:
         ('pyrecipe', ' PYRECIPE    '),
         ('key', "F2"), ('footer', ' Save  '),
         ('key', "Esc"), ('footer', ' Quit  '),
-        ('key', "F5/F6"), ('footer', ' Move item DOWN/UP  '),
-        ('key', "Ctrl-d"), ('footer', ' del ingredient/method  ')
+        ('key', "F5/F6"), ('footer', ' Move item UP/DOWN  '),
+        ('key', "Ctrl-d"), ('footer', ' Delete item  ')
         ])
 
     def __init__(self, recipe='', add=False):
         self.add = add
-        self.r = Recipe(recipe)
         if self.add:
-            self.welcome = 'Add a Recipe'
-        if self.r['recipe_name']:
-            self.welcome = 'Edit: {}'.format(self.r['recipe_name'])
+            if isinstance(recipe, Recipe):
+                self.r = recipe
+            else:
+                self.r = Recipe()
+                self.r['recipe_name'] = recipe
+            self.welcome = 'Add a Recipe: {}'.format(self.r['recipe_name'])
         else:
-            self.welcome = 'Add a Recipe'
+            self.r = Recipe(recipe)
+            self.welcome = 'Edit: {}'.format(self.r['recipe_name'])
         
         self.gernal_info = []
         self.disht_group = []
@@ -477,7 +480,10 @@ class RecipeEditor:
         
         self.r['steps'] = steps
         # save the recipe
-        self.r.save_state()
+        if self.add:
+            self.r.save(save_as=True)
+        else:
+            self.r.save()
         raise ExitMainLoop()
 
     def _testing(self, button):
