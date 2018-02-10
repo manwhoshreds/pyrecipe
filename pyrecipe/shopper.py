@@ -25,7 +25,7 @@ from pint.errors import DimensionalityError
 from pyrecipe.config import (RAND_RECIPE_COUNT, S_DIV,
                              SHOPPING_LIST_FILE, PP)
 from pyrecipe.recipe import Recipe
-from pyrecipe import manifest, color, RecipeNum, Q_
+from pyrecipe import color, RecipeNum, Q_
 
 class ShoppingList:
     """Creates a shopping list of ingredients from a list of recipes. 

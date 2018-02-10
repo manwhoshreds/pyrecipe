@@ -1,0 +1,87 @@
+recipe_name: Zesty Meatloaf
+prep_time: 20
+bake_time: 70
+oven_temp: 
+  amount: 350
+  unit: F
+dish_type: main
+price: $
+yields:
+  - 3
+ingredients:
+    - name: ground chuck
+      amounts:
+        - amount: 2
+          unit: pound
+    - name: ground pork
+      amounts:
+        - amount: 1
+          unit: pound
+    - name: bread crumbs
+      amounts:
+        - amount: .5
+          unit: cup
+    - name: salt
+      amounts:
+        - amount: 2
+          unit: teaspoon
+    - name: black pepper
+      amounts:
+        - amount: 1
+          unit: teaspoon
+    - name: cayenne pepper
+      amounts:
+        - amount: .25
+          unit: teaspoon
+    - name: thyme
+      amounts:
+        - amount: 1
+          unit: teaspoon 
+    - name: cumin
+      amounts:
+        - amount: 1
+          unit: teaspoon
+    - name: garlic powder
+      amounts:
+        - amount: 1
+          unit: teaspoon
+    - name: onions
+      amounts:
+        - amount: .5
+          unit: cup
+      prep: very finely chopped
+    - name: worcestershire sauce
+      amounts:
+        - amount: 1
+          unit: tablespoon
+    - name: egg
+      amounts:
+        - amount: 1
+          unit: each
+alt_ingredients:
+    - ketchup sauce:
+      - name: ketchup
+        amounts:
+          - amount: .25
+            unit: cup
+      - name: cumin
+        amounts:
+          - amount: .5
+            unit: teaspoon
+      - name: honey
+        amounts:
+          - amount: .5
+            unit: tablespoon
+      - name: worcestershire sauce
+        amounts:
+           - amount: 1
+             unit: teaspoon
+      - name: hot sauce
+        amounts:
+           - amount: 1
+             unit: teaspoon
+    
+
+steps:
+  - step: In large bowl mix all ingredients except ketchup sauce. Make meat mixture in to a loaf and put in 350 degree oven for 1 hour 10 min. Add ketchup sauce on top of meat loaf when there is 30 min left of cooking time. internal temperature should reach 160 degrees.
+# vim: noai:tabstop=4 syntax=yaml

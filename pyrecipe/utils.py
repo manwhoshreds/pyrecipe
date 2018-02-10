@@ -12,7 +12,7 @@ from numbers import Number
 from pyrecipe.config import (__version__, __scriptname__, __email__,
                              RECIPE_DATA_DIR, RECIPE_DATA_FILES,
                              DISH_TYPES, VIM_MODE_LINE, EDITOR)
-from pyrecipe import manifest, yaml, p, color
+from pyrecipe import yaml, p, color, manifest
 
 
 def mins_to_hours(mins):
@@ -44,7 +44,7 @@ def check_source(source):
             return abspath_name
         except FileNotFoundError:
             return sys.exit("{}ERROR: {} does not exist."
-                            .format(color.ERROR, file_name))
+                            .format(color.ERROR, abspath_name))
     
 def get_file_name(source):
     strip_punc = ''.join(c for c in source if c not in string.punctuation)

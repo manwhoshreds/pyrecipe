@@ -42,6 +42,7 @@
 import sys
 import os
 import re
+import io
 import textwrap
 from fractions import Fraction
 from zipfile import ZipFile, BadZipFile
@@ -50,12 +51,12 @@ from lxml import etree
 from urllib.request import urlopen
 
 import bs4
-
-from pyrecipe import ureg, Q_, p, color, yaml, RecipeNum
+import yaml
+from pyrecipe import ureg, Q_, p, color, RecipeNum #yaml
 from pyrecipe.config import (S_DIV, RECIPE_DATA_FILES,
                              SCRIPT_DIR, PP, CAN_UNITS,
                              INGRED_UNITS, SIZE_STRINGS,
-                             PREP_TYPES)
+                             PREP_TYPES, RECIPE_DATA_DIR)
 from pyrecipe.utils import check_source, get_file_name, mins_to_hours, all_singular
 
 
@@ -380,7 +381,7 @@ class Recipe:
     def dump_to_screen(self, data_type=None):
         """Dump a data format to screen.
         
-        This method is mostly helpful for troubleshooting
+        This method is mostly useful for troubleshooting
         and development
         """ 
         if data_type in ('raw', None): 
@@ -399,47 +400,34 @@ class Recipe:
             raise ValueError('data_type argument must be one of '
                              'raw, yaml, or xml')
 
-    def dump(self, stream=None):
-        """Dump the yaml to a file"""
-        strm = self.source if stream is None else stream
-        if not strm:
-            raise RuntimeError('Recipe has no source to save to')
-        if strm in RECIPE_DATA_FILES:
-            raise RuntimeError('Recipe already exist with that file name.')
-        with open(strm, 'w') as recipe_file:
-            yaml.dump(self.recipe_data, recipe_file)
-
-    def save_state(self):
-        """save state of class even if file exist"""
+    
+    def save(self, save_as=False):
+        """save state of class
+        
+        If save_as is true, we first check to see if the file already exisist
+        so we dont clobber an existing recipe. If not save_as, we assume user
+        wants to edit a file in which case we intend to overwrite the file with
+        changes.
+        """
         if not self.source:
             raise RuntimeError('Recipe has no source to save to')
+        elif save_as:
+            if self.source in RECIPE_DATA_FILES:
+                raise RuntimeError('Recipe already exist with that filename')
         else:
-            with open(self.source, 'w') as recipe_file:
-                yaml.dump(self.recipe_data, recipe_file)
+            source = os.path.join(RECIPE_DATA_DIR, self.source)
+            stream = io.StringIO()
+            yaml.dump(self.recipe_data, stream)
+            
+            with ZipFile(source, 'w') as zfile:
+                zfile.writestr('recipe.yaml', stream.getvalue())
+                zfile.writestr('MIMETYPE', 'application/recipe+zip')
+
 
 class RecipeWebScraper(Recipe):
 
     def __init__(self, url):
         super().__init__()
-        self.scrapeable = False
-        scraper_file = os.path.join(SCRIPT_DIR, 'web_scrapers.yaml')
-        with open(scraper_file, 'r') as stream:
-            _scrapers = yaml.load(stream)
-
-        self.scrapeable_sites = list(_scrapers.keys())
-        for item in self.scrapeable_sites:
-            if url.startswith(item):
-                self.scrapeable = True
-                self.site = item
-
-        if not self.scrapeable:
-            sys.exit('Site is not supported. Exiting...')
-
-        self.rnt = _scrapers[self.site]['recipe_name_tag']
-        self.rna = _scrapers[self.site]['recipe_name_attr']
-        self.ilt = _scrapers[self.site]['ingred_list_tag']
-        self.ila = _scrapers[self.site]['ingred_list_attr']
-
         self['source_url'] = url
         self.req = urlopen(url)
         self.soup = bs4.BeautifulSoup(self.req, 'html.parser')
@@ -449,11 +437,11 @@ class RecipeWebScraper(Recipe):
         self._fetch_method()
 
     def _fetch_recipe_name(self):
-        name_box = self.soup.find(self.rnt, attrs=self.rna)
+        name_box = self.soup.find('h2', attrs={'class': 'modal-title'})
         self['recipe_name'] = name_box.text.strip()
 
     def _fetch_ingredients(self):
-        ingred_box = self.soup.find_all(self.ilt, attrs=self.ila)
+        ingred_box = self.soup.find_all('ul', attrs={'class': 'ingredient-list'})
         ingred_parser = IngredientParser(return_dict=True)
         ingredients = []
         for item in ingred_box:
@@ -705,6 +693,6 @@ class IngredientParser:
 
 # testing
 if __name__ == '__main__':
-    r = Recipe('korean pork tacos')
-    r.get_ingredients()
+    r = Recipe('test.recipe')
+    r.print_recipe()
     

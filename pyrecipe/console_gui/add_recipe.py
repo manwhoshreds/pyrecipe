@@ -76,9 +76,9 @@ class IngredBlock(WidgetWrap):
             for item in self.ingredients:
                 ingred_entry = Edit("- ", item)
                 self.widgets.append(ingred_entry)
-        self._after_init()
+        self._refresh()
     
-    def _after_init(self, focus_item=1):
+    def _refresh(self, focus_item=1):
         try:
             self.pile = Pile(self.widgets, focus_item=focus_item)
         except IndexError:
@@ -90,14 +90,15 @@ class IngredBlock(WidgetWrap):
         self.widgets.clear()
         del self.ingredients
         self.alt_ingred = ''
-        self._after_init()
+        self._refresh()
 
     def toggle_name(self, button):
+        self.name = self.widgets[1]
         if not self.alt_ingred:
             self.alt_name = AttrMap(Edit('* ', 'name'), 'title')
             self.widgets.insert(1, self.alt_name)
             self.alt_ingred = self.alt_name.original_widget.get_edit_text()
-            self._after_init()
+            self._refresh()
         else:
             for item in self.widgets:
                 try:
@@ -107,13 +108,13 @@ class IngredBlock(WidgetWrap):
                         break
                 except AttributeError:
                     pass
-            self._after_init()
+            self._refresh()
 
     def add_ingredient(self, button=None):
         ingred_entry = Edit("- ", 'Add')
         self.widgets.append(ingred_entry)
         new_focus = len(self.widgets)
-        self._after_init(focus_item=new_focus)
+        self._refresh(focus_item=new_focus)
 
     def del_ingredient(self, size):
         focus_minus_one = self.focus_pos - 1
@@ -137,7 +138,7 @@ class IngredBlock(WidgetWrap):
             self.widgets.remove(item)
         except IndexError:
             pass
-        self._after_init(self.focus_pos)
+        self._refresh(self.focus_pos)
 
     def entry_up(self, size):
         try: 
@@ -152,7 +153,7 @@ class IngredBlock(WidgetWrap):
         item = list(self.widgets)[self.focus_pos]
         self.widgets.remove(item)
         self.widgets.insert(newfocus, item)
-        self._after_init(newfocus)
+        self._refresh(newfocus)
 
     def entry_down(self, size):
         try: 
@@ -167,7 +168,7 @@ class IngredBlock(WidgetWrap):
         item = list(self.widgets)[self.focus_pos]
         self.widgets.remove(item)
         self.widgets.insert(newfocus, item)
-        self._after_init(newfocus)
+        self._refresh(newfocus)
 
     def keypress(self, size, key):
         self.focus_pos = self.pile.focus_position
@@ -240,9 +241,9 @@ class MethodBlock(WidgetWrap):
             method_pile = Pile(self.method_widgets)
         else:
             method_pile = BLANK
-        self._after_init()
+        self._refresh()
 
-    def _after_init(self, focus_item=1):
+    def _refresh(self, focus_item=1):
         try:
             self.pile = Pile(self.method_widgets, focus_item=focus_item)
         except IndexError:
@@ -273,7 +274,7 @@ class MethodBlock(WidgetWrap):
         method_entry = Edit(caption, ". ", 'Add')
         self.method_widgets.append(method_entry)
         new_focus = len(self.method_widgets) - 1
-        self._after_init(focus_item=new_focus)
+        self._refresh(focus_item=new_focus)
 
     def del_method(self, size):
         # dont let the user delete the add button at pos 0
@@ -294,7 +295,7 @@ class MethodBlock(WidgetWrap):
             self.method_widgets.pop(self.focus_pos)
         except IndexError:
             pass
-        self._after_init(self.focus)
+        self._refresh(self.focus)
 
     def keypress(self, size, key):
         self.focus_pos = self.pile.focus_position
@@ -322,8 +323,11 @@ class RecipeEditor:
         ('key', "Ctrl-d"), ('footer', ' del ingredient/method  ')
         ])
 
-    def __init__(self, recipe=''):
+    def __init__(self, recipe='', add=False):
+        self.add = add
         self.r = Recipe(recipe)
+        if self.add:
+            self.welcome = 'Add a Recipe'
         if self.r['recipe_name']:
             self.welcome = 'Edit: {}'.format(self.r['recipe_name'])
         else:
@@ -360,7 +364,7 @@ class RecipeEditor:
                              AttrMap(IntEdit('Enter prep time: ', self.r['prep_time']), 'prep_time'),
                              AttrMap(IntEdit('Enter cook time: ', self.r['cook_time']), 'cook_time'),
                              AttrMap(IntEdit('Enter bake time: ', self.r['bake_time']), 'bake_time'),
-                             AttrMap(Edit('Enter price: ', self.r['price']), 'price'),
+                             AttrMap(Edit('Enter price($): ', self.r['price']), 'price'),
                              AttrMap(Edit('Enter source url: ', self.r['source_url'], wrap='clip'), 'source_url'),
                              AttrMap(Edit('Enter author: ', self.r['author']), 'author')]
 
@@ -422,6 +426,7 @@ class RecipeEditor:
         for item in gen_info:
             attr = item.attr_map[None]
             edit_text = item.original_widget.get_edit_text()
+            print(edit_text)
             if edit_text != '':
                 self.r[attr] = edit_text
          
@@ -471,10 +476,9 @@ class RecipeEditor:
             steps.append({'step': step})
         
         self.r['steps'] = steps
-        self.r.print_recipe()
         # save the recipe
-        #self.r.save_state()
-        #raise ExitMainLoop(test())
+        self.r.save_state()
+        raise ExitMainLoop()
 
     def _testing(self, button):
         self.ingred_blocks.append(IngredBlock(['hello']))
