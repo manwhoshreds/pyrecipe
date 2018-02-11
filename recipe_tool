@@ -164,6 +164,20 @@ def parse_args():
         nargs="?",
         help="Choose a directory to output xml file"
     )
+    parser_export.add_argument(
+        "-x",
+        "--xml",
+        dest="xml",
+        action='store_true',
+        help="Export file in xml format"
+    )
+    parser_export.add_argument(
+        "-r",
+        "--recipe",
+        dest="recipe",
+        action='store_true',
+        help="Export recipe file"
+    )
     parser_export.set_defaults(func=argfunc.export_recipes)
     
     # recipe_tool fetch

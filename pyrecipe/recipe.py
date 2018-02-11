@@ -116,6 +116,7 @@ class Recipe:
     def _scan_recipe(self):
         """Internal method used to build the xml tree"""
         # recipe name
+
         if self['recipe_name']:
             xml_recipe_name = etree.SubElement(self.xml_root, "name")
             xml_recipe_name.text = self['recipe_name']
@@ -271,9 +272,27 @@ class Recipe:
         return self['_recipe_data']
 
     @property
+    def file_name(self):
+        if self.source:
+            name = self.source.split('/')[-1]
+        else:
+            name = None
+        return name
+
+    @property
     def has_alt_ingredients(self):
         return self._has_alt_ingreds
 
+    @property
+    def xml_data(self):
+        result = etree.tostring(self.xml_root,
+                                xml_declaration=True,
+                                encoding='utf-8',
+                                with_tail=False,
+                                method='xml',
+                                pretty_print=True).decode('utf-8')
+        return result
+    
     def get_ingredients(self, amount_level=0, alt_ingred=None, color=False):
         """Returns a list of ingredient strings.
 

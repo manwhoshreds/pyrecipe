@@ -38,7 +38,8 @@ def check_source(source):
             return source
     # must be a string name a recipe that exist in the data dir
     else:
-        abspath_name = get_file_name(source)
+        file_name = get_file_name(source)
+        abspath_name = os.path.join(RECIPE_DATA_DIR, file_name)
         try:
             assert open(abspath_name)
             return abspath_name
@@ -46,11 +47,11 @@ def check_source(source):
             return sys.exit("{}ERROR: {} does not exist."
                             .format(color.ERROR, abspath_name))
     
-def get_file_name(source):
+def get_file_name(source, ext='recipe'):
     strip_punc = ''.join(c for c in source if c not in string.punctuation)
-    file_name = strip_punc.replace(" ", "_").lower() + ".recipe"
-    abspath_name = os.path.join(RECIPE_DATA_DIR, file_name)
-    return abspath_name
+    file_name = strip_punc.replace(" ", "_").lower()
+    file_name = '{}.{}'.format(file_name, ext)
+    return file_name
 
 def list_recipes(ret=False):
     """List all recipes in the database"""

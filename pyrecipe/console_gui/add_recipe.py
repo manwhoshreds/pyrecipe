@@ -30,7 +30,7 @@ PALETTE = ([
     ('button', 'yellow', 'dark green', 'standout'),
     ])
 
-HEADINGS  = {
+HEADINGS = {
             'general_info': AttrMap(Text('General Information:'), 'heading'),
             'dish_types': AttrMap(Text('Dish Types:'), 'heading'),
             'testing': AttrMap(Text('Testing:'), 'heading'),
@@ -95,7 +95,7 @@ class IngredBlock(WidgetWrap):
     def toggle_name(self, button):
         self.name = self.widgets[1]
         if not self.alt_ingred:
-            self.alt_name = AttrMap(Edit('* ', 'name'), 'title')
+            self.alt_name = AttrMap(Edit('* ', 'Name'), 'title')
             self.widgets.insert(1, self.alt_name)
             self.alt_ingred = self.alt_name.original_widget.get_edit_text()
             self._refresh()
@@ -400,7 +400,7 @@ class RecipeEditor:
         general_and_dish = GridFlow([self.general_info, radio_dish_types, test], 53, 0, 2, 'left')
         ingred_and_method = GridFlow([self.ingred_block, self.method_block], 79, 0, 2, 'left')
         
-        listbox_content = [
+        self.listbox_content = [
                 BLANK,
                 headings_general_and_dish_types,
                 BLANK,
@@ -411,7 +411,7 @@ class RecipeEditor:
                 ingred_and_method
                 ]
         
-        list_box = ListBox(SimpleListWalker(listbox_content))
+        list_box = ListBox(SimpleListWalker(self.listbox_content))
         
         return list_box
     
@@ -420,6 +420,8 @@ class RecipeEditor:
             raise ExitMainLoop()
         elif key in ('f2',):
             self.save_recipe()
+        elif key in ('f9',):
+            self._testing(key)
         else:
             pass
 
@@ -488,13 +490,13 @@ class RecipeEditor:
 
     def _testing(self, button):
         self.ingred_blocks.append(IngredBlock(['hello']))
-        #self.loop = self.setup_view()
-        self.lop.draw_screen()
+        self.loop = self.setup_view()
         
     
     def start(self):
-        loop = self.setup_view()
-        loop.run()
+        self.loop = self.setup_view()
+        self.loop.run()
+        
 
 class PopUpDialog(WidgetWrap):
     """A dialog that appears with nothing but a close button """
@@ -530,13 +532,3 @@ if __name__ == '__main__':
     
     RecipeEditor('7 cheese mac and cheese').start()
     #test = AttrMap(Edit('enter stuff', 'hell'), 'hell')
-    #print(test.original_widget.get_edit_text())
-    #r = Recipe('7 cheese mac and cheese')
-
-    #fill = Filler(IngredBlock(r.get_ingredients()), 'top')
-    #fill = Filler(IngredBlock())
-    #loop = MainLoop(
-    #    fill,
-    #    [('popbg', 'white', 'dark blue')])
-    #loop.run()
-

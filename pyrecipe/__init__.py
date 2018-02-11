@@ -25,7 +25,6 @@ from pyrecipe.config import (__version__, __scriptname__,
                      DB_FILE, RECIPE_DATA_FILES)
 from .recipe_numbers import RecipeNum
 
-
 yaml = YAML(typ='safe')
 yaml.default_flow_style = False
 

@@ -4,6 +4,7 @@
 
 import sys
 import subprocess
+import shutil
 import os
 from zipfile import ZipFile
 
@@ -43,11 +44,6 @@ def fetch_recipe(args):
     scraper = RecipeWebScraper(args.url)
     RecipeEditor(scraper, add=True).start()
 
-    #if args.save:
-    #    scraper.dump()
-    #else:
-    #    scraper.print_recipe(verb_level=2)
-
 def print_recipe(args):
     r = Recipe(args.source)
     r.print_recipe(args.verbose)
@@ -76,7 +72,6 @@ def add_recipe(args):
     else:
         RecipeEditor(args.name, add=True).start()
 
-
 def print_list(args):
     recipes = manifest.recipe_names
     lower_recipes = [x.lower() for x in recipes]
@@ -84,34 +79,34 @@ def print_list(args):
         print(item.title())
 	
 def version(args):
-	
     print(utils.version())
 
 def export_recipes(args):
-    print(args.__dict__)	
-    #recipe_name = args.source
-    #r = Recipe(args.source)
-    #xml = r.xml_data
-    #new_name = recipe_name.replace(" ", "_")
-    #lower_new_name  = new_name.lower() + ".xml"# I prefer file names to be all lower case
-    # check for output dir flag	and make dir if it does not exist
-    #if args.output_dir:	
-    #    output_dir = os.path.abspath(args.output_dir)
-    #    if os.path.exists(output_dir):
-    #        if not os.path.isdir(output_dir):
-    #            print("Not a directory")
-    #            exit(1)
-    #    else:
-    #        try:
-    #            os.makedirs(output_dir)
-    #        except OSError:
-    #            print("couldnt create directory")
-    #            exit(1)
-    #else:
-    #    output_dir = RECIPE_XML_DIR
-    
-    #file_name = os.path.join(output_dir, lower_new_name)	
-            
-    #print("{}Writing to file: {}{}".format(color.INFORM, file_name, color.NORMAL))
-    #with open(file_name, "w") as file:
-    #        file.write(str(xml))
+    try:
+        output_dir = os.path.realpath(args.output_dir)
+        os.makedirs(output_dir)
+    except FileExistsError:
+        sys.exit('{}ERROR: A directory with name {} already exists.'
+                 .format(color.ERROR, output_dir))
+    except TypeError:
+        output_dir = os.getcwd()
+        
+    recipe_name = args.source
+    r = Recipe(args.source)
+    xml = r.xml_data
+    file_name = utils.get_file_name(args.source, 'xml')
+    file_name = os.path.join(output_dir, file_name)
+    if args.xml:
+        print("{}Writing to file: {}{}".format(color.INFORM, file_name, color.NORMAL))
+        with open(file_name, "w") as file:
+                file.write(str(xml))
+    if args.recipe:
+        src = r.source
+        dst = os.path.join(output_dir, r.file_name)
+        if os.path.isfile(dst):
+            sys.exit('{}ERROR: File already exists.'
+                    .format(color.ERROR))
+        else:
+            shutil.copyfile(src, dst)
+
+

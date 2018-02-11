@@ -37,7 +37,7 @@ import os
 import urwid
 from urwid.raw_display import Screen
 
-from zope.interface import Interface, Attribute, implements
+from zope.interface import Interface, Attribute, implementer
 from twisted.application.service import Application
 from twisted.application.internet import TCPServer
 from twisted.cred.portal import Portal
@@ -129,10 +129,10 @@ class UnhandledKeyHandler(object):
     def key_ctrl_c(self, key):
         self.mind.terminal.loseConnection()
 
-
+@implementer
 class UrwidMind(Adapter):
 
-    implements(IUrwidMind)
+    #implements(IUrwidMind)
 
     cred_checkers = []
     ui = None
