@@ -2,23 +2,17 @@
 # -*- encoding: UTF-8 -*-
 # PYTHON_ARGCOMPLETE_OK
 
-
 import argparse
 import argcomplete
 
 from pyrecipe.config import RAND_RECIPE_COUNT
-import pyrecipe.argfuncs as argfunc
 from pyrecipe import manifest
-import pdb
-#pdb.set_trace()
 
 def recipe_completer(**kwargs):
     recipe_list = [x.lower() for x in manifest.recipe_names]
     return recipe_list
 	
 def parse_args():
-    # TODO argcomplete is way too slow, figure out how to speed it up	
-
     parser = argparse.ArgumentParser(
         description="Recipe_tool has tab completion functionality. After adding a recipe, \
                      simply run recipe_tool print <TAB><TAB> to view whats available.",
@@ -53,31 +47,26 @@ def parse_args():
     )
 
     # subparsers start here
-    subparser = parser.add_subparsers()
+    subparser = parser.add_subparsers(dest='subparser')
 
     # recipe_tool print
     parser_print = subparser.add_parser("print", help="Print the recipe to screen")
     parser_print.add_argument("source", help="Recipe to print").completer = recipe_completer
-    parser_print.set_defaults(func=argfunc.print_recipe)
     
     # recipe_tool list
     parser_list = subparser.add_parser("list", help="List recipes")
-    parser_list.set_defaults(func=argfunc.print_list)
-
+  
     # recipe_tool edit	
     parser_edit = subparser.add_parser("edit", help="Edit a recipe data file")
     parser_edit.add_argument("source", type=str, help="Recipe to edit").completer = recipe_completer
-    parser_edit.set_defaults(func=argfunc.edit_recipe)
-
+    
     # recipe_tool add
     parser_add = subparser.add_parser("add", help='Add a recipe')
     parser_add.add_argument("name", help='Name of the recipe to add')
-    parser_add.set_defaults(func=argfunc.add_recipe)
 
     # recipe_tool remove
     parser_remove = subparser.add_parser("remove", help='Delete a recipe')
     parser_remove.add_argument("source", help='Recipe, to delete').completer = recipe_completer
-    parser_remove.set_defaults(func=argfunc.delete_recipe)
 
     # recipe_tool shop
     parser_shop = subparser.add_parser("shop", help='Make a shopping list')
@@ -103,14 +92,12 @@ def parse_args():
         action="store_true",
         help="Write the shopping list to an xml file"
     )
-    parser_shop.set_defaults(func=argfunc.print_shopping_list)
 
     # recipe_tool show
     parser_show = subparser.add_parser(
         "show",
         help='Show information about recipes'
     )
-    parser_show.set_defaults(func=argfunc.show_stats)
 
     # recipe_tool dump
     parser_dump = subparser.add_parser(
@@ -145,7 +132,6 @@ def parse_args():
         const="raw",
         help="Dump source data in its raw format"
     )
-    parser_dump.set_defaults(func=argfunc.dump_data)
 
     # recipe_tool export
     parser_export = subparser.add_parser(
@@ -178,7 +164,6 @@ def parse_args():
         action='store_true',
         help="Export recipe file"
     )
-    parser_export.set_defaults(func=argfunc.export_recipes)
     
     # recipe_tool fetch
     parser_fetch = subparser.add_parser(
@@ -196,7 +181,6 @@ def parse_args():
         action="store_true",
         help="Save file, default behaviour just prints recipe to stdout"
     )
-    parser_fetch.set_defaults(func=argfunc.fetch_recipe)
     
     # auto completion	
     argcomplete.autocomplete(parser)
@@ -210,13 +194,27 @@ def parse_args():
 def main():
     """main entry point of recipe_tool"""
     args = parse_args()
+    import pyrecipe.argfuncs as argfunc
+    action = {
+            'gui': argfunc.start_gui,
+            'version': argfunc.version,
+            'print': argfunc.print_recipe,
+            'list': argfunc.print_list,
+            'edit': argfunc.edit_recipe,
+            'add': argfunc.add_recipe,
+            'remove': argfunc.delete_recipe,
+            'shop': argfunc.print_shopping_list,
+            'show': argfunc.show_stats,
+            'dump': argfunc.dump_data,
+            'export': argfunc.export_recipes,
+            'fetch': argfunc.fetch_recipe
+            }
     if args.guimode:
-        argfunc.start_gui()
+        action['gui']()
     if args.version:
-        argfunc.version(args)
-        exit(0)
-    if hasattr(args, 'func'):
-        args.func(args)
+        action['version'](args)
+    else:
+        action[args.subparser](args)
             
 if __name__ == '__main__':
     main()

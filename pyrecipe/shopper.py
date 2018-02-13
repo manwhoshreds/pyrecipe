@@ -25,7 +25,7 @@ from pint.errors import DimensionalityError
 from pyrecipe.config import (RAND_RECIPE_COUNT, S_DIV,
                              SHOPPING_LIST_FILE, PP)
 from pyrecipe.recipe import Recipe
-from pyrecipe import color, RecipeNum, Q_
+from pyrecipe import color, RecipeNum, Q_, manifest
 
 class ShoppingList:
     """Creates a shopping list of ingredients from a list of recipes. 
@@ -73,7 +73,10 @@ class ShoppingList:
                     
             if name == "s&p":
                 continue
-            amount = RecipeNum(item['amounts'][0].get('amount', 0))
+            try:
+                amount = RecipeNum(item['amounts'][0].get('amount', 0))
+            except ValueError:
+                amount = 0
             unit = item['amounts'][0].get('unit', '')
             
             # FIXME:

@@ -12,9 +12,11 @@ import textwrap
 from collections import deque
 
 from urwid import *
+from birdseye import eye
 
 from pyrecipe.config import (DISH_TYPES)
 from pyrecipe.recipe import Recipe, IngredientParser
+from pyrecipe.utils import wrap
 
 
 ingred_parser = IngredientParser(return_dict=True)
@@ -62,7 +64,8 @@ class IngredBlock(WidgetWrap):
         self.del_block = Padding(self.del_block, 'left', right=8)
         self.buttons = Columns([self.add_button, 
                                 self.add_name,
-                                self.del_block])
+                                self.del_block
+                                ])
         self.widgets.append(self.buttons)
         
         if alt_ingred:
@@ -78,11 +81,12 @@ class IngredBlock(WidgetWrap):
                 self.widgets.append(ingred_entry)
         self._refresh()
     
-    def _refresh(self, focus_item=1):
+    def _refresh(self, focus_item=0):
         try:
             self.pile = Pile(self.widgets, focus_item=focus_item)
         except IndexError:
             self.pile = Pile(self.widgets, focus_item=focus_item-1)
+
         self.num_widgets = len(self.widgets)
         super().__init__(self.pile)
     
@@ -111,7 +115,7 @@ class IngredBlock(WidgetWrap):
             self._refresh()
 
     def add_ingredient(self, button=None):
-        ingred_entry = Edit("- ", 'Add')
+        ingred_entry = Edit("- ", '')
         self.widgets.append(ingred_entry)
         new_focus = len(self.widgets)
         self._refresh(focus_item=new_focus)
@@ -187,8 +191,14 @@ class IngredBlock(WidgetWrap):
             self.entry_up(size)
         elif key == 'f6':
             self.entry_down(size)
+        elif key == 'f9':
+            self._test()
         else:
             return key
+
+    def _test(self):
+        self.test.append(p)
+        self._refresh
 
     def on_enter(self, key):
         try:
@@ -209,11 +219,10 @@ class IngredBlock(WidgetWrap):
         else:
             return ingredients
 
-
 class MethodBlock(WidgetWrap):
 
     def __init__(self, method=[]):
-        self.method_widgets = []
+        self.method_widgets = deque()
         self.method = method
         if not isinstance(self.method, list):
             raise TypeError('MethodBlock only excepts a list of methods')
@@ -222,19 +231,9 @@ class MethodBlock(WidgetWrap):
                 on_press=self.add_method)
         self.method_widgets.append(GridFlow([add_button], 14, 0, 0, 'left'))
         
-        wrapper = textwrap.TextWrapper(width=70)
-        if len(self.method) > 9:
-            wrapper.initial_indent = ' '
-            wrapper.subsequent_indent = '    '
-        else:
-            wrapper.subsequent_indent = '   '
-
-        for index, step in enumerate(self.method, start=1):
-            if index >= 10:
-                wrapper.initial_indent = ''
-                wrapper.subsequent_indent = '    '
-            wrap = wrapper.fill(step)
-            method_entry = Edit(str(index) + ". ", wrap)
+        wrapped = wrap(self.method)
+        for index, item in wrapped:
+            method_entry = Edit(str(index) + ' ', item)
             self.method_widgets.append(method_entry)
             
         if len(self.method_widgets) > 0:
@@ -250,8 +249,9 @@ class MethodBlock(WidgetWrap):
             self.pile = Pile(self.method_widgets, focus_item=focus_item-1)
         self.num_widgets = len(self.method_widgets)
         super().__init__(self.pile)
-
+    
     def _renumber(self, focus):
+        self.method_widgets.clear()
         wrapper = textwrap.TextWrapper(width=70)
         if len(self.method) > 9:
             wrapper.initial_indent = ' '
@@ -271,7 +271,7 @@ class MethodBlock(WidgetWrap):
 
     def add_method(self, button):
         caption = str(len(self.method_widgets))
-        method_entry = Edit(caption, ". ", 'Add')
+        method_entry = Edit(caption + ". ", '')
         self.method_widgets.append(method_entry)
         new_focus = len(self.method_widgets) - 1
         self._refresh(focus_item=new_focus)
@@ -288,14 +288,16 @@ class MethodBlock(WidgetWrap):
             col = len(self.method_widgets[row].edit_text) + 2
         except IndexError:
             row = self.focus_pos - 1
-            col = len(self.method_widgets[row].edit_text) + 2
+            col = len(self.method_widgets[row].edit_text) - 2
 
         self.pile.move_cursor_to_coords(size, col, row)
         try: 
-            self.method_widgets.pop(self.focus_pos)
+            item = list(self.method_widgets)[self.focus_pos]
+            self.method_widgets.remove(item)
         except IndexError:
             pass
-        self._refresh(self.focus)
+        #self._refresh(self.focus_pos)
+        self._renumber(self.focus_pos)
 
     def keypress(self, size, key):
         self.focus_pos = self.pile.focus_position

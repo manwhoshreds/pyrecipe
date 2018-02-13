@@ -43,21 +43,22 @@ import sys
 import os
 import re
 import io
-import textwrap
 from fractions import Fraction
 from zipfile import ZipFile, BadZipFile
 from numbers import Number
 from lxml import etree
 from urllib.request import urlopen
 
+from birdseye import eye
+
 import bs4
-import yaml
-from pyrecipe import ureg, Q_, p, color, RecipeNum #yaml
+from pyrecipe import ureg, Q_, p, color, RecipeNum, yaml
 from pyrecipe.config import (S_DIV, RECIPE_DATA_FILES,
                              SCRIPT_DIR, PP, CAN_UNITS,
                              INGRED_UNITS, SIZE_STRINGS,
                              PREP_TYPES, RECIPE_DATA_DIR)
-from pyrecipe.utils import check_source, get_file_name, mins_to_hours, all_singular
+from pyrecipe.utils import (check_source, get_file_name, mins_to_hours, 
+                            all_singular, wrap)
 
 
 class Recipe:
@@ -318,7 +319,7 @@ class Recipe:
             ingred = Ingredient(item, color=color)
             ingredients.append(str(ingred))
         return ingredients
-    
+     
     def print_recipe(self, verb_level=0):
         """Print recipe to standard output."""
         print(color.RECIPENAME
@@ -376,20 +377,9 @@ class Recipe:
                 + color.NORMAL)
 
         # print steps
-        # lots of conditional wrapper mods for pretty steps output
-        wrapper = textwrap.TextWrapper(width=60)
-        if len(self['steps']) > 9:
-            wrapper.initial_indent = ' '
-            wrapper.subsequent_indent = '    '
-        else:
-            wrapper.subsequent_indent = '   '
-
-        for index, step in enumerate(self['steps'], start=1):
-            if index >= 10:
-                wrapper.initial_indent = ''
-                wrapper.subsequent_indent = '    '
-            wrap = wrapper.fill(step['step'])
-            print("{}{}.{} {}".format(color.NUMBER, index, color.NORMAL, wrap))
+        wrapped = wrap(self.get_method())
+        for index, string in wrapped:
+            print("{}{}{} {}".format(color.NUMBER, index, color.NORMAL, string))
     
     def get_method(self):
         steps = []

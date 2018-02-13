@@ -6,6 +6,7 @@ import os
 import sys
 import subprocess
 import string
+import textwrap
 from fractions import Fraction
 from numbers import Number
 
@@ -24,6 +25,24 @@ def mins_to_hours(mins):
     else:
         len = "%d h %02d m" % (hours, minutes)
     return len
+
+def wrap(str_list, width=60):
+    if not isinstance(str_list, list):
+        raise TypeError('First argument must be a list.')
+    wrapped = []
+    wrapper = textwrap.TextWrapper(width)
+    wrapper.subsequent_indent = '   '
+    if len(str_list) > 9:
+        wrapper.initial_indent = ' '
+        wrapper.subsequent_indent = '    '
+
+    for index, step in enumerate(str_list, start=1):
+        if index >= 10:
+            wrapper.initial_indent = ''
+        wrap = wrapper.fill(step)
+        wrapped_str = str(index) + ".", wrap
+        wrapped.append(wrapped_str)
+    return wrapped
 
 def check_source(source):
     if os.path.isdir(source):

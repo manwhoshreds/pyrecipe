@@ -12,7 +12,7 @@ from .config import PP, EDITOR, RECIPE_DATA_FILES
 from pyrecipe import utils, shopper, manifest, color
 from pyrecipe.recipe import Recipe, RecipeWebScraper
 import pyrecipe.gui.maingui as gui
-from pyrecipe.console_gui.add_recipe import RecipeEditor
+from pyrecipe.console_gui.edit_recipe import RecipeEditor
 
 def dump_data(args):
     r = Recipe(args.source)
