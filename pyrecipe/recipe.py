@@ -610,7 +610,7 @@ class IngredientParser:
     def __init__(self, return_dict=False):
 
         self.return_dict = return_dict
-        self.punctuation = "!\"#$%&'()*+,-:;<=>?@[\]^_`{|}~"
+        self.punctuation = "!\"#$%&'()*+,:;<=>?@[\]^_`{|}~"
         self._OUNCE_CAN_RE = re.compile(r'\d+ (ounce|pound) (can|bag)')
         self._PAREN_RE = re.compile(r'\((.*?)\)')
 
@@ -703,6 +703,14 @@ class IngredientParser:
 
 # testing
 if __name__ == '__main__':
-    r = Recipe('test.recipe')
-    r.print_recipe()
+    r = Recipe('test')
+    test = r.get_ingredients()
+    print(test)
+    parser = IngredientParser()
+    for item in test:
+        parsed = parser.parse(item)
+        print(parsed)
+
+
+
     

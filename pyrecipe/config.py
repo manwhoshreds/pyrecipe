@@ -16,14 +16,14 @@ __scriptname__  = os.path.basename(sys.argv[0])
 config = configparser.ConfigParser()
 
 CONFIG_DIR         = os.path.expanduser('~/.config/pyrecipe/')
+DB_FILE            = os.path.expanduser('~/code/git/pyrecipe/pyrecipe/test.db')
+RECIPE_DATA_DIR    = os.path.expanduser('~/.config/pyrecipe/recipe_data/')
 CONFIG_FILE        = CONFIG_DIR + 'config'
 SCRIPT_DIR         = os.path.dirname(__file__)
 
 # parse config
 config.read(CONFIG_FILE)
 RECIPE_XML_DIR     = os.path.expanduser(config['paths']['recipe_xml_dir'])
-RECIPE_DATA_DIR    = os.path.expanduser(config['paths']['recipe_data_dir'])
-DB_FILE            = os.path.expanduser(config['paths']['recipe_db_file'])
 SHOPPING_LIST_FILE = os.path.expanduser(config['paths']['shopping_list_file'])
 RAND_RECIPE_COUNT  = config['pyrecipe']['rand_recipe_count']
 

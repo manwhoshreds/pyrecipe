@@ -12,8 +12,6 @@
 
 import os
 import sys
-from numbers import Number
-from fractions import Fraction
 from math import ceil
 from zipfile import ZipFile
 
@@ -31,6 +29,7 @@ yaml.default_flow_style = False
 ureg = UnitRegistry()
 ureg.load_definitions(os.path.expanduser('~/.local/lib/python3.6/site-packages/pyrecipe/culinary_units.txt'))
 #Q_ = ureg.Quantity
+
 
 class Q_(ureg.Quantity):
     """subclass to implement a few custom behaviors
