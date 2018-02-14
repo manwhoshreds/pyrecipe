@@ -87,10 +87,9 @@ class IngredBlock(WidgetWrap):
         except IndexError:
             self.pile = Pile(self.widgets, focus_item=focus_item-1)
         self.num_widgets = len(self.widgets)
-        print(type(self.pile) )
 
         #test = Columns([Pile(self.pile)])
-        #super().__init__(test)
+        super().__init__(self.pile)
     
     def delete_block(self, button):
         self.widgets.clear()
