@@ -241,7 +241,7 @@ class Recipe:
         return recipe_string
 
     def __repr__(self):
-        return "<pyrecipe.recipe.Recipe name='{}'>"\
+        return "<Recipe(name='{}')>"\
                 .format(self['recipe_name'])
 
     def __getitem__(self, key):

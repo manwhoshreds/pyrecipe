@@ -38,7 +38,10 @@ class RecipeDB:
         self.c.execute("SELECT id FROM Recipes WHERE name = '%s'" % recipe['recipe_name'])
         recipe_id = self.c.fetchone()[0]
         for item in recipe.get_ingredients():
-            self.c.execute('''INSERT INTO RecipeIngredients (recipe_id, ingredient_str) VALUES(?, ?)''', (recipe_id, item)) 
+            self.c.execute('''INSERT INTO RecipeIngredients (
+                                recipe_id, 
+                                ingredient_str
+                                ) VALUES(?, ?)''', (recipe_id, item)) 
         self._commit()
 
 
@@ -51,14 +54,33 @@ class RecipeDB:
     def execute(self, command):
         return self.c.execute(command)
 
+    def query(self, command):
+        if not command.lower().startswith('select'):
+            raise TypeError('query string must be one of select')
+        query = self.c.execute(command)
+        result = query.fetchall()
+        return result
+    
     def build_database(self):
-        self.c.execute('''CREATE TABLE Recipes (id INTEGER PRIMARY KEY AUTOINCREMENT, dish_type TEXT,
-                          name TEXT, file_name TEXT, author TEXT, tags TEXT, categories TEXT, price TEXT, 
-                          source_url TEXT)''')
-        self.c.execute('''CREATE TABLE RecipeIngredients (recipe_id INTEGER, ingredient_str TEXT)''')
-
-
-
+        self.c.execute('''CREATE TABLE Recipes 
+                          (id INTEGER PRIMARY KEY AUTOINCREMENT, 
+                          dish_type TEXT,
+                          name TEXT, 
+                          file_name TEXT, 
+                          author TEXT, 
+                          tags TEXT, 
+                          categories TEXT, 
+                          price TEXT, 
+                          source_url TEXT
+                          )''')
+        
+        self.c.execute('''CREATE TABLE RecipeIngredients 
+                          (
+                           recipe_id INTEGER, 
+                           ingredient_str TEXT,
+                           FOREIGN KEY(recipe_id) REFERENCES Recipes(id)
+                          )''')
+        
 if not os.path.exists(DB_FILE):
     db = RecipeDB()
     db.build_database()
@@ -69,6 +91,9 @@ if not os.path.exists(DB_FILE):
 
 if __name__ == '__main__':
     db = RecipeDB()
-    r = Recipe('pesto')
-    test = db.execute("SELECT name FROM Recipes WHERE dish_type = 'main'")
-    db.add_recipe(r)
+    #r = Recipe('pesto')
+    sql = 'SELECT name FROM Recipes'
+    names = db.query(sql)
+    for item in sorted(names):
+        print(item[0])
+

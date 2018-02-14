@@ -86,9 +86,11 @@ class IngredBlock(WidgetWrap):
             self.pile = Pile(self.widgets, focus_item=focus_item)
         except IndexError:
             self.pile = Pile(self.widgets, focus_item=focus_item-1)
-
         self.num_widgets = len(self.widgets)
-        super().__init__(self.pile)
+        print(type(self.pile) )
+
+        #test = Columns([Pile(self.pile)])
+        #super().__init__(test)
     
     def delete_block(self, button):
         self.widgets.clear()
@@ -250,24 +252,18 @@ class MethodBlock(WidgetWrap):
         self.num_widgets = len(self.method_widgets)
         super().__init__(self.pile)
     
-    def _renumber(self, focus):
+    def _renumber(self, focus_item=1):
         self.method_widgets.clear()
-        wrapper = textwrap.TextWrapper(width=70)
-        if len(self.method) > 9:
-            wrapper.initial_indent = ' '
-            wrapper.subsequent_indent = '    '
-        else:
-            wrapper.subsequent_indent = '   '
-
-        for index, step in enumerate(self.method, start=1):
-            if index >= 10:
-                wrapper.initial_indent = ''
-                wrapper.subsequent_indent = '    '
-            wrap = wrapper.fill(step)
-            method_entry = Edit(str(index) + ". ", wrap)
+        wrapped = wrap(self.method)
+        for index, item in wrapped:
+            method_entry = Edit(str(index) + ' ', item)
             self.method_widgets.append(method_entry)
-
-        super().__init__(Pile(self.method_widgets, focus))
+        try:
+            self.pile = Pile(self.method_widgets, focus_item=focus_item)
+        except IndexError:
+            self.pile = Pile(self.method_widgets, focus_item=focus_item-1)
+        self.num_widgets = len(self.method_widgets)
+        super().__init__(self.pile)
 
     def add_method(self, button):
         caption = str(len(self.method_widgets))
@@ -338,7 +334,6 @@ class RecipeEditor:
             self.r = Recipe(recipe)
             self.welcome = 'Edit: {}'.format(self.r['recipe_name'])
         
-        self.gernal_info = []
         self.disht_group = []
         self.ingred_widgets = []
         self.alt_ingred_widgets = []
