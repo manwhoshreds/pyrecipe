@@ -44,7 +44,7 @@ BLANK = Divider()
 
 class IngredBlock(WidgetWrap):
 
-    def __init__(self, ingredients=[], alt_ingred=None):
+    def __temperooni__(self, ingredients=[], alt_ingred=None):
         self.ingredients = ingredients
         self.alt_ingred = alt_ingred
         if not isinstance(self.ingredients, list):
@@ -80,9 +80,9 @@ class IngredBlock(WidgetWrap):
                 self.widgets.append(ingred_entry)
         self._refresh()
 
-    #def __init__(self, ingredients=[], alt_ingred=None):
-   #     self.blocks = deque()
-   #     self.add_block(ingredients, alt_ingred)
+    def __init__(self, ingredients=[], alt_ingred=None):
+        self.blocks = deque()
+        self.add_block(ingredients, alt_ingred)
     
     def _refresh(self, focus_item=0):
         self.ingred_edits = Pile(self.widgets, focus_item=focus_item)
@@ -94,7 +94,7 @@ class IngredBlock(WidgetWrap):
         if not isinstance(ingredients, list):
             raise TypeError('IngredBlock only excepts a list of ingredients')
         
-        self.widgets = deque()
+        widgets = deque()
         self.add_button = Button('Add Ingredient',
                     on_press=self.add_ingredient)
         self.add_button = Padding(self.add_button, 'left', right=8)
@@ -164,6 +164,9 @@ class IngredBlock(WidgetWrap):
         if isinstance(row_minus_one, (AttrMap, Columns)):
             return
         
+        if self.num_widgets == 1:
+            self.widgets[1].edit_text = 'add ingred'
+            return
         try: 
             row = self.row
             col = len(self.widgets[row].edit_text) + 2
@@ -215,11 +218,10 @@ class IngredBlock(WidgetWrap):
                 'f9': self._test
                 }
         try:
-            # I only need to pass key to one function
-            # unfortunately i will have to pass to all
-            # this is still a verly clean way to write the code
-            # as opossed to the if, elif, etc....
-            # perhaps a better way eludes me
+            # I only need to pass key to one function unfortunately 
+            # i will have to pass to all. This is still a very clean 
+            # way to write the code as opossed to if, elif, etc....
+            # perhaps a even better way eludes me
             pressed[key](size, key)
         except KeyError:
             return key
@@ -413,8 +415,7 @@ class RecipeEditor:
                      HEADINGS['method'],
                      ], 79, 0, 2, 'left'
                 )
-        self.ingred_blocks = []
-        self.ingred_blocks.append(IngredBlock(self.r.get_ingredients()))
+        self.ingred_block = IngredBlock(self.r.get_ingredients())
         #self.ingred_block.add_block(self.r.get_ingredients())
         
         if self.r.has_alt_ingredients: 
@@ -426,7 +427,7 @@ class RecipeEditor:
         
         test = Padding(Button('hello', self._testing), 'left', ('relative', 20))
         general_and_dish = GridFlow([self.general_info, radio_dish_types, test], 53, 0, 2, 'left')
-        ingred_and_method = GridFlow([Pile(self.ingred_blocks), self.method_block], 79, 0, 2, 'left')
+        ingred_and_method = GridFlow([self.ingred_block, self.method_block], 79, 0, 2, 'left')
         
         self.listbox_content = [
                 BLANK,
@@ -519,6 +520,7 @@ class RecipeEditor:
     def _testing(self, button):
         self.ingred_blocks.append(IngredBlock(['hello']))
         self.loop = self.setup_view()
+        
     
     def start(self):
         self.loop = self.setup_view()

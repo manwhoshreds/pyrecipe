@@ -39,19 +39,17 @@
     license: GPL, see LICENSE for more details.
 """
 
-import sys
 import os
+import sys
 import re
 import io
-from fractions import Fraction
-from zipfile import ZipFile, BadZipFile
-from numbers import Number
 from lxml import etree
 from urllib.request import urlopen
+from zipfile import ZipFile, BadZipFile
 
 from birdseye import eye
-
 import bs4
+
 from pyrecipe import ureg, Q_, p, color, RecipeNum, yaml
 from pyrecipe.config import (S_DIV, RECIPE_DATA_FILES,
                              SCRIPT_DIR, PP, CAN_UNITS,
@@ -59,7 +57,7 @@ from pyrecipe.config import (S_DIV, RECIPE_DATA_FILES,
                              PREP_TYPES, RECIPE_DATA_DIR)
 from pyrecipe.utils import (check_source, get_file_name, mins_to_hours, 
                             all_singular, wrap)
-
+import pyrecipe.utils
 
 class Recipe:
     """The recipe class is used to perform operations on
@@ -493,11 +491,10 @@ class Ingredient:
         self.color = color
         self._name = ingredients['name']
         self._unit = ''
-        self._amount = 0
         self._amounts = ingredients.get('amounts', '')
         if self._amounts:
             try: 
-                self._amount = RecipeNum(self._amounts[amount_level].get('amount', 0))
+                self._amount = RecipeNum(self._amounts[amount_level].get('amount', ''))
             except ValueError:
                 self._amount = 0
             self._unit = self._amounts[amount_level]['unit']
@@ -529,7 +526,7 @@ class Ingredient:
                                                 color_normal, self._size, 
                                                 self.unit, self.name)
             # the previous line adds unwanted spaces if 
-            # values are absent we simply clean that up here.
+            # values are absent, we simply clean that up here.
             cleaned_string = " ".join(string.split())
             if self._prep is '':
                 return cleaned_string
@@ -546,7 +543,10 @@ class Ingredient:
 
     @property
     def amount(self):
-        return self._amount
+        if self._amount > 0:
+            return self._amount
+        else:
+            return ''
 
     @property
     def unit(self):
@@ -658,6 +658,7 @@ class IngredientParser:
             amount = str(RecipeNum(' '.join(amnt_list)))
         except ValueError:
             amount = ''
+            
 
         ingred_list = [x for x in ingred_list if x not in amnt_list]
         ingred_string = ' '.join(ingred_list)
@@ -703,13 +704,9 @@ class IngredientParser:
 
 # testing
 if __name__ == '__main__':
-    r = Recipe('test')
-    test = r.get_ingredients()
+    r = Recipe('sesame chicken')
+    test = r['ingredients']
     print(test)
-    parser = IngredientParser()
-    for item in test:
-        parsed = parser.parse(item)
-        print(parsed)
 
 
 

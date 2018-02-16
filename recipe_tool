@@ -11,7 +11,7 @@ from pyrecipe import manifest
 def recipe_completer(**kwargs):
     recipe_list = [x.lower() for x in manifest.recipe_names]
     return recipe_list
-	
+
 def parse_args():
     parser = argparse.ArgumentParser(
         description="Recipe_tool has tab completion functionality. After adding a recipe, \
