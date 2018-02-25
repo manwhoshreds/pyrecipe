@@ -7,7 +7,6 @@ import sys
 import subprocess
 import string
 import textwrap
-from fractions import Fraction
 from numbers import Number
 
 from pyrecipe.config import (__version__, __scriptname__, __email__,
@@ -17,7 +16,7 @@ from pyrecipe import yaml, p, color, manifest
 
 
 def mins_to_hours(mins):
-    days = mins // 1440
+    #days = mins // 1440
     hours = mins // 60
     minutes = mins - hours * 60
     if not hours:

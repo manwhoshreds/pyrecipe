@@ -11,7 +11,10 @@ from birdseye import eye
 class RecipeDB:
     """A database subclass for pyrecipe"""
     def __init__(self):
-        self.conn = sqlite3.connect(DB_FILE)
+        try: 
+            self.conn = sqlite3.connect(DB_FILE)
+        except sqlite3.OperationalError:
+            sys.exit('Something unexpected happened....')
         self.c = self.conn.cursor()
 
     def add_recipe(self, recipe):

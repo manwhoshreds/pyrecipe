@@ -1,7 +1,13 @@
 #!/usr/bin/env python
 # -*- encoding: UTF-8 -*-
 # PYTHON_ARGCOMPLETE_OK
+"""
+    recipe_tool
+    ~~~~~~~~~~~
 
+    recipe_tool is the front end commandline tool for use
+    with the pyrecipe library
+"""
 import argparse
 import argcomplete
 
@@ -9,10 +15,12 @@ from pyrecipe.config import RAND_RECIPE_COUNT
 from pyrecipe import manifest
 
 def recipe_completer(**kwargs):
+    """list of recipes for completer"""
     recipe_list = [x.lower() for x in manifest.recipe_names]
     return recipe_list
 
 def parse_args():
+    """parse the args"""
     parser = argparse.ArgumentParser(
         description="Recipe_tool has tab completion functionality. After adding a recipe, \
                      simply run recipe_tool print <TAB><TAB> to view whats available.",
@@ -24,18 +32,18 @@ def parse_args():
         help='Show this help message and quit'
     )
     parser.add_argument(
-        "-v", 
-        "--verbose", 
-        dest="verbose", 
-        action="count", 
+        "-v",
+        "--verbose",
+        dest="verbose",
+        action="count",
         default=0,
         help="Verbose output. Use -vv to increase verbosity"
     )
     parser.add_argument(
-        "-V", 
-        "--version", 
-        dest="version", 
-        action="store_true", 
+        "-V",
+        "--version",
+        dest="version",
+        action="store_true",
         help="Print version and exit"
     )
     parser.add_argument(
@@ -52,14 +60,11 @@ def parse_args():
     # recipe_tool print
     parser_print = subparser.add_parser("print", help="Print the recipe to screen")
     parser_print.add_argument("source", help="Recipe to print").completer = recipe_completer
-    
-    # recipe_tool list
-    parser_list = subparser.add_parser("list", help="List recipes")
-  
-    # recipe_tool edit	
+
+    # recipe_tool edit
     parser_edit = subparser.add_parser("edit", help="Edit a recipe data file")
     parser_edit.add_argument("source", type=str, help="Recipe to edit").completer = recipe_completer
-    
+
     # recipe_tool add
     parser_add = subparser.add_parser("add", help='Add a recipe')
     parser_add.add_argument("name", help='Name of the recipe to add')
@@ -76,13 +81,13 @@ def parse_args():
         help='List of recipe to compile shopping list'
     ).completer = recipe_completer
     parser_shop.add_argument(
-        "-r", 
-        "--random", 
-        nargs='?', 
-        const=RAND_RECIPE_COUNT, 
-        type=int , 
-        metavar="NUM", 
-        dest="random", 
+        "-r",
+        "--random",
+        nargs='?',
+        const=RAND_RECIPE_COUNT,
+        type=int,
+        metavar="NUM",
+        dest="random",
         help="Pick n random recipes for the week"
     )
     parser_shop.add_argument(
@@ -93,34 +98,28 @@ def parse_args():
         help="Write the shopping list to an xml file"
     )
 
-    # recipe_tool show
-    parser_show = subparser.add_parser(
-        "show",
-        help='Show information about recipes'
-    )
-
     # recipe_tool dump
     parser_dump = subparser.add_parser(
         "dump",
         help="Dump yaml or xml representation of recipe stdout"
-    ) 
+    )
     parser_dump.add_argument(
         "source",
         help="Recipe to dump data from"
     ).completer = recipe_completer
     parser_dump.add_argument(
-        "-x", 
-        "--xml", 
-        dest="data_type", 
-        action="store_const", 
+        "-x",
+        "--xml",
+        dest="data_type",
+        action="store_const",
         const="xml",
         help="Dump sorce xml tree to standard output"
     )
     parser_dump.add_argument(
-        "-y", 
-        "--yaml", 
-        dest="data_type", 
-        action="store_const", 
+        "-y",
+        "--yaml",
+        dest="data_type",
+        action="store_const",
         const="yaml",
         help="Dump source yaml to standard output"
     )
@@ -164,7 +163,7 @@ def parse_args():
         action='store_true',
         help="Export recipe file"
     )
-    
+
     # recipe_tool fetch
     parser_fetch = subparser.add_parser(
         "fetch",
@@ -179,13 +178,13 @@ def parse_args():
         "-s",
         "--save",
         action="store_true",
-        help="Save file, default behaviour just prints recipe to stdout"
+        help="Save file, default behaviour just prints recipe to stdout."
     )
-    
-    # auto completion	
+
+    # auto completion
     argcomplete.autocomplete(parser)
-    
-    import sys	
+
+    import sys
     if len(sys.argv) == 1:
         sys.exit(parser.print_help())
     else:
@@ -196,27 +195,23 @@ def main():
     args = parse_args()
     import pyrecipe.argfuncs as argfunc
     action = {
-            'gui': argfunc.start_gui,
-            'version': argfunc.version,
-            'print': argfunc.print_recipe,
-            'list': argfunc.print_list,
-            'edit': argfunc.edit_recipe,
-            'add': argfunc.add_recipe,
-            'remove': argfunc.delete_recipe,
-            'shop': argfunc.print_shopping_list,
-            'show': argfunc.show_stats,
-            'dump': argfunc.dump_data,
-            'export': argfunc.export_recipes,
-            'fetch': argfunc.fetch_recipe
-            }
+        'gui': argfunc.start_gui,
+        'version': argfunc.version,
+        'print': argfunc.print_recipe,
+        'edit': argfunc.edit_recipe,
+        'add': argfunc.add_recipe,
+        'remove': argfunc.delete_recipe,
+        'shop': argfunc.print_shopping_list,
+        'dump': argfunc.dump_data,
+        'export': argfunc.export_recipes,
+        'fetch': argfunc.fetch_recipe
+        }
     if args.guimode:
         action['gui']()
     if args.version:
         action['version'](args)
     else:
         action[args.subparser](args)
-            
+
 if __name__ == '__main__':
     main()
-    
-

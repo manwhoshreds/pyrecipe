@@ -5,5 +5,6 @@ setup(
     version='0.8.0',
     packages=['pyrecipe',],
     license='GNU General Public License',
-    long_description=open('README.rst').read()
-)
+    long_description='A python tool for managing recipes',
+    install_requires=['pint', 'urwid', 'bs4']
+    )

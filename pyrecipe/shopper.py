@@ -84,7 +84,11 @@ class ShoppingList:
             # this is a workaround until a better solution is found
             if 'can' in unit:
                 unit = 'can'
-            quant = Q_(amount, unit)
+            try: 
+                quant = Q_(amount, unit)
+            except ValueError:
+                print(amount, unit)
+                exit()
             
             if name in sl.keys():
                 orig_ingred = sl[name]

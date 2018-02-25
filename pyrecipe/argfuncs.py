@@ -42,11 +42,13 @@ def print_shopping_list(args):
 
 def fetch_recipe(args):
     scraper = RecipeWebScraper(args.url)
-    RecipeEditor(scraper, add=True).start()
+    scraper.print_recipe()
+    #RecipeEditor(scraper, add=True).start()
 
 def print_recipe(args):
     r = Recipe(args.source)
-    r.print_recipe(args.verbose)
+    r.print_recipe(verb_level=0)
+
 
 def show_stats(args):
     utils.stats(args.verbose)

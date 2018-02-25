@@ -16,7 +16,7 @@ __scriptname__  = os.path.basename(sys.argv[0])
 config = configparser.ConfigParser()
 
 CONFIG_DIR         = os.path.expanduser('~/.config/pyrecipe/')
-DB_FILE            = os.path.expanduser('~/code/git/pyrecipe/pyrecipe/test.db')
+DB_FILE            = os.path.expanduser('~/git/pyrecipe/pyrecipe/test.db')
 RECIPE_DATA_DIR    = os.path.expanduser('~/.config/pyrecipe/recipe_data/')
 CONFIG_FILE        = CONFIG_DIR + 'config'
 SCRIPT_DIR         = os.path.dirname(__file__)
