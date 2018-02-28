@@ -28,7 +28,6 @@ yaml.default_flow_style = False
 
 ureg = UnitRegistry()
 ureg.load_definitions(os.path.expanduser('~/.local/lib/python3.6/site-packages/pyrecipe/culinary_units.txt'))
-#Q_ = ureg.Quantity
 
 
 class Q_(ureg.Quantity):

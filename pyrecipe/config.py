@@ -43,6 +43,7 @@ DISH_TYPES           = ['main', 'side', 'dessert', 'condiment', 'dip',
 			'salad dressing', 'sauce', 'base', 'garnish', 'seasoning']
 CULINARY_UNITS       = ['teaspoon', 'tablespoon', 'ounce', 'fulid ounce', 
                         'cup', 'quart', 'gallon', 'pound', 'pint', 'gram', 'mililiter']
+
 PINT_UNDEFINED_UNITS = ['box', 'taste', 'inch piece', 'stick', 'bottle', 'each', 'bag',
                         'whole', 'link', 'sprig', 'stalk', 'can', 'pinch', 'cube', 'splash']
 # CAN_UNITS are checked later and put in parenthesis

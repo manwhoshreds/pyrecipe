@@ -50,6 +50,7 @@ class RecipeDB:
 
     def __del__(self):
         self.conn.close()
+        print('DATABASE CLOSED')
 
     def _commit(self):
         self.conn.commit()

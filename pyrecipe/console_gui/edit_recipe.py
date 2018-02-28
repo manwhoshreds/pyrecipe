@@ -12,7 +12,6 @@ import textwrap
 from collections import deque
 
 import urwid
-#from birdseye import eye
 
 from pyrecipe.config import (DISH_TYPES)
 from pyrecipe.recipe import Recipe, IngredientParser
@@ -50,13 +49,13 @@ class IngredientsContainer(urwid.WidgetWrap):
         if not isinstance(self.ingredients, list):
             raise TypeError('IngredientBlock only excepts a list of ingredients')
 
-        self.add_ingred_block = urwid.Button(
-                'Add Ingredient Block',
-                on_press=self._add_block
-                )
+        add_ingred_block = urwid.Button('Add Ingredient Block',
+                on_press=self._add_block)
+        
+        add_ingred_block = urwid.GridFlow([add_ingred_block], 24, 0, 0, 'left')
         
         self.ingred_blocks = []
-        self.ingred_blocks.append(self.add_ingred_block)
+        self.ingred_blocks.append(add_ingred_block)
         self._add_block(self.ingredients)
         if self.alt_ingredients:
             for item in self.alt_ingredients:
@@ -84,16 +83,6 @@ class IngredientsContainer(urwid.WidgetWrap):
     def blocks(self):
         return self.ingred_blocks[1:]
     
-    def get_ingredients(self):
-        ingredients = []
-        alt_ingreds = {}
-        for block in self.blocks[1:]:
-            ingred = block.get_ingredients()
-            for item in ingred:
-                ingredients.append(item)
-            
-        return ingredients, alt_ingreds
-        
 
 class IngredBlock(urwid.WidgetWrap):
 
@@ -144,7 +133,7 @@ class IngredBlock(urwid.WidgetWrap):
     def delete_block(self, button):
         self.widgets.clear()
         del self.ingredients
-        self.alt_ingred = ''
+        self.name = ''
         self._refresh()
 
     def toggle_name(self, button):
@@ -224,7 +213,11 @@ class IngredBlock(urwid.WidgetWrap):
     def keypress(self, size, key):
         key = super().keypress(size, key)
         self.row = self.ingred_block.focus_position
-        self.end_col = len(self.widgets[self.row].edit_text) + 2
+        try: 
+            self.end_col = len(self.widgets[self.row].edit_text) + 2
+        except:
+            return key
+        
         pressed = {
                 'enter': self.on_enter,
                 'ctrl d': self.del_ingredient,
@@ -243,16 +236,18 @@ class IngredBlock(urwid.WidgetWrap):
 
     def on_enter(self, size, key):
         try:
-            self.ingred_edits.set_focus(self.row + 1)
+            self.ingred_block.set_focus(self.row + 1)
         except IndexError:
-            pass
+            self.add_ingredient()
 
     def get_ingredients(self):
         ingredients = []
         alt_ingreds = {}
         for item in self.widgets:
+            if isinstance(item, urwid.AttrMap):
+                self.name = item.original_widget.get_edit_text()
             if isinstance(item, urwid.Edit):
-                    ingredients.append(item.get_edit_text())
+                ingredients.append(item.get_edit_text())
         
         if self.name:
             alt_ingreds[self.name] = ingredients
@@ -331,8 +326,8 @@ class MethodBlock(urwid.WidgetWrap):
             self.method_widgets.remove(item)
         except IndexError:
             pass
-        #self._refresh(self.focus_pos)
-        self._renumber(self.focus_pos)
+        self._refresh(self.focus_pos)
+        #self._renumber(self.focus_pos)
 
     def keypress(self, size, key):
         self.focus_pos = self.pile.focus_position
@@ -377,6 +372,7 @@ class RecipeEditor:
         self.ingred_widgets = []
         self.alt_ingred_widgets = []
         self.method_widgets = []
+        self.recipe_hash = self.r.get_hash()
 
     def setup_view(self):
         header = urwid.AttrMap(urwid.Text(self.welcome), 'header')
@@ -421,10 +417,7 @@ class RecipeEditor:
                      ], 79, 0, 2, 'left'
                 )
          
-        ingreds = self.r.get_ingredients()
-        alt_ingreds = None
-        if self.r.has_alt_ingredients:
-            alt_ingreds = self.r.get_alt_ingredients()
+        ingreds, alt_ingreds = self.r.get_ingredients()
         self.ingred_block = IngredientsContainer(ingredients=ingreds, alt_ingredients=alt_ingreds) 
         self.method_block = MethodBlock(self.r.get_method())
         
@@ -448,15 +441,25 @@ class RecipeEditor:
     
     def handle_input(self, key):
         if key in ('f8', 'esc'):
-            raise urwid.ExitMainLoop()
+            if self.recipe_changed:
+                PopUp()
+                print(self.r)
+            else:
+                raise urwid.ExitMainLoop()
         elif key in ('f2',):
             self.save_recipe()
-        elif key in ('f9',):
-            self._testing(key)
         else:
             pass
-
-    def save_recipe(self):
+    
+    def recipe_changed(self):
+        changed = False
+        recipe = self.get_recipe_data()
+        if self.recipe_hash != recipe.get_hash():
+            changed == True
+        return changed
+    
+    def get_recipe_data(self):
+        """Grab the data from the editors"""
         # gen info
         gen_info = self.general_info.original_widget.widget_list
         for item in gen_info:
@@ -472,18 +475,25 @@ class RecipeEditor:
         # ingredients
         ingredients = []
         alt_ingreds = []
+        names = []
         for block in self.ingred_block.blocks:
             ingreds = block.get_ingredients()
             if isinstance(ingreds, dict):
                 alt_ingreds.append(ingreds)
+                names += list(ingreds.keys())
             else:
                 ingredients += ingreds
-                
         self.r.ingredients = ingredients
+        
         if len(alt_ingreds) > 0:
+            self.r['alt_ingreds'] = names
             self.r.alt_ingredients = alt_ingreds
         else:
             self.r['alt_ingreds'] = None
+            try: 
+                del self.r['alt_ingredients']
+            except KeyError:
+                pass
         
         # method
         steps = []
@@ -495,12 +505,15 @@ class RecipeEditor:
             steps.append({'step': step})
         
         self.r['steps'] = steps
-        
-        # save the recipe
+        return self.r
+    
+    def save_recipe(self):
+        """Saves the current state of the recipe"""
+        reicpe = self.get_recipe_data()
         if self.add:
-            self.r.save(save_as=True)
+            recipe.save(save_as=True)
         else:
-            self.r.save()
+            reicpe.save()
         raise urwid.ExitMainLoop()
 
     def start(self):
@@ -513,7 +526,7 @@ class PopUpDialog(urwid.WidgetWrap):
     signals = ['close']
     def __init__(self):
         close_button = urwid.Button("that's pretty cool")
-        connect_signal(close_button, 'click',
+        urwid.connect_signal(close_button, 'click',
             lambda button:self._emit("close"))
         pile = urwid.Pile([urwid.Text(
             "^^  I'm attached to the widget that opened me. "
@@ -522,15 +535,15 @@ class PopUpDialog(urwid.WidgetWrap):
         self.__super.__init__(urwid.AttrMap(fill, 'popbg'))
 
 
-class ThingWithAPopUp(urwid.PopUpLauncher):
+class PopUp(urwid.PopUpLauncher):
     def __init__(self):
         self.__super.__init__(urwid.Button("click-me"))
-        connect_signal(self.original_widget, 'click',
+        urwid.connect_signal(self.original_widget, 'click',
             lambda button: self.open_pop_up())
 
     def create_pop_up(self):
         pop_up = PopUpDialog()
-        connect_signal(pop_up, 'close',
+        urwid.connect_signal(pop_up, 'close',
             lambda button: self.close_pop_up())
         return pop_up
 

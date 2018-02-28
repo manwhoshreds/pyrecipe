@@ -90,71 +90,11 @@ def columnify(iterable):
     padded = [x.ljust(widest) for x in strings]
     return padded
 
-def improper_to_mixed(fraction):
-    str_frac = str(fraction)
-    x = str_frac.split('/')
-    num = int(x[0])
-    den = int(x[1])
-    whole_part = num // den
-    fract_part = num % den
-    return "{} {}/{}".format(whole_part, fract_part, den)
-
 def all_singular(iterable):
     words = [p.singular_noun(x) for x in iterable]
     return words
 
-def template(recipe_name):
-    """Start the interactive template builder"""
-    
-    try:
-        print("Interactive Template Builder. Press Ctrl-c to abort.\n")
-        template = ""
-        template += "recipe_name: {}\n".format(recipe_name)
-        # check if file exist, lets catch this early so we 
-        # can exit before entering in all the info
-        file_name = get_source_path(recipe_name)
-        if os.path.isfile(file_name):
-            sys.exit("File with this name already exist in directory exiting...")
-        while True:
-            dish_type = input("Enter dish type: ")
-            if dish_type not in DISH_TYPES:
-                print("Dish type must be one of {}".format(", ".join(DISH_TYPES)))
-                continue
-            else:
-                break
-        template += "dish_type: {}\n".format(dish_type)
-        prep_time = input("Enter prep time: ")
-        template += "prep_time: {}\n".format(prep_time)
-        cook_time = input("Enter cook time (optional): ")
-        if cook_time:
-            template += "cook_time: {}\n".format(cook_time)
-        author = input("Enter authors full name: ")
-        template += "author: {}\n".format(author)
-        ingred_amount = 0
-        while True:
-            try:
-                ingred_amount = int(input("Enter amount of ingredients: "))
-            except ValueError:
-                print("Input must be a number")
-                continue
-            else:
-                break
-        template += "ingredients:\n"
-        for item in range(ingred_amount):
-            template += "    - name:\n      amounts:\n        - amount:\n          unit:\n"
-        template += "steps:\n  - step: Coming soon"
-        template += VIM_MODE_LINE
-        temp_yaml = yaml.load(template)
-        print("Writing to file... " + file_name)
-        with open(file_name, "w") as file:
-            yaml.dump(temp_yaml, file)
-    
-    except KeyboardInterrupt:
-        sys.exit("\nExiting...")
-    
-    subprocess.call([EDITOR, file_name])
-
-def check_file(soruce, silent=False):
+def check_file(source, silent=False):
     """function to validate Open Recipe Format files"""
     
     failure_keys = []

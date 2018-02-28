@@ -177,6 +177,7 @@ def parse_args():
     parser_fetch.add_argument(
         "-s",
         "--save",
+        dest="save",
         action="store_true",
         help="Save file, default behaviour just prints recipe to stdout."
     )

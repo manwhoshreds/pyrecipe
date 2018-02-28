@@ -43,12 +43,12 @@ import os
 import sys
 import re
 import io
+import hashlib
 from collections import OrderedDict
-from lxml import etree
 from urllib.request import urlopen
 from zipfile import ZipFile, BadZipFile
+from lxml import etree
 
-#from birdseye import eye
 import bs4
 
 from pyrecipe import ureg, p, color, RecipeNum, yaml
@@ -60,8 +60,11 @@ from pyrecipe.utils import (check_source, get_file_name, mins_to_hours,
                             all_singular, wrap)
 
 class Recipe:
-    """The recipe class is used to perform operations on
-    recipe source files such as print and save xml.
+    """The main recipe class used for I/O operations of recipe files
+
+    The recipe class can open .recipe files and read their data. It can
+    change the state of a recipe file and then save the new data back to
+    the reicpe file.
     """
     # All keys applicable to the Open Recipe Format
     orf_keys = ['recipe_name', 'recipe_uuid', 'dish_type', 'category',
@@ -72,6 +75,7 @@ class Recipe:
     def __init__(self, source=''):
         self.source = source
         self.xml_root = etree.Element('recipe')
+        self.md5 = hashlib.md5
         if self.source:
             self.source = check_source(source)
             try:
@@ -91,10 +95,10 @@ class Recipe:
             self._recipe_data = {}
             # dish type should default to main
             self['dish_type'] = 'main'
-        
+
         # Ingredient parser for setting ingredients
         self.ingred_parser = IngredientParser()
-        
+
         # All root keys included in the particular source which may
         # or may not include all keys from the orf spec
         self.yaml_root_keys = list(self._recipe_data.keys())
@@ -105,16 +109,14 @@ class Recipe:
     def _scan_recipe(self):
         """Internal method used to build the xml tree"""
         # alt_ingreds
-        self._has_alt_ingreds = False
         if self['alt_ingredients']:
-            self._has_alt_ingreds = True
             self.alt_ingreds = []
             # building a list of alternative ingredient names here helps later
             # in get_ingredients()
             for item in self['alt_ingredients']:
                 name = list(item.keys())
                 self.alt_ingreds += name
-        
+
         # recipe name
         if self['recipe_name']:
             xml_recipe_name = etree.SubElement(self.xml_root, "name")
@@ -193,22 +195,21 @@ class Recipe:
         # ingredients
         if self['ingredients']:
             xml_ingredients = etree.SubElement(self.xml_root, "ingredients")
-            for ingred in self.get_ingredients():
+            for ingred in self.get_ingredients()[0]:
                 xml_ingred = etree.SubElement(xml_ingredients, "ingred")
                 xml_ingred.text = ingred
 
         # alt_ingredients
-        try:
+        if self['alt_ingredients']:
             for item in self.alt_ingreds:
                 xml_alt_ingredients = etree.SubElement(self.xml_root,
-                                                       "alt_ingredients")
+                                                           "alt_ingredients")
                 xml_alt_ingredients.set('alt_name', item.title())
-                for ingred in self.get_ingredients(alt_ingred=item):
+                for ingred in self.get_ingredients()[1]:
                     xml_alt_ingred = etree.SubElement(xml_alt_ingredients,
-                                                      "alt_ingred")
+                                                          "alt_ingred")
                     xml_alt_ingred.text = ingred
-        except (AttributeError, TypeError):
-            pass
+        
         # steps
         xml_steps = etree.SubElement(self.xml_root, "steps")
         for step in self['steps']:
@@ -227,7 +228,7 @@ class Recipe:
         try:
             for item in self.alt_ingreds:
                 recipe_string += "\n{}\n".format(item.title())
-                for ingred in self.get_ingredients(alt_ingred=item):
+                for ingred in self.get_ingredients()[1]:
                     recipe_string += "{}\n".format(ingred)
         except AttributeError:
             pass
@@ -269,24 +270,24 @@ class Recipe:
     @property
     def recipe_data(self):
         return self['_recipe_data']
-    
+
     @property
     def ingredients(self):
-        return self['ingredients'] 
+        return self['ingredients']
 
     @ingredients.setter
     def ingredients(self, value):
         if not isinstance(value, list):
             raise TypeError('Ingredients must be a list')
-        
+
         ingredients = []
         for item in value:
             ingred = self.ingred_parser.parse(item, return_dict=True)
             ingredients.append(ingred)
-        
+
         self['ingredients'] = ingredients
         self._scan_recipe()
-    
+
     @property
     def alt_ingredients(self):
         return self['alt_ingredients']
@@ -298,7 +299,7 @@ class Recipe:
         if not isinstance(value[0], dict):
             raise TypeError('Alt Ingredients must be a list, of dicts')
 
-        alt_ingredients = [] 
+        alt_ingredients = []
         for item in value:
             alt_name = list(item.keys())[0]
             ingreds = list(item.values())[0]
@@ -312,7 +313,7 @@ class Recipe:
 
         self['alt_ingredients'] = alt_ingredients
         self._scan_recipe()
-    
+
     @property
     def file_name(self):
         if self.source:
@@ -320,10 +321,6 @@ class Recipe:
         else:
             name = None
         return name
-
-    @property
-    def has_alt_ingredients(self):
-        return self._has_alt_ingreds
 
     @property
     def xml_data(self):
@@ -335,38 +332,36 @@ class Recipe:
                                 pretty_print=True).decode('utf-8')
         return result
 
-    def get_ingredients(self, amount_level=0, alt_ingred=None, color=False):
+    def get_hash(self):
+        recipe_hash = self.md5(str(self).encode('utf-8'))
+        return recipe_hash.hexdigest()
+
+    def get_ingredients(self, amount_level=0, color=False):
         """Returns a list of ingredient strings.
 
         args:
 
         - amount_level: in aticipation of a future feature, this is for multiple
                         recipe yields.
-
-        - alt_ingred: If an alt ingredient is given, it returns the ingredients
-                      associated with the particular alt ingredient.
         """
         ingredients = []
-        if alt_ingred:
-            for item in self['alt_ingredients']:
-                try:
-                    ingredient_data = item[alt_ingred]
-                except KeyError:
-                    pass
-        else:
-            ingredient_data = self['ingredients']
-
-        for item in ingredient_data:
+        for item in self['ingredients']:
             ingred = Ingredient(item, color=color)
             ingredients.append(str(ingred))
-        return ingredients
-    
-    def get_alt_ingredients(self):
-        alt_ingreds = OrderedDict()
-        for item in self.alt_ingreds:
-            alt_ingreds[item] = self.get_ingredients(alt_ingred=item)
-        return alt_ingreds
-    
+        
+        named_ingredients = OrderedDict()
+        if self['alt_ingredients']:
+            alt_ingreds = self['alt_ingredients']
+            for item in alt_ingreds:
+                alt_name = list(item.keys())[0]
+                ingred_list = []
+                for ingredient in list(item.values())[0]:
+                    ingred = Ingredient(ingredient, color=color)
+                    ingred_list.append(str(ingred))
+                named_ingredients[alt_name] = ingred_list
+        
+        return ingredients, named_ingredients
+
     def print_recipe(self, verb_level=0):
         """Print recipe to standard output."""
         print(color.RECIPENAME
@@ -374,53 +369,57 @@ class Recipe:
               + color.NORMAL
               + "\n")
 
+
         if self['dish_type']:
             print("Dish Type: {}"
                   .format(str(self['dish_type'])))
-        if self['prep_time']:
-            print("Prep time: {}"
-                  .format(mins_to_hours(RecipeNum(self['prep_time']))))
-        if self['cook_time']:
-            print("Cook time: {}"
-                  .format(mins_to_hours(RecipeNum(self['cook_time']))))
-        if self['bake_time']:
-            print("Bake time: {}"
-                  .format(mins_to_hours(RecipeNum(self['bake_time']))))
-        if self['ready_in']:
-            print("Ready in: {}"
-                  .format(mins_to_hours(RecipeNum(self['ready_in']))))
+        for item in ('prep_time', 'cook_time', 'bake_time', 'ready_in'):
+            if self[item]:
+                print("{}: {}"
+                      .format(item.title(),
+                              mins_to_hours(RecipeNum(self[item]))))
         if self['oven_temp']:
             print("Oven temp: {} {}"
                   .format(str(self['oven_temp']['amount']),
                           self['oven_temp']['unit']))
 
         if verb_level >= 1:
-            self['price'] and print("Price: {}".format(self['price']))
-            self['author'] and print("Author: {}".format(self['author']))
-            self['source_url'] and print("URL: {}".format(self['source_url']))
-            self['category'] and print("Category(s): "
-                                       + ", ".join(self['category']))
-            self['yields'] and print("Yields: " + str(self['yeilds']))
+            if self['price']:
+                print("Price: {}".format(self['price']))
+            if self['author']:
+                print("Author: {}".format(self['author']))
+            if self['source_url']:
+                print("URL: {}".format(self['source_url']))
+            if self['category']:
+                print("Category(s): "
+                      + ", ".join(self['category']))
+            if self['yields']:
+                print("Yields: " + str(self['yeilds']))
             if self['notes']:
                 print(S_DIV)
                 print("NOTES:")
                 for note in self['notes']:
                     print(note)
 
-        print(color.LINE + S_DIV + color.TITLE + "\nIngredients:" + color.NORMAL)
+        print(color.LINE
+              + S_DIV
+              + color.TITLE
+              + "\nIngredients:"
+              + color.NORMAL)
+
         # Put together all the ingredients
-        for ingred in self.get_ingredients(color=True):
+        ingreds, alt_ingreds = self.get_ingredients(color=True)
+        for ingred in ingreds:
             print(ingred)
-        try:
-            for item in self.alt_ingreds:
+        
+        if alt_ingreds:
+            for item in alt_ingreds:
                 print("\n{}{}{}".format(color.TITLE,
                                         item.title(),
                                         color.NORMAL))
 
-                for ingred in self.get_ingredients(alt_ingred=item, color=True):
+                for ingred in alt_ingreds[item]:
                     print(ingred)
-        except (AttributeError, TypeError):
-            pass
 
         print("\n"
               + color.LINE
@@ -488,7 +487,9 @@ class Recipe:
 
 
 class RecipeWebScraper(Recipe):
+    """A Webscraper class to download recipes from the web
 
+    """
     def __init__(self, url):
         super().__init__()
         self['source_url'] = url
@@ -534,7 +535,7 @@ class RecipeWebScraper(Recipe):
 
 
 class Ingredient:
-    """The ingredient class is used to build an ingredietns object
+    """The ingredient class is used to build an ingredient object
 
     :param name: name of the ingredient e.g onion
     :param amount: amount of ingredient
@@ -623,8 +624,6 @@ class Ingredient:
                 return "{}".format(unit)
             else:
                 return self._unit
-        else:
-            return self._unit
 
     @property
     def quantity(self):
@@ -663,8 +662,8 @@ class IngredientParser:
     """
     def __init__(self):
         self.punctuation = "!\"#$%&'()*+,:;<=>?@[\]^_`{|}~"
-        self._OUNCE_CAN_RE = re.compile(r'\d+ (ounce|pound) (can|bag)')
-        self._PAREN_RE = re.compile(r'\((.*?)\)')
+        self.ounce_can_re = re.compile(r'\d+ (ounce|pound) (can|bag)')
+        self.paren_re = re.compile(r'\((.*?)\)')
 
     def _preprocess_string(self, string):
         """preprocess the string"""
@@ -672,13 +671,13 @@ class IngredientParser:
         # on some sites througout the web. There maybe others
         if '⁄' in string:
             string = string.replace('⁄', '/')
-        test = self._PAREN_RE.search(string)
-        if test:
-            print(test.group())
+        parens = self.paren_re.search(string)
         stripd_punc = self._strip_punctuation(string).lower()
         singular_string = ' '.join(all_singular(stripd_punc.split()))
         return singular_string
 
+    def _strip_punctuation(self, string):
+        return ''.join(c for c in string if c not in self.punctuation)
 
     def parse(self, string='', return_dict=False):
         """parse the ingredient string"""
@@ -692,7 +691,7 @@ class IngredientParser:
 
         # string preprocessing
         pre_string = self._preprocess_string(string)
-        match = self._OUNCE_CAN_RE.search(pre_string)
+        match = self.ounce_can_re.search(pre_string)
         if match:
             pre_string = pre_string.replace(match.group(), '')
             unit = match.group()
@@ -720,7 +719,7 @@ class IngredientParser:
             if item in ingred_string:
                 size = item
                 ingred_string = ingred_string.replace(item, '')
-
+        
         for item in INGRED_UNITS:
             if item in ingred_string.split():
                 unit = item
@@ -740,9 +739,11 @@ class IngredientParser:
         if name.lower() == 'salt and pepper':
             name = 's&p'
         ingred_dict['amounts'] = [{'amount': amount, 'unit': unit}]
-        if size: ingred_dict['size'] = size
+        if size: 
+            ingred_dict['size'] = size
         ingred_dict['name'] = name
-        if prep: ingred_dict['prep'] = prep
+        if prep: 
+            ingred_dict['prep'] = prep
 
         ingred_list = [amount, size, unit, name, prep]
 
@@ -751,15 +752,11 @@ class IngredientParser:
         else:
             return ingred_list
 
-    def _strip_punctuation(self, string):
-        return ''.join(c for c in string if c not in self.punctuation)
 
 # testing
 if __name__ == '__main__':
-    r = Recipe('sesame chicken')
-    test = r['ingredients']
-    r.ingredients = ['1 tablespoon onion, chopped', '200 sillyheads, minced']
-    r.alt_ingredients = [{'marmalad': ['1 tablespoon onion', '3 tablespoons silly, chopped']}]
-    print(r['alt_ingredients'])
-    r.print_recipe()
-
+    r = Recipe('korean pork tacos')
+    i, a = r.get_ingredients()
+    print(r.get_hash())
+    #i = IngredientParser()
+    #i.parse('1 tablespoon onion')

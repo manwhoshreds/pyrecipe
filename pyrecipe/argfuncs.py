@@ -22,7 +22,6 @@ def start_gui():
     gui.start()
 
 def print_shopping_list(args):
-	
     if args.random:
         rr = shopper.RandomShoppingList(args.random)
         rr.print_random()
@@ -42,13 +41,14 @@ def print_shopping_list(args):
 
 def fetch_recipe(args):
     scraper = RecipeWebScraper(args.url)
-    scraper.print_recipe()
-    #RecipeEditor(scraper, add=True).start()
+    if args.save:
+        RecipeEditor(scraper, add=True).start()
+    else:
+        scraper.print_recipe()
 
 def print_recipe(args):
     r = Recipe(args.source)
     r.print_recipe(verb_level=0)
-
 
 def show_stats(args):
     utils.stats(args.verbose)
@@ -110,5 +110,3 @@ def export_recipes(args):
                     .format(color.ERROR))
         else:
             shutil.copyfile(src, dst)
-
-
