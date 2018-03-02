@@ -75,7 +75,6 @@ class Recipe:
     def __init__(self, source=''):
         self.source = source
         self.xml_root = etree.Element('recipe')
-        self.md5 = hashlib.md5
         if self.source:
             self.source = check_source(source)
             try:
@@ -223,15 +222,14 @@ class Recipe:
         recipe_string += "\nIngredients:\n"
 
         # Put together all the ingredients
-        for ingred in self.get_ingredients():
-            recipe_string += "{}\n".format(ingred)
-        try:
-            for item in self.alt_ingreds:
+        ingreds, alt_ingreds = self.get_ingredients()
+        for item in ingreds:
+            recipe_string += "{}\n".format(item)
+        if alt_ingreds: 
+            for item in alt_ingreds:
                 recipe_string += "\n{}\n".format(item.title())
                 for ingred in self.get_ingredients()[1]:
                     recipe_string += "{}\n".format(ingred)
-        except AttributeError:
-            pass
 
         recipe_string += "\nMethod:\n"
         # print steps
@@ -333,7 +331,8 @@ class Recipe:
         return result
 
     def get_hash(self):
-        recipe_hash = self.md5(str(self).encode('utf-8'))
+        md5 = hashlib.md5
+        recipe_hash = md5(str(self['_recipe_data']).encode('utf-8'))
         return recipe_hash.hexdigest()
 
     def get_ingredients(self, amount_level=0, color=False):
@@ -647,7 +646,8 @@ class IngredientParser:
     - return_dict: return ingredient data in a dict in the form of
                    {'name': <name>,
                     'size': <size>,
-                    'amounts': [{'amount': <amount>, 'uniit': <unit>}]
+                    'amounts': [{'amount': <amount>, 'uniit': <unit>}],
+                    'note': <note>,
                     'prep': <prep>}
 
     examples:
@@ -672,6 +672,7 @@ class IngredientParser:
         if '⁄' in string:
             string = string.replace('⁄', '/')
         parens = self.paren_re.search(string)
+        print(parens.group())
         stripd_punc = self._strip_punctuation(string).lower()
         singular_string = ' '.join(all_singular(stripd_punc.split()))
         return singular_string
@@ -679,7 +680,7 @@ class IngredientParser:
     def _strip_punctuation(self, string):
         return ''.join(c for c in string if c not in self.punctuation)
 
-    def parse(self, string='', return_dict=False):
+    def parse(self, string='', return_dict=True):
         """parse the ingredient string"""
         amount = ''
         size = ''
@@ -691,6 +692,7 @@ class IngredientParser:
 
         # string preprocessing
         pre_string = self._preprocess_string(string)
+        print(pre_string)
         match = self.ounce_can_re.search(pre_string)
         if match:
             pre_string = pre_string.replace(match.group(), '')
@@ -756,7 +758,7 @@ class IngredientParser:
 # testing
 if __name__ == '__main__':
     r = Recipe('korean pork tacos')
-    i, a = r.get_ingredients()
-    print(r.get_hash())
-    #i = IngredientParser()
-    #i.parse('1 tablespoon onion')
+    i = IngredientParser()
+    #test = i.parse('1 large onion, very finely chopped (I prefer white onions)')
+    test = i.parse('1 (16 ounce) can tamatoes, very finely chopped (I prefer white onions)')
+    print(test)

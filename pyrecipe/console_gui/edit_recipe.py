@@ -27,6 +27,7 @@ PALETTE = ([
     ('heading', 'dark cyan', 'black'),
     ('key', 'light cyan', 'black'),
     ('title', 'light cyan', 'default'),
+    ('red', 'light red', 'default', 'bold'),
     ('pyrecipe', 'light green', 'black'),
     ('button', 'yellow', 'dark green', 'standout'),
     ])
@@ -34,7 +35,6 @@ PALETTE = ([
 HEADINGS = {
             'general_info': urwid.AttrMap(urwid.Text('General Information:'), 'heading'),
             'dish_types': urwid.AttrMap(urwid.Text('Dish Types:'), 'heading'),
-            'testing': urwid.AttrMap(urwid.Text('Testing:'), 'heading'),
             'ingredients': urwid.AttrMap(urwid.Text('Ingredients:'), 'heading'),
             'method': urwid.AttrMap(urwid.Text('Method:'), 'heading'),
             }
@@ -42,6 +42,7 @@ HEADINGS = {
 BLANK = urwid.Divider()
 
 class IngredientsContainer(urwid.WidgetWrap):
+    """The IngredientsContatiner holds multiple IngredBlocks"""
 
     def __init__(self, ingredients=[], alt_ingredients=None):
         self.ingredients = ingredients
@@ -85,7 +86,7 @@ class IngredientsContainer(urwid.WidgetWrap):
     
 
 class IngredBlock(urwid.WidgetWrap):
-
+    """Ingredient block for displaying editable ingredients"""
     def __init__(self, ingredients=[], name=None):
         self.ingredients = ingredients
         self.name = name
@@ -192,7 +193,7 @@ class IngredBlock(urwid.WidgetWrap):
             col = len(self.widgets[row].edit_text) - 2
         
         self.ingred_block.move_cursor_to_coords(size, col, row)
-        if key == 'f5':
+        if key == 'ctrl up':
             widget = self.widgets[self.row-1]
             if isinstance(widget, (urwid.AttrMap, urwid.Padding, urwid.Columns)):
                 return
@@ -221,8 +222,8 @@ class IngredBlock(urwid.WidgetWrap):
         pressed = {
                 'enter': self.on_enter,
                 'ctrl d': self.del_ingredient,
-                'f5': self.move_entry,
-                'f6': self.move_entry,
+                'ctrl up': self.move_entry,
+                'ctrl down': self.move_entry,
                 }
         try:
             # I only need to pass key to one function
@@ -351,7 +352,7 @@ class RecipeEditor:
         ('pyrecipe', ' PYRECIPE    '),
         ('key', "F2"), ('footer', ' Save  '),
         ('key', "Esc"), ('footer', ' Quit  '),
-        ('key', "F5/F6"), ('footer', ' Move item UP/DOWN  '),
+        ('key', "Ctrl-UP/DOWN"), ('footer', ' Move item UP/DOWN  '),
         ('key', "Ctrl-d"), ('footer', ' Delete item  ')
         ])
 
@@ -373,14 +374,15 @@ class RecipeEditor:
         self.alt_ingred_widgets = []
         self.method_widgets = []
         self.recipe_hash = self.r.get_hash()
+        self.data = self.r['_recipe_data']
 
     def setup_view(self):
         header = urwid.AttrMap(urwid.Text(self.welcome), 'header')
         listbox = self.setup_listbox()
-        frame = urwid.Frame(urwid.AttrMap(listbox, 'body'), header=header)
-        frame.footer = urwid.AttrMap(urwid.Text(
+        self.frame = urwid.Frame(urwid.AttrMap(listbox, 'body'), header=header)
+        self.frame.footer = urwid.AttrMap(urwid.Text(
             self.footer_text), 'footer')
-        loop = urwid.MainLoop(frame, palette=PALETTE)
+        loop = urwid.MainLoop(self.frame, palette=PALETTE)
         loop.unhandled_input = self.handle_input
         loop.pop_ups = True
         return loop
@@ -395,7 +397,8 @@ class RecipeEditor:
             if item.get_label() == self.r['dish_type']:
                 item.set_state(True)
 
-        self.general_info = [urwid.AttrMap(urwid.Edit('Enter recipe name: ', self.r['recipe_name']), 'recipe_name'),
+        self.general_info = [urwid.AttrMap(
+                                urwid.Edit('Enter recipe name: ', self.r['recipe_name'], wrap='clip'), 'recipe_name'),
                              urwid.AttrMap(urwid.IntEdit('Enter prep time: ', self.r['prep_time']), 'prep_time'),
                              urwid.AttrMap(urwid.IntEdit('Enter cook time: ', self.r['cook_time']), 'cook_time'),
                              urwid.AttrMap(urwid.IntEdit('Enter bake time: ', self.r['bake_time']), 'bake_time'),
@@ -408,8 +411,7 @@ class RecipeEditor:
         headings_general_and_dish_types = urwid.GridFlow(
                     [HEADINGS['general_info'], 
                      HEADINGS['dish_types'],
-                     HEADINGS['testing']
-                     ], 53, 0, 2, 'left'
+                     ], 79, 0, 2, 'left'
                 )
         headings_ingred_and_method = urwid.GridFlow(
                     [HEADINGS['ingredients'], 
@@ -421,7 +423,7 @@ class RecipeEditor:
         self.ingred_block = IngredientsContainer(ingredients=ingreds, alt_ingredients=alt_ingreds) 
         self.method_block = MethodBlock(self.r.get_method())
         
-        general_and_dish = urwid.GridFlow([self.general_info, radio_dish_types], 53, 0, 2, 'left')
+        general_and_dish = urwid.GridFlow([self.general_info, radio_dish_types], 79, 0, 2, 'left')
         ingred_and_method = urwid.GridFlow([self.ingred_block, self.method_block], 79, 0, 2, 'left')
         
         self.listbox_content = [
@@ -439,11 +441,66 @@ class RecipeEditor:
         
         return list_box
     
+    def quit_prompt(self):
+        """Pop-up window that appears when you try to quit."""
+        # Nothing fancy here.
+        text = "Changes have been made. Quit?"
+        question = urwid.Text(("bold", text), "center")
+        quit_btn = urwid.AttrMap(urwid.Button(
+            "Quit", self.prompt_answer, "quit"), "red", None)
+        save_btn = urwid.AttrMap(urwid.Button(
+            "Save", self.prompt_answer, "save"), "title", None)
+        cancel_btn = urwid.AttrMap(urwid.Button(
+            "Cancel", self.prompt_answer, "cancel"), "title", None)
+
+        prompt = urwid.LineBox(urwid.ListBox(urwid.SimpleFocusListWalker(
+            [question, BLANK, BLANK, quit_btn, save_btn, cancel_btn])))
+        
+        overlay = urwid.Overlay(
+            prompt, self.loop.widget,
+            "center", 19, "middle", 9,
+            16, 8)
+        
+        self.loop.widget = overlay 
+   
+    def test_prompt(self):
+        """Pop-up window that appears when you try to quit."""
+        # Nothing fancy here.
+        text = self.r['_recipe_data']
+        new_data = self.get_recipe_data()
+        text2 = new_data['_recipe_data']
+        data = urwid.Text(str(text), "center")
+        data2 = urwid.Text(str(text2), "center")
+        quit_btn = urwid.AttrMap(urwid.Button(
+            "Quit", self.prompt_answer, "quit"), "red", None)
+        cancel_btn = urwid.AttrMap(urwid.Button(
+            "Cancel", self.prompt_answer, "cancel"), "title", None)
+
+        prompt = urwid.LineBox(urwid.ListBox(urwid.SimpleFocusListWalker(
+            [data, BLANK, BLANK, data2, BLANK, quit_btn, cancel_btn])))
+        
+        overlay = urwid.Overlay(
+            prompt, self.loop.widget,
+            "center", 100, "middle", 100,
+            16, 8)
+        
+        self.loop.widget = overlay 
+    
+    def prompt_answer(self, button, label):
+        if label == 'quit':
+            raise urwid.ExitMainLoop()
+        elif label == 'save':
+            self.save_recipe()
+        else:
+            self.loop.widget = self.frame
+
     def handle_input(self, key):
         if key in ('f8', 'esc'):
-            if self.recipe_changed:
-                PopUp()
-                print(self.r)
+            changed = self.recipe_changed()
+            if changed:
+                #self.quit_prompt()
+                self.test_prompt()
+                return
             else:
                 raise urwid.ExitMainLoop()
         elif key in ('f2',):
@@ -455,7 +512,7 @@ class RecipeEditor:
         changed = False
         recipe = self.get_recipe_data()
         if self.recipe_hash != recipe.get_hash():
-            changed == True
+            changed = True
         return changed
     
     def get_recipe_data(self):
@@ -486,10 +543,8 @@ class RecipeEditor:
         self.r.ingredients = ingredients
         
         if len(alt_ingreds) > 0:
-            self.r['alt_ingreds'] = names
             self.r.alt_ingredients = alt_ingreds
         else:
-            self.r['alt_ingreds'] = None
             try: 
                 del self.r['alt_ingredients']
             except KeyError:
@@ -509,47 +564,17 @@ class RecipeEditor:
     
     def save_recipe(self):
         """Saves the current state of the recipe"""
-        reicpe = self.get_recipe_data()
+        recipe = self.get_recipe_data()
         if self.add:
             recipe.save(save_as=True)
         else:
-            reicpe.save()
+            recipe.save()
         raise urwid.ExitMainLoop()
 
     def start(self):
         self.loop = self.setup_view()
         self.loop.run()
         
-# may use later
-class PopUpDialog(urwid.WidgetWrap):
-    """A dialog that appears with nothing but a close button """
-    signals = ['close']
-    def __init__(self):
-        close_button = urwid.Button("that's pretty cool")
-        urwid.connect_signal(close_button, 'click',
-            lambda button:self._emit("close"))
-        pile = urwid.Pile([urwid.Text(
-            "^^  I'm attached to the widget that opened me. "
-            "Try resizing the window!\n"), close_button])
-        fill = Filler(pile)
-        self.__super.__init__(urwid.AttrMap(fill, 'popbg'))
-
-
-class PopUp(urwid.PopUpLauncher):
-    def __init__(self):
-        self.__super.__init__(urwid.Button("click-me"))
-        urwid.connect_signal(self.original_widget, 'click',
-            lambda button: self.open_pop_up())
-
-    def create_pop_up(self):
-        pop_up = PopUpDialog()
-        urwid.connect_signal(pop_up, 'close',
-            lambda button: self.close_pop_up())
-        return pop_up
-
-    def get_pop_up_parameters(self):
-        return {'left':0, 'top':1, 'overlay_width':32, 'overlay_height':7}
-
 
 if __name__ == '__main__':
     RecipeEditor('test').start()
