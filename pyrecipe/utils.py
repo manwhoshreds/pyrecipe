@@ -1,5 +1,5 @@
 """
-	utils for the pyrecipe program
+    utils for the pyrecipe program
 
 """
 import os
@@ -7,13 +7,99 @@ import sys
 import subprocess
 import string
 import textwrap
+from math import ceil
+from zipfile import ZipFile
 from numbers import Number
+
+import inflect
 
 from pyrecipe.config import (__version__, __scriptname__, __email__,
                              RECIPE_DATA_DIR, RECIPE_DATA_FILES,
-                             DISH_TYPES, VIM_MODE_LINE, EDITOR)
-from pyrecipe import yaml, p, color, manifest
+                             DISH_TYPES, EDITOR, DB_FILE)
+from pyrecipe import yaml
+from .recipe_numbers import RecipeNum
 
+
+class RecipeManifest:
+    """A manifest of recipe information
+    
+    In the future, this will be entirely handled by sqlite
+    """
+    def __init__(self):
+        self.recipe_names = []
+        self.maindish_names = []
+        self.dressing_names = []
+        self.sauce_names = []
+        self.salad_names = []
+        self.recipe_authors = []
+        self.urls = []
+        for item in RECIPE_DATA_FILES:
+            try:
+                with ZipFile(item, 'r') as zfile:
+                    try: 
+                        with zfile.open('recipe.yaml', 'r') as stream:
+                            _recipe = yaml.load(stream)
+                            self.recipe_names.append(_recipe['recipe_name'].lower())
+                            if _recipe['dish_type'] == 'main':
+                                self.maindish_names.append(_recipe['recipe_name'])
+                            if _recipe['dish_type'] == 'salad dressing':
+                                self.dressing_names.append(_recipe['recipe_name'])
+                            if _recipe['dish_type'] == 'sauce':
+                                self.sauce_names.append(_recipe['recipe_name'])
+                            if _recipe['dish_type'] == 'salad':
+                                self.salad_names.append(_recipe['recipe_name'])
+                    except KeyError:
+                        sys.exit('cannot find recipe.yaml')
+            except EOFError:
+                print(item)
+
+manifest = RecipeManifest()
+
+class Color:
+    """The color class defines various colors for pyrecipe"""
+    NORMAL = '\033[m'
+    ERROR = '\033[1;31m'
+    RECIPENAME = '\033[1;36m'
+    TITLE = '\033[36m'
+    NUMBER = '\033[1;33m'
+    REGULAR = '\033[1;35m'
+    LINE = '\033[1;37m'
+    INFORM = '\033[1;36m'
+
+color = Color()
+
+# Inflects default behaviour for returning the singular of a word is
+# not very useful to this project because it returns false if
+# it comes across a non-noun word. Therfore, the following is a
+# functional work-a-round
+class InflectEngine(inflect.engine):
+    """An inflect subclass to implement different singular behaviour"""
+    def __init__(self):
+        super().__init__()
+        self.ignored = ['roma', 'canola', 'hummus']
+
+    def singular_noun(self, word):
+        if word in self.ignored:
+            return word
+
+        singular = super().singular_noun(word)
+        if singular:
+            return singular
+        else:
+            return word
+
+    def plural(self, word, count=None):
+        if count: 
+            if count <= 1:
+                return word
+            else:
+                word = super().plural(word)
+                return word
+        else:
+            word = super().plural(word)
+            return word
+
+p = InflectEngine()
 
 def mins_to_hours(mins):
     #days = mins // 1440

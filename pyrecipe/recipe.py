@@ -44,6 +44,7 @@ import sys
 import re
 import io
 import hashlib
+import string
 from collections import OrderedDict
 from urllib.request import urlopen
 from zipfile import ZipFile, BadZipFile
@@ -51,13 +52,18 @@ from lxml import etree
 
 import bs4
 
-from pyrecipe import ureg, p, color, RecipeNum, yaml
+import pyrecipe.utils as utils
+from pyrecipe import ureg, yaml
 from pyrecipe.config import (S_DIV, RECIPE_DATA_FILES,
                              PP, CAN_UNITS, INGRED_UNITS,
                              SIZE_STRINGS, PREP_TYPES,
                              RECIPE_DATA_DIR)
-from pyrecipe.utils import (check_source, get_file_name, mins_to_hours,
-                            all_singular, wrap)
+from pyrecipe.recipe_numbers import RecipeNum
+
+# Global re's
+PORTIONED_UNIT_RE = re.compile(r'\(?\d+ (ounce|pound)\)? (can|bag)') 
+PAREN_RE = re.compile(r'\((.*?)\)')
+
 
 class Recipe:
     """The main recipe class used for I/O operations of recipe files
@@ -76,7 +82,7 @@ class Recipe:
         self.source = source
         self.xml_root = etree.Element('recipe')
         if self.source:
-            self.source = check_source(source)
+            self.source = utils.check_source(source)
             try:
                 with ZipFile(self.source, 'r') as zfile:
                     try:
@@ -85,10 +91,10 @@ class Recipe:
                     except KeyError:
                         sys.exit("{}ERROR: Can not find recipe.yaml."
                                  " Is this really a recipe file?"
-                                 .format(color.ERROR))
+                                 .format(utils.color.ERROR))
             except BadZipFile:
                 sys.exit("{}ERROR: This file is not a zipfile."
-                         .format(color.ERROR))
+                         .format(utils.color.ERROR))
 
         else:
             self._recipe_data = {}
@@ -249,7 +255,7 @@ class Recipe:
 
     def __setitem__(self, key, value):
         if key == 'recipe_name':
-            self.source = get_file_name(value)
+            self.source = utils.get_file_name(value)
         if key in Recipe.orf_keys:
             self.__dict__['_recipe_data'][key] = value
             self._scan_recipe()
@@ -363,9 +369,9 @@ class Recipe:
 
     def print_recipe(self, verb_level=0):
         """Print recipe to standard output."""
-        print(color.RECIPENAME
+        print(utils.color.RECIPENAME
               + self['recipe_name'].title()
-              + color.NORMAL
+              + utils.color.NORMAL
               + "\n")
 
 
@@ -376,7 +382,7 @@ class Recipe:
             if self[item]:
                 print("{}: {}"
                       .format(item.title(),
-                              mins_to_hours(RecipeNum(self[item]))))
+                              utils.mins_to_hours(RecipeNum(self[item]))))
         if self['oven_temp']:
             print("Oven temp: {} {}"
                   .format(str(self['oven_temp']['amount']),
@@ -400,11 +406,11 @@ class Recipe:
                 for note in self['notes']:
                     print(note)
 
-        print(color.LINE
+        print(utils.color.LINE
               + S_DIV
-              + color.TITLE
+              + utils.color.TITLE
               + "\nIngredients:"
-              + color.NORMAL)
+              + utils.color.NORMAL)
 
         # Put together all the ingredients
         ingreds, alt_ingreds = self.get_ingredients(color=True)
@@ -413,24 +419,24 @@ class Recipe:
         
         if alt_ingreds:
             for item in alt_ingreds:
-                print("\n{}{}{}".format(color.TITLE,
+                print("\n{}{}{}".format(utils.color.TITLE,
                                         item.title(),
-                                        color.NORMAL))
+                                        utils.color.NORMAL))
 
                 for ingred in alt_ingreds[item]:
                     print(ingred)
 
         print("\n"
-              + color.LINE
+              + utils.color.LINE
               + S_DIV
-              + color.TITLE
+              + utils.color.TITLE
               + "\nMethod:"
-              + color.NORMAL)
+              + utils.color.NORMAL)
 
         # print steps
-        wrapped = wrap(self.get_method())
+        wrapped = utils.wrap(self.get_method())
         for index, string in wrapped:
-            print("{}{}{} {}".format(color.NUMBER, index, color.NORMAL, string))
+            print("{}{}{} {}".format(utils.color.NUMBER, index, utils.color.NORMAL, string))
 
     def get_method(self):
         steps = []
@@ -565,8 +571,8 @@ class Ingredient:
         color_number = ''
         color_normal = ''
         if self.color:
-            color_number = color.NUMBER
-            color_normal = color.NORMAL
+            color_number = utils.color.NUMBER
+            color_normal = utils.color.NORMAL
 
         if self._name == 's&p':
             return "Salt and pepper to taste"
@@ -592,7 +598,7 @@ class Ingredient:
     @property
     def name(self):
         if not self._unit or self._unit == 'each':
-            return p.plural(self._name, self._amount)
+            return utils.p.plural(self._name, self._amount)
         else:
             return self._name
 
@@ -612,9 +618,9 @@ class Ingredient:
                 unit = self._unit.split()
                 unit_paren = "({})".format(unit[0] + " " + unit[1])
                 unit = unit_paren + unit[2]
-                return "{}".format(p.plural(unit))
+                return "{}".format(utils.p.plural(unit))
             else:
-                return p.plural(self._unit)
+                return utils.p.plural(self._unit)
         elif self._amount <= 1:
             if self._unit in CAN_UNITS:
                 unit = self._unit.split()
@@ -661,39 +667,38 @@ class IngredientParser:
     {'amounts': [{'amount': 1, 'unit': 'tablespoon'}], 'name': 'onion chopped', 'prep': 'chopped'}
     """
     def __init__(self):
-        self.punctuation = "!\"#$%&'()*+,:;<=>?@[\]^_`{|}~"
-        self.ounce_can_re = re.compile(r'\d+ (ounce|pound) (can|bag)')
-        self.paren_re = re.compile(r'\((.*?)\)')
-
+        omitted = '-/()'
+        self.punct = ''.join(c for c in string.punctuation if c not in omitted)
+    
     def _preprocess_string(self, string):
         """preprocess the string"""
         # this special forward slash character (differs from '/') is encounterd
         # on some sites througout the web. There maybe others
         if '⁄' in string:
             string = string.replace('⁄', '/')
-        parens = self.paren_re.search(string)
-        print(parens.group())
-        stripd_punc = self._strip_punctuation(string).lower()
-        singular_string = ' '.join(all_singular(stripd_punc.split()))
+        parens = PAREN_RE.search(string)
+        stripd_punc = ''.join(c for c in string if c not in self.punct).lower()
+        singular_string = ' '.join(utils.all_singular(stripd_punc.split()))
         return singular_string
 
     def _strip_punctuation(self, string):
-        return ''.join(c for c in string if c not in self.punctuation)
+        #'1 (232323 ounce) can tamatoes, very *&@#finely chopped (I prefer white onions)'
+        return ''.join(c for c in string if c not in self.punct)
 
     def parse(self, string='', return_dict=True):
         """parse the ingredient string"""
-        amount = ''
+        amount = '' 
         size = ''
         unit = ''
         name = ''
         prep = ''
+        note = ''
         ingred_list = []
         ingred_dict = {}
 
         # string preprocessing
         pre_string = self._preprocess_string(string)
-        print(pre_string)
-        match = self.ounce_can_re.search(pre_string)
+        match = PORTIONED_UNIT_RE.search(pre_string)
         if match:
             pre_string = pre_string.replace(match.group(), '')
             unit = match.group()
@@ -746,6 +751,8 @@ class IngredientParser:
         ingred_dict['name'] = name
         if prep: 
             ingred_dict['prep'] = prep
+        if note:
+            ingred_dict['note'] = note
 
         ingred_list = [amount, size, unit, name, prep]
 
@@ -760,5 +767,5 @@ if __name__ == '__main__':
     r = Recipe('korean pork tacos')
     i = IngredientParser()
     #test = i.parse('1 large onion, very finely chopped (I prefer white onions)')
-    test = i.parse('1 (16 ounce) can tamatoes, very finely chopped (I prefer white onions)')
+    test = i.parse('1 (232323 ounce) can tamatoes, very *&@#finely chopped (I prefer white onions)')
     print(test)

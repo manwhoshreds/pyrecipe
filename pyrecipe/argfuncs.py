@@ -8,10 +8,11 @@ import shutil
 import os
 from zipfile import ZipFile
 
-from .config import PP, EDITOR, RECIPE_DATA_FILES
-from pyrecipe import utils, shopper, manifest, color
-from pyrecipe.recipe import Recipe, RecipeWebScraper
+import pyrecipe.utils as utils
 import pyrecipe.gui.maingui as gui
+import pyrecipe.shopper as shopper
+from .config import PP, EDITOR, RECIPE_DATA_FILES
+from pyrecipe.recipe import Recipe, RecipeWebScraper
 from pyrecipe.console_gui.edit_recipe import RecipeEditor
 
 def dump_data(args):

@@ -12,8 +12,6 @@ from pyrecipe.gui.add_recipe import AddRecipe
 from pyrecipe.gui.settings import Settings
 from pyrecipe.gui.tk_utils import *
 import pyrecipe.config as conf
-from pyrecipe import manifest
-#from .config import *
 from pyrecipe.utils import *
 
 

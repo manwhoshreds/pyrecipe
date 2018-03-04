@@ -9,6 +9,7 @@ import sys
 import pprint
 import configparser
 
+
 __version__     = '1.0.0'
 __email__       = "m.k.miller@gmx.com"
 __scriptname__  = os.path.basename(sys.argv[0])
@@ -39,24 +40,28 @@ PP                   = pprint.PrettyPrinter(compact=True, indent=4)
 S_DIV                = "~" * 60
 REQUIRED_ORD_KEYS    = ['recipe_name', 'dish_type', 
                         'prep_time', 'ingredients', 'steps']
+
 DISH_TYPES           = ['main', 'side', 'dessert', 'condiment', 'dip', 
 			'salad dressing', 'sauce', 'base', 'garnish', 'seasoning']
+
 CULINARY_UNITS       = ['teaspoon', 'tablespoon', 'ounce', 'fulid ounce', 
                         'cup', 'quart', 'gallon', 'pound', 'pint', 'gram', 'mililiter']
 
 PINT_UNDEFINED_UNITS = ['box', 'taste', 'inch piece', 'stick', 'bottle', 'each', 'bag',
                         'whole', 'link', 'sprig', 'stalk', 'can', 'pinch', 'cube', 'splash']
+
+CAN_UNITS = ['TEST']
 # CAN_UNITS are checked later and put in parenthesis
 # its not considered professional recipe writing
 # to use two numbers in a row, for example "1 32 ounce can"
-CAN_UNITS            = ['32 ounce can', '16 ounce can', '15 ounce can', '8.5 ounce can', '8 ounce can', '2 pound package']
-
-_ingr_units          = CAN_UNITS + CULINARY_UNITS + PINT_UNDEFINED_UNITS
+from pyrecipe.utils import p
+_ingr_units          = CULINARY_UNITS + PINT_UNDEFINED_UNITS
+_plur_units          = [p.plural(x) for x in _ingr_units]
 _size_strs           = ['large', 'medium', 'small', 'heaping']
 _prp_typs            = ['softened', 'diced', 'finely diced', 'shredded', 
                         'tightly packed', 'drained', 'drained and rinsed', 
-                        'deviened', 'cubed', 'chopped', 'finely chopped', 'freshly ground', 
-                        'very finely chopped', 'minced', 'finely minced', 
+                        'deviened', 'cubed', 'chopped', 'finely chopped', 
+                        'freshly ground', 'very finely chopped', 'minced', 'finely minced', 
                         'peeled and finely minced', 'sliced', 'grated', 
                         'squeezed', 'freshly grated', 'peeled', 'quartered', 
                         'julienned', 'puréed', 'crushed', 'coarsely chopped', 
@@ -66,6 +71,9 @@ _prp_typs            = ['softened', 'diced', 'finely diced', 'shredded',
                         'lightly packed', 'thinly sliced', 'finely sliced', 'roasted',
                         'boiling']
 
-INGRED_UNITS          = sorted(_ingr_units)
+INGRED_UNITS          = sorted(_ingr_units + _plur_units)
 SIZE_STRINGS          = sorted(_size_strs)
 PREP_TYPES            = sorted(_prp_typs)
+
+if __name__ == '__main__':
+    print(INGRED_UNITS)

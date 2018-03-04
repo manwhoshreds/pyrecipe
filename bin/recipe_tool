@@ -12,7 +12,7 @@ import argparse
 import argcomplete
 
 from pyrecipe.config import RAND_RECIPE_COUNT
-from pyrecipe import manifest
+from pyrecipe.utils import manifest
 
 def recipe_completer(**kwargs):
     """list of recipes for completer"""

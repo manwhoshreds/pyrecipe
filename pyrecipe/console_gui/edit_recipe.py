@@ -466,7 +466,7 @@ class RecipeEditor:
     def test_prompt(self):
         """Pop-up window that appears when you try to quit."""
         # Nothing fancy here.
-        text = self.r['_recipe_data']
+        text = self.data
         new_data = self.get_recipe_data()
         text2 = new_data['_recipe_data']
         data = urwid.Text(str(text), "center")
@@ -498,8 +498,8 @@ class RecipeEditor:
         if key in ('f8', 'esc'):
             changed = self.recipe_changed()
             if changed:
-                #self.quit_prompt()
-                self.test_prompt()
+                self.quit_prompt()
+                #self.test_prompt()
                 return
             else:
                 raise urwid.ExitMainLoop()
@@ -549,7 +549,7 @@ class RecipeEditor:
                 del self.r['alt_ingredients']
             except KeyError:
                 pass
-        
+         
         # method
         steps = []
         for item in self.method_block.method_widgets:
