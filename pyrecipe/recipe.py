@@ -566,12 +566,15 @@ class Ingredient:
         self.size = ingredients.get('size', '')
         self.prep = ingredients.get('prep', '')
         self.note = ingredients.get('note', '')
-        self.amounts = ingredients['amounts']
-        try: 
-            self.amount = RecipeNum(self.amounts[amount_level].get('amount', ''))
-        except ValueError:
-            self.amount = ''
-        self.unit = self.amounts[amount_level]['unit']
+        self.amount = ''
+        self.unit = ''
+        self.amounts = ingredients.get('amounts', '')
+        if self.amounts:
+            try: 
+                self.amount = RecipeNum(self.amounts[amount_level].get('amount', ''))
+            except ValueError:
+                self.amount = ''
+            self.unit = self.amounts[amount_level]['unit']
         if self.unit == 'each':
             self.unit = ''
 
@@ -664,6 +667,7 @@ class IngredientParser:
 
     def parse(self, string='', return_list=False):
         """parse the ingredient string"""
+        #FIXME: we do not parse the ingredient "pich" right. its causeing problems
         amount = '' 
         size = ''
         unit = ''
