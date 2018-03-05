@@ -11,10 +11,8 @@ from math import ceil
 from zipfile import ZipFile
 from numbers import Number
 
-import inflect
-
-from pyrecipe.config import (__version__, __scriptname__, __email__,
-                             RECIPE_DATA_DIR, RECIPE_DATA_FILES,
+from pyrecipe  import (__version__, __scriptname__, __email__, p)
+from pyrecipe.config import (RECIPE_DATA_DIR, RECIPE_DATA_FILES,
                              DISH_TYPES, EDITOR, DB_FILE)
 from pyrecipe import yaml
 from .recipe_numbers import RecipeNum
@@ -67,39 +65,6 @@ class Color:
     INFORM = '\033[1;36m'
 
 color = Color()
-
-# Inflects default behaviour for returning the singular of a word is
-# not very useful to this project because it returns false if
-# it comes across a non-noun word. Therfore, the following is a
-# functional work-a-round
-class InflectEngine(inflect.engine):
-    """An inflect subclass to implement different singular behaviour"""
-    def __init__(self):
-        super().__init__()
-        self.ignored = ['roma', 'canola', 'hummus']
-
-    def singular_noun(self, word):
-        if word in self.ignored:
-            return word
-
-        singular = super().singular_noun(word)
-        if singular:
-            return singular
-        else:
-            return word
-
-    def plural(self, word, count=None):
-        if count: 
-            if count <= 1:
-                return word
-            else:
-                word = super().plural(word)
-                return word
-        else:
-            word = super().plural(word)
-            return word
-
-p = InflectEngine()
 
 def mins_to_hours(mins):
     #days = mins // 1440

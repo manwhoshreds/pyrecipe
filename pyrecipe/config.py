@@ -9,10 +9,7 @@ import sys
 import pprint
 import configparser
 
-
-__version__     = '1.0.0'
-__email__       = "m.k.miller@gmx.com"
-__scriptname__  = os.path.basename(sys.argv[0])
+from pyrecipe import p
 
 config = configparser.ConfigParser()
 
@@ -47,16 +44,17 @@ DISH_TYPES           = ['main', 'side', 'dessert', 'condiment', 'dip',
 CULINARY_UNITS       = ['teaspoon', 'tablespoon', 'ounce', 'fulid ounce', 
                         'cup', 'quart', 'gallon', 'pound', 'pint', 'gram', 'mililiter']
 
-PINT_UNDEFINED_UNITS = ['box', 'taste', 'inch piece', 'stick', 'bottle', 'each', 'bag',
+PINT_UNDEFINED_UNITS = ['box', 'to taste', 'inch piece', 'stick', 'bottle', 'each', 'bag',
                         'whole', 'link', 'sprig', 'stalk', 'can', 'pinch', 'cube', 'splash']
 
 CAN_UNITS = ['TEST']
 # CAN_UNITS are checked later and put in parenthesis
 # its not considered professional recipe writing
 # to use two numbers in a row, for example "1 32 ounce can"
-from pyrecipe.utils import p
+
 _ingr_units          = CULINARY_UNITS + PINT_UNDEFINED_UNITS
-_plur_units          = [p.plural(x) for x in _ingr_units]
+_nonplurals          = ('each', 'splash')
+_plur_units          = [p.plural(x) for x in _ingr_units if x not in _nonplurals]
 _size_strs           = ['large', 'medium', 'small', 'heaping']
 _prp_typs            = ['softened', 'diced', 'finely diced', 'shredded', 
                         'tightly packed', 'drained', 'drained and rinsed', 

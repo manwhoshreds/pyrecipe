@@ -29,8 +29,7 @@
                         Currently supported sites: www.geniuskitchen.com
     * Inherits from Recipe
 
-    - Ingredient: Returns a gramatically correct ingredient string given
-                  the elments of ingredient data
+    - Ingredient: Used to parse a dict of ingredient data into a string
 
     - IngredientParser: Converts an ingredient string into a list or dict
                         of ingredient data elements.
@@ -38,7 +37,6 @@
     copyright: 2017 by Michael Miller
     license: GPL, see LICENSE for more details.
 """
-
 import os
 import sys
 import re
@@ -48,12 +46,12 @@ import string
 from collections import OrderedDict
 from urllib.request import urlopen
 from zipfile import ZipFile, BadZipFile
-from lxml import etree
 
 import bs4
+from lxml import etree
 
 import pyrecipe.utils as utils
-from pyrecipe import ureg, yaml
+from pyrecipe import ureg, yaml, p
 from pyrecipe.config import (S_DIV, RECIPE_DATA_FILES,
                              PP, CAN_UNITS, INGRED_UNITS,
                              SIZE_STRINGS, PREP_TYPES,
@@ -112,7 +110,7 @@ class Recipe:
         self._scan_recipe()
 
     def _scan_recipe(self):
-        """Internal method used to build the xml tree"""
+        """Scan the recipe to build xml."""
         # alt_ingreds
         if self['alt_ingredients']:
             self.alt_ingreds = []
@@ -222,7 +220,7 @@ class Recipe:
             steps_of.text = step['step']
 
     def __str__(self):
-        """Returns the complete string representation of the recipe data."""
+        """Return the complete string representation of the recipe data."""
         recipe_string = ''
         recipe_string += self['recipe_name'].title() + "\n"
         recipe_string += "\nIngredients:\n"
@@ -273,10 +271,12 @@ class Recipe:
 
     @property
     def recipe_data(self):
+        """Return the recipe data."""
         return self['_recipe_data']
 
     @property
     def ingredients(self):
+        """Return ingredient data."""
         return self['ingredients']
 
     @ingredients.setter
@@ -286,7 +286,7 @@ class Recipe:
 
         ingredients = []
         for item in value:
-            ingred = self.ingred_parser.parse(item, return_dict=True)
+            ingred = self.ingred_parser.parse(item)
             ingredients.append(ingred)
 
         self['ingredients'] = ingredients
@@ -294,6 +294,7 @@ class Recipe:
 
     @property
     def alt_ingredients(self):
+        """Return alt ingredient data."""
         return self['alt_ingredients']
 
     @alt_ingredients.setter
@@ -310,7 +311,7 @@ class Recipe:
             parsed_ingreds = []
             entry = {}
             for ingred in ingreds:
-                parsed = self.ingred_parser.parse(ingred, return_dict=True)
+                parsed = self.ingred_parser.parse(ingred)
                 parsed_ingreds.append(parsed)
             entry[alt_name] = parsed_ingreds
             alt_ingredients.append(entry)
@@ -320,6 +321,7 @@ class Recipe:
 
     @property
     def file_name(self):
+        """Return the file name of the recipe."""
         if self.source:
             name = self.source.split('/')[-1]
         else:
@@ -328,6 +330,7 @@ class Recipe:
 
     @property
     def xml_data(self):
+        """Return the xml data."""
         result = etree.tostring(self.xml_root,
                                 xml_declaration=True,
                                 encoding='utf-8',
@@ -337,12 +340,13 @@ class Recipe:
         return result
 
     def get_hash(self):
+        """Get the recipe hash."""
         md5 = hashlib.md5
-        recipe_hash = md5(str(self['_recipe_data']).encode('utf-8'))
+        recipe_hash = md5(self.get_yaml_string().encode('utf-8'))
         return recipe_hash.hexdigest()
 
     def get_ingredients(self, amount_level=0, color=False):
-        """Returns a list of ingredient strings.
+        """Return a list of ingredient strings.
 
         args:
 
@@ -439,6 +443,7 @@ class Recipe:
             print("{}{}{} {}".format(utils.color.NUMBER, index, utils.color.NORMAL, string))
 
     def get_method(self):
+        """Return a list of steps."""
         steps = []
         for step in self['steps']:
             steps.append(step['step'])
@@ -448,7 +453,9 @@ class Recipe:
         """Dump a data format to screen.
 
         This method is mostly useful for troubleshooting
-        and development
+        and development. It prints data in three formats.
+        raw (just a plain python dictionary with pretty print)
+        yaml, and xml.
         """
         if data_type in ('raw', None):
             PP.pprint(self.recipe_data)
@@ -465,7 +472,11 @@ class Recipe:
         else:
             raise ValueError('data_type argument must be one of '
                              'raw, yaml, or xml')
-
+    
+    def get_yaml_string(self):
+        string = io.StringIO()
+        yaml.dump(self.recipe_data, string)
+        return string.getvalue()
 
     def save(self, save_as=False):
         """save state of class
@@ -492,9 +503,7 @@ class Recipe:
 
 
 class RecipeWebScraper(Recipe):
-    """A Webscraper class to download recipes from the web
-
-    """
+    """A Webscraper class to download recipes from the web."""
     def __init__(self, url):
         super().__init__()
         self['source_url'] = url
@@ -516,7 +525,7 @@ class RecipeWebScraper(Recipe):
         for item in ingred_box:
             for litag in item.find_all('li'):
                 ingred_text = ' '.join(litag.text.strip().split())
-                ingred = ingred_parser.parse(ingred_text, return_dict=True)
+                ingred = ingred_parser.parse(ingred_text)
                 ingredients.append(ingred)
         self['ingredients'] = ingredients
 
@@ -541,7 +550,8 @@ class RecipeWebScraper(Recipe):
 
 class Ingredient:
     """The ingredient class is used to build an ingredient object
-
+    
+    Given a dict of ingredient data, Ingredient class can return a string
     :param name: name of the ingredient e.g onion
     :param amount: amount of ingredient
     :param size: size of ingredient
@@ -549,18 +559,21 @@ class Ingredient:
     :param prep: prep string if any, such as diced, chopped.. etc...
     """
     def __init__(self, ingredients={}, amount_level=0, color=False):
+        if not isinstance(ingredients, dict):
+            raise TypeError('Ingredient only except dict as its first argument')
         self.color = color
-        self._name = ingredients['name']
-        self._unit = ''
-        self._amounts = ingredients.get('amounts', '')
-        if self._amounts:
-            try:
-                self._amount = RecipeNum(self._amounts[amount_level].get('amount', ''))
-            except ValueError:
-                self._amount = 0
-            self._unit = self._amounts[amount_level]['unit']
-        self._size = ingredients.get('size', '')
-        self._prep = ingredients.get('prep', '')
+        self.name = ingredients['name']
+        self.size = ingredients.get('size', '')
+        self.prep = ingredients.get('prep', '')
+        self.note = ingredients.get('note', '')
+        self.amounts = ingredients['amounts']
+        try: 
+            self.amount = RecipeNum(self.amounts[amount_level].get('amount', ''))
+        except ValueError:
+            self.amount = ''
+        self.unit = self.amounts[amount_level]['unit']
+        if self.unit == 'each':
+            self.unit = ''
 
     def __str__(self):
         """Turn ingredient object into a string
@@ -573,66 +586,29 @@ class Ingredient:
         if self.color:
             color_number = utils.color.NUMBER
             color_normal = utils.color.NORMAL
+        
+        if self.note:
+            self.note = '({})'.format(self.note)
 
-        if self._name == 's&p':
-            return "Salt and pepper to taste"
-        elif self._unit == 'taste':
-            return "{} to taste".format(self._name.capitalize())
-        elif self._unit == 'pinch':
-            return "Pinch of {}".format(self._name)
-        elif self._unit == 'splash':
-            return "Splash of {}".format(self._name)
+        if self.unit == 'to taste':
+            return "{} to taste".format(self.name.capitalize())
+        elif self.unit == 'pinch':
+            return "Pinch of {}".format(self.name)
+        elif self.unit == 'splash':
+            return "Splash of {}".format(self.name)
         else:
-            string = "{}{}{} {} {} {}".format(color_number, self.amount,
-                                              color_normal, self._size,
+            ingred_string = "{}{}{} {} {} {}".format(color_number, self.amount,
+                                              color_normal, self.size,
                                               self.unit, self.name)
             # the previous line adds unwanted spaces if
             # values are absent, we simply clean that up here.
-            cleaned_string = " ".join(string.split())
-            if self._prep is '':
-                return cleaned_string
-            else:
-                cleaned_string += ", " + self._prep
-                return cleaned_string
-
-    @property
-    def name(self):
-        if not self._unit or self._unit == 'each':
-            return utils.p.plural(self._name, self._amount)
-        else:
-            return self._name
-
-    @property
-    def amount(self):
-        if self._amount > 0:
-            return self._amount
-        else:
-            return ''
-
-    @property
-    def unit(self):
-        if self._unit == 'each':
-            return ''
-        elif self._amount > 1:
-            if self._unit in CAN_UNITS:
-                unit = self._unit.split()
-                unit_paren = "({})".format(unit[0] + " " + unit[1])
-                unit = unit_paren + unit[2]
-                return "{}".format(utils.p.plural(unit))
-            else:
-                return utils.p.plural(self._unit)
-        elif self._amount <= 1:
-            if self._unit in CAN_UNITS:
-                unit = self._unit.split()
-                unit_paren = "({})".format(unit[0] + " " + unit[1])
-                unit = unit_paren + " " + unit[2]
-                return "{}".format(unit)
-            else:
-                return self._unit
-
-    @property
-    def quantity(self):
-        return self._amount * ureg
+            ingred_string = " ".join(ingred_string.split())
+            if self.prep:
+                ingred_string += ", " + self.prep
+            if self.note:
+                ingred_string += " {}".format(self.note)
+            
+            return ingred_string
 
 
 class IngredientParser:
@@ -667,7 +643,7 @@ class IngredientParser:
     {'amounts': [{'amount': 1, 'unit': 'tablespoon'}], 'name': 'onion chopped', 'prep': 'chopped'}
     """
     def __init__(self):
-        omitted = '-/()'
+        omitted = '-/(),'
         self.punct = ''.join(c for c in string.punctuation if c not in omitted)
     
     def _preprocess_string(self, string):
@@ -676,16 +652,17 @@ class IngredientParser:
         # on some sites througout the web. There maybe others
         if '⁄' in string:
             string = string.replace('⁄', '/')
-        parens = PAREN_RE.search(string)
-        stripd_punc = ''.join(c for c in string if c not in self.punct).lower()
-        singular_string = ' '.join(utils.all_singular(stripd_punc.split()))
-        return singular_string
+        lower_stripd_punc = ''.join(c for c in string if c not in self.punct).lower()
+        return lower_stripd_punc
 
-    def _strip_punctuation(self, string):
+    def _strip_parens(self, string):
+        return ''.join(c for c in string if c not in ('(', ')'))
+
+    def _strip_punct(self, string):
         #'1 (232323 ounce) can tamatoes, very *&@#finely chopped (I prefer white onions)'
         return ''.join(c for c in string if c not in self.punct)
 
-    def parse(self, string='', return_dict=True):
+    def parse(self, string='', return_list=False):
         """parse the ingredient string"""
         amount = '' 
         size = ''
@@ -697,13 +674,30 @@ class IngredientParser:
         ingred_dict = {}
 
         # string preprocessing
-        pre_string = self._preprocess_string(string)
-        match = PORTIONED_UNIT_RE.search(pre_string)
+        ingred_string = self._preprocess_string(string)
+        
+        # get unit
+        match = PORTIONED_UNIT_RE.search(ingred_string)
         if match:
-            pre_string = pre_string.replace(match.group(), '')
-            unit = match.group()
+            ingred_string = ingred_string.replace(match.group(), '')
+            unit = self._strip_parens(match.group())
+        else:
+            for item in INGRED_UNITS:
+                if item in ingred_string.split():
+                    unit = item
+                    ingred_string = ingred_string.replace(item, '')
 
-        ingred_list = pre_string.split()
+        if "to taste" in ingred_string:
+            unit = "to taste"
+            ingred_string = ingred_string.replace(unit, '')
+        
+        # get note if any
+        parens = PAREN_RE.search(ingred_string)
+        if parens:
+            ingred_string = ingred_string.replace(parens.group(), '')
+            note = self._strip_parens(parens.group())
+
+        ingred_list = ingred_string.split()
         amnt_list = []
         for item in ingred_list:
             try:
@@ -731,11 +725,13 @@ class IngredientParser:
             if item in ingred_string.split():
                 unit = item
                 ingred_string = ingred_string.replace(item, '')
-
-        for item in PREP_TYPES:
-            if item in ingred_string:
-                prep = item
-                ingred_string = ingred_string.replace(item, '')
+        
+        try: 
+            assert ',' in ingred_string
+            prep = ingred_string.split(',')[-1].strip()
+            ingred_string = ingred_string.replace(prep, '')
+        except AssertionError:
+            prep = ''
 
         if not unit:
             unit = 'each'
@@ -743,8 +739,7 @@ class IngredientParser:
         # at this point we are assuming that all elements have been removed
         # from list except for the name. Whatever is left gets joined together
         name = ' '.join(ingred_string.split())
-        if name.lower() == 'salt and pepper':
-            name = 's&p'
+        name = name.strip(',')
         ingred_dict['amounts'] = [{'amount': amount, 'unit': unit}]
         if size: 
             ingred_dict['size'] = size
@@ -754,18 +749,20 @@ class IngredientParser:
         if note:
             ingred_dict['note'] = note
 
-        ingred_list = [amount, size, unit, name, prep]
+        ingred_list = [amount, size, unit, name, prep, note]
 
-        if return_dict:
-            return ingred_dict
-        else:
+        if return_list:
             return ingred_list
+        return ingred_dict
 
 
 # testing
 if __name__ == '__main__':
-    r = Recipe('korean pork tacos')
+    r = Recipe('7 cheese mac and cheese')
     i = IngredientParser()
-    #test = i.parse('1 large onion, very finely chopped (I prefer white onions)')
-    test = i.parse('1 (232323 ounce) can tamatoes, very *&@#finely chopped (I prefer white onions)')
+    test = i.parse('1 small onion, chopped')
+    ok = Ingredient(test)
+    print(r.get_yaml_string())
+    print(ok)
     print(test)
+

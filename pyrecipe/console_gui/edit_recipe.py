@@ -370,9 +370,6 @@ class RecipeEditor:
             self.welcome = 'Edit: {}'.format(self.r['recipe_name'])
         
         self.disht_group = []
-        self.ingred_widgets = []
-        self.alt_ingred_widgets = []
-        self.method_widgets = []
         self.recipe_hash = self.r.get_hash()
         self.data = self.r['_recipe_data']
 

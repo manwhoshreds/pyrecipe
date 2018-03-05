@@ -1,7 +1,9 @@
 README.rst
+bin/recipe_tool
 pyrecipe/__init__.py
 pyrecipe/argfuncs.py
 pyrecipe/config.py
+pyrecipe/culinary_units.txt
 pyrecipe/db.py
 pyrecipe/recipe.py
 pyrecipe/recipe_numbers.py
@@ -12,3 +14,10 @@ pyrecipe.egg-info/SOURCES.txt
 pyrecipe.egg-info/dependency_links.txt
 pyrecipe.egg-info/requires.txt
 pyrecipe.egg-info/top_level.txt
+pyrecipe/console_gui/__init__.py
+pyrecipe/console_gui/edit_recipe.py
+pyrecipe/gui/__init__.py
+pyrecipe/gui/add_recipe.py
+pyrecipe/gui/maingui.py
+pyrecipe/gui/settings.py
+pyrecipe/gui/tk_utils.py

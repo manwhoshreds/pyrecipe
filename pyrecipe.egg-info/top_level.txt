@@ -1,1 +1,3 @@
 pyrecipe
+pyrecipe/console_gui
+pyrecipe/gui
