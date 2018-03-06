@@ -59,7 +59,7 @@ from pyrecipe.config import (S_DIV, RECIPE_DATA_FILES,
 from pyrecipe.recipe_numbers import RecipeNum
 
 # Global re's
-PORTIONED_UNIT_RE = re.compile(r'\(?\d+ (ounce|pound)\)? (can|bag)') 
+PORTIONED_UNIT_RE = re.compile(r'\(?\d+[.,]?\d+ (ounce|pound)\)? (cans?|bags?)') 
 PAREN_RE = re.compile(r'\((.*?)\)')
 
 
@@ -595,9 +595,9 @@ class Ingredient:
 
         if self.unit == 'to taste':
             return "{} to taste".format(self.name.capitalize())
-        elif self.unit == 'pinch':
+        elif self.unit == 'pinch of':
             return "Pinch of {}".format(self.name)
-        elif self.unit == 'splash':
+        elif self.unit == 'splash of':
             return "Splash of {}".format(self.name)
         else:
             ingred_string = "{}{}{} {} {} {}".format(color_number, self.amount,
@@ -646,7 +646,7 @@ class IngredientParser:
     {'amounts': [{'amount': 1, 'unit': 'tablespoon'}], 'name': 'onion chopped', 'prep': 'chopped'}
     """
     def __init__(self):
-        omitted = '-/(),'
+        omitted = '-/(),.'
         self.punct = ''.join(c for c in string.punctuation if c not in omitted)
     
     def _preprocess_string(self, string):
@@ -667,7 +667,6 @@ class IngredientParser:
 
     def parse(self, string='', return_list=False):
         """parse the ingredient string"""
-        #FIXME: we do not parse the ingredient "pich" right. its causeing problems
         amount = '' 
         size = ''
         unit = ''
@@ -693,6 +692,12 @@ class IngredientParser:
 
         if "to taste" in ingred_string:
             unit = "to taste"
+            ingred_string = ingred_string.replace(unit, '')
+        elif "splash of" in ingred_string:
+            unit = "splash of"
+            ingred_string = ingred_string.replace(unit, '')
+        elif "pinch of" in ingred_string:
+            unit = "pinch of"
             ingred_string = ingred_string.replace(unit, '')
         
         # get note if any
@@ -760,13 +765,11 @@ class IngredientParser:
         return ingred_dict
 
 
-# testing
 if __name__ == '__main__':
     r = Recipe('7 cheese mac and cheese')
     i = IngredientParser()
-    test = i.parse('1 small onion, chopped')
+    test = i.parse('10 (8989.8080 ounce) cans nutmeg')
+    #test = i.parse('1 whole cube steak')
     ok = Ingredient(test)
-    print(r.get_yaml_string())
-    print(ok)
     print(test)
-
+    print(ok)
