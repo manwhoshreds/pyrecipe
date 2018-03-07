@@ -577,12 +577,14 @@ class Ingredient:
         """
         color_number = ''
         color_normal = ''
+        color_note = ''
         if self.color:
             color_number = color.NUMBER
             color_normal = color.NORMAL
+            color_note = color.INFORM 
         
         if self.note:
-            self.note = '({})'.format(self.note)
+            self.note = '{}({}){}'.format(color_note, self.note, color_normal)
 
         if self.unit == 'to taste':
             return "{} to taste".format(self.name.capitalize())

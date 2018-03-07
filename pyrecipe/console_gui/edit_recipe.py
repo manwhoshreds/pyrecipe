@@ -269,7 +269,116 @@ class IngredBlock(urwid.WidgetWrap):
             return ingredients
 
 
-class MethodBlock(urwid.WidgetWrap):
+class EntryBlock(urwid.WidgetWrap):
+    """Base class for entry piles."""
+    def __init__(self, entries=[], wrap_amount=70):
+        self.widgets = deque()
+        if not isinstance(entries, list):
+            raise TypeError('{} only excepts a list of methods'.format(__class__))
+        
+        wrapped = wrap(entries, wrap_amount)
+        for index, item in wrapped:
+            method_entry = urwid.Edit(str(index) + ' ', item)
+            self.widgets.append(method_entry)
+        self._refresh()
+
+    def _refresh(self, focus_item=0):
+        self.pile = urwid.Pile(self.widgets, focus_item=focus_item)
+        super().__init__(self.pile)
+    
+    @property
+    def widget_list(self):
+        return self.pile.widget_list
+    
+    def keypress(self, size, key):
+        key = super().keypress(size, key)
+        self.row = self.pile.focus_position
+        try: 
+            self.end_col = len(self.widgets[self.row].edit_text) + 2
+        except:
+            return key
+        
+        pressed = {
+                'enter': self.on_enter,
+                'ctrl d': self.del_entry,
+                'ctrl up': self.move_entry,
+                'ctrl down': self.move_entry
+                }
+        try:
+            pressed[key](size, key)
+        except KeyError:
+            return key
+    
+    def add_entry(self):
+        """Add an entry."""
+        caption = str(len(self.widgets) + 1)
+        entry = urwid.Edit(caption + ". ", '')
+        self.widgets.append(entry)
+        new_focus = len(self.widgets) - 1
+        self._refresh(focus_item=new_focus)
+    
+    def del_entry(self, size, key):
+        """Delete an entry."""
+        if len(self.widgets) == 1:
+            return
+        row_minus_one = self.row - 1
+        row_minus_one = self.widgets[row_minus_one]
+        if isinstance(row_minus_one, (urwid.AttrMap, urwid.Columns)):
+            return
+
+        try: 
+            row = self.row
+            col = len(self.widgets[row].edit_text) + 2
+        except IndexError:
+            row = self.row
+            col = len(self.widgets[row].edit_text) - 2
+
+        self.pile.move_cursor_to_coords(size, col, row)
+        try: 
+            item = list(self.widgets)[self.row]
+            self.widgets.remove(item)
+        except IndexError:
+            pass
+        self._refresh(self.row-1)
+    
+    def move_entry(self):
+        """Move an entry up or down."""
+        pass
+        
+    def on_enter(self, size, key):
+        """Respond to the enter key."""
+        try:
+            col = len(self.widgets[self.row + 1].edit_text) + 2
+            self.pile.move_cursor_to_coords(size, col, self.row + 1)
+        except IndexError:
+            self.pile.move_cursor_to_coords(size, 2, self.row)
+            self.add_entry()
+
+    def get_entries(self):
+        """Retrieve the text from the entries."""
+        entries = []
+        for item in self.widget_list:
+            if isinstance(item, urwid.GridFlow):
+                continue
+            text = item.get_edit_text()
+            text = ' '.join(text.split())
+            entries.append(text)
+        return entries
+
+
+class MethodBlock(EntryBlock):
+    """Display an editable list of methods."""
+    def __init__(self, method=[]):
+        self.method = method
+        if len(self.method) < 1:
+            self.method = ['Add method here.']
+        super().__init__(self.method)
+
+    def get_method(self):
+        pass
+        
+
+class MethodBlockBAK(urwid.WidgetWrap):
     """Display an editable list of methods."""
     def __init__(self, method=[]):
         self.method_widgets = deque()
@@ -319,7 +428,7 @@ class MethodBlock(urwid.WidgetWrap):
         self.method_widgets.append(method_entry)
         new_focus = len(self.method_widgets) - 1
         self._refresh(focus_item=new_focus)
-
+    
     def del_method(self, size):
         # dont let the user delete the add button at pos 0
         if self.focus_pos == 0:
@@ -342,6 +451,10 @@ class MethodBlock(urwid.WidgetWrap):
             pass
         self._refresh(self.focus_pos)
         #self._renumber(self.focus_pos)
+    
+    @property
+    def widget_list(self):
+        return self.pile.widget_list
 
     def keypress(self, size, key):
         self.focus_pos = self.pile.focus_position
@@ -358,19 +471,39 @@ class MethodBlock(urwid.WidgetWrap):
             self.pile.set_focus(self.focus_pos + 1)
         except IndexError:
             pass
+    
+    def get_entries(self):
+        entries = []
+        for item in self.widget_list:
+            if isinstance(item, urwid.GridFlow):
+                continue
+            text = item.get_edit_text()
+            text = ' '.join(text.split())
+            entries.append(text)
+        return entries
 
 
-class NoteBlock(MethodBlock):
+class NoteBlock(EntryBlock):
     """Display an editable list of notes."""
     def __init__(self, notes=[]):
         self.notes = notes
         if len(self.notes) < 1:
             self.notes = ['No notes added yet']
-        super().__init__(self.notes)
+        super().__init__(self.notes, wrap_amount=45)
 
-    def get_notes(self):
-        #notes = self.
-        pass
+    def get_entries(self):
+        """Get text from the entries."""
+        entries = []
+        for item in self.widget_list:
+            if isinstance(item, urwid.GridFlow):
+                continue
+            text = item.get_edit_text()
+            text = ' '.join(text.split())
+            entries.append(text)
+        if entries[0] == 'No notes added yet':
+            entries = ''
+        return entries
+
 
 class RecipeEditor:
     """The pyrecipe console interface for managing recipes."""
@@ -411,7 +544,7 @@ class RecipeEditor:
         return loop
     
     def setup_listbox(self):
-    
+        """The main listbox"""
         #radio_dish_types = urwid.Pile([urwid.AttrMap(urwid.RadioButton(self.disht_group,
         #                    txt), 'buttn', 'buttnf')
         #                    for txt in DISH_TYPES])
@@ -450,9 +583,9 @@ class RecipeEditor:
         ingreds, alt_ingreds = self.r.get_ingredients()
         self.ingred_block = IngredientsContainer(ingredients=ingreds, alt_ingredients=alt_ingreds) 
         self.method_block = MethodBlock(self.r.get_method())
-        self.notes = NoteBlock(self.r['notes'])
+        self.notes_block = NoteBlock(self.r['notes'])
         
-        general_and_dish = urwid.GridFlow([self.general_info, radio_dish_types, self.notes], 53, 0, 2, 'left')
+        general_and_dish = urwid.GridFlow([self.general_info, radio_dish_types, self.notes_block], 53, 0, 2, 'left')
         ingred_and_method = urwid.GridFlow([self.ingred_block, self.method_block], 79, 0, 2, 'left')
         
         self.listbox_content = [
@@ -515,6 +648,7 @@ class RecipeEditor:
         self.loop.widget = overlay 
     
     def prompt_answer(self, button, label):
+        """Prompt answer"""
         if label == 'quit':
             raise urwid.ExitMainLoop()
         elif label == 'save':
@@ -523,6 +657,7 @@ class RecipeEditor:
             self.loop.widget = self.frame
 
     def handle_input(self, key):
+        """Handle the input."""
         if key in ('f8', 'esc'):
             if self.recipe_changed:
                 self.quit_prompt()
@@ -537,6 +672,7 @@ class RecipeEditor:
    
     @property
     def recipe_changed(self):
+        """Check if the state of the recipe has changed."""
         changed = False
         recipe = self.get_recipe_data()
         if self.recipe_hash != recipe.get_hash():
@@ -580,14 +716,15 @@ class RecipeEditor:
          
         # method
         steps = []
-        for item in self.method_block.method_widgets:
-            if isinstance(item, urwid.GridFlow):
-                continue
-            pre_processed = item.get_edit_text()
-            step = ' '.join(pre_processed.split())
-            steps.append({'step': step})
-        
+        method_entries = self.method_block.get_entries()
+        for item in method_entries:
+            steps.append({'step': item})
         self.r['steps'] = steps
+
+        # notes if any
+        notes = self.notes_block.get_entries()
+        if notes:
+            self.r['notes'] = notes
         return self.r
     
     def save_recipe(self):
