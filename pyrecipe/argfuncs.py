@@ -49,7 +49,7 @@ def fetch_recipe(args):
 
 def print_recipe(args):
     r = Recipe(args.source)
-    r.print_recipe(verb_level=0)
+    r.print_recipe(verb_level=args.verbose)
 
 def show_stats(args):
     utils.stats(args.verbose)

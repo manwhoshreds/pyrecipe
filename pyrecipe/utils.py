@@ -11,7 +11,7 @@ from math import ceil
 from zipfile import ZipFile
 from numbers import Number
 
-from pyrecipe  import (__version__, __scriptname__, __email__, p)
+from pyrecipe  import (__version__, __scriptname__, __email__, p, color)
 from pyrecipe.config import (RECIPE_DATA_DIR, RECIPE_DATA_FILES,
                              DISH_TYPES, EDITOR, DB_FILE)
 from pyrecipe import yaml
@@ -53,18 +53,7 @@ class RecipeManifest:
 
 manifest = RecipeManifest()
 
-class Color:
-    """The color class defines various colors for pyrecipe"""
-    NORMAL = '\033[m'
-    ERROR = '\033[1;31m'
-    RECIPENAME = '\033[1;36m'
-    TITLE = '\033[36m'
-    NUMBER = '\033[1;33m'
-    REGULAR = '\033[1;35m'
-    LINE = '\033[1;37m'
-    INFORM = '\033[1;36m'
 
-color = Color()
 
 def mins_to_hours(mins):
     #days = mins // 1440
@@ -278,8 +267,6 @@ def stats(verb=0):
 
 # testing
 if __name__ == '__main__':
-    test = 'i am a super, dup-awsome.*&^%'
-    ok = get_source_path(test)
-    print(ok)
-
-
+    bar = 'i am a super, dup-awsome.*&^%'
+    foo = get_source_path(bar)
+    print(foo)

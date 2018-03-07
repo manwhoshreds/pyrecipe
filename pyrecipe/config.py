@@ -9,7 +9,7 @@ import sys
 import pprint
 import configparser
 
-from pyrecipe import p
+from pyrecipe import p, color
 
 config = configparser.ConfigParser()
 
@@ -34,7 +34,7 @@ for item in os.listdir(RECIPE_DATA_DIR):
     RECIPE_DATA_FILES.append(RECIPE_DATA_DIR + item)
 
 PP                   = pprint.PrettyPrinter(compact=True, indent=4)
-S_DIV                = "~" * 60
+S_DIV                = color.LINE + "~" * 60 + color.NORMAL
 REQUIRED_ORD_KEYS    = ['recipe_name', 'dish_type', 
                         'prep_time', 'ingredients', 'steps']
 

@@ -35,14 +35,16 @@ PALETTE = ([
 HEADINGS = {
             'general_info': urwid.AttrMap(urwid.Text('General Information:'), 'heading'),
             'dish_types': urwid.AttrMap(urwid.Text('Dish Types:'), 'heading'),
+            'notes': urwid.AttrMap(urwid.Text('Notes:'), 'heading'),
             'ingredients': urwid.AttrMap(urwid.Text('Ingredients:'), 'heading'),
             'method': urwid.AttrMap(urwid.Text('Method:'), 'heading'),
             }
 
 BLANK = urwid.Divider()
 
+
 class IngredientsContainer(urwid.WidgetWrap):
-    """The IngredientsContatiner holds multiple IngredBlocks"""
+    """Main container for holding ingredient blocks."""
 
     def __init__(self, ingredients=[], alt_ingredients=None):
         self.ingredients = ingredients
@@ -83,10 +85,10 @@ class IngredientsContainer(urwid.WidgetWrap):
     @property
     def blocks(self):
         return self.ingred_blocks[1:]
-    
+
 
 class IngredBlock(urwid.WidgetWrap):
-    """Ingredient block for displaying editable ingredients"""
+    """Ingredient block for displaying editable ingredients."""
     def __init__(self, ingredients=[], name=None):
         self.ingredients = ingredients
         self.name = name
@@ -154,11 +156,43 @@ class IngredBlock(urwid.WidgetWrap):
                     pass
             self._refresh(2)
 
+    def keypress(self, size, key):
+        key = super().keypress(size, key)
+        self.row = self.ingred_block.focus_position
+        try: 
+            self.end_col = len(self.widgets[self.row].edit_text) + 2
+        except:
+            return key
+        
+        pressed = {
+                'enter': self.on_enter,
+                'ctrl d': self.del_ingredient,
+                'ctrl a': self.insert_ingredient,
+                'ctrl up': self.move_entry,
+                'ctrl down': self.move_entry,
+                }
+        try:
+            # I only need to pass key to one function
+            # but i will have to pass to all
+            # this is still a verly clean way to write this
+            # as opossed to if, elif, etc....
+            # perhaps a better way eludes me
+            pressed[key](size, key)
+        except KeyError:
+            return key
+    
     def add_ingredient(self, button=None):
         ingred_entry = urwid.Edit("- ", '')
         self.widgets.append(ingred_entry)
         new_focus = len(self.widgets) - 1
         self._refresh(new_focus)
+    
+    def insert_ingredient(self, size, key):
+        ingred_entry = urwid.Edit("- ", '')
+        row_plus = self.row + 1
+        self.widgets.insert(row_plus, ingred_entry)
+        self.ingred_block.move_cursor_to_coords(size, 2, self.row)
+        self._refresh(row_plus)
 
     def del_ingredient(self, size, key):
         widget = self.widgets[self.row]
@@ -168,7 +202,7 @@ class IngredBlock(urwid.WidgetWrap):
         row_minus_one = self.widgets[row_minus_one]
         if isinstance(row_minus_one, (urwid.AttrMap, urwid.Columns)):
             return
-        
+
         try: 
             row = self.row
             col = len(self.widgets[row].edit_text) + 2
@@ -211,34 +245,12 @@ class IngredBlock(urwid.WidgetWrap):
         except IndexError:
             return
     
-    def keypress(self, size, key):
-        key = super().keypress(size, key)
-        self.row = self.ingred_block.focus_position
-        try: 
-            self.end_col = len(self.widgets[self.row].edit_text) + 2
-        except:
-            return key
-        
-        pressed = {
-                'enter': self.on_enter,
-                'ctrl d': self.del_ingredient,
-                'ctrl up': self.move_entry,
-                'ctrl down': self.move_entry,
-                }
-        try:
-            # I only need to pass key to one function
-            # unfortunately i will have to pass to all
-            # this is still a verly clean way to write the code
-            # as opossed to the if, elif, etc....
-            # perhaps a better way eludes me
-            pressed[key](size, key)
-        except KeyError:
-            return key
-
     def on_enter(self, size, key):
         try:
-            self.ingred_block.set_focus(self.row + 1)
+            col = len(self.widgets[self.row + 1].edit_text) + 2
+            self.ingred_block.move_cursor_to_coords(size, col, self.row + 1)
         except IndexError:
+            self.ingred_block.move_cursor_to_coords(size, 2, self.row)
             self.add_ingredient()
 
     def get_ingredients(self):
@@ -256,8 +268,9 @@ class IngredBlock(urwid.WidgetWrap):
         else:
             return ingredients
 
-class MethodBlock(urwid.WidgetWrap):
 
+class MethodBlock(urwid.WidgetWrap):
+    """Display an editable list of methods."""
     def __init__(self, method=[]):
         self.method_widgets = deque()
         self.method = method
@@ -346,16 +359,29 @@ class MethodBlock(urwid.WidgetWrap):
         except IndexError:
             pass
 
+
+class NoteBlock(MethodBlock):
+    """Display an editable list of notes."""
+    def __init__(self, notes=[]):
+        self.notes = notes
+        if len(self.notes) < 1:
+            self.notes = ['No notes added yet']
+        super().__init__(self.notes)
+
+    def get_notes(self):
+        #notes = self.
+        pass
+
 class RecipeEditor:
-    
+    """The pyrecipe console interface for managing recipes."""
     footer_text = ('foot', [
         ('pyrecipe', ' PYRECIPE    '),
         ('key', "F2"), ('footer', ' Save  '),
         ('key', "Esc"), ('footer', ' Quit  '),
         ('key', "Ctrl-UP/DOWN"), ('footer', ' Move item UP/DOWN  '),
+        ('key', "Ctrl-a"), ('footer', ' Insert item  '),
         ('key', "Ctrl-d"), ('footer', ' Delete item  ')
         ])
-
     def __init__(self, recipe='', add=False):
         self.add = add
         if self.add:
@@ -386,10 +412,14 @@ class RecipeEditor:
     
     def setup_listbox(self):
     
-        radio_dish_types = urwid.Pile([urwid.AttrMap(urwid.RadioButton(self.disht_group,
-                            txt), 'buttn', 'buttnf')
-                            for txt in DISH_TYPES])
+        #radio_dish_types = urwid.Pile([urwid.AttrMap(urwid.RadioButton(self.disht_group,
+        #                    txt), 'buttn', 'buttnf')
+        #                    for txt in DISH_TYPES])
 
+        radio_dish_types = urwid.GridFlow([urwid.AttrMap(urwid.RadioButton(self.disht_group,
+                            txt), 'buttn', 'buttnf')
+                            for txt in DISH_TYPES], 15, 0, 2, 'left')
+        
         for item in self.disht_group:
             if item.get_label() == self.r['dish_type']:
                 item.set_state(True)
@@ -408,7 +438,8 @@ class RecipeEditor:
         headings_general_and_dish_types = urwid.GridFlow(
                     [HEADINGS['general_info'], 
                      HEADINGS['dish_types'],
-                     ], 79, 0, 2, 'left'
+                     HEADINGS['notes'],
+                     ], 53, 0, 2, 'left'
                 )
         headings_ingred_and_method = urwid.GridFlow(
                     [HEADINGS['ingredients'], 
@@ -419,8 +450,9 @@ class RecipeEditor:
         ingreds, alt_ingreds = self.r.get_ingredients()
         self.ingred_block = IngredientsContainer(ingredients=ingreds, alt_ingredients=alt_ingreds) 
         self.method_block = MethodBlock(self.r.get_method())
+        self.notes = NoteBlock(self.r['notes'])
         
-        general_and_dish = urwid.GridFlow([self.general_info, radio_dish_types], 79, 0, 2, 'left')
+        general_and_dish = urwid.GridFlow([self.general_info, radio_dish_types, self.notes], 53, 0, 2, 'left')
         ingred_and_method = urwid.GridFlow([self.ingred_block, self.method_block], 79, 0, 2, 'left')
         
         self.listbox_content = [
@@ -440,7 +472,6 @@ class RecipeEditor:
     
     def quit_prompt(self):
         """Pop-up window that appears when you try to quit."""
-        # Nothing fancy here.
         text = "Changes have been made. Quit?"
         question = urwid.Text(("bold", text), "center")
         quit_btn = urwid.AttrMap(urwid.Button(
@@ -493,8 +524,7 @@ class RecipeEditor:
 
     def handle_input(self, key):
         if key in ('f8', 'esc'):
-            changed = self.recipe_changed()
-            if changed:
+            if self.recipe_changed:
                 self.quit_prompt()
                 #self.test_prompt()
                 return
@@ -504,7 +534,8 @@ class RecipeEditor:
             self.save_recipe()
         else:
             pass
-    
+   
+    @property
     def recipe_changed(self):
         changed = False
         recipe = self.get_recipe_data()
@@ -560,7 +591,7 @@ class RecipeEditor:
         return self.r
     
     def save_recipe(self):
-        """Saves the current state of the recipe"""
+        """Save the current state of the recipe and exit."""
         recipe = self.get_recipe_data()
         if self.add:
             recipe.save(save_as=True)
@@ -569,6 +600,7 @@ class RecipeEditor:
         raise urwid.ExitMainLoop()
 
     def start(self):
+        """Main entry point of the recipe editor."""
         self.loop = self.setup_view()
         self.loop.run()
         

@@ -87,3 +87,15 @@ class InflectEngine(inflect.engine):
 
 p = InflectEngine()
 
+class Color:
+    """The color class defines various colors for pyrecipe"""
+    NORMAL = '\033[m'
+    ERROR = '\033[1;31m'
+    RECIPENAME = '\033[1;36m'
+    TITLE = '\033[36m'
+    NUMBER = '\033[1;33m'
+    REGULAR = '\033[1;35m'
+    LINE = '\033[1;37m'
+    INFORM = '\033[1;36m'
+
+color = Color()

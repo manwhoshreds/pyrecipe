@@ -38,7 +38,7 @@ class RecipeNum(Fraction):
         Examples
         --------
 
-        >>> RecipeNum(RecipNum(-1,1,2), RecipeNum(0,1,2), RecipeNum(0,1,2))
+        >>> RecipeNum(RecipeNum(-1,1,2), RecipeNum(0,1,2), RecipeNum(0,1,2))
         RecipeNum(-2, 1, 2)
         >>> RecipeNum('-1 2/3')
         RecipeNum(-1, 2, 3)
@@ -327,8 +327,8 @@ class RecipeNum(Fraction):
 
 if __name__ == '__main__':
     # testing goes here
-    #import doctest
-    #doctest.testmod()
+    import doctest
+    doctest.testmod()
     test = RecipeNum('23 1/3')
     anon = RecipeNum('.3849')
     print(test)

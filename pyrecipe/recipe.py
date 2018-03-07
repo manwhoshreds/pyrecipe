@@ -55,7 +55,7 @@ from pyrecipe import ureg, yaml, p
 from pyrecipe.config import (S_DIV, RECIPE_DATA_FILES,
                              PP, CAN_UNITS, INGRED_UNITS,
                              SIZE_STRINGS, PREP_TYPES,
-                             RECIPE_DATA_DIR)
+                             RECIPE_DATA_DIR, color)
 from pyrecipe.recipe_numbers import RecipeNum
 
 # Global re's
@@ -89,10 +89,10 @@ class Recipe:
                     except KeyError:
                         sys.exit("{}ERROR: Can not find recipe.yaml."
                                  " Is this really a recipe file?"
-                                 .format(utils.color.ERROR))
+                                 .format(color.ERROR))
             except BadZipFile:
                 sys.exit("{}ERROR: This file is not a zipfile."
-                         .format(utils.color.ERROR))
+                         .format(color.ERROR))
 
         else:
             self._recipe_data = {}
@@ -373,9 +373,9 @@ class Recipe:
 
     def print_recipe(self, verb_level=0):
         """Print recipe to standard output."""
-        print(utils.color.RECIPENAME
+        print(color.RECIPENAME
               + self['recipe_name'].title()
-              + utils.color.NORMAL
+              + color.NORMAL
               + "\n")
 
 
@@ -385,7 +385,7 @@ class Recipe:
         for item in ('prep_time', 'cook_time', 'bake_time', 'ready_in'):
             if self[item]:
                 print("{}: {}"
-                      .format(item.title(),
+                      .format(item.replace('_', ' ').title(),
                               utils.mins_to_hours(RecipeNum(self[item]))))
         if self['oven_temp']:
             print("Oven temp: {} {}"
@@ -405,16 +405,12 @@ class Recipe:
             if self['yields']:
                 print("Yields: " + str(self['yeilds']))
             if self['notes']:
-                print(S_DIV)
-                print("NOTES:")
-                for note in self['notes']:
-                    print(note)
+                print("\n{}{}\nNotes:{}".format(S_DIV, color.TITLE, color.NORMAL))
+                wrapped = utils.wrap(self['notes'])
+                for index, note in wrapped:
+                    print(index, note)
 
-        print(utils.color.LINE
-              + S_DIV
-              + utils.color.TITLE
-              + "\nIngredients:"
-              + utils.color.NORMAL)
+        print("\n{}{}\nIngredients:{}".format(S_DIV, color.TITLE, color.NORMAL))
 
         # Put together all the ingredients
         ingreds, alt_ingreds = self.get_ingredients(color=True)
@@ -423,24 +419,19 @@ class Recipe:
         
         if alt_ingreds:
             for item in alt_ingreds:
-                print("\n{}{}{}".format(utils.color.TITLE,
-                                        item.title(),
-                                        utils.color.NORMAL))
+                print("\n{}{}{}".format(color.TITLE, 
+                                        item.title(), 
+                                        color.NORMAL))
 
                 for ingred in alt_ingreds[item]:
                     print(ingred)
 
-        print("\n"
-              + utils.color.LINE
-              + S_DIV
-              + utils.color.TITLE
-              + "\nMethod:"
-              + utils.color.NORMAL)
+        print("\n{}{}\nMethod:{}".format(S_DIV, color.TITLE, color.NORMAL))
 
         # print steps
         wrapped = utils.wrap(self.get_method())
         for index, string in wrapped:
-            print("{}{}{} {}".format(utils.color.NUMBER, index, utils.color.NORMAL, string))
+            print("{}{}{} {}".format(color.NUMBER, index, color.NORMAL, string))
 
     def get_method(self):
         """Return a list of steps."""
@@ -503,7 +494,7 @@ class Recipe:
 
 
 class RecipeWebScraper(Recipe):
-    """A Webscraper class to download recipes from the web."""
+    """Scrape recipes from web sources."""
     def __init__(self, url):
         super().__init__()
         self['source_url'] = url
@@ -549,7 +540,7 @@ class RecipeWebScraper(Recipe):
 
 
 class Ingredient:
-    """The ingredient class is used to build an ingredient object
+    """Build an Ingredient object.
     
     Given a dict of ingredient data, Ingredient class can return a string
     :param name: name of the ingredient e.g onion
@@ -587,8 +578,8 @@ class Ingredient:
         color_number = ''
         color_normal = ''
         if self.color:
-            color_number = utils.color.NUMBER
-            color_normal = utils.color.NORMAL
+            color_number = color.NUMBER
+            color_normal = color.NORMAL
         
         if self.note:
             self.note = '({})'.format(self.note)
@@ -600,6 +591,10 @@ class Ingredient:
         elif self.unit == 'splash of':
             return "Splash of {}".format(self.name)
         else:
+            match = PORTIONED_UNIT_RE.search(self.unit)
+            if match:
+                unit = match.group().split()
+                self.unit = "({}) {}".format(' '.join(unit[0:2]), unit[-1])
             ingred_string = "{}{}{} {} {} {}".format(color_number, self.amount,
                                               color_normal, self.size,
                                               self.unit, self.name)
@@ -615,7 +610,7 @@ class Ingredient:
 
 
 class IngredientParser:
-    """Convert an ingredient string into a list or dict
+    """Convert an ingredient string into a list or dict.
 
     an excepted ingredient string is usually in the form of
 
@@ -768,7 +763,7 @@ class IngredientParser:
 if __name__ == '__main__':
     r = Recipe('7 cheese mac and cheese')
     i = IngredientParser()
-    test = i.parse('10 (8989.8080 ounce) cans nutmeg')
+    test = i.parse('1 ounce cantelope')
     #test = i.parse('1 whole cube steak')
     ok = Ingredient(test)
     print(test)

@@ -23,10 +23,11 @@ from math import ceil
 from pint.errors import DimensionalityError
 
 from pyrecipe.config import (RAND_RECIPE_COUNT, S_DIV,
-                             SHOPPING_LIST_FILE, PP)
+                             SHOPPING_LIST_FILE, PP,
+                             color)
 from pyrecipe.recipe import Recipe
 from pyrecipe import Q_
-from pyrecipe.utils import manifest, color
+from pyrecipe.utils import manifest
 from pyrecipe.recipe_numbers import RecipeNum
 
 class ShoppingList:
