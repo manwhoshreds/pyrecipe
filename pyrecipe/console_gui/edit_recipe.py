@@ -529,7 +529,7 @@ class RecipeEditor:
             self.welcome = 'Edit: {}'.format(self.r['recipe_name'])
         
         self.disht_group = []
-        self.recipe_hash = self.r.get_hash()
+        self.initial_hash = hash(self.r)
         self.data = self.r['_recipe_data']
 
     def setup_view(self):
@@ -675,7 +675,7 @@ class RecipeEditor:
         """Check if the state of the recipe has changed."""
         changed = False
         recipe = self.get_recipe_data()
-        if self.recipe_hash != recipe.get_hash():
+        if self.initial_hash != hash(recipe):
             changed = True
         return changed
     

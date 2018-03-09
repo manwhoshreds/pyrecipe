@@ -97,5 +97,6 @@ class Color:
     REGULAR = '\033[1;35m'
     LINE = '\033[1;37m'
     INFORM = '\033[1;36m'
+    WARN = '\033[1;33m'
 
 color = Color()

@@ -15,7 +15,7 @@ from pyrecipe  import (__version__, __scriptname__, __email__, p, color)
 from pyrecipe.config import (RECIPE_DATA_DIR, RECIPE_DATA_FILES,
                              DISH_TYPES, EDITOR, DB_FILE)
 from pyrecipe import yaml
-from .recipe_numbers import RecipeNum
+from pyrecipe.recipe_numbers import RecipeNum
 
 
 class RecipeManifest:
@@ -53,8 +53,6 @@ class RecipeManifest:
 
 manifest = RecipeManifest()
 
-
-
 def mins_to_hours(mins):
     #days = mins // 1440
     hours = mins // 60
@@ -85,8 +83,8 @@ def wrap(str_list, width=60):
 
 def check_source(source):
     if os.path.isdir(source):
-        return sys.exit('{}ERROR: {} is a directory'
-                        .format(color.ERROR, source))
+        return sys.exit(msg('{} is a directory'
+                        .format(source), 'ERROR'))
     elif os.path.isfile(source):
         if not source.endswith('.recipe'):
             return sys.exit("{}ERROR: Pyrecipe can only read "
@@ -265,8 +263,27 @@ def stats(verb=0):
         print("Recipe xml directory: {}".format(RECIPE_XML_DIR))
         print("Default random recipe: {}".format(RAND_RECIPE_COUNT))
 
+def msg(text, level='INFORM'):
+    msg_level = {'INFORM': color.INFORM,
+                 'ERROR': color.ERROR,
+                 'WARN': color.WARN
+                }
+    print('{}{}{}'.format(msg_level[level], text, color.NORMAL))
+
 # testing
 if __name__ == '__main__':
-    bar = 'i am a super, dup-awsome.*&^%'
-    foo = get_source_path(bar)
-    print(foo)
+    #sys.exit(msg('hello', 'WARN'))
+    import random
+    text = 'Ok so what is this alla botu huh? i am aboot to say yeeeeeeeeeeee'
+    def colorify(text):
+        rand = random.randint(1,3)
+        if rand == 1:
+            colo = color.INFORM
+        elif rand == 2:
+            colo = color.WARN
+        elif rand == 3:
+            colo = color.ERROR 
+        
+        return(colo + text + color.NORMAL)
+    color = [colorify(x) for x in text]
+    print(''.join(x for x in color))
