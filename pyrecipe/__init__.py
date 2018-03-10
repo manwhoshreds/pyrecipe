@@ -59,7 +59,9 @@ class Q_(ureg.Quantity):
 # it comes across a non-noun word. Therfore, the following is a
 # functional work-a-round
 class InflectEngine(inflect.engine):
-    """An inflect subclass to implement different singular behaviour"""
+    """An inflect subclass to implement different singular behaviour.
+    
+    """
     def __init__(self):
         super().__init__()
         self.ignored = ['roma', 'canola', 'hummus']

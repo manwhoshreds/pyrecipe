@@ -1,0 +1,411 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>pyrecipe.gui package &#8212; pyrecipe v0.9.0 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="pyrecipe-gui-package">
+<h1>pyrecipe.gui package<a class="headerlink" href="#pyrecipe-gui-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-pyrecipe.gui.add_recipe">
+<span id="pyrecipe-gui-add-recipe-module"></span><h2>pyrecipe.gui.add_recipe module<a class="headerlink" href="#module-pyrecipe.gui.add_recipe" title="Permalink to this headline">¶</a></h2>
+<p>The add_recipe module include classes to 
+add or edit a recipe</p>
+<dl class="class">
+<dt id="pyrecipe.gui.add_recipe.AddRecipe">
+<em class="property">class </em><code class="descclassname">pyrecipe.gui.add_recipe.</code><code class="descname">AddRecipe</code><span class="sig-paren">(</span><em>source=''</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/gui/add_recipe.html#AddRecipe"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.gui.add_recipe.AddRecipe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">tkinter.Toplevel</span></code></p>
+<p>Add a recipe.</p>
+<p>The AddRecipe class is a toplevel dialouge used to 
+add a recipe to the recipe store. If a source argument
+is passed with the class instance, a dialouge is produced
+with fields aleady populated with the relavant information.</p>
+<dl class="method">
+<dt id="pyrecipe.gui.add_recipe.AddRecipe.add_ingredient">
+<code class="descname">add_ingredient</code><span class="sig-paren">(</span><em>event=''</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/gui/add_recipe.html#AddRecipe.add_ingredient"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.gui.add_recipe.AddRecipe.add_ingredient" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add ingredient button</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyrecipe.gui.add_recipe.AddRecipe.save_recipe">
+<code class="descname">save_recipe</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/gui/add_recipe.html#AddRecipe.save_recipe"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.gui.add_recipe.AddRecipe.save_recipe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save the recipe</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyrecipe.gui.add_recipe.IngredTree">
+<em class="property">class </em><code class="descclassname">pyrecipe.gui.add_recipe.</code><code class="descname">IngredTree</code><span class="sig-paren">(</span><em>master=None</em>, <em>**kw</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/gui/add_recipe.html#IngredTree"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.gui.add_recipe.IngredTree" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">tkinter.ttk.Treeview</span></code></p>
+<p>A simple editable treeview</p>
+<dl class="docutils">
+<dt>It uses the following events from Treeview:</dt>
+<dd>&lt;Button-1&gt;</dd>
+</dl>
+<p>The first is used to configure cell editors.
+The second is called after a cell was changed.
+You can know wich cell is being configured or edited, using:</p>
+<blockquote>
+<div>get_event_info()</div></blockquote>
+<dl class="method">
+<dt id="pyrecipe.gui.add_recipe.IngredTree.delete">
+<code class="descname">delete</code><span class="sig-paren">(</span><em>*items</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/gui/add_recipe.html#IngredTree.delete"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.gui.add_recipe.IngredTree.delete" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete all specified items and all their descendants. The root
+item may not be deleted.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyrecipe.gui.add_recipe.IngredTree.get_event_info">
+<code class="descname">get_event_info</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/gui/add_recipe.html#IngredTree.get_event_info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.gui.add_recipe.IngredTree.get_event_info" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrecipe.gui.add_recipe.IngredTree.inplace_checkbutton">
+<code class="descname">inplace_checkbutton</code><span class="sig-paren">(</span><em>item</em>, <em>col</em>, <em>onvalue='True'</em>, <em>offvalue='False'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/gui/add_recipe.html#IngredTree.inplace_checkbutton"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.gui.add_recipe.IngredTree.inplace_checkbutton" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrecipe.gui.add_recipe.IngredTree.inplace_combobox">
+<code class="descname">inplace_combobox</code><span class="sig-paren">(</span><em>col</em>, <em>item</em>, <em>values</em>, <em>readonly=True</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/gui/add_recipe.html#IngredTree.inplace_combobox"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.gui.add_recipe.IngredTree.inplace_combobox" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrecipe.gui.add_recipe.IngredTree.inplace_custom">
+<code class="descname">inplace_custom</code><span class="sig-paren">(</span><em>col</em>, <em>item</em>, <em>widget</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/gui/add_recipe.html#IngredTree.inplace_custom"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.gui.add_recipe.IngredTree.inplace_custom" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrecipe.gui.add_recipe.IngredTree.inplace_entry">
+<code class="descname">inplace_entry</code><span class="sig-paren">(</span><em>col</em>, <em>item</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/gui/add_recipe.html#IngredTree.inplace_entry"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.gui.add_recipe.IngredTree.inplace_entry" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrecipe.gui.add_recipe.IngredTree.inplace_spinbox">
+<code class="descname">inplace_spinbox</code><span class="sig-paren">(</span><em>col</em>, <em>item</em>, <em>min</em>, <em>max</em>, <em>step</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/gui/add_recipe.html#IngredTree.inplace_spinbox"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.gui.add_recipe.IngredTree.inplace_spinbox" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrecipe.gui.add_recipe.IngredTree.xview">
+<code class="descname">xview</code><span class="sig-paren">(</span><em>*args</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/gui/add_recipe.html#IngredTree.xview"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.gui.add_recipe.IngredTree.xview" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update inplace widgets position when doing horizontal scroll</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyrecipe.gui.add_recipe.IngredTree.xview_moveto">
+<code class="descname">xview_moveto</code><span class="sig-paren">(</span><em>fraction</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/gui/add_recipe.html#IngredTree.xview_moveto"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.gui.add_recipe.IngredTree.xview_moveto" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adjusts the view in the window so that FRACTION of the
+total width of the canvas is off-screen to the left.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyrecipe.gui.add_recipe.IngredTree.xview_scroll">
+<code class="descname">xview_scroll</code><span class="sig-paren">(</span><em>number</em>, <em>what</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/gui/add_recipe.html#IngredTree.xview_scroll"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.gui.add_recipe.IngredTree.xview_scroll" title="Permalink to this definition">¶</a></dt>
+<dd><p>Shift the x-view according to NUMBER which is measured in “units”
+or “pages” (WHAT).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyrecipe.gui.add_recipe.IngredTree.yview">
+<code class="descname">yview</code><span class="sig-paren">(</span><em>*args</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/gui/add_recipe.html#IngredTree.yview"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.gui.add_recipe.IngredTree.yview" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update inplace widgets position when doing vertical scroll</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyrecipe.gui.add_recipe.IngredTree.yview_moveto">
+<code class="descname">yview_moveto</code><span class="sig-paren">(</span><em>fraction</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/gui/add_recipe.html#IngredTree.yview_moveto"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.gui.add_recipe.IngredTree.yview_moveto" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adjusts the view in the window so that FRACTION of the
+total height of the canvas is off-screen to the top.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyrecipe.gui.add_recipe.IngredTree.yview_scroll">
+<code class="descname">yview_scroll</code><span class="sig-paren">(</span><em>number</em>, <em>what</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/gui/add_recipe.html#IngredTree.yview_scroll"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.gui.add_recipe.IngredTree.yview_scroll" title="Permalink to this definition">¶</a></dt>
+<dd><p>Shift the y-view according to NUMBER which is measured in
+“units” or “pages” (WHAT).</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-pyrecipe.gui.maingui">
+<span id="pyrecipe-gui-maingui-module"></span><h2>pyrecipe.gui.maingui module<a class="headerlink" href="#module-pyrecipe.gui.maingui" title="Permalink to this headline">¶</a></h2>
+<p>gui</p>
+<dl class="class">
+<dt id="pyrecipe.gui.maingui.AutoEntry">
+<em class="property">class </em><code class="descclassname">pyrecipe.gui.maingui.</code><code class="descname">AutoEntry</code><span class="sig-paren">(</span><em>somelist</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/gui/maingui.html#AutoEntry"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.gui.maingui.AutoEntry" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">tkinter.ttk.Entry</span></code></p>
+<dl class="method">
+<dt id="pyrecipe.gui.maingui.AutoEntry.changed">
+<code class="descname">changed</code><span class="sig-paren">(</span><em>name</em>, <em>index</em>, <em>mode</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/gui/maingui.html#AutoEntry.changed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.gui.maingui.AutoEntry.changed" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrecipe.gui.maingui.AutoEntry.comparison">
+<code class="descname">comparison</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/gui/maingui.html#AutoEntry.comparison"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.gui.maingui.AutoEntry.comparison" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrecipe.gui.maingui.AutoEntry.down">
+<code class="descname">down</code><span class="sig-paren">(</span><em>event</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/gui/maingui.html#AutoEntry.down"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.gui.maingui.AutoEntry.down" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrecipe.gui.maingui.AutoEntry.selection">
+<code class="descname">selection</code><span class="sig-paren">(</span><em>event</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/gui/maingui.html#AutoEntry.selection"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.gui.maingui.AutoEntry.selection" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrecipe.gui.maingui.AutoEntry.up">
+<code class="descname">up</code><span class="sig-paren">(</span><em>event</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/gui/maingui.html#AutoEntry.up"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.gui.maingui.AutoEntry.up" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyrecipe.gui.maingui.MainGUI">
+<em class="property">class </em><code class="descclassname">pyrecipe.gui.maingui.</code><code class="descname">MainGUI</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/gui/maingui.html#MainGUI"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.gui.maingui.MainGUI" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">tkinter.Tk</span></code></p>
+<dl class="method">
+<dt id="pyrecipe.gui.maingui.MainGUI.add_recipe">
+<code class="descname">add_recipe</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/gui/maingui.html#MainGUI.add_recipe"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.gui.maingui.MainGUI.add_recipe" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrecipe.gui.maingui.MainGUI.donothing">
+<code class="descname">donothing</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/gui/maingui.html#MainGUI.donothing"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.gui.maingui.MainGUI.donothing" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrecipe.gui.maingui.MainGUI.edit_recipe">
+<code class="descname">edit_recipe</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/gui/maingui.html#MainGUI.edit_recipe"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.gui.maingui.MainGUI.edit_recipe" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrecipe.gui.maingui.MainGUI.onDoubleClk">
+<code class="descname">onDoubleClk</code><span class="sig-paren">(</span><em>event</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/gui/maingui.html#MainGUI.onDoubleClk"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.gui.maingui.MainGUI.onDoubleClk" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrecipe.gui.maingui.MainGUI.onLeftClk">
+<code class="descname">onLeftClk</code><span class="sig-paren">(</span><em>event</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/gui/maingui.html#MainGUI.onLeftClk"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.gui.maingui.MainGUI.onLeftClk" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrecipe.gui.maingui.MainGUI.onRightClk">
+<code class="descname">onRightClk</code><span class="sig-paren">(</span><em>event</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/gui/maingui.html#MainGUI.onRightClk"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.gui.maingui.MainGUI.onRightClk" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrecipe.gui.maingui.MainGUI.refresh_recipes">
+<code class="descname">refresh_recipes</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/gui/maingui.html#MainGUI.refresh_recipes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.gui.maingui.MainGUI.refresh_recipes" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrecipe.gui.maingui.MainGUI.show_version">
+<code class="descname">show_version</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/gui/maingui.html#MainGUI.show_version"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.gui.maingui.MainGUI.show_version" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="pyrecipe.gui.maingui.start">
+<code class="descclassname">pyrecipe.gui.maingui.</code><code class="descname">start</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/gui/maingui.html#start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.gui.maingui.start" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-pyrecipe.gui.settings">
+<span id="pyrecipe-gui-settings-module"></span><h2>pyrecipe.gui.settings module<a class="headerlink" href="#module-pyrecipe.gui.settings" title="Permalink to this headline">¶</a></h2>
+<p>add recipe class</p>
+<dl class="class">
+<dt id="pyrecipe.gui.settings.Settings">
+<em class="property">class </em><code class="descclassname">pyrecipe.gui.settings.</code><code class="descname">Settings</code><span class="sig-paren">(</span><em>source=''</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/gui/settings.html#Settings"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.gui.settings.Settings" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">tkinter.Toplevel</span></code></p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-pyrecipe.gui.tk_utils">
+<span id="pyrecipe-gui-tk-utils-module"></span><h2>pyrecipe.gui.tk_utils module<a class="headerlink" href="#module-pyrecipe.gui.tk_utils" title="Permalink to this headline">¶</a></h2>
+<p>various utils to for tkinter</p>
+<dl class="class">
+<dt id="pyrecipe.gui.tk_utils.ComboPopup">
+<em class="property">class </em><code class="descclassname">pyrecipe.gui.tk_utils.</code><code class="descname">ComboPopup</code><span class="sig-paren">(</span><em>parent</em>, <em>text</em>, <em>**kw</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/gui/tk_utils.html#ComboPopup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.gui.tk_utils.ComboPopup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">tkinter.ttk.Combobox</span></code></p>
+<dl class="method">
+<dt id="pyrecipe.gui.tk_utils.ComboPopup.enter">
+<code class="descname">enter</code><span class="sig-paren">(</span><em>event</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/gui/tk_utils.html#ComboPopup.enter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.gui.tk_utils.ComboPopup.enter" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrecipe.gui.tk_utils.ComboPopup.selectAll">
+<code class="descname">selectAll</code><span class="sig-paren">(</span><em>*ignore</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/gui/tk_utils.html#ComboPopup.selectAll"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.gui.tk_utils.ComboPopup.selectAll" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set selection on the whole text</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyrecipe.gui.tk_utils.EntryPopup">
+<em class="property">class </em><code class="descclassname">pyrecipe.gui.tk_utils.</code><code class="descname">EntryPopup</code><span class="sig-paren">(</span><em>parent</em>, <em>text</em>, <em>**kw</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/gui/tk_utils.html#EntryPopup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.gui.tk_utils.EntryPopup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">tkinter.Entry</span></code></p>
+<dl class="method">
+<dt id="pyrecipe.gui.tk_utils.EntryPopup.enter">
+<code class="descname">enter</code><span class="sig-paren">(</span><em>event</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/gui/tk_utils.html#EntryPopup.enter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.gui.tk_utils.EntryPopup.enter" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrecipe.gui.tk_utils.EntryPopup.selectAll">
+<code class="descname">selectAll</code><span class="sig-paren">(</span><em>*ignore</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/gui/tk_utils.html#EntryPopup.selectAll"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.gui.tk_utils.EntryPopup.selectAll" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set selection on the whole text</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyrecipe.gui.tk_utils.PrepOptionsMenu">
+<em class="property">class </em><code class="descclassname">pyrecipe.gui.tk_utils.</code><code class="descname">PrepOptionsMenu</code><span class="sig-paren">(</span><em>parent</em>, <em>var</em>, <em>*args</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/gui/tk_utils.html#PrepOptionsMenu"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.gui.tk_utils.PrepOptionsMenu" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">tkinter.OptionMenu</span></code></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="pyrecipe.gui.tk_utils.ToolTip">
+<em class="property">class </em><code class="descclassname">pyrecipe.gui.tk_utils.</code><code class="descname">ToolTip</code><span class="sig-paren">(</span><em>widget</em>, <em>text='widget info'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/gui/tk_utils.html#ToolTip"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.gui.tk_utils.ToolTip" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>create a tooltip for a given widget</p>
+<dl class="method">
+<dt id="pyrecipe.gui.tk_utils.ToolTip.close">
+<code class="descname">close</code><span class="sig-paren">(</span><em>event=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/gui/tk_utils.html#ToolTip.close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.gui.tk_utils.ToolTip.close" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrecipe.gui.tk_utils.ToolTip.enter">
+<code class="descname">enter</code><span class="sig-paren">(</span><em>event=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/gui/tk_utils.html#ToolTip.enter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.gui.tk_utils.ToolTip.enter" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyrecipe.gui.tk_utils.Warn">
+<em class="property">class </em><code class="descclassname">pyrecipe.gui.tk_utils.</code><code class="descname">Warn</code><span class="sig-paren">(</span><em>msg</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/gui/tk_utils.html#Warn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.gui.tk_utils.Warn" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">tkinter.Toplevel</span></code></p>
+<dl class="method">
+<dt id="pyrecipe.gui.tk_utils.Warn.play_sound">
+<code class="descname">play_sound</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/gui/tk_utils.html#Warn.play_sound"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.gui.tk_utils.Warn.play_sound" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrecipe.gui.tk_utils.Warn.sound">
+<code class="descname">sound</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/gui/tk_utils.html#Warn.sound"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.gui.tk_utils.Warn.sound" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="pyrecipe.gui.tk_utils.center">
+<code class="descclassname">pyrecipe.gui.tk_utils.</code><code class="descname">center</code><span class="sig-paren">(</span><em>toplevel</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/gui/tk_utils.html#center"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.gui.tk_utils.center" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="pyrecipe.gui.tk_utils.remove_extra_space">
+<code class="descclassname">pyrecipe.gui.tk_utils.</code><code class="descname">remove_extra_space</code><span class="sig-paren">(</span><em>string</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/gui/tk_utils.html#remove_extra_space"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.gui.tk_utils.remove_extra_space" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-pyrecipe.gui">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-pyrecipe.gui" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">pyrecipe.gui package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-pyrecipe.gui.add_recipe">pyrecipe.gui.add_recipe module</a></li>
+<li><a class="reference internal" href="#module-pyrecipe.gui.maingui">pyrecipe.gui.maingui module</a></li>
+<li><a class="reference internal" href="#module-pyrecipe.gui.settings">pyrecipe.gui.settings module</a></li>
+<li><a class="reference internal" href="#module-pyrecipe.gui.tk_utils">pyrecipe.gui.tk_utils module</a></li>
+<li><a class="reference internal" href="#module-pyrecipe.gui">Module contents</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/source/pyrecipe.gui.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Michael Miller.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="../_sources/source/pyrecipe.gui.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

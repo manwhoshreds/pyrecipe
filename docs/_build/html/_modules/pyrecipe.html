@@ -1,0 +1,180 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>pyrecipe &#8212; pyrecipe v0.9.0 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pyrecipe</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    pyrecipe</span>
+<span class="sd">    ~~~~~~~~</span>
+
+<span class="sd">    Pyrecipe is a python application that lets you manage recipes.</span>
+<span class="sd">    Recipe are saved in Yaml format.</span>
+
+<span class="sd">    :copyright: 2017 by Michael Miller</span>
+<span class="sd">    :license: GPL, see LICENSE for more details.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">pkg_resources</span>
+<span class="kn">from</span> <span class="nn">math</span> <span class="k">import</span> <span class="n">ceil</span>
+
+<span class="kn">from</span> <span class="nn">pint</span> <span class="k">import</span> <span class="n">UnitRegistry</span>
+<span class="kn">from</span> <span class="nn">ruamel.yaml</span> <span class="k">import</span> <span class="n">YAML</span>
+<span class="kn">import</span> <span class="nn">inflect</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">__version__</span> <span class="o">=</span> <span class="n">pkg_resources</span><span class="o">.</span><span class="n">get_distribution</span><span class="p">(</span><span class="s1">&#39;pyrecipe&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">version</span>
+<span class="k">except</span><span class="p">:</span>
+    <span class="n">__version__</span> <span class="o">=</span> <span class="s1">&#39;unknown&#39;</span>
+
+<span class="n">__email__</span> <span class="o">=</span> <span class="s1">&#39;m.k.miller@gmx.com&#39;</span>
+<span class="n">__scriptname__</span>  <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+<span class="n">yaml</span> <span class="o">=</span> <span class="n">YAML</span><span class="p">(</span><span class="n">typ</span><span class="o">=</span><span class="s1">&#39;safe&#39;</span><span class="p">)</span>
+<span class="n">yaml</span><span class="o">.</span><span class="n">default_flow_style</span> <span class="o">=</span> <span class="kc">False</span>
+
+<span class="n">ureg</span> <span class="o">=</span> <span class="n">UnitRegistry</span><span class="p">()</span>
+<span class="n">dirr</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span>
+<span class="n">definitions</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">dirr</span><span class="p">,</span> <span class="s1">&#39;culinary_units.txt&#39;</span><span class="p">)</span>
+<span class="n">ureg</span><span class="o">.</span><span class="n">load_definitions</span><span class="p">(</span><span class="n">definitions</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="Q_"><a class="viewcode-back" href="../source/pyrecipe.html#pyrecipe.Q_">[docs]</a><span class="k">class</span> <span class="nc">Q_</span><span class="p">(</span><span class="n">ureg</span><span class="o">.</span><span class="n">Quantity</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Subclass to implement a few custom behaviors</span>
+<span class="sd">    </span>
+<span class="sd">    Capabilities include always rounding up to the nearest whole</span>
+<span class="sd">    and printing plural units dependent upon the objects magnitude</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Q_.round_up"><a class="viewcode-back" href="../source/pyrecipe.html#pyrecipe.Q_.round_up">[docs]</a>    <span class="k">def</span> <span class="nf">round_up</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="n">ceil</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_magnitude</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_units</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">units</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;each&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">format</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">magnitude</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">magnitude</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">plural</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">units</span><span class="p">)))</span>
+        <span class="k">else</span><span class="p">:</span></div>
+            <span class="k">return</span> <span class="nb">format</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+<span class="c1"># Inflects default behaviour for returning the singular of a word is</span>
+<span class="c1"># not very useful to this project because it returns false if</span>
+<span class="c1"># it comes across a non-noun word. Therfore, the following is a</span>
+<span class="c1"># functional work-a-round</span>
+<div class="viewcode-block" id="InflectEngine"><a class="viewcode-back" href="../source/pyrecipe.html#pyrecipe.InflectEngine">[docs]</a><span class="k">class</span> <span class="nc">InflectEngine</span><span class="p">(</span><span class="n">inflect</span><span class="o">.</span><span class="n">engine</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;An inflect subclass to implement different singular behaviour&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ignored</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;roma&#39;</span><span class="p">,</span> <span class="s1">&#39;canola&#39;</span><span class="p">,</span> <span class="s1">&#39;hummus&#39;</span><span class="p">]</span>
+
+<div class="viewcode-block" id="InflectEngine.singular_noun"><a class="viewcode-back" href="../source/pyrecipe.html#pyrecipe.InflectEngine.singular_noun">[docs]</a>    <span class="k">def</span> <span class="nf">singular_noun</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">word</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">word</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ignored</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">word</span>
+
+        <span class="n">singular</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">singular_noun</span><span class="p">(</span><span class="n">word</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">singular</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">singular</span>
+        <span class="k">else</span><span class="p">:</span></div>
+            <span class="k">return</span> <span class="n">word</span>
+
+<div class="viewcode-block" id="InflectEngine.plural"><a class="viewcode-back" href="../source/pyrecipe.html#pyrecipe.InflectEngine.plural">[docs]</a>    <span class="k">def</span> <span class="nf">plural</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">word</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">count</span><span class="p">:</span> 
+            <span class="k">if</span> <span class="n">count</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">word</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">word</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">plural</span><span class="p">(</span><span class="n">word</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">word</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">word</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">plural</span><span class="p">(</span><span class="n">word</span><span class="p">)</span></div></div>
+            <span class="k">return</span> <span class="n">word</span>
+
+<span class="n">p</span> <span class="o">=</span> <span class="n">InflectEngine</span><span class="p">()</span>
+
+<div class="viewcode-block" id="Color"><a class="viewcode-back" href="../source/pyrecipe.html#pyrecipe.Color">[docs]</a><span class="k">class</span> <span class="nc">Color</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;The color class defines various colors for pyrecipe&quot;&quot;&quot;</span>
+    <span class="n">NORMAL</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\033</span><span class="s1">[m&#39;</span>
+    <span class="n">ERROR</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\033</span><span class="s1">[1;31m&#39;</span>
+    <span class="n">RECIPENAME</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\033</span><span class="s1">[1;36m&#39;</span>
+    <span class="n">TITLE</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\033</span><span class="s1">[36m&#39;</span>
+    <span class="n">NUMBER</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\033</span><span class="s1">[1;33m&#39;</span>
+    <span class="n">REGULAR</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\033</span><span class="s1">[1;35m&#39;</span>
+    <span class="n">LINE</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\033</span><span class="s1">[1;37m&#39;</span>
+    <span class="n">INFORM</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\033</span><span class="s1">[1;36m&#39;</span></div>
+    <span class="n">WARN</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\033</span><span class="s1">[1;33m&#39;</span>
+
+<span class="n">color</span> <span class="o">=</span> <span class="n">Color</span><span class="p">()</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Michael Miller.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

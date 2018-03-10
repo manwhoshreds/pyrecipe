@@ -112,7 +112,7 @@ class AddRecipe(tk.Toplevel):
         if self.source:
             ingreds = self.recipe.get_ingredients()
             for item in ingreds:
-                ingred_list = self.ingred_parser.parse(item)
+                ingred_list = self.ingred_parser.parse(item, return_list=True)
                 self.ingred_tree.insert('', 'end', text='test', values=(ingred_list))
         # method
         self.method = tk.Frame(self.notebook, **kw)

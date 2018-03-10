@@ -20,14 +20,14 @@ import sys
 from lxml import etree
 from math import ceil
 
-from pint.errors import DimensionalityError
+import pint.errors
 
+import pyrecipe.utils as utils
 from pyrecipe.config import (RAND_RECIPE_COUNT, S_DIV,
                              SHOPPING_LIST_FILE, PP,
                              color)
 from pyrecipe.recipe import Recipe
 from pyrecipe import Q_
-from pyrecipe.utils import manifest
 from pyrecipe.recipe_numbers import RecipeNum
 
 class ShoppingList:
@@ -81,6 +81,8 @@ class ShoppingList:
             except ValueError:
                 amount = 0
             unit = item['amounts'][0].get('unit', '')
+            if unit in ['splash of', 'to taste', 'pinch of']:
+                continue
             
             # FIXME:
             # pint cannot handle units such as '16 ounce can' etc....
@@ -98,7 +100,7 @@ class ShoppingList:
                 try:
                     addition = orig_ingred + quant
                     sl[name] = addition
-                except DimensionalityError:
+                except pint.errors.DimensionalityError:
                     sl[name] = MultiQuantity(orig_ingred, quant)
             else:
                 sl[name] = quant
@@ -122,7 +124,7 @@ class ShoppingList:
         # Print list	
         padding = max(len(x) for x in sl.keys()) + 1
         for key, value in sl.items():
-            if value.units in ['splash', 'taste', 'pinch']:
+            if value.units in ['splash of', 'to taste', 'pinch of']:
                 print("{} {}".format(key.ljust(padding, '.'), 'N/A'))
             else:    
                 try:
@@ -164,7 +166,7 @@ class ShoppingList:
                                 method='xml',
                                 pretty_print=True).decode("utf-8")
         
-        print("\n{}Writing shopping list to {}{}".format(color.INFORM, SHOPPING_LIST_FILE, color.NORMAL))
+        utils.msg("Writing shopping list to %s" % SHOPPING_LIST_FILE, 'INFORM')
         with open(SHOPPING_LIST_FILE, "w") as f:
             f.write(result)
     
@@ -199,20 +201,20 @@ class RandomShoppingList(ShoppingList):
         super().__init__()
         self.count = count
         try:
-            self.recipe_sample = random.sample(manifest.maindish_names, self.count)
-            self.salad_dressing_random = random.choice(manifest.dressing_names)
+            self.recipe_sample = random.sample(utils.manifest.maindish_names, self.count)
+            self.salad_dressing_random = random.choice(utils.manifest.dressing_names)
         except ValueError:
             sys.exit("{}ERROR: Random count is higher than "
                      "the amount of recipes available ({}). "
                      "Please enter a lower number."
-                     .format(color.ERROR, str(len(manifest.maindish_names))))
+                     .format(color.ERROR, str(len(utils.manifest.maindish_names))))
         
         self.update(self.salad_dressing_random)
         for dish in self.recipe_sample:
             self.update(dish)
     
-    def print_random(self):
-        self.print_list()
+    def print_random(self, write=False):
+        self.print_list(write=write)
 
 
 class MultiQuantity:
@@ -244,7 +246,7 @@ class MultiQuantity:
                 self.quants.remove(item)
                 self.quants.append(addition)
                 break
-            except DimensionalityError:
+            except pint.errors.DimensionalityError:
                 continue
         return self
     

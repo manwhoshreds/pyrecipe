@@ -274,7 +274,7 @@ def msg(text, level='INFORM'):
 if __name__ == '__main__':
     #sys.exit(msg('hello', 'WARN'))
     import random
-    text = 'Ok so what is this alla botu huh? i am aboot to say yeeeeeeeeeeee'
+    text = 'ok so what'
     def colorify(text):
         rand = random.randint(1,3)
         if rand == 1:

@@ -1,0 +1,193 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>pyrecipe.argfuncs &#8212; pyrecipe v0.9.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pyrecipe.argfuncs</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">	pyrecipe.argfuncts</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">subprocess</span>
+<span class="kn">import</span> <span class="nn">shutil</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">zipfile</span> <span class="k">import</span> <span class="n">ZipFile</span>
+
+<span class="kn">import</span> <span class="nn">pyrecipe.utils</span> <span class="k">as</span> <span class="nn">utils</span>
+<span class="kn">import</span> <span class="nn">pyrecipe.gui.maingui</span> <span class="k">as</span> <span class="nn">gui</span>
+<span class="kn">import</span> <span class="nn">pyrecipe.shopper</span> <span class="k">as</span> <span class="nn">shopper</span>
+<span class="kn">from</span> <span class="nn">.config</span> <span class="k">import</span> <span class="n">PP</span><span class="p">,</span> <span class="n">EDITOR</span><span class="p">,</span> <span class="n">RECIPE_DATA_FILES</span>
+<span class="kn">from</span> <span class="nn">pyrecipe.recipe</span> <span class="k">import</span> <span class="n">Recipe</span><span class="p">,</span> <span class="n">RecipeWebScraper</span>
+<span class="kn">from</span> <span class="nn">pyrecipe.console_gui.edit_recipe</span> <span class="k">import</span> <span class="n">RecipeEditor</span>
+
+<div class="viewcode-block" id="dump_data"><a class="viewcode-back" href="../../source/pyrecipe.html#pyrecipe.argfuncs.dump_data">[docs]</a><span class="k">def</span> <span class="nf">dump_data</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">Recipe</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">source</span><span class="p">)</span></div>
+    <span class="n">r</span><span class="o">.</span><span class="n">dump_to_screen</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">data_type</span><span class="p">)</span>
+
+<div class="viewcode-block" id="start_gui"><a class="viewcode-back" href="../../source/pyrecipe.html#pyrecipe.argfuncs.start_gui">[docs]</a><span class="k">def</span> <span class="nf">start_gui</span><span class="p">():</span></div>
+    <span class="n">gui</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+<div class="viewcode-block" id="print_shopping_list"><a class="viewcode-back" href="../../source/pyrecipe.html#pyrecipe.argfuncs.print_shopping_list">[docs]</a><span class="k">def</span> <span class="nf">print_shopping_list</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">random</span><span class="p">:</span>
+        <span class="n">rr</span> <span class="o">=</span> <span class="n">shopper</span><span class="o">.</span><span class="n">RandomShoppingList</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">random</span><span class="p">)</span>
+        <span class="n">rr</span><span class="o">.</span><span class="n">print_random</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">menu_items</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">recipes</span>	
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">menu_items</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="s1">&#39;You must supply at least one recipe&#39;</span>
+                     <span class="s1">&#39; to build your shopping list from!&#39;</span><span class="p">)</span>
+            
+        <span class="n">sl</span> <span class="o">=</span> <span class="n">shopper</span><span class="o">.</span><span class="n">ShoppingList</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">menu_items</span><span class="p">:</span>
+            <span class="n">sl</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">write</span><span class="p">:</span>			
+            <span class="n">sl</span><span class="o">.</span><span class="n">print_list</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span></div>
+            <span class="n">sl</span><span class="o">.</span><span class="n">print_list</span><span class="p">()</span>
+
+<div class="viewcode-block" id="fetch_recipe"><a class="viewcode-back" href="../../source/pyrecipe.html#pyrecipe.argfuncs.fetch_recipe">[docs]</a><span class="k">def</span> <span class="nf">fetch_recipe</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+    <span class="n">scraper</span> <span class="o">=</span> <span class="n">RecipeWebScraper</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">url</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">save</span><span class="p">:</span>
+        <span class="n">RecipeEditor</span><span class="p">(</span><span class="n">scraper</span><span class="p">,</span> <span class="n">add</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span></div>
+        <span class="n">scraper</span><span class="o">.</span><span class="n">print_recipe</span><span class="p">()</span>
+
+<div class="viewcode-block" id="print_recipe"><a class="viewcode-back" href="../../source/pyrecipe.html#pyrecipe.argfuncs.print_recipe">[docs]</a><span class="k">def</span> <span class="nf">print_recipe</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">Recipe</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">source</span><span class="p">)</span></div>
+    <span class="n">r</span><span class="o">.</span><span class="n">print_recipe</span><span class="p">(</span><span class="n">verb_level</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">verbose</span><span class="p">)</span>
+
+<div class="viewcode-block" id="show_stats"><a class="viewcode-back" href="../../source/pyrecipe.html#pyrecipe.argfuncs.show_stats">[docs]</a><span class="k">def</span> <span class="nf">show_stats</span><span class="p">(</span><span class="n">args</span><span class="p">):</span></div>
+    <span class="n">utils</span><span class="o">.</span><span class="n">stats</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">verbose</span><span class="p">)</span>
+
+<div class="viewcode-block" id="delete_recipe"><a class="viewcode-back" href="../../source/pyrecipe.html#pyrecipe.argfuncs.delete_recipe">[docs]</a><span class="k">def</span> <span class="nf">delete_recipe</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+    <span class="n">source</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">source</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">Recipe</span><span class="p">(</span><span class="n">source</span><span class="p">)</span> 
+    <span class="n">file_name</span> <span class="o">=</span> <span class="n">r</span><span class="p">[</span><span class="s1">&#39;source&#39;</span><span class="p">]</span>
+    <span class="n">answer</span> <span class="o">=</span> <span class="nb">input</span><span class="p">(</span><span class="s2">&quot;Are you sure your want to delete </span><span class="si">{}</span><span class="s2">? yes/no &quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">source</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">answer</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;yes&#39;</span><span class="p">:</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">file_name</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> has been deleted&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">source</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span></div>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> not deleted&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">source</span><span class="p">))</span>
+
+<div class="viewcode-block" id="edit_recipe"><a class="viewcode-back" href="../../source/pyrecipe.html#pyrecipe.argfuncs.edit_recipe">[docs]</a><span class="k">def</span> <span class="nf">edit_recipe</span><span class="p">(</span><span class="n">args</span><span class="p">):</span></div>
+    <span class="n">RecipeEditor</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">source</span><span class="p">)</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+<div class="viewcode-block" id="add_recipe"><a class="viewcode-back" href="../../source/pyrecipe.html#pyrecipe.argfuncs.add_recipe">[docs]</a><span class="k">def</span> <span class="nf">add_recipe</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">get_file_name</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">RECIPE_DATA_FILES</span><span class="p">:</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">ERROR: A recipe with that name already exist.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">color</span><span class="o">.</span><span class="n">ERROR</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span></div>
+        <span class="n">RecipeEditor</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">add</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+<div class="viewcode-block" id="print_list"><a class="viewcode-back" href="../../source/pyrecipe.html#pyrecipe.argfuncs.print_list">[docs]</a><span class="k">def</span> <span class="nf">print_list</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+    <span class="n">recipes</span> <span class="o">=</span> <span class="n">manifest</span><span class="o">.</span><span class="n">recipe_names</span>
+    <span class="n">lower_recipes</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">recipes</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">lower_recipes</span><span class="p">):</span></div>
+        <span class="nb">print</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">title</span><span class="p">())</span>
+	
+<div class="viewcode-block" id="version"><a class="viewcode-back" href="../../source/pyrecipe.html#pyrecipe.argfuncs.version">[docs]</a><span class="k">def</span> <span class="nf">version</span><span class="p">(</span><span class="n">args</span><span class="p">):</span></div>
+    <span class="nb">print</span><span class="p">(</span><span class="n">utils</span><span class="o">.</span><span class="n">version</span><span class="p">())</span>
+
+<div class="viewcode-block" id="export_recipes"><a class="viewcode-back" href="../../source/pyrecipe.html#pyrecipe.argfuncs.export_recipes">[docs]</a><span class="k">def</span> <span class="nf">export_recipes</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">output_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">realpath</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">output_dir</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">output_dir</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">FileExistsError</span><span class="p">:</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">ERROR: A directory with name </span><span class="si">{}</span><span class="s1"> already exists.&#39;</span>
+                 <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">color</span><span class="o">.</span><span class="n">ERROR</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">))</span>
+    <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+        <span class="n">output_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span>
+        
+    <span class="n">recipe_name</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">source</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">Recipe</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">source</span><span class="p">)</span>
+    <span class="n">xml</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">xml_data</span>
+    <span class="n">file_name</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">get_file_name</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">source</span><span class="p">,</span> <span class="s1">&#39;xml&#39;</span><span class="p">)</span>
+    <span class="n">file_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">file_name</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">xml</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">Writing to file: </span><span class="si">{}{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">color</span><span class="o">.</span><span class="n">INFORM</span><span class="p">,</span> <span class="n">file_name</span><span class="p">,</span> <span class="n">color</span><span class="o">.</span><span class="n">NORMAL</span><span class="p">))</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_name</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+                <span class="n">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">xml</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">recipe</span><span class="p">:</span>
+        <span class="n">src</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">source</span>
+        <span class="n">dst</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">file_name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">dst</span><span class="p">):</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">ERROR: File already exists.&#39;</span>
+                    <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">color</span><span class="o">.</span><span class="n">ERROR</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span></div>
+            <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">dst</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  <li><a href="../pyrecipe.html">pyrecipe</a><ul>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Michael Miller.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

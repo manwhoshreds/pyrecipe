@@ -1,0 +1,829 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>pyrecipe.recipe &#8212; pyrecipe v0.9.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pyrecipe.recipe</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- encoding: UTF-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    pyrecipe.recipe</span>
+<span class="sd">    ~~~~~~~~~~~~~~~</span>
+<span class="sd">    The recipe module contains the main recipe</span>
+<span class="sd">    class used to interact with ORF (open recipe format) files.</span>
+<span class="sd">    You can simply print the recipe or print the xml dump.</span>
+
+<span class="sd">    - Recipe: The main recipe class is responsible for caching all the</span>
+<span class="sd">              data associated with an Open Recipe Format file. Give the</span>
+<span class="sd">              recipe instance an ORF source and all data can be accessed</span>
+<span class="sd">              like a python dict. You can also assign new attributes or</span>
+<span class="sd">              change current ones. Use the print_recipe() method to print</span>
+<span class="sd">              the recipe to standard output and dump() to save the data</span>
+<span class="sd">              back to the same file or one of your own choosing.</span>
+
+<span class="sd">              An instance of a recipe class contains all the information</span>
+<span class="sd">              in a recipe.</span>
+
+<span class="sd">              The current recipe data understood by the recipe class can</span>
+<span class="sd">              be found in the class variable: orf_keys</span>
+
+
+<span class="sd">    - RecipeWebScraper: The pyrecipe web_scraper class is a web</span>
+<span class="sd">                        scraping utility used to download and analyze</span>
+<span class="sd">                        recipes found on websites in an attempt to</span>
+<span class="sd">                        save the recipe data in the format understood</span>
+<span class="sd">                        by pyrecipe.</span>
+<span class="sd">                        Currently supported sites: www.geniuskitchen.com</span>
+<span class="sd">    * Inherits from Recipe</span>
+
+<span class="sd">    - Ingredient: Used to parse a dict of ingredient data into a string</span>
+
+<span class="sd">    - IngredientParser: Converts an ingredient string into a list or dict</span>
+<span class="sd">                        of ingredient data elements.</span>
+
+<span class="sd">    :copyright: 2017 by Michael Miller</span>
+<span class="sd">    :license: GPL, see LICENSE for more details.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">io</span>
+<span class="kn">import</span> <span class="nn">string</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">OrderedDict</span>
+<span class="kn">from</span> <span class="nn">urllib.request</span> <span class="k">import</span> <span class="n">urlopen</span>
+<span class="kn">from</span> <span class="nn">zipfile</span> <span class="k">import</span> <span class="n">ZipFile</span><span class="p">,</span> <span class="n">BadZipFile</span>
+
+<span class="kn">import</span> <span class="nn">bs4</span>
+<span class="kn">import</span> <span class="nn">lxml.etree</span> <span class="k">as</span> <span class="nn">ET</span>
+
+<span class="kn">import</span> <span class="nn">pyrecipe.utils</span> <span class="k">as</span> <span class="nn">utils</span>
+<span class="kn">import</span> <span class="nn">pyrecipe.config</span> <span class="k">as</span> <span class="nn">conf</span>
+<span class="kn">from</span> <span class="nn">pyrecipe.recipe_numbers</span> <span class="k">import</span> <span class="n">RecipeNum</span>
+<span class="kn">from</span> <span class="nn">pyrecipe</span> <span class="k">import</span> <span class="n">ureg</span><span class="p">,</span> <span class="n">yaml</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">color</span>
+
+<span class="c1"># Global re&#39;s</span>
+<span class="n">PORTIONED_UNIT_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;\(?\d+[.,]?\d+ (ounce|pound)\)? (cans?|bags?)&#39;</span><span class="p">)</span> 
+<span class="n">PAREN_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;\((.*?)\)&#39;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="Recipe"><a class="viewcode-back" href="../../source/pyrecipe.html#pyrecipe.recipe.Recipe">[docs]</a><span class="k">class</span> <span class="nc">Recipe</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;The main recipe class used for I/O operations of recipe files</span>
+
+<span class="sd">    The recipe class can open .recipe files and read their data. It can</span>
+<span class="sd">    change the state of a recipe file and then save the new data back to</span>
+<span class="sd">    the reicpe file.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># All keys applicable to the Open Recipe Format</span>
+    <span class="n">orf_keys</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;recipe_name&#39;</span><span class="p">,</span> <span class="s1">&#39;recipe_uuid&#39;</span><span class="p">,</span> <span class="s1">&#39;dish_type&#39;</span><span class="p">,</span> <span class="s1">&#39;category&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;cook_time&#39;</span><span class="p">,</span> <span class="s1">&#39;prep_time&#39;</span><span class="p">,</span> <span class="s1">&#39;author&#39;</span><span class="p">,</span> <span class="s1">&#39;oven_temp&#39;</span><span class="p">,</span> <span class="s1">&#39;bake_time&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;yields&#39;</span><span class="p">,</span> <span class="s1">&#39;ingredients&#39;</span><span class="p">,</span> <span class="s1">&#39;alt_ingredients&#39;</span><span class="p">,</span> <span class="s1">&#39;notes&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;source_url&#39;</span><span class="p">,</span> <span class="s1">&#39;steps&#39;</span><span class="p">,</span> <span class="s1">&#39;tags&#39;</span><span class="p">,</span> <span class="s1">&#39;source_book&#39;</span><span class="p">,</span> <span class="s1">&#39;price&#39;</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">source</span> <span class="o">=</span> <span class="n">source</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">source</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">check_source</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">with</span> <span class="n">ZipFile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">zfile</span><span class="p">:</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="k">with</span> <span class="n">zfile</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s1">&#39;recipe.yaml&#39;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">stream</span><span class="p">:</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">_recipe_data</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">stream</span><span class="p">)</span>
+                    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">ERROR: Can not find recipe.yaml.&quot;</span>
+                                 <span class="s2">&quot; Is this really a recipe file?&quot;</span>
+                                 <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">color</span><span class="o">.</span><span class="n">ERROR</span><span class="p">))</span>
+            <span class="k">except</span> <span class="n">BadZipFile</span><span class="p">:</span>
+                <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">ERROR: This file is not a zipfile.&quot;</span>
+                         <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">color</span><span class="o">.</span><span class="n">ERROR</span><span class="p">))</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_recipe_data</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="c1"># dish type should default to main</span>
+            <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;dish_type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;main&#39;</span>
+
+        <span class="c1"># All root keys included in the particular source which may</span>
+        <span class="c1"># or may not include all keys from the orf spec</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">yaml_root_keys</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_recipe_data</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+
+        <span class="c1"># Scan the recipe to build the xml</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_scan_recipe</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_scan_recipe</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Scan the recipe to build xml.&quot;&quot;&quot;</span>
+        <span class="c1">#FIXME: this method is incomplete.</span>
+        <span class="c1"># we nee to build xml here.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">xml_root</span> <span class="o">=</span> <span class="n">ET</span><span class="o">.</span><span class="n">Element</span><span class="p">(</span><span class="s1">&#39;recipe&#39;</span><span class="p">)</span>
+        <span class="c1"># recipe name</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;recipe_name&#39;</span><span class="p">]:</span>
+            <span class="n">xml_recipe_name</span> <span class="o">=</span> <span class="n">ET</span><span class="o">.</span><span class="n">SubElement</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xml_root</span><span class="p">,</span> <span class="s2">&quot;name&quot;</span><span class="p">)</span>
+            <span class="n">xml_recipe_name</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;recipe_name&#39;</span><span class="p">]</span>
+
+        <span class="c1"># recipe_uuid</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;recipe_uuid&#39;</span><span class="p">]:</span>
+            <span class="n">xml_recipe_uuid</span> <span class="o">=</span> <span class="n">ET</span><span class="o">.</span><span class="n">SubElement</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xml_root</span><span class="p">,</span> <span class="s2">&quot;uuid&quot;</span><span class="p">)</span>
+            <span class="n">xml_recipe_uuid</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="s1">&#39;recipe_uuid&#39;</span><span class="p">])</span>
+
+        <span class="c1"># dish_type</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;dish_type&#39;</span><span class="p">]:</span>
+            <span class="n">xml_dish_type</span> <span class="o">=</span> <span class="n">ET</span><span class="o">.</span><span class="n">SubElement</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xml_root</span><span class="p">,</span> <span class="s2">&quot;dish_type&quot;</span><span class="p">)</span>
+            <span class="n">xml_dish_type</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;dish_type&#39;</span><span class="p">]</span>
+
+        <span class="c1"># category</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;category&#39;</span><span class="p">]:</span>
+            <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;category&#39;</span><span class="p">]:</span>
+                <span class="n">xml_category</span> <span class="o">=</span> <span class="n">ET</span><span class="o">.</span><span class="n">SubElement</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xml_root</span><span class="p">,</span> <span class="s2">&quot;category&quot;</span><span class="p">)</span>
+                <span class="n">xml_category</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span>
+
+        <span class="c1"># author</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;author&#39;</span><span class="p">]:</span>
+            <span class="n">xml_author</span> <span class="o">=</span> <span class="n">ET</span><span class="o">.</span><span class="n">SubElement</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xml_root</span><span class="p">,</span> <span class="s2">&quot;author&quot;</span><span class="p">)</span>
+            <span class="n">xml_author</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;author&#39;</span><span class="p">]</span>
+
+        <span class="c1"># prep_time</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;prep_time&#39;</span><span class="p">]:</span>
+            <span class="n">xml_prep_time</span> <span class="o">=</span> <span class="n">ET</span><span class="o">.</span><span class="n">SubElement</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xml_root</span><span class="p">,</span> <span class="s2">&quot;prep_time&quot;</span><span class="p">)</span>
+            <span class="n">xml_prep_time</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="s1">&#39;prep_time&#39;</span><span class="p">])</span>
+
+        <span class="c1"># cook_time</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;cook_time&#39;</span><span class="p">]:</span>
+            <span class="n">xml_cook_time</span> <span class="o">=</span> <span class="n">ET</span><span class="o">.</span><span class="n">SubElement</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xml_root</span><span class="p">,</span> <span class="s2">&quot;cook_time&quot;</span><span class="p">)</span>
+            <span class="n">xml_cook_time</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="s1">&#39;cook_time&#39;</span><span class="p">])</span>
+
+        <span class="c1"># bake_time</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;bake_time&#39;</span><span class="p">]:</span>
+            <span class="n">xml_bake_time</span> <span class="o">=</span> <span class="n">ET</span><span class="o">.</span><span class="n">SubElement</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xml_root</span><span class="p">,</span> <span class="s2">&quot;bake_time&quot;</span><span class="p">)</span>
+            <span class="n">xml_bake_time</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="s1">&#39;bake_time&#39;</span><span class="p">])</span>
+
+        <span class="c1"># ready_in</span>
+        <span class="c1"># not actually an ord tag, so is not read from recipe file</span>
+        <span class="c1"># it is simply calculated within the class</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;prep_time&#39;</span><span class="p">]</span> <span class="ow">and</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;cook_time&#39;</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;ready_in&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">RecipeNum</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="s1">&#39;prep_time&#39;</span><span class="p">])</span> <span class="o">+</span> <span class="n">RecipeNum</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="s1">&#39;cook_time&#39;</span><span class="p">])</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;prep_time&#39;</span><span class="p">]</span> <span class="ow">and</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;bake_time&#39;</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;ready_in&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">RecipeNum</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="s1">&#39;prep_time&#39;</span><span class="p">])</span> <span class="o">+</span> <span class="n">RecipeNum</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="s1">&#39;bake_time&#39;</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;ready_in&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;prep_time&#39;</span><span class="p">]</span>
+
+        <span class="c1"># notes</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;notes&#39;</span><span class="p">]:</span>
+            <span class="k">pass</span>
+
+        <span class="c1"># price</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;price&#39;</span><span class="p">]:</span>
+            <span class="n">xml_price</span> <span class="o">=</span> <span class="n">ET</span><span class="o">.</span><span class="n">SubElement</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xml_root</span><span class="p">,</span> <span class="s2">&quot;price&quot;</span><span class="p">)</span>
+            <span class="n">xml_price</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="s1">&#39;price&#39;</span><span class="p">])</span>
+
+        <span class="c1"># oven_temp</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;oven_temp&#39;</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">oven_temp</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;oven_temp&#39;</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ot_amount</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;oven_temp&#39;</span><span class="p">][</span><span class="s1">&#39;amount&#39;</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ot_unit</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;oven_temp&#39;</span><span class="p">][</span><span class="s1">&#39;unit&#39;</span><span class="p">]</span>
+            <span class="n">xml_oven_temp</span> <span class="o">=</span> <span class="n">ET</span><span class="o">.</span><span class="n">SubElement</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xml_root</span><span class="p">,</span> <span class="s2">&quot;oven_temp&quot;</span><span class="p">)</span>
+            <span class="n">xml_oven_temp</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ot_amount</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ot_unit</span><span class="p">)</span>
+
+        <span class="c1"># yields</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;yields&#39;</span><span class="p">]:</span>
+            <span class="n">xml_yields</span> <span class="o">=</span> <span class="n">ET</span><span class="o">.</span><span class="n">SubElement</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xml_root</span><span class="p">,</span> <span class="s2">&quot;yields&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">yeld</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;yields&#39;</span><span class="p">]:</span>
+                <span class="n">xml_servings</span> <span class="o">=</span> <span class="n">ET</span><span class="o">.</span><span class="n">SubElement</span><span class="p">(</span><span class="n">xml_yields</span><span class="p">,</span> <span class="s2">&quot;servings&quot;</span><span class="p">)</span>
+                <span class="n">xml_servings</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">yeld</span><span class="p">)</span>
+        
+        <span class="c1"># ingredients</span>
+        <span class="n">ingredients</span><span class="p">,</span> <span class="n">alt_ingredients</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_ingredients</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">ingredients</span><span class="p">:</span>
+            <span class="n">xml_ingredients</span> <span class="o">=</span> <span class="n">ET</span><span class="o">.</span><span class="n">SubElement</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xml_root</span><span class="p">,</span> <span class="s2">&quot;ingredients&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">ingred</span> <span class="ow">in</span> <span class="n">ingredients</span><span class="p">:</span>
+                <span class="n">xml_ingred</span> <span class="o">=</span> <span class="n">ET</span><span class="o">.</span><span class="n">SubElement</span><span class="p">(</span><span class="n">xml_ingredients</span><span class="p">,</span> <span class="s2">&quot;ingred&quot;</span><span class="p">)</span>
+                <span class="n">xml_ingred</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="n">ingred</span>
+
+        <span class="k">if</span> <span class="n">alt_ingredients</span><span class="p">:</span> 
+            <span class="k">pass</span>
+            <span class="c1">#xml_alt_ingredients = ET.SubElement(self.xml_root, &quot;alt_ingredients&quot;)</span>
+            <span class="c1">#for item in alt_ingredients:</span>
+            <span class="c1">#    print(item.values())</span>
+        
+        <span class="c1"># steps</span>
+        <span class="n">xml_steps</span> <span class="o">=</span> <span class="n">ET</span><span class="o">.</span><span class="n">SubElement</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xml_root</span><span class="p">,</span> <span class="s2">&quot;steps&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;steps&#39;</span><span class="p">]:</span>
+            <span class="n">steps_of</span> <span class="o">=</span> <span class="n">ET</span><span class="o">.</span><span class="n">SubElement</span><span class="p">(</span><span class="n">xml_steps</span><span class="p">,</span> <span class="s2">&quot;step&quot;</span><span class="p">)</span>
+            <span class="n">steps_of</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="n">step</span><span class="p">[</span><span class="s1">&#39;step&#39;</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return the complete string representation of the recipe data.&quot;&quot;&quot;</span>
+        <span class="n">recipe_string</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="n">recipe_string</span> <span class="o">+=</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;recipe_name&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">title</span><span class="p">()</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="n">recipe_string</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Ingredients:</span><span class="se">\n</span><span class="s2">&quot;</span>
+
+        <span class="c1"># Put together all the ingredients</span>
+        <span class="n">ingreds</span><span class="p">,</span> <span class="n">alt_ingreds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_ingredients</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">ingreds</span><span class="p">:</span>
+            <span class="n">recipe_string</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">alt_ingreds</span><span class="p">:</span> 
+            <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">alt_ingreds</span><span class="p">:</span>
+                <span class="n">recipe_string</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="si">{}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">title</span><span class="p">())</span>
+                <span class="k">for</span> <span class="n">ingred</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_ingredients</span><span class="p">()[</span><span class="mi">1</span><span class="p">]:</span>
+                    <span class="n">recipe_string</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ingred</span><span class="p">)</span>
+
+        <span class="n">recipe_string</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Method:</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="c1"># print steps</span>
+        <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">step</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="s1">&#39;steps&#39;</span><span class="p">],</span> <span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+            <span class="n">recipe_string</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">. </span><span class="si">{}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">step</span><span class="p">[</span><span class="s1">&#39;step&#39;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">recipe_string</span>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;&lt;Recipe(name=&#39;</span><span class="si">{}</span><span class="s2">&#39;)&gt;&quot;</span>\
+                <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="s1">&#39;recipe_name&#39;</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">Recipe</span><span class="o">.</span><span class="n">orf_keys</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">[</span><span class="s1">&#39;_recipe_data&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="s1">&#39;recipe_name&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">source</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">get_file_name</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">Recipe</span><span class="o">.</span><span class="n">orf_keys</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">[</span><span class="s1">&#39;_recipe_data&#39;</span><span class="p">][</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_scan_recipe</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+
+    <span class="k">def</span> <span class="nf">__delitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="s1">&#39;recipe_name&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">source</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">Recipe</span><span class="o">.</span><span class="n">orf_keys</span><span class="p">:</span>
+            <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">[</span><span class="s1">&#39;_recipe_data&#39;</span><span class="p">][</span><span class="n">key</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_scan_recipe</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get the recipe hash.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">hash</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_yaml_string</span><span class="p">())</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">recipe_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return the recipe data.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;_recipe_data&#39;</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">ingredients</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return ingredient data.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;ingredients&#39;</span><span class="p">]</span>
+
+    <span class="nd">@ingredients</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">ingredients</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Ingredients must be a list&#39;</span><span class="p">)</span>
+        
+        <span class="n">ingred_parser</span> <span class="o">=</span> <span class="n">IngredientParser</span><span class="p">()</span>
+        <span class="n">ingredients</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">value</span><span class="p">:</span>
+            <span class="n">ingred</span> <span class="o">=</span> <span class="n">ingred_parser</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+            <span class="n">ingredients</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ingred</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;ingredients&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ingredients</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_scan_recipe</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">alt_ingredients</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return alt ingredient data.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;alt_ingredients&#39;</span><span class="p">]</span>
+
+    <span class="nd">@alt_ingredients</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">alt_ingredients</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Alt Ingredients must be a list&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Alt Ingredients must be a list, of dicts&#39;</span><span class="p">)</span>
+        
+        <span class="n">ingred_parser</span> <span class="o">=</span> <span class="n">IngredientParser</span><span class="p">()</span>
+        <span class="n">alt_ingredients</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">value</span><span class="p">:</span>
+            <span class="n">alt_name</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">keys</span><span class="p">())[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">ingreds</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">values</span><span class="p">())[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">parsed_ingreds</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">entry</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">ingred</span> <span class="ow">in</span> <span class="n">ingreds</span><span class="p">:</span>
+                <span class="n">parsed</span> <span class="o">=</span> <span class="n">ingred_parser</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">ingred</span><span class="p">)</span>
+                <span class="n">parsed_ingreds</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">parsed</span><span class="p">)</span>
+            <span class="n">entry</span><span class="p">[</span><span class="n">alt_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">parsed_ingreds</span>
+            <span class="n">alt_ingredients</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;alt_ingredients&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">alt_ingredients</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_scan_recipe</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">file_name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return the file name of the recipe.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="n">name</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">xml_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return the xml data.&quot;&quot;&quot;</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">ET</span><span class="o">.</span><span class="n">tostring</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xml_root</span><span class="p">,</span>
+                             <span class="n">xml_declaration</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                             <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf-8&#39;</span><span class="p">,</span>
+                             <span class="n">with_tail</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                             <span class="n">method</span><span class="o">=</span><span class="s1">&#39;xml&#39;</span><span class="p">,</span>
+                             <span class="n">pretty_print</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span>
+
+<div class="viewcode-block" id="Recipe.get_ingredients"><a class="viewcode-back" href="../../source/pyrecipe.html#pyrecipe.recipe.Recipe.get_ingredients">[docs]</a>    <span class="k">def</span> <span class="nf">get_ingredients</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">amount_level</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return a list of ingredient strings.</span>
+
+<span class="sd">        args:</span>
+
+<span class="sd">        - amount_level: in aticipation of a future feature, this is for multiple</span>
+<span class="sd">                        recipe yields.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">ingredients</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;ingredients&#39;</span><span class="p">]:</span>
+            <span class="n">ingred</span> <span class="o">=</span> <span class="n">Ingredient</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">)</span>
+            <span class="n">ingredients</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">ingred</span><span class="p">))</span>
+        
+        <span class="n">named_ingredients</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;alt_ingredients&#39;</span><span class="p">]:</span>
+            <span class="n">alt_ingreds</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;alt_ingredients&#39;</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">alt_ingreds</span><span class="p">:</span>
+                <span class="n">alt_name</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">keys</span><span class="p">())[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">ingred_list</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">for</span> <span class="n">ingredient</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">values</span><span class="p">())[</span><span class="mi">0</span><span class="p">]:</span>
+                    <span class="n">ingred</span> <span class="o">=</span> <span class="n">Ingredient</span><span class="p">(</span><span class="n">ingredient</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">)</span>
+                    <span class="n">ingred_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">ingred</span><span class="p">))</span>
+                <span class="n">named_ingredients</span><span class="p">[</span><span class="n">alt_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">ingred_list</span>
+        </div>
+        <span class="k">return</span> <span class="n">ingredients</span><span class="p">,</span> <span class="n">named_ingredients</span>
+
+<div class="viewcode-block" id="Recipe.print_recipe"><a class="viewcode-back" href="../../source/pyrecipe.html#pyrecipe.recipe.Recipe.print_recipe">[docs]</a>    <span class="k">def</span> <span class="nf">print_recipe</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">verb_level</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Print recipe to standard output.&quot;&quot;&quot;</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">color</span><span class="o">.</span><span class="n">RECIPENAME</span>
+              <span class="o">+</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;recipe_name&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">title</span><span class="p">()</span>
+              <span class="o">+</span> <span class="n">color</span><span class="o">.</span><span class="n">NORMAL</span>
+              <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+
+        <span class="k">if</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;dish_type&#39;</span><span class="p">]:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Dish Type: </span><span class="si">{}</span><span class="s2">&quot;</span>
+                  <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="s1">&#39;dish_type&#39;</span><span class="p">])))</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;prep_time&#39;</span><span class="p">,</span> <span class="s1">&#39;cook_time&#39;</span><span class="p">,</span> <span class="s1">&#39;bake_time&#39;</span><span class="p">,</span> <span class="s1">&#39;ready_in&#39;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="p">[</span><span class="n">item</span><span class="p">]:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">: </span><span class="si">{}</span><span class="s2">&quot;</span>
+                      <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">,</span> <span class="s1">&#39; &#39;</span><span class="p">)</span><span class="o">.</span><span class="n">title</span><span class="p">(),</span>
+                              <span class="n">utils</span><span class="o">.</span><span class="n">mins_to_hours</span><span class="p">(</span><span class="n">RecipeNum</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="n">item</span><span class="p">]))))</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;oven_temp&#39;</span><span class="p">]:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Oven temp: </span><span class="si">{}</span><span class="s2"> </span><span class="si">{}</span><span class="s2">&quot;</span>
+                  <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="s1">&#39;oven_temp&#39;</span><span class="p">][</span><span class="s1">&#39;amount&#39;</span><span class="p">]),</span>
+                          <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;oven_temp&#39;</span><span class="p">][</span><span class="s1">&#39;unit&#39;</span><span class="p">]))</span>
+
+        <span class="k">if</span> <span class="n">verb_level</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;price&#39;</span><span class="p">]:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Price: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="s1">&#39;price&#39;</span><span class="p">]))</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;author&#39;</span><span class="p">]:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Author: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="s1">&#39;author&#39;</span><span class="p">]))</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;source_url&#39;</span><span class="p">]:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;URL: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="s1">&#39;source_url&#39;</span><span class="p">]))</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;category&#39;</span><span class="p">]:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Category(s): &quot;</span>
+                      <span class="o">+</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="s1">&#39;category&#39;</span><span class="p">]))</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;yields&#39;</span><span class="p">]:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Yields: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="s1">&#39;yeilds&#39;</span><span class="p">]))</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;notes&#39;</span><span class="p">]:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="si">{}{}</span><span class="se">\n</span><span class="s2">Notes:</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">conf</span><span class="o">.</span><span class="n">S_DIV</span><span class="p">,</span> <span class="n">color</span><span class="o">.</span><span class="n">TITLE</span><span class="p">,</span> <span class="n">color</span><span class="o">.</span><span class="n">NORMAL</span><span class="p">))</span>
+                <span class="n">wrapped</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">wrap</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="s1">&#39;notes&#39;</span><span class="p">])</span>
+                <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">note</span> <span class="ow">in</span> <span class="n">wrapped</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">note</span><span class="p">)</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="si">{}{}</span><span class="se">\n</span><span class="s2">Ingredients:</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">conf</span><span class="o">.</span><span class="n">S_DIV</span><span class="p">,</span> <span class="n">color</span><span class="o">.</span><span class="n">TITLE</span><span class="p">,</span> <span class="n">color</span><span class="o">.</span><span class="n">NORMAL</span><span class="p">))</span>
+
+        <span class="c1"># Put together all the ingredients</span>
+        <span class="n">ingreds</span><span class="p">,</span> <span class="n">alt_ingreds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_ingredients</span><span class="p">(</span><span class="n">color</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">ingred</span> <span class="ow">in</span> <span class="n">ingreds</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">ingred</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">alt_ingreds</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">alt_ingreds</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="si">{}{}{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">color</span><span class="o">.</span><span class="n">TITLE</span><span class="p">,</span> 
+                                        <span class="n">item</span><span class="o">.</span><span class="n">title</span><span class="p">(),</span> 
+                                        <span class="n">color</span><span class="o">.</span><span class="n">NORMAL</span><span class="p">))</span>
+
+                <span class="k">for</span> <span class="n">ingred</span> <span class="ow">in</span> <span class="n">alt_ingreds</span><span class="p">[</span><span class="n">item</span><span class="p">]:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="n">ingred</span><span class="p">)</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="si">{}{}</span><span class="se">\n</span><span class="s2">Method:</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">conf</span><span class="o">.</span><span class="n">S_DIV</span><span class="p">,</span> <span class="n">color</span><span class="o">.</span><span class="n">TITLE</span><span class="p">,</span> <span class="n">color</span><span class="o">.</span><span class="n">NORMAL</span><span class="p">))</span>
+
+        <span class="c1"># print steps</span>
+        <span class="n">wrapped</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">wrap</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_method</span><span class="p">())</span>
+        <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">string</span> <span class="ow">in</span> <span class="n">wrapped</span><span class="p">:</span></div>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}{}{}</span><span class="s2"> </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">color</span><span class="o">.</span><span class="n">NUMBER</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">color</span><span class="o">.</span><span class="n">NORMAL</span><span class="p">,</span> <span class="n">string</span><span class="p">))</span>
+
+<div class="viewcode-block" id="Recipe.get_method"><a class="viewcode-back" href="../../source/pyrecipe.html#pyrecipe.recipe.Recipe.get_method">[docs]</a>    <span class="k">def</span> <span class="nf">get_method</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return a list of steps.&quot;&quot;&quot;</span>
+        <span class="n">steps</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;steps&#39;</span><span class="p">]:</span>
+            <span class="n">steps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">step</span><span class="p">[</span><span class="s1">&#39;step&#39;</span><span class="p">])</span></div>
+        <span class="k">return</span> <span class="n">steps</span>
+
+<div class="viewcode-block" id="Recipe.dump_to_screen"><a class="viewcode-back" href="../../source/pyrecipe.html#pyrecipe.recipe.Recipe.dump_to_screen">[docs]</a>    <span class="k">def</span> <span class="nf">dump_to_screen</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_type</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Dump a data format to screen.</span>
+
+<span class="sd">        This method is mostly useful for troubleshooting</span>
+<span class="sd">        and development. It prints data in three formats.</span>
+<span class="sd">        raw (just a plain python dictionary with pretty print)</span>
+<span class="sd">        yaml, and xml.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">data_type</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;raw&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="n">conf</span><span class="o">.</span><span class="n">PP</span><span class="o">.</span><span class="n">pprint</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">recipe_data</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">data_type</span> <span class="o">==</span> <span class="s1">&#39;yaml&#39;</span><span class="p">:</span>
+            <span class="n">yaml</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="s1">&#39;_recipe_data&#39;</span><span class="p">],</span> <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">data_type</span> <span class="o">==</span> <span class="s1">&#39;xml&#39;</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xml_data</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;data_type argument must be one of &#39;</span></div>
+                             <span class="s1">&#39;raw, yaml, or xml&#39;</span><span class="p">)</span>
+    
+<div class="viewcode-block" id="Recipe.get_yaml_string"><a class="viewcode-back" href="../../source/pyrecipe.html#pyrecipe.recipe.Recipe.get_yaml_string">[docs]</a>    <span class="k">def</span> <span class="nf">get_yaml_string</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">string</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">StringIO</span><span class="p">()</span>
+        <span class="n">yaml</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">recipe_data</span><span class="p">,</span> <span class="n">string</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">string</span><span class="o">.</span><span class="n">getvalue</span><span class="p">()</span>
+
+<div class="viewcode-block" id="Recipe.save"><a class="viewcode-back" href="../../source/pyrecipe.html#pyrecipe.recipe.Recipe.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">save_as</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;save state of class</span>
+
+<span class="sd">        If save_as is true, we first check to see if the file already exisist</span>
+<span class="sd">        so we dont clobber an existing recipe. If not save_as, we assume user</span>
+<span class="sd">        wants to edit a file in which case we intend to overwrite the file with</span>
+<span class="sd">        changes.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">save_as</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">source</span> <span class="ow">in</span> <span class="n">conf</span><span class="o">.</span><span class="n">RECIPE_DATA_FILES</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;Recipe already exist with that filename&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;Recipe has no source to save to&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">source</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">conf</span><span class="o">.</span><span class="n">RECIPE_DATA_DIR</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="p">)</span>
+            <span class="n">stream</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">StringIO</span><span class="p">()</span>
+            <span class="n">yaml</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">recipe_data</span><span class="p">,</span> <span class="n">stream</span><span class="p">)</span>
+
+            <span class="k">with</span> <span class="n">ZipFile</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">zfile</span><span class="p">:</span>
+                <span class="n">zfile</span><span class="o">.</span><span class="n">writestr</span><span class="p">(</span><span class="s1">&#39;recipe.yaml&#39;</span><span class="p">,</span> <span class="n">stream</span><span class="o">.</span><span class="n">getvalue</span><span class="p">())</span></div></div>
+                <span class="n">zfile</span><span class="o">.</span><span class="n">writestr</span><span class="p">(</span><span class="s1">&#39;MIMETYPE&#39;</span><span class="p">,</span> <span class="s1">&#39;application/recipe+zip&#39;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="RecipeWebScraper"><a class="viewcode-back" href="../../source/pyrecipe.html#pyrecipe.recipe.RecipeWebScraper">[docs]</a><span class="k">class</span> <span class="nc">RecipeWebScraper</span><span class="p">(</span><span class="n">Recipe</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Scrape recipes from web sources.&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;source_url&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">url</span>
+        <span class="k">try</span><span class="p">:</span> 
+            <span class="bp">self</span><span class="o">.</span><span class="n">req</span> <span class="o">=</span> <span class="n">urlopen</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="s1">&#39;You must supply a valid url cooyon!&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">soup</span> <span class="o">=</span> <span class="n">bs4</span><span class="o">.</span><span class="n">BeautifulSoup</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">req</span><span class="p">,</span> <span class="s1">&#39;html.parser&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fetch_recipe_name</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fetch_ingredients</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fetch_author</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fetch_method</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_fetch_recipe_name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">name_box</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">soup</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;h2&#39;</span><span class="p">,</span> <span class="n">attrs</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;class&#39;</span><span class="p">:</span> <span class="s1">&#39;modal-title&#39;</span><span class="p">})</span>
+        <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;recipe_name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">name_box</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_fetch_ingredients</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">ingred_box</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">soup</span><span class="o">.</span><span class="n">find_all</span><span class="p">(</span><span class="s1">&#39;ul&#39;</span><span class="p">,</span> <span class="n">attrs</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;class&#39;</span><span class="p">:</span> <span class="s1">&#39;ingredient-list&#39;</span><span class="p">})</span>
+        <span class="n">ingred_parser</span> <span class="o">=</span> <span class="n">IngredientParser</span><span class="p">()</span>
+        <span class="n">ingredients</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">ingred_box</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">litag</span> <span class="ow">in</span> <span class="n">item</span><span class="o">.</span><span class="n">find_all</span><span class="p">(</span><span class="s1">&#39;li&#39;</span><span class="p">):</span>
+                <span class="n">ingred_text</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">litag</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">())</span>
+                <span class="n">ingred</span> <span class="o">=</span> <span class="n">ingred_parser</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">ingred_text</span><span class="p">)</span>
+                <span class="n">ingredients</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ingred</span><span class="p">)</span>
+        <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;ingredients&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ingredients</span>
+
+    <span class="k">def</span> <span class="nf">_fetch_method</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">method_box</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">soup</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;div&#39;</span><span class="p">,</span> <span class="n">attrs</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;class&#39;</span><span class="p">:</span> <span class="s1">&#39;directions-inner container-xs&#39;</span><span class="p">})</span>
+        <span class="n">litags</span> <span class="o">=</span> <span class="n">method_box</span><span class="o">.</span><span class="n">find_all</span><span class="p">(</span><span class="s1">&#39;li&#39;</span><span class="p">)</span>
+        <span class="c1"># last litag is &quot;submit a correction&quot;, we dont need that</span>
+        <span class="k">del</span> <span class="n">litags</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">recipe_steps</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">litags</span><span class="p">:</span>
+            <span class="n">step_dict</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">step_dict</span><span class="p">[</span><span class="s1">&#39;step&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="n">recipe_steps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">step_dict</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;steps&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">recipe_steps</span>
+
+    <span class="k">def</span> <span class="nf">_fetch_author</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">name_box</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">soup</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;h6&#39;</span><span class="p">,</span> <span class="n">attrs</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;class&#39;</span><span class="p">:</span> <span class="s1">&#39;byline&#39;</span><span class="p">})</span>
+        <span class="n">recipe_by</span> <span class="o">=</span> <span class="n">name_box</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span></div>
+        <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;author&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">recipe_by</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)[</span><span class="mi">2</span><span class="p">:])</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="Ingredient"><a class="viewcode-back" href="../../source/pyrecipe.html#pyrecipe.recipe.Ingredient">[docs]</a><span class="k">class</span> <span class="nc">Ingredient</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Build an Ingredient object.</span>
+<span class="sd">    </span>
+<span class="sd">    Given a dict of ingredient data, Ingredient class can return a string</span>
+<span class="sd">    :param ingredient: dict of ingredient data</span>
+<span class="sd">    :param amount_level: choose the yield of the recipe</span>
+<span class="sd">    :param color: return string with color data for color output</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ingredient</span><span class="o">=</span><span class="p">{},</span> <span class="n">amount_level</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ingredient</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Ingredient only except dict as its first argument&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">color</span> <span class="o">=</span> <span class="n">color</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">ingredient</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">size</span> <span class="o">=</span> <span class="n">ingredient</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;size&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prep</span> <span class="o">=</span> <span class="n">ingredient</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;prep&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">note</span> <span class="o">=</span> <span class="n">ingredient</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;note&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">amount</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">unit</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">amounts</span> <span class="o">=</span> <span class="n">ingredient</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;amounts&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">amounts</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span> 
+                <span class="bp">self</span><span class="o">.</span><span class="n">amount</span> <span class="o">=</span> <span class="n">RecipeNum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">amounts</span><span class="p">[</span><span class="n">amount_level</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;amount&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">))</span>
+            <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">amount</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">unit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">amounts</span><span class="p">[</span><span class="n">amount_level</span><span class="p">][</span><span class="s1">&#39;unit&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">unit</span> <span class="o">==</span> <span class="s1">&#39;each&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">unit</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Turn ingredient object into a string</span>
+
+<span class="sd">        Calling string on an ingredient object returns the gramatically</span>
+<span class="sd">        correct representation of the ingredient object.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">color_number</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="n">color_normal</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="n">color_note</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">color</span><span class="p">:</span>
+            <span class="n">color_number</span> <span class="o">=</span> <span class="n">color</span><span class="o">.</span><span class="n">NUMBER</span>
+            <span class="n">color_normal</span> <span class="o">=</span> <span class="n">color</span><span class="o">.</span><span class="n">NORMAL</span>
+            <span class="n">color_note</span> <span class="o">=</span> <span class="n">color</span><span class="o">.</span><span class="n">INFORM</span> 
+        
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">note</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">note</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">(</span><span class="si">{}</span><span class="s1">)</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">color_note</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">note</span><span class="p">,</span> <span class="n">color_normal</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">unit</span> <span class="o">==</span> <span class="s1">&#39;to taste&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> to taste&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">capitalize</span><span class="p">())</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">unit</span> <span class="o">==</span> <span class="s1">&#39;pinch of&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;Pinch of </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">unit</span> <span class="o">==</span> <span class="s1">&#39;splash of&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;Splash of </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">match</span> <span class="o">=</span> <span class="n">PORTIONED_UNIT_RE</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">unit</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">match</span><span class="p">:</span>
+                <span class="n">unit</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">unit</span> <span class="o">=</span> <span class="s2">&quot;(</span><span class="si">{}</span><span class="s2">) </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">unit</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">]),</span> <span class="n">unit</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+            <span class="n">ingred_string</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}{}{}</span><span class="s2"> </span><span class="si">{}</span><span class="s2"> </span><span class="si">{}</span><span class="s2"> </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">color_number</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">amount</span><span class="p">,</span>
+                                              <span class="n">color_normal</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">,</span>
+                                              <span class="bp">self</span><span class="o">.</span><span class="n">unit</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+            <span class="c1"># the previous line adds unwanted spaces if</span>
+            <span class="c1"># values are absent, we simply clean that up here.</span>
+            <span class="n">ingred_string</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">ingred_string</span><span class="o">.</span><span class="n">split</span><span class="p">())</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">prep</span><span class="p">:</span>
+                <span class="n">ingred_string</span> <span class="o">+=</span> <span class="s2">&quot;, &quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">prep</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">note</span><span class="p">:</span>
+                <span class="n">ingred_string</span> <span class="o">+=</span> <span class="s2">&quot; </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">note</span><span class="p">)</span>
+            </div>
+            <span class="k">return</span> <span class="n">ingred_string</span>
+
+
+<div class="viewcode-block" id="IngredientParser"><a class="viewcode-back" href="../../source/pyrecipe.html#pyrecipe.recipe.IngredientParser">[docs]</a><span class="k">class</span> <span class="nc">IngredientParser</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Convert an ingredient string into a list or dict.</span>
+
+<span class="sd">    an excepted ingredient string is usually in the form of</span>
+
+<span class="sd">    &quot;&lt;amount&gt; &lt;size&gt; &lt;unit&gt; &lt;ingredient&gt;, &lt;prep&gt;&quot;</span>
+
+<span class="sd">    however, not all elements of an ingredient string may</span>
+<span class="sd">    be present in every case. It is the job of the ingredient</span>
+<span class="sd">    parser to identify what an ingredient string contains, and to</span>
+<span class="sd">    return a list or dict populated with the relevant data.</span>
+
+<span class="sd">    params:</span>
+
+<span class="sd">    - return_dict: return ingredient data in a dict in the form of</span>
+<span class="sd">                   {&#39;name&#39;: &lt;name&gt;,</span>
+<span class="sd">                    &#39;size&#39;: &lt;size&gt;,</span>
+<span class="sd">                    &#39;amounts&#39;: [{&#39;amount&#39;: &lt;amount&gt;, &#39;uniit&#39;: &lt;unit&gt;}],</span>
+<span class="sd">                    &#39;note&#39;: &lt;note&gt;,</span>
+<span class="sd">                    &#39;prep&#39;: &lt;prep&gt;}</span>
+
+<span class="sd">    examples:</span>
+
+<span class="sd">    &gt;&gt;&gt; parser = IngredientParser()</span>
+<span class="sd">    &gt;&gt;&gt; parser.parse(&#39;1 tablespoon onion, chopped&#39;)</span>
+<span class="sd">    [1, &#39;&#39;, &#39;tablespoon&#39;, &#39;onion chopped&#39;, &#39;chopped&#39;]</span>
+<span class="sd">    &gt;&gt;&gt; parser.parse(&#39;3 large carrots, finely diced&#39;)</span>
+<span class="sd">    [&#39;3&#39;, &#39;large&#39;, &#39;carrot&#39;, &#39;finely diced&#39;]</span>
+<span class="sd">    &gt;&gt;&gt; parser.parse(&#39;1 tablespoon onion chopped&#39;, return_dict=True)</span>
+<span class="sd">    {&#39;amounts&#39;: [{&#39;amount&#39;: 1, &#39;unit&#39;: &#39;tablespoon&#39;}], &#39;name&#39;: &#39;onion chopped&#39;, &#39;prep&#39;: &#39;chopped&#39;}</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">omitted</span> <span class="o">=</span> <span class="s1">&#39;-/(),.&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">punct</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">string</span><span class="o">.</span><span class="n">punctuation</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">omitted</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">_preprocess_string</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">string</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;preprocess the string&quot;&quot;&quot;</span>
+        <span class="c1"># this special forward slash character (differs from &#39;/&#39;) is encounterd</span>
+        <span class="c1"># on some sites througout the web. There maybe others</span>
+        <span class="k">if</span> <span class="s1">&#39;⁄&#39;</span> <span class="ow">in</span> <span class="n">string</span><span class="p">:</span>
+            <span class="n">string</span> <span class="o">=</span> <span class="n">string</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;⁄&#39;</span><span class="p">,</span> <span class="s1">&#39;/&#39;</span><span class="p">)</span>
+        <span class="n">lower_stripd_punc</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">string</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">punct</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">lower_stripd_punc</span>
+
+    <span class="k">def</span> <span class="nf">_strip_parens</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">string</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">string</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;(&#39;</span><span class="p">,</span> <span class="s1">&#39;)&#39;</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">_strip_punct</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">string</span><span class="p">):</span>
+        <span class="c1">#&#39;1 (232323 ounce) can tamatoes, very *&amp;@#finely chopped (I prefer white onions)&#39;</span>
+        <span class="k">return</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">string</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">punct</span><span class="p">)</span>
+
+<div class="viewcode-block" id="IngredientParser.parse"><a class="viewcode-back" href="../../source/pyrecipe.html#pyrecipe.recipe.IngredientParser.parse">[docs]</a>    <span class="k">def</span> <span class="nf">parse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">string</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">return_list</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;parse the ingredient string&quot;&quot;&quot;</span>
+        <span class="n">amount</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span> 
+        <span class="n">size</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="n">unit</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="n">prep</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="n">note</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="n">ingred_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">ingred_dict</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c1"># string preprocessing</span>
+        <span class="n">ingred_string</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_preprocess_string</span><span class="p">(</span><span class="n">string</span><span class="p">)</span>
+        
+        <span class="c1"># get unit</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="n">PORTIONED_UNIT_RE</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">ingred_string</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">match</span><span class="p">:</span>
+            <span class="n">ingred_string</span> <span class="o">=</span> <span class="n">ingred_string</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(),</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+            <span class="n">unit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_strip_parens</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">())</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">conf</span><span class="o">.</span><span class="n">INGRED_UNITS</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">ingred_string</span><span class="o">.</span><span class="n">split</span><span class="p">():</span>
+                    <span class="n">unit</span> <span class="o">=</span> <span class="n">item</span>
+                    <span class="n">ingred_string</span> <span class="o">=</span> <span class="n">ingred_string</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="s2">&quot;to taste&quot;</span> <span class="ow">in</span> <span class="n">ingred_string</span><span class="p">:</span>
+            <span class="n">unit</span> <span class="o">=</span> <span class="s2">&quot;to taste&quot;</span>
+            <span class="n">ingred_string</span> <span class="o">=</span> <span class="n">ingred_string</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">unit</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="s2">&quot;splash of&quot;</span> <span class="ow">in</span> <span class="n">ingred_string</span><span class="p">:</span>
+            <span class="n">unit</span> <span class="o">=</span> <span class="s2">&quot;splash of&quot;</span>
+            <span class="n">ingred_string</span> <span class="o">=</span> <span class="n">ingred_string</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">unit</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="s2">&quot;pinch of&quot;</span> <span class="ow">in</span> <span class="n">ingred_string</span><span class="p">:</span>
+            <span class="n">unit</span> <span class="o">=</span> <span class="s2">&quot;pinch of&quot;</span>
+            <span class="n">ingred_string</span> <span class="o">=</span> <span class="n">ingred_string</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">unit</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+        
+        <span class="c1"># get note if any</span>
+        <span class="n">parens</span> <span class="o">=</span> <span class="n">PAREN_RE</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">ingred_string</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">parens</span><span class="p">:</span>
+            <span class="n">ingred_string</span> <span class="o">=</span> <span class="n">ingred_string</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">parens</span><span class="o">.</span><span class="n">group</span><span class="p">(),</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+            <span class="n">note</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_strip_parens</span><span class="p">(</span><span class="n">parens</span><span class="o">.</span><span class="n">group</span><span class="p">())</span>
+
+        <span class="n">ingred_list</span> <span class="o">=</span> <span class="n">ingred_string</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+        <span class="n">amnt_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">ingred_list</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">RecipeNum</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+                <span class="n">amnt_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">amount</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">RecipeNum</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">amnt_list</span><span class="p">)))</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="n">amount</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+
+
+        <span class="n">ingred_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">ingred_list</span> <span class="k">if</span> <span class="n">x</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">amnt_list</span><span class="p">]</span>
+        <span class="n">ingred_string</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">ingred_list</span><span class="p">)</span>
+
+
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">conf</span><span class="o">.</span><span class="n">SIZE_STRINGS</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">ingred_string</span><span class="p">:</span>
+                <span class="n">size</span> <span class="o">=</span> <span class="n">item</span>
+                <span class="n">ingred_string</span> <span class="o">=</span> <span class="n">ingred_string</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+        
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">conf</span><span class="o">.</span><span class="n">INGRED_UNITS</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">ingred_string</span><span class="o">.</span><span class="n">split</span><span class="p">():</span>
+                <span class="n">unit</span> <span class="o">=</span> <span class="n">item</span>
+                <span class="n">ingred_string</span> <span class="o">=</span> <span class="n">ingred_string</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+        
+        <span class="k">try</span><span class="p">:</span> 
+            <span class="k">assert</span> <span class="s1">&#39;,&#39;</span> <span class="ow">in</span> <span class="n">ingred_string</span>
+            <span class="n">prep</span> <span class="o">=</span> <span class="n">ingred_string</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="n">ingred_string</span> <span class="o">=</span> <span class="n">ingred_string</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">prep</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">AssertionError</span><span class="p">:</span>
+            <span class="n">prep</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">unit</span><span class="p">:</span>
+            <span class="n">unit</span> <span class="o">=</span> <span class="s1">&#39;each&#39;</span>
+
+        <span class="c1"># at this point we are assuming that all elements have been removed</span>
+        <span class="c1"># from list except for the name. Whatever is left gets joined together</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">ingred_string</span><span class="o">.</span><span class="n">split</span><span class="p">())</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span>
+        <span class="n">ingred_dict</span><span class="p">[</span><span class="s1">&#39;amounts&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[{</span><span class="s1">&#39;amount&#39;</span><span class="p">:</span> <span class="n">amount</span><span class="p">,</span> <span class="s1">&#39;unit&#39;</span><span class="p">:</span> <span class="n">unit</span><span class="p">}]</span>
+        <span class="k">if</span> <span class="n">size</span><span class="p">:</span> 
+            <span class="n">ingred_dict</span><span class="p">[</span><span class="s1">&#39;size&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">size</span>
+        <span class="n">ingred_dict</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="k">if</span> <span class="n">prep</span><span class="p">:</span> 
+            <span class="n">ingred_dict</span><span class="p">[</span><span class="s1">&#39;prep&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">prep</span>
+        <span class="k">if</span> <span class="n">note</span><span class="p">:</span>
+            <span class="n">ingred_dict</span><span class="p">[</span><span class="s1">&#39;note&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">note</span>
+
+        <span class="n">ingred_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">amount</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="n">unit</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">prep</span><span class="p">,</span> <span class="n">note</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">return_list</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">ingred_list</span></div></div>
+        <span class="k">return</span> <span class="n">ingred_dict</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">Recipe</span><span class="p">(</span><span class="s1">&#39;korean pork tacos&#39;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="nb">dir</span><span class="p">(</span><span class="n">r</span><span class="p">))</span>
+    <span class="c1">#i = IngredientParser()</span>
+    <span class="c1">#test = i.parse(&#39;1 ounce cantelope&#39;)</span>
+    <span class="c1">#test = i.parse(&#39;1 whole cube steak&#39;)</span>
+    <span class="c1">#ok = Ingredient(test)</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  <li><a href="../pyrecipe.html">pyrecipe</a><ul>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Michael Miller.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

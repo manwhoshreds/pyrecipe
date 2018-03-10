@@ -1,0 +1,331 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>pyrecipe.gui.maingui &#8212; pyrecipe v0.9.0 documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pyrecipe.gui.maingui</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;gui</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">from</span> <span class="nn">tkinter</span> <span class="k">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">tkinter.ttk</span> <span class="k">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">numbers</span> <span class="k">import</span> <span class="n">Number</span>
+
+<span class="kn">import</span> <span class="nn">pyrecipe.recipe</span> <span class="k">as</span> <span class="nn">recipe</span>
+<span class="kn">from</span> <span class="nn">pyrecipe.gui.add_recipe</span> <span class="k">import</span> <span class="n">AddRecipe</span>
+<span class="kn">from</span> <span class="nn">pyrecipe.gui.settings</span> <span class="k">import</span> <span class="n">Settings</span>
+<span class="kn">from</span> <span class="nn">pyrecipe.gui.tk_utils</span> <span class="k">import</span> <span class="o">*</span>
+<span class="kn">import</span> <span class="nn">pyrecipe.config</span> <span class="k">as</span> <span class="nn">conf</span>
+<span class="kn">from</span> <span class="nn">pyrecipe.utils</span> <span class="k">import</span> <span class="o">*</span>
+
+
+
+
+<div class="viewcode-block" id="MainGUI"><a class="viewcode-back" href="../../../source/pyrecipe.gui.html#pyrecipe.gui.maingui.MainGUI">[docs]</a><span class="k">class</span> <span class="nc">MainGUI</span><span class="p">(</span><span class="n">Tk</span><span class="p">):</span>
+	
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">Tk</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;Pyrecipe - The python recipe management program&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">screen_width</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">winfo_screenwidth</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">screen_height</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">winfo_screenheight</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_build_menubar</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">top_bar</span> <span class="o">=</span> <span class="n">Frame</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">top_bar</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="n">fill</span><span class="o">=</span><span class="n">X</span><span class="p">)</span>
+        <span class="n">new_recipe</span> <span class="o">=</span> <span class="n">Button</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">top_bar</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;New&quot;</span><span class="p">,</span> <span class="n">command</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">add_recipe</span><span class="p">)</span>
+        <span class="n">new_recipe</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="n">side</span><span class="o">=</span><span class="n">LEFT</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">edit_recipe</span> <span class="o">=</span> <span class="n">Button</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">top_bar</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;Edit&quot;</span><span class="p">,</span> <span class="n">command</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">edit_recipe</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">edit_recipe</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="n">side</span><span class="o">=</span><span class="n">LEFT</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">left_pane</span> <span class="o">=</span> <span class="n">Frame</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">left_pane</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="n">side</span><span class="o">=</span><span class="n">LEFT</span><span class="p">)</span>
+        <span class="n">search</span> <span class="o">=</span> <span class="n">Label</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">left_pane</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;Search Recipes&quot;</span><span class="p">)</span>
+        <span class="n">search</span><span class="o">.</span><span class="n">pack</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rec_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">title</span><span class="p">()</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">manifest</span><span class="o">.</span><span class="n">recipe_names</span><span class="p">]</span>
+        <span class="n">entry</span> <span class="o">=</span> <span class="n">AutoEntry</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rec_names</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">left_pane</span><span class="p">)</span>
+        <span class="n">entry</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="n">fill</span><span class="o">=</span><span class="n">X</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">recipe_listbox</span> <span class="o">=</span> <span class="n">Listbox</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">left_pane</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">selectmode</span><span class="o">=</span><span class="n">SINGLE</span><span class="p">,</span> <span class="n">bg</span><span class="o">=</span><span class="s1">&#39;white&#39;</span><span class="p">,</span> <span class="n">font</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;ubuntu&#39;</span><span class="p">,</span> <span class="mi">13</span><span class="p">))</span>
+        <span class="n">scrollb</span> <span class="o">=</span> <span class="n">Scrollbar</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">left_pane</span><span class="p">,</span> <span class="n">command</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">recipe_listbox</span><span class="o">.</span><span class="n">yview</span><span class="p">)</span>
+        <span class="n">scrollb</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="n">side</span><span class="o">=</span><span class="n">RIGHT</span><span class="p">,</span> <span class="n">fill</span><span class="o">=</span><span class="n">Y</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">recipe_listbox</span><span class="o">.</span><span class="n">configure</span><span class="p">(</span><span class="n">yscrollcommand</span><span class="o">=</span><span class="n">scrollb</span><span class="o">.</span><span class="n">set</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">recipe_listbox</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="n">side</span><span class="o">=</span><span class="n">LEFT</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">refresh_recipes</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">recipe_listbox</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span><span class="s2">&quot;&lt;Double-Button-1&gt;&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">onDoubleClk</span><span class="p">)</span>	
+        <span class="bp">self</span><span class="o">.</span><span class="n">recipe_listbox</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span><span class="s2">&quot;&lt;Button-1&gt;&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">onLeftClk</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">recipe_listbox</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span><span class="s2">&quot;&lt;Button-3&gt;&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">onRightClk</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">selection</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">recipe_listbox</span><span class="o">.</span><span class="n">curselection</span><span class="p">()</span>
+        
+        <span class="c1"># listbox context menu</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">popup_menu</span> <span class="o">=</span> <span class="n">Menu</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">recipe_listbox</span><span class="p">,</span> <span class="n">tearoff</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">popup_menu</span><span class="o">.</span><span class="n">add_command</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Edit&quot;</span><span class="p">,</span> <span class="n">command</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">edit_recipe</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">popup_menu</span><span class="o">.</span><span class="n">add_command</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Select All&quot;</span><span class="p">,</span> <span class="n">command</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">donothing</span><span class="p">)</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">recipe_textbox</span> <span class="o">=</span> <span class="n">Text</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">font</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;ubuntu&#39;</span><span class="p">,</span> <span class="mi">16</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">recipe_textbox</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="n">side</span><span class="o">=</span><span class="n">LEFT</span><span class="p">,</span> <span class="n">fill</span><span class="o">=</span><span class="n">X</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">right_pane</span> <span class="o">=</span> <span class="n">Frame</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">right_pane</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="n">side</span><span class="o">=</span><span class="n">RIGHT</span><span class="p">,</span> <span class="n">fill</span><span class="o">=</span><span class="n">BOTH</span><span class="p">)</span>
+        <span class="n">test</span> <span class="o">=</span> <span class="n">Button</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">right_pane</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;test&quot;</span><span class="p">,</span> <span class="n">command</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">donothing</span><span class="p">)</span>
+        <span class="n">test</span><span class="o">.</span><span class="n">pack</span><span class="p">()</span>
+    
+<div class="viewcode-block" id="MainGUI.onLeftClk"><a class="viewcode-back" href="../../../source/pyrecipe.gui.html#pyrecipe.gui.maingui.MainGUI.onLeftClk">[docs]</a>    <span class="k">def</span> <span class="nf">onLeftClk</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">popup_menu</span><span class="o">.</span><span class="n">unpost</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_get_selection</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">recipe</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">recipe_listbox</span><span class="o">.</span><span class="n">curselection</span><span class="p">()</span>
+            <span class="n">rec_selection</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">recipe_listbox</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">recipe</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="k">return</span> <span class="n">rec_selection</span>
+        <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+<div class="viewcode-block" id="MainGUI.refresh_recipes"><a class="viewcode-back" href="../../../source/pyrecipe.gui.html#pyrecipe.gui.maingui.MainGUI.refresh_recipes">[docs]</a>    <span class="k">def</span> <span class="nf">refresh_recipes</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">recipe_listbox</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">END</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rec_names</span><span class="p">):</span></div>
+            <span class="bp">self</span><span class="o">.</span><span class="n">recipe_listbox</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">END</span><span class="p">,</span> <span class="n">item</span><span class="p">)</span>
+
+<div class="viewcode-block" id="MainGUI.add_recipe"><a class="viewcode-back" href="../../../source/pyrecipe.gui.html#pyrecipe.gui.maingui.MainGUI.add_recipe">[docs]</a>    <span class="k">def</span> <span class="nf">add_recipe</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">recipe_add</span> <span class="o">=</span> <span class="n">AddRecipe</span><span class="p">()</span>
+        <span class="n">recipe_add</span><span class="o">.</span><span class="n">wait_window</span><span class="p">()</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">refresh_recipes</span><span class="p">()</span>
+
+<div class="viewcode-block" id="MainGUI.edit_recipe"><a class="viewcode-back" href="../../../source/pyrecipe.gui.html#pyrecipe.gui.maingui.MainGUI.edit_recipe">[docs]</a>    <span class="k">def</span> <span class="nf">edit_recipe</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">rec_selection</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_selection</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">rec_selection</span><span class="p">:</span>
+            <span class="n">Warn</span><span class="p">(</span><span class="n">msg</span><span class="o">=</span><span class="s2">&quot;Select a recipe from the list box&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="n">recipe</span><span class="o">.</span><span class="n">Recipe</span><span class="p">(</span><span class="n">rec_selection</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">r</span><span class="p">[</span><span class="s1">&#39;alt_ingredients&#39;</span><span class="p">]:</span>
+                <span class="n">warning</span> <span class="o">=</span> <span class="n">Warn</span><span class="p">(</span><span class="n">msg</span><span class="o">=</span><span class="s2">&quot;This recipe contains alt ingredient data &quot;</span>
+                                   <span class="s2">&quot;The pyrecipe gui is not able to handle this &quot;</span>
+                                   <span class="s2">&quot;feature yet. Please use the cli if you wish &quot;</span>
+                                   <span class="s2">&quot;to edit recipes with alt ingredients.&quot;</span><span class="p">)</span>
+                <span class="n">warning</span><span class="o">.</span><span class="n">wait_window</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span></div>
+                <span class="n">AddRecipe</span><span class="p">(</span><span class="n">rec_selection</span><span class="p">)</span>
+
+        
+<div class="viewcode-block" id="MainGUI.onRightClk"><a class="viewcode-back" href="../../../source/pyrecipe.gui.html#pyrecipe.gui.maingui.MainGUI.onRightClk">[docs]</a>    <span class="k">def</span> <span class="nf">onRightClk</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">popup_menu</span><span class="o">.</span><span class="n">unpost</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">recipe_listbox</span><span class="o">.</span><span class="n">select_clear</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">END</span><span class="p">)</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">y_root</span> <span class="o">-</span> <span class="mi">120</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">recipe_listbox</span><span class="o">.</span><span class="n">nearest</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">recipe_listbox</span><span class="o">.</span><span class="n">select_set</span><span class="p">(</span><span class="n">index</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">popup_menu</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">x_root</span><span class="p">,</span> <span class="n">event</span><span class="o">.</span><span class="n">y_root</span><span class="p">)</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_get_selection</span><span class="p">()</span>
+    
+<div class="viewcode-block" id="MainGUI.onDoubleClk"><a class="viewcode-back" href="../../../source/pyrecipe.gui.html#pyrecipe.gui.maingui.MainGUI.onDoubleClk">[docs]</a>    <span class="k">def</span> <span class="nf">onDoubleClk</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
+        <span class="c1"># State Normal on click on disabled when we finish building text</span>
+        <span class="c1"># this is nescassary for text to be read-only</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">recipe_textbox</span><span class="o">.</span><span class="n">config</span><span class="p">(</span><span class="n">state</span><span class="o">=</span><span class="n">NORMAL</span><span class="p">)</span>
+        <span class="c1"># delete text box so recipes dont keep appending inside</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">recipe_textbox</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="s1">&#39;1.0&#39;</span><span class="p">,</span> <span class="n">END</span><span class="p">)</span>
+        <span class="n">widget</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">widget</span>
+        <span class="n">selection</span> <span class="o">=</span> <span class="n">widget</span><span class="o">.</span><span class="n">curselection</span><span class="p">()</span>
+        <span class="n">recipe_selection</span> <span class="o">=</span> <span class="n">widget</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">selection</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">recipe</span><span class="o">.</span><span class="n">Recipe</span><span class="p">(</span><span class="n">recipe_selection</span><span class="p">)</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_build_recipe_text</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">_build_recipe_text</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">recipe</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">recipe_textbox</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">END</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">recipe</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">recipe_textbox</span><span class="o">.</span><span class="n">config</span><span class="p">(</span><span class="n">state</span><span class="o">=</span><span class="n">DISABLED</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_build_menubar</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># filemenu</span>
+        <span class="n">menubar</span> <span class="o">=</span> <span class="n">Menu</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">filemenu</span> <span class="o">=</span> <span class="n">Menu</span><span class="p">(</span><span class="n">menubar</span><span class="p">,</span> <span class="n">tearoff</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">filemenu</span><span class="o">.</span><span class="n">add_command</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;New&quot;</span><span class="p">,</span> <span class="n">command</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">add_recipe</span><span class="p">)</span>
+        <span class="n">filemenu</span><span class="o">.</span><span class="n">add_command</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Open&quot;</span><span class="p">,</span> <span class="n">command</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">donothing</span><span class="p">)</span>
+        <span class="n">filemenu</span><span class="o">.</span><span class="n">add_command</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Close&quot;</span><span class="p">,</span> <span class="n">command</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">donothing</span><span class="p">)</span>
+
+        <span class="n">filemenu</span><span class="o">.</span><span class="n">add_separator</span><span class="p">()</span>
+
+        <span class="n">filemenu</span><span class="o">.</span><span class="n">add_command</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Exit&quot;</span><span class="p">,</span> <span class="n">command</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">quit</span><span class="p">)</span>
+        <span class="n">menubar</span><span class="o">.</span><span class="n">add_cascade</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;File&quot;</span><span class="p">,</span> <span class="n">menu</span><span class="o">=</span><span class="n">filemenu</span><span class="p">)</span>
+        
+        <span class="c1"># editmenu	</span>
+        <span class="n">editmenu</span> <span class="o">=</span> <span class="n">Menu</span><span class="p">(</span><span class="n">menubar</span><span class="p">,</span> <span class="n">tearoff</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">editmenu</span><span class="o">.</span><span class="n">add_command</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Settings&quot;</span><span class="p">,</span> <span class="n">command</span><span class="o">=</span><span class="n">Settings</span><span class="p">)</span>
+        <span class="n">menubar</span><span class="o">.</span><span class="n">add_cascade</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Edit&quot;</span><span class="p">,</span> <span class="n">menu</span><span class="o">=</span><span class="n">editmenu</span><span class="p">)</span>
+        
+        <span class="c1"># helpmenu</span>
+        <span class="n">helpmenu</span> <span class="o">=</span> <span class="n">Menu</span><span class="p">(</span><span class="n">menubar</span><span class="p">,</span> <span class="n">tearoff</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">helpmenu</span><span class="o">.</span><span class="n">add_command</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;About...&quot;</span><span class="p">,</span> <span class="n">command</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">show_version</span><span class="p">)</span>
+        <span class="n">menubar</span><span class="o">.</span><span class="n">add_cascade</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Help&quot;</span><span class="p">,</span> <span class="n">menu</span><span class="o">=</span><span class="n">helpmenu</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">(</span><span class="n">menu</span><span class="o">=</span><span class="n">menubar</span><span class="p">)</span>
+
+<div class="viewcode-block" id="MainGUI.show_version"><a class="viewcode-back" href="../../../source/pyrecipe.gui.html#pyrecipe.gui.maingui.MainGUI.show_version">[docs]</a>    <span class="k">def</span> <span class="nf">show_version</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">ver</span> <span class="o">=</span> <span class="n">Toplevel</span><span class="p">(</span><span class="n">width</span><span class="o">=</span><span class="mi">800</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">800</span><span class="p">)</span>
+        <span class="n">ver</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Pyrecipe Version Information&quot;</span><span class="p">)</span>
+
+        <span class="n">verframe</span> <span class="o">=</span> <span class="n">Frame</span><span class="p">(</span><span class="n">ver</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">800</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">800</span><span class="p">)</span>
+        <span class="n">verframe</span><span class="o">.</span><span class="n">pack</span><span class="p">()</span>
+        
+        <span class="n">msg_body</span> <span class="o">=</span> <span class="n">recipe</span><span class="o">.</span><span class="n">version</span><span class="p">(</span><span class="n">text_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>	
+        <span class="n">msg</span> <span class="o">=</span> <span class="n">Message</span><span class="p">(</span><span class="n">verframe</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="n">msg_body</span><span class="p">)</span>
+        <span class="n">msg</span><span class="o">.</span><span class="n">pack</span><span class="p">()</span>
+        
+        <span class="n">button</span> <span class="o">=</span> <span class="n">Button</span><span class="p">(</span><span class="n">ver</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;Ok&quot;</span><span class="p">,</span> <span class="n">command</span><span class="o">=</span><span class="n">ver</span><span class="o">.</span><span class="n">destroy</span><span class="p">)</span></div>
+        <span class="n">button</span><span class="o">.</span><span class="n">pack</span><span class="p">()</span>
+
+<div class="viewcode-block" id="MainGUI.donothing"><a class="viewcode-back" href="../../../source/pyrecipe.gui.html#pyrecipe.gui.maingui.MainGUI.donothing">[docs]</a>    <span class="k">def</span> <span class="nf">donothing</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></div></div>
+        <span class="k">pass</span>
+
+
+<div class="viewcode-block" id="AutoEntry"><a class="viewcode-back" href="../../../source/pyrecipe.gui.html#pyrecipe.gui.maingui.AutoEntry">[docs]</a><span class="k">class</span> <span class="nc">AutoEntry</span><span class="p">(</span><span class="n">Entry</span><span class="p">):</span>
+
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">somelist</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">Entry</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">somelist</span> <span class="o">=</span> <span class="n">somelist</span>       
+        <span class="bp">self</span><span class="o">.</span><span class="n">var</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="s2">&quot;textvariable&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">var</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">var</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="s2">&quot;textvariable&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">StringVar</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">var</span><span class="o">.</span><span class="n">trace</span><span class="p">(</span><span class="s1">&#39;w&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">changed</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span><span class="s2">&quot;&lt;Return&gt;&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">selection</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span><span class="s2">&quot;&lt;Right&gt;&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">selection</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span><span class="s2">&quot;&lt;Up&gt;&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">up</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span><span class="s2">&quot;&lt;Down&gt;&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">down</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lb_up</span> <span class="o">=</span> <span class="kc">False</span>
+
+<div class="viewcode-block" id="AutoEntry.changed"><a class="viewcode-back" href="../../../source/pyrecipe.gui.html#pyrecipe.gui.maingui.AutoEntry.changed">[docs]</a>    <span class="k">def</span> <span class="nf">changed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">mode</span><span class="p">):</span>  
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">var</span><span class="o">.</span><span class="n">get</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lb</span><span class="o">.</span><span class="n">destroy</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lb_up</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">words</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">comparison</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">words</span><span class="p">:</span>            
+                <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">lb_up</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">lb</span> <span class="o">=</span> <span class="n">Listbox</span><span class="p">()</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">lb</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span><span class="s2">&quot;&lt;Double-Button-1&gt;&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">selection</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">lb</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span><span class="s2">&quot;&lt;Right&gt;&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">selection</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">lb</span><span class="o">.</span><span class="n">place</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">winfo_x</span><span class="p">(),</span> <span class="n">y</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">winfo_y</span><span class="p">()</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">winfo_height</span><span class="p">())</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">lb_up</span> <span class="o">=</span> <span class="kc">True</span>
+                
+                <span class="bp">self</span><span class="o">.</span><span class="n">lb</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">END</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">words</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">lb</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">END</span><span class="p">,</span><span class="n">w</span><span class="p">)</span>
+                    <span class="c1">#recipe_listbox.insert(END, w)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">lb_up</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">lb</span><span class="o">.</span><span class="n">destroy</span><span class="p">()</span></div>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">lb_up</span> <span class="o">=</span> <span class="kc">False</span>
+        
+<div class="viewcode-block" id="AutoEntry.selection"><a class="viewcode-back" href="../../../source/pyrecipe.gui.html#pyrecipe.gui.maingui.AutoEntry.selection">[docs]</a>    <span class="k">def</span> <span class="nf">selection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">lb_up</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">var</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lb</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ACTIVE</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lb</span><span class="o">.</span><span class="n">destroy</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lb_up</span> <span class="o">=</span> <span class="kc">False</span></div>
+            <span class="bp">self</span><span class="o">.</span><span class="n">icursor</span><span class="p">(</span><span class="n">END</span><span class="p">)</span>
+
+<div class="viewcode-block" id="AutoEntry.up"><a class="viewcode-back" href="../../../source/pyrecipe.gui.html#pyrecipe.gui.maingui.AutoEntry.up">[docs]</a>    <span class="k">def</span> <span class="nf">up</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">lb_up</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">lb</span><span class="o">.</span><span class="n">curselection</span><span class="p">()</span> <span class="o">==</span> <span class="p">():</span>
+                <span class="n">index</span> <span class="o">=</span> <span class="s1">&#39;0&#39;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lb</span><span class="o">.</span><span class="n">curselection</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">index</span> <span class="o">!=</span> <span class="s1">&#39;0&#39;</span><span class="p">:</span>                
+                <span class="bp">self</span><span class="o">.</span><span class="n">lb</span><span class="o">.</span><span class="n">selection_clear</span><span class="p">(</span><span class="n">first</span><span class="o">=</span><span class="n">index</span><span class="p">)</span>
+                <span class="n">index</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">index</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>                
+                <span class="bp">self</span><span class="o">.</span><span class="n">lb</span><span class="o">.</span><span class="n">selection_set</span><span class="p">(</span><span class="n">first</span><span class="o">=</span><span class="n">index</span><span class="p">)</span></div>
+                <span class="bp">self</span><span class="o">.</span><span class="n">lb</span><span class="o">.</span><span class="n">activate</span><span class="p">(</span><span class="n">index</span><span class="p">)</span> 
+
+<div class="viewcode-block" id="AutoEntry.down"><a class="viewcode-back" href="../../../source/pyrecipe.gui.html#pyrecipe.gui.maingui.AutoEntry.down">[docs]</a>    <span class="k">def</span> <span class="nf">down</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">lb_up</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">lb</span><span class="o">.</span><span class="n">curselection</span><span class="p">()</span> <span class="o">==</span> <span class="p">():</span>
+                <span class="n">index</span> <span class="o">=</span> <span class="s1">&#39;0&#39;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lb</span><span class="o">.</span><span class="n">curselection</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">index</span> <span class="o">!=</span> <span class="n">END</span><span class="p">:</span>                        
+                <span class="bp">self</span><span class="o">.</span><span class="n">lb</span><span class="o">.</span><span class="n">selection_clear</span><span class="p">(</span><span class="n">first</span><span class="o">=</span><span class="n">index</span><span class="p">)</span>
+                <span class="n">index</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">index</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>        
+                <span class="bp">self</span><span class="o">.</span><span class="n">lb</span><span class="o">.</span><span class="n">selection_set</span><span class="p">(</span><span class="n">first</span><span class="o">=</span><span class="n">index</span><span class="p">)</span></div>
+                <span class="bp">self</span><span class="o">.</span><span class="n">lb</span><span class="o">.</span><span class="n">activate</span><span class="p">(</span><span class="n">index</span><span class="p">)</span> 
+
+<div class="viewcode-block" id="AutoEntry.comparison"><a class="viewcode-back" href="../../../source/pyrecipe.gui.html#pyrecipe.gui.maingui.AutoEntry.comparison">[docs]</a>    <span class="k">def</span> <span class="nf">comparison</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s1">&#39;.*&#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">var</span><span class="o">.</span><span class="n">get</span><span class="p">()</span> <span class="o">+</span> <span class="s1">&#39;.*&#39;</span><span class="p">)</span></div></div>
+        <span class="k">return</span> <span class="p">[</span><span class="n">w</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">somelist</span> <span class="k">if</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">pattern</span><span class="p">,</span> <span class="n">w</span><span class="p">)]</span>
+
+<div class="viewcode-block" id="start"><a class="viewcode-back" href="../../../source/pyrecipe.gui.html#pyrecipe.gui.maingui.start">[docs]</a><span class="k">def</span> <span class="nf">start</span><span class="p">():</span>
+    <span class="n">maingui</span> <span class="o">=</span> <span class="n">MainGUI</span><span class="p">()</span></div>
+    <span class="n">maingui</span><span class="o">.</span><span class="n">mainloop</span><span class="p">()</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  <li><a href="../../pyrecipe.html">pyrecipe</a><ul>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Michael Miller.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

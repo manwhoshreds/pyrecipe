@@ -1,0 +1,368 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>pyrecipe.console_gui package &#8212; pyrecipe v0.9.0 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="pyrecipe-console-gui-package">
+<h1>pyrecipe.console_gui package<a class="headerlink" href="#pyrecipe-console-gui-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-pyrecipe.console_gui.edit_recipe">
+<span id="pyrecipe-console-gui-edit-recipe-module"></span><h2>pyrecipe.console_gui.edit_recipe module<a class="headerlink" href="#module-pyrecipe.console_gui.edit_recipe" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="pyrecipe-console-gui-add-recipe">
+<h3>pyrecipe.console_gui.add_recipe<a class="headerlink" href="#pyrecipe-console-gui-add-recipe" title="Permalink to this headline">¶</a></h3>
+<p>A console gui built with urwid used to add recipes to pyrecipe</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">copyright:</th><td class="field-body">2017 by Michael Miller</td>
+</tr>
+<tr class="field-even field"><th class="field-name">license:</th><td class="field-body">GPL, see LICENSE for more details.</td>
+</tr>
+</tbody>
+</table>
+<dl class="class">
+<dt id="pyrecipe.console_gui.edit_recipe.EntryBlock">
+<em class="property">class </em><code class="descclassname">pyrecipe.console_gui.edit_recipe.</code><code class="descname">EntryBlock</code><span class="sig-paren">(</span><em>entries=[]</em>, <em>wrap_amount=70</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/console_gui/edit_recipe.html#EntryBlock"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.console_gui.edit_recipe.EntryBlock" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">urwid.widget.WidgetWrap</span></code></p>
+<p>Base class for entry piles.</p>
+<dl class="method">
+<dt id="pyrecipe.console_gui.edit_recipe.EntryBlock.add_entry">
+<code class="descname">add_entry</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/console_gui/edit_recipe.html#EntryBlock.add_entry"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.console_gui.edit_recipe.EntryBlock.add_entry" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add an entry.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyrecipe.console_gui.edit_recipe.EntryBlock.del_entry">
+<code class="descname">del_entry</code><span class="sig-paren">(</span><em>size</em>, <em>key</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/console_gui/edit_recipe.html#EntryBlock.del_entry"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.console_gui.edit_recipe.EntryBlock.del_entry" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete an entry.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyrecipe.console_gui.edit_recipe.EntryBlock.get_entries">
+<code class="descname">get_entries</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/console_gui/edit_recipe.html#EntryBlock.get_entries"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.console_gui.edit_recipe.EntryBlock.get_entries" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve the text from the entries.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyrecipe.console_gui.edit_recipe.EntryBlock.keypress">
+<code class="descname">keypress</code><span class="sig-paren">(</span><em>size</em>, <em>key</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/console_gui/edit_recipe.html#EntryBlock.keypress"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.console_gui.edit_recipe.EntryBlock.keypress" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrecipe.console_gui.edit_recipe.EntryBlock.move_entry">
+<code class="descname">move_entry</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/console_gui/edit_recipe.html#EntryBlock.move_entry"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.console_gui.edit_recipe.EntryBlock.move_entry" title="Permalink to this definition">¶</a></dt>
+<dd><p>Move an entry up or down.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyrecipe.console_gui.edit_recipe.EntryBlock.on_enter">
+<code class="descname">on_enter</code><span class="sig-paren">(</span><em>size</em>, <em>key</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/console_gui/edit_recipe.html#EntryBlock.on_enter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.console_gui.edit_recipe.EntryBlock.on_enter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Respond to the enter key.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pyrecipe.console_gui.edit_recipe.EntryBlock.widget_list">
+<code class="descname">widget_list</code><a class="headerlink" href="#pyrecipe.console_gui.edit_recipe.EntryBlock.widget_list" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyrecipe.console_gui.edit_recipe.IngredBlock">
+<em class="property">class </em><code class="descclassname">pyrecipe.console_gui.edit_recipe.</code><code class="descname">IngredBlock</code><span class="sig-paren">(</span><em>ingredients=[]</em>, <em>name=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/console_gui/edit_recipe.html#IngredBlock"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.console_gui.edit_recipe.IngredBlock" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">urwid.widget.WidgetWrap</span></code></p>
+<p>Ingredient block for displaying editable ingredients.</p>
+<dl class="method">
+<dt id="pyrecipe.console_gui.edit_recipe.IngredBlock.add_ingredient">
+<code class="descname">add_ingredient</code><span class="sig-paren">(</span><em>button=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/console_gui/edit_recipe.html#IngredBlock.add_ingredient"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.console_gui.edit_recipe.IngredBlock.add_ingredient" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrecipe.console_gui.edit_recipe.IngredBlock.del_ingredient">
+<code class="descname">del_ingredient</code><span class="sig-paren">(</span><em>size</em>, <em>key</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/console_gui/edit_recipe.html#IngredBlock.del_ingredient"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.console_gui.edit_recipe.IngredBlock.del_ingredient" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrecipe.console_gui.edit_recipe.IngredBlock.delete_block">
+<code class="descname">delete_block</code><span class="sig-paren">(</span><em>button</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/console_gui/edit_recipe.html#IngredBlock.delete_block"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.console_gui.edit_recipe.IngredBlock.delete_block" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrecipe.console_gui.edit_recipe.IngredBlock.get_ingredients">
+<code class="descname">get_ingredients</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/console_gui/edit_recipe.html#IngredBlock.get_ingredients"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.console_gui.edit_recipe.IngredBlock.get_ingredients" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrecipe.console_gui.edit_recipe.IngredBlock.insert_ingredient">
+<code class="descname">insert_ingredient</code><span class="sig-paren">(</span><em>size</em>, <em>key</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/console_gui/edit_recipe.html#IngredBlock.insert_ingredient"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.console_gui.edit_recipe.IngredBlock.insert_ingredient" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrecipe.console_gui.edit_recipe.IngredBlock.keypress">
+<code class="descname">keypress</code><span class="sig-paren">(</span><em>size</em>, <em>key</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/console_gui/edit_recipe.html#IngredBlock.keypress"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.console_gui.edit_recipe.IngredBlock.keypress" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrecipe.console_gui.edit_recipe.IngredBlock.move_entry">
+<code class="descname">move_entry</code><span class="sig-paren">(</span><em>size</em>, <em>key</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/console_gui/edit_recipe.html#IngredBlock.move_entry"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.console_gui.edit_recipe.IngredBlock.move_entry" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrecipe.console_gui.edit_recipe.IngredBlock.on_enter">
+<code class="descname">on_enter</code><span class="sig-paren">(</span><em>size</em>, <em>key</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/console_gui/edit_recipe.html#IngredBlock.on_enter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.console_gui.edit_recipe.IngredBlock.on_enter" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrecipe.console_gui.edit_recipe.IngredBlock.toggle_name">
+<code class="descname">toggle_name</code><span class="sig-paren">(</span><em>button</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/console_gui/edit_recipe.html#IngredBlock.toggle_name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.console_gui.edit_recipe.IngredBlock.toggle_name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyrecipe.console_gui.edit_recipe.IngredientsContainer">
+<em class="property">class </em><code class="descclassname">pyrecipe.console_gui.edit_recipe.</code><code class="descname">IngredientsContainer</code><span class="sig-paren">(</span><em>ingredients=[]</em>, <em>alt_ingredients=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/console_gui/edit_recipe.html#IngredientsContainer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.console_gui.edit_recipe.IngredientsContainer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">urwid.widget.WidgetWrap</span></code></p>
+<p>Main container for holding ingredient blocks.</p>
+<dl class="attribute">
+<dt id="pyrecipe.console_gui.edit_recipe.IngredientsContainer.blocks">
+<code class="descname">blocks</code><a class="headerlink" href="#pyrecipe.console_gui.edit_recipe.IngredientsContainer.blocks" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyrecipe.console_gui.edit_recipe.MethodBlock">
+<em class="property">class </em><code class="descclassname">pyrecipe.console_gui.edit_recipe.</code><code class="descname">MethodBlock</code><span class="sig-paren">(</span><em>method=[]</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/console_gui/edit_recipe.html#MethodBlock"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.console_gui.edit_recipe.MethodBlock" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyrecipe.console_gui.edit_recipe.EntryBlock" title="pyrecipe.console_gui.edit_recipe.EntryBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyrecipe.console_gui.edit_recipe.EntryBlock</span></code></a></p>
+<p>Display an editable list of methods.</p>
+<dl class="method">
+<dt id="pyrecipe.console_gui.edit_recipe.MethodBlock.get_method">
+<code class="descname">get_method</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/console_gui/edit_recipe.html#MethodBlock.get_method"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.console_gui.edit_recipe.MethodBlock.get_method" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyrecipe.console_gui.edit_recipe.MethodBlockBAK">
+<em class="property">class </em><code class="descclassname">pyrecipe.console_gui.edit_recipe.</code><code class="descname">MethodBlockBAK</code><span class="sig-paren">(</span><em>method=[]</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/console_gui/edit_recipe.html#MethodBlockBAK"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.console_gui.edit_recipe.MethodBlockBAK" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">urwid.widget.WidgetWrap</span></code></p>
+<p>Display an editable list of methods.</p>
+<dl class="method">
+<dt id="pyrecipe.console_gui.edit_recipe.MethodBlockBAK.add_method">
+<code class="descname">add_method</code><span class="sig-paren">(</span><em>button</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/console_gui/edit_recipe.html#MethodBlockBAK.add_method"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.console_gui.edit_recipe.MethodBlockBAK.add_method" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrecipe.console_gui.edit_recipe.MethodBlockBAK.del_method">
+<code class="descname">del_method</code><span class="sig-paren">(</span><em>size</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/console_gui/edit_recipe.html#MethodBlockBAK.del_method"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.console_gui.edit_recipe.MethodBlockBAK.del_method" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrecipe.console_gui.edit_recipe.MethodBlockBAK.get_entries">
+<code class="descname">get_entries</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/console_gui/edit_recipe.html#MethodBlockBAK.get_entries"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.console_gui.edit_recipe.MethodBlockBAK.get_entries" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrecipe.console_gui.edit_recipe.MethodBlockBAK.keypress">
+<code class="descname">keypress</code><span class="sig-paren">(</span><em>size</em>, <em>key</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/console_gui/edit_recipe.html#MethodBlockBAK.keypress"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.console_gui.edit_recipe.MethodBlockBAK.keypress" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrecipe.console_gui.edit_recipe.MethodBlockBAK.on_enter">
+<code class="descname">on_enter</code><span class="sig-paren">(</span><em>key</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/console_gui/edit_recipe.html#MethodBlockBAK.on_enter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.console_gui.edit_recipe.MethodBlockBAK.on_enter" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyrecipe.console_gui.edit_recipe.MethodBlockBAK.widget_list">
+<code class="descname">widget_list</code><a class="headerlink" href="#pyrecipe.console_gui.edit_recipe.MethodBlockBAK.widget_list" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyrecipe.console_gui.edit_recipe.NoteBlock">
+<em class="property">class </em><code class="descclassname">pyrecipe.console_gui.edit_recipe.</code><code class="descname">NoteBlock</code><span class="sig-paren">(</span><em>notes=[]</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/console_gui/edit_recipe.html#NoteBlock"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.console_gui.edit_recipe.NoteBlock" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyrecipe.console_gui.edit_recipe.EntryBlock" title="pyrecipe.console_gui.edit_recipe.EntryBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyrecipe.console_gui.edit_recipe.EntryBlock</span></code></a></p>
+<p>Display an editable list of notes.</p>
+<dl class="method">
+<dt id="pyrecipe.console_gui.edit_recipe.NoteBlock.get_entries">
+<code class="descname">get_entries</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/console_gui/edit_recipe.html#NoteBlock.get_entries"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.console_gui.edit_recipe.NoteBlock.get_entries" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get text from the entries.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyrecipe.console_gui.edit_recipe.RecipeEditor">
+<em class="property">class </em><code class="descclassname">pyrecipe.console_gui.edit_recipe.</code><code class="descname">RecipeEditor</code><span class="sig-paren">(</span><em>recipe=''</em>, <em>add=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/console_gui/edit_recipe.html#RecipeEditor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.console_gui.edit_recipe.RecipeEditor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>The pyrecipe console interface for managing recipes.</p>
+<dl class="attribute">
+<dt id="pyrecipe.console_gui.edit_recipe.RecipeEditor.footer_text">
+<code class="descname">footer_text</code><em class="property"> = ('foot', [('pyrecipe', ' PYRECIPE    '), ('key', 'F2'), ('footer', ' Save  '), ('key', 'Esc'), ('footer', ' Quit  '), ('key', 'Ctrl-UP/DOWN'), ('footer', ' Move item UP/DOWN  '), ('key', 'Ctrl-a'), ('footer', ' Insert item  '), ('key', 'Ctrl-d'), ('footer', ' Delete item  ')])</em><a class="headerlink" href="#pyrecipe.console_gui.edit_recipe.RecipeEditor.footer_text" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrecipe.console_gui.edit_recipe.RecipeEditor.get_recipe_data">
+<code class="descname">get_recipe_data</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/console_gui/edit_recipe.html#RecipeEditor.get_recipe_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.console_gui.edit_recipe.RecipeEditor.get_recipe_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Grab the data from the editors</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyrecipe.console_gui.edit_recipe.RecipeEditor.handle_input">
+<code class="descname">handle_input</code><span class="sig-paren">(</span><em>key</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/console_gui/edit_recipe.html#RecipeEditor.handle_input"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.console_gui.edit_recipe.RecipeEditor.handle_input" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handle the input.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyrecipe.console_gui.edit_recipe.RecipeEditor.prompt_answer">
+<code class="descname">prompt_answer</code><span class="sig-paren">(</span><em>button</em>, <em>label</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/console_gui/edit_recipe.html#RecipeEditor.prompt_answer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.console_gui.edit_recipe.RecipeEditor.prompt_answer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prompt answer</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyrecipe.console_gui.edit_recipe.RecipeEditor.quit_prompt">
+<code class="descname">quit_prompt</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/console_gui/edit_recipe.html#RecipeEditor.quit_prompt"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.console_gui.edit_recipe.RecipeEditor.quit_prompt" title="Permalink to this definition">¶</a></dt>
+<dd><p>Pop-up window that appears when you try to quit.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pyrecipe.console_gui.edit_recipe.RecipeEditor.recipe_changed">
+<code class="descname">recipe_changed</code><a class="headerlink" href="#pyrecipe.console_gui.edit_recipe.RecipeEditor.recipe_changed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if the state of the recipe has changed.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyrecipe.console_gui.edit_recipe.RecipeEditor.save_recipe">
+<code class="descname">save_recipe</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/console_gui/edit_recipe.html#RecipeEditor.save_recipe"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.console_gui.edit_recipe.RecipeEditor.save_recipe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save the current state of the recipe and exit.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyrecipe.console_gui.edit_recipe.RecipeEditor.setup_listbox">
+<code class="descname">setup_listbox</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/console_gui/edit_recipe.html#RecipeEditor.setup_listbox"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.console_gui.edit_recipe.RecipeEditor.setup_listbox" title="Permalink to this definition">¶</a></dt>
+<dd><p>The main listbox</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyrecipe.console_gui.edit_recipe.RecipeEditor.setup_view">
+<code class="descname">setup_view</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/console_gui/edit_recipe.html#RecipeEditor.setup_view"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.console_gui.edit_recipe.RecipeEditor.setup_view" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrecipe.console_gui.edit_recipe.RecipeEditor.start">
+<code class="descname">start</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/console_gui/edit_recipe.html#RecipeEditor.start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.console_gui.edit_recipe.RecipeEditor.start" title="Permalink to this definition">¶</a></dt>
+<dd><p>Main entry point of the recipe editor.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyrecipe.console_gui.edit_recipe.RecipeEditor.test_prompt">
+<code class="descname">test_prompt</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrecipe/console_gui/edit_recipe.html#RecipeEditor.test_prompt"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyrecipe.console_gui.edit_recipe.RecipeEditor.test_prompt" title="Permalink to this definition">¶</a></dt>
+<dd><p>Pop-up window that appears when you try to quit.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+<div class="section" id="module-pyrecipe.console_gui">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-pyrecipe.console_gui" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">pyrecipe.console_gui package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-pyrecipe.console_gui.edit_recipe">pyrecipe.console_gui.edit_recipe module</a><ul>
+<li><a class="reference internal" href="#pyrecipe-console-gui-add-recipe">pyrecipe.console_gui.add_recipe</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-pyrecipe.console_gui">Module contents</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/source/pyrecipe.console_gui.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Michael Miller.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="../_sources/source/pyrecipe.console_gui.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

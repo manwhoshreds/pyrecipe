@@ -373,24 +373,34 @@ class Recipe:
             print("Oven temp: {} {}"
                   .format(str(self['oven_temp']['amount']),
                           self['oven_temp']['unit']))
-
+        
+        extra_info = False
         if verb_level >= 1:
             if self['price']:
                 print("Price: {}".format(self['price']))
+                extra_info = True
             if self['author']:
                 print("Author: {}".format(self['author']))
+                extra_info = True
             if self['source_url']:
                 print("URL: {}".format(self['source_url']))
+                extra_info = True
             if self['category']:
                 print("Category(s): "
                       + ", ".join(self['category']))
+                extra_info = True
             if self['yields']:
                 print("Yields: " + str(self['yeilds']))
+                extra_info = True
             if self['notes']:
                 print("\n{}{}\nNotes:{}".format(conf.S_DIV, color.TITLE, color.NORMAL))
                 wrapped = utils.wrap(self['notes'])
                 for index, note in wrapped:
                     print(index, note)
+                extra_info = True
+
+            if not extra_info:
+                utils.msg('\nNo additional inforation', 'ERROR')
 
         print("\n{}{}\nIngredients:{}".format(conf.S_DIV, color.TITLE, color.NORMAL))
 

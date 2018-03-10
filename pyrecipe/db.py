@@ -1,11 +1,9 @@
-
 import os
 import sqlite3
 
 from pyrecipe.config import DB_FILE
 from pyrecipe.recipe import Recipe
-from pyrecipe import manifest
-from birdseye import eye
+from pyrecipe.utils import manifest
 
 
 class RecipeDB:

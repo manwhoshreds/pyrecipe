@@ -25,7 +25,7 @@ def start_gui():
 def print_shopping_list(args):
     if args.random:
         rr = shopper.RandomShoppingList(args.random)
-        rr.print_random()
+        rr.print_random(write=args.write)
     else:
         menu_items = args.recipes	
         if len(menu_items) == 0:
@@ -35,10 +35,7 @@ def print_shopping_list(args):
         sl = shopper.ShoppingList()
         for item in menu_items:
             sl.update(item)
-        if args.write:			
-            sl.print_list(write=True)
-        else:
-            sl.print_list()
+        sl.print_list(write=args.write)
 
 def fetch_recipe(args):
     scraper = RecipeWebScraper(args.url)
