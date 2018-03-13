@@ -45,7 +45,7 @@ CULINARY_UNITS       = ['teaspoon', 'tablespoon', 'ounce', 'fulid ounce',
                         'cup', 'quart', 'gallon', 'pound', 'pint', 'gram', 'mililiter']
 
 PINT_UNDEFINED_UNITS = ['box', 'to taste', 'inch piece', 'stick', 'bottle', 'each', 'bag',
-                        'whole', 'link', 'sprig', 'stalk', 'can', 'pinch of', 'cube', 'splash of']
+                        'whole', 'link', 'sprig', 'stalk', 'pinch of', 'cube', 'splash of']
 
 CAN_UNITS = ['TEST']
 # CAN_UNITS are checked later and put in parenthesis

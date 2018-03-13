@@ -289,7 +289,7 @@ class Recipe:
         if not isinstance(value, list):
             raise TypeError('Alt Ingredients must be a list')
         if not isinstance(value[0], dict):
-            raise TypeError('Alt Ingredients must be a list, of dicts')
+            raise TypeError('Alt Ingredients must be a list of dicts')
         
         ingred_parser = IngredientParser()
         alt_ingredients = []
@@ -359,8 +359,7 @@ class Recipe:
               + self['recipe_name'].title()
               + color.NORMAL
               + "\n")
-
-
+        
         if self['dish_type']:
             print("Dish Type: {}"
                   .format(str(self['dish_type'])))
