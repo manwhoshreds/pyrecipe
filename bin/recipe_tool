@@ -187,7 +187,6 @@ def parse_args():
 
     # auto completion
     argcomplete.autocomplete(parser)
-
     import sys
     if len(sys.argv) == 1:
         sys.exit(parser.print_help())
@@ -212,10 +211,13 @@ def main():
         }
     if args.guimode:
         action['gui']()
-    if args.version:
+    elif args.version:
         action['version'](args)
     else:
-        action[args.subparser](args)
+        try:
+            action[args.subparser](args)
+        except KeyError:
+            print('Please specify an action for pyrecipe to invoke.')
 
 if __name__ == '__main__':
     main()
