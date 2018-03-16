@@ -373,13 +373,13 @@ class Recipe:
                   .format(str(self['oven_temp']['amount']),
                           self['oven_temp']['unit']))
         
+        if self['author']:
+            print("Author: {}".format(self['author']))
+        
         extra_info = False
         if verb_level >= 1:
             if self['price']:
                 print("Price: {}".format(self['price']))
-                extra_info = True
-            if self['author']:
-                print("Author: {}".format(self['author']))
                 extra_info = True
             if self['source_url']:
                 print("URL: {}".format(self['source_url']))
