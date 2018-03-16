@@ -55,7 +55,7 @@ from pyrecipe.recipe_numbers import RecipeNum
 from pyrecipe import ureg, yaml, p, color
 
 # Global re's
-PORTIONED_UNIT_RE = re.compile(r'\(?\d+[.,]?\d+ (ounce|pound)\)? (cans?|bags?)') 
+PORTIONED_UNIT_RE = re.compile(r'\(?\d+\.?\d*? (ounce|pound)\)? (cans?|bags?)') 
 PAREN_RE = re.compile(r'\((.*?)\)')
 
 
@@ -750,9 +750,14 @@ class IngredientParser:
 
 if __name__ == '__main__':
     r = Recipe('korean pork tacos')
-    print(r.__dict__)
-    print(dir(r))
-    #i = IngredientParser()
-    #test = i.parse('1 ounce cantelope')
+    i = IngredientParser()
+    test = i.parse('1 (8 ounce) can tomato sauce')
+    test1 = i.parse('1 (15.4 ounce) can tomato sauce')
+    test2 = i.parse('1 (1534 ounce) can tomato sauce')
+    test3 = i.parse('1 (15.34 ounce) can tomato sauce')
+    print(test)
+    print(test1)
+    print(test2)
+    print(test3)
     #test = i.parse('1 whole cube steak')
     #ok = Ingredient(test)
