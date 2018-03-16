@@ -100,8 +100,8 @@ def check_source(source):
             assert open(abspath_name)
             return abspath_name
         except FileNotFoundError:
-            return sys.exit("{}ERROR: {} does not exist."
-                            .format(color.ERROR, abspath_name))
+            return sys.exit(msg("ERROR: {} does not exist."
+                            .format(file_name), 'ERROR'))
     
 def get_file_name(source, ext='recipe'):
     strip_punc = ''.join(c for c in source if c not in string.punctuation)

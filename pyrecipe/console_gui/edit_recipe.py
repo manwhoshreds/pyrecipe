@@ -558,13 +558,14 @@ class RecipeEditor:
                 item.set_state(True)
 
         self.general_info = [urwid.AttrMap(
-                                urwid.Edit('Enter recipe name: ', self.r['recipe_name'], wrap='clip'), 'recipe_name'),
-                             urwid.AttrMap(urwid.IntEdit('Enter prep time: ', self.r['prep_time']), 'prep_time'),
-                             urwid.AttrMap(urwid.IntEdit('Enter cook time: ', self.r['cook_time']), 'cook_time'),
-                             urwid.AttrMap(urwid.IntEdit('Enter bake time: ', self.r['bake_time']), 'bake_time'),
-                             urwid.AttrMap(urwid.Edit('Enter price($): ', self.r['price']), 'price'),
-                             urwid.AttrMap(urwid.Edit('Enter source url: ', self.r['source_url'], wrap='clip'), 'source_url'),
-                             urwid.AttrMap(urwid.Edit('Enter author: ', self.r['author']), 'author')]
+                                urwid.Edit('Recipe Name: ', self.r['recipe_name'], wrap='clip'), 'recipe_name'),
+                             urwid.AttrMap(urwid.IntEdit('Prep Time: ', self.r['prep_time']), 'prep_time'),
+                             urwid.AttrMap(urwid.IntEdit('Cook Time: ', self.r['cook_time']), 'cook_time'),
+                             urwid.AttrMap(urwid.IntEdit('Bake Time: ', self.r['bake_time']), 'bake_time'),
+                             urwid.AttrMap(urwid.Edit('Price($): ', self.r['price']), 'price'),
+                             urwid.AttrMap(urwid.Edit('Source URL: ', self.r['source_url'], wrap='clip'), 'source_url'),
+                             urwid.AttrMap(urwid.Edit('Author: ', self.r['author']), 'author')]
+                             #urwid.AttrMap(urwid.Edit('Categories (comma separated): ', self.r['categories']), 'categories')]
 
         self.general_info = urwid.Padding(urwid.Pile(self.general_info), align='left', left=2)
         
@@ -624,29 +625,6 @@ class RecipeEditor:
         
         self.loop.widget = overlay 
    
-    def test_prompt(self):
-        """Pop-up window that appears when you try to quit."""
-        # Nothing fancy here.
-        text = self.data
-        new_data = self.get_recipe_data()
-        text2 = new_data['_recipe_data']
-        data = urwid.Text(str(text), "center")
-        data2 = urwid.Text(str(text2), "center")
-        quit_btn = urwid.AttrMap(urwid.Button(
-            "Quit", self.prompt_answer, "quit"), "red", None)
-        cancel_btn = urwid.AttrMap(urwid.Button(
-            "Cancel", self.prompt_answer, "cancel"), "title", None)
-
-        prompt = urwid.LineBox(urwid.ListBox(urwid.SimpleFocusListWalker(
-            [data, BLANK, BLANK, data2, BLANK, quit_btn, cancel_btn])))
-        
-        overlay = urwid.Overlay(
-            prompt, self.loop.widget,
-            "center", 100, "middle", 100,
-            16, 8)
-        
-        self.loop.widget = overlay 
-    
     def prompt_answer(self, button, label):
         """Prompt answer"""
         if label == 'quit':
@@ -680,7 +658,7 @@ class RecipeEditor:
         return changed
     
     def get_recipe_data(self):
-        """Grab the data from the editors"""
+        """Grab the data from the editors."""
         # gen info
         gen_info = self.general_info.original_widget.widget_list
         for item in gen_info:
