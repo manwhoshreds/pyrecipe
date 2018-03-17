@@ -589,6 +589,8 @@ class Ingredient:
             # the previous line adds unwanted spaces if
             # values are absent, we simply clean that up here.
             ingred_string = " ".join(ingred_string.split())
+            if not self.unit and not self.amount:
+                ingred_string = "{}".format(self.name.capitalize())
             if self.prep:
                 ingred_string += ", " + self.prep
             if self.note:
