@@ -30,22 +30,21 @@ PALETTE = ([
     ('red', 'light red', 'default', 'bold'),
     ('pyrecipe', 'light green', 'black'),
     ('button', 'yellow', 'dark green', 'standout'),
-    ])
+])
 
 HEADINGS = {
-            'general_info': urwid.AttrMap(urwid.Text('General Information:'), 'heading'),
-            'dish_types': urwid.AttrMap(urwid.Text('Dish Types:'), 'heading'),
-            'notes': urwid.AttrMap(urwid.Text('Notes:'), 'heading'),
-            'ingredients': urwid.AttrMap(urwid.Text('Ingredients:'), 'heading'),
-            'method': urwid.AttrMap(urwid.Text('Method:'), 'heading'),
-            }
+    'general_info': urwid.AttrMap(urwid.Text('General Information:'), 'heading'),
+    'dish_types': urwid.AttrMap(urwid.Text('Dish Types:'), 'heading'),
+    'notes': urwid.AttrMap(urwid.Text('Notes:'), 'heading'),
+    'ingredients': urwid.AttrMap(urwid.Text('Ingredients:'), 'heading'),
+    'method': urwid.AttrMap(urwid.Text('Method:'), 'heading'),
+}
 
 BLANK = urwid.Divider()
 
 
 class IngredientsContainer(urwid.WidgetWrap):
     """Main container for holding ingredient blocks."""
-
     def __init__(self, ingredients=[], alt_ingredients=None):
         self.ingredients = ingredients
         self.alt_ingredients = alt_ingredients
@@ -514,7 +513,7 @@ class RecipeEditor:
         ('key', "Ctrl-UP/DOWN"), ('footer', ' Move item UP/DOWN  '),
         ('key', "Ctrl-a"), ('footer', ' Insert item  '),
         ('key', "Ctrl-d"), ('footer', ' Delete item  ')
-        ])
+    ])
     def __init__(self, recipe='', add=False):
         self.add = add
         if self.add:
@@ -557,30 +556,38 @@ class RecipeEditor:
             if item.get_label() == self.r['dish_type']:
                 item.set_state(True)
 
-        self.general_info = [urwid.AttrMap(
-                                urwid.Edit('Recipe Name: ', self.r['recipe_name'], wrap='clip'), 'recipe_name'),
-                             urwid.AttrMap(urwid.IntEdit('Prep Time: ', self.r['prep_time']), 'prep_time'),
-                             urwid.AttrMap(urwid.IntEdit('Cook Time: ', self.r['cook_time']), 'cook_time'),
-                             urwid.AttrMap(urwid.IntEdit('Bake Time: ', self.r['bake_time']), 'bake_time'),
-                             urwid.AttrMap(urwid.Edit('Price($): ', self.r['price']), 'price'),
-                             urwid.AttrMap(urwid.Edit('Source URL: ', self.r['source_url'], wrap='clip'), 'source_url'),
-                             urwid.AttrMap(urwid.Edit('Author: ', self.r['author']), 'author')]
-                             #urwid.AttrMap(urwid.Edit('Categories (comma separated): ', self.r['categories']), 'categories')]
+        self.general_info = [
+                urwid.AttrMap(
+                    urwid.Edit('Recipe Name: ', self.r['recipe_name'], wrap='clip'), 'recipe_name'),
+                urwid.AttrMap(
+                    urwid.IntEdit('Prep Time: ', self.r['prep_time']), 'prep_time'),
+                urwid.AttrMap(
+                    urwid.IntEdit('Cook Time: ', self.r['cook_time']), 'cook_time'),
+                urwid.AttrMap(
+                    urwid.IntEdit('Bake Time: ', self.r['bake_time']), 'bake_time'),
+                urwid.AttrMap(
+                    urwid.Edit('Price($): ', self.r['price']), 'price'),
+                urwid.AttrMap(
+                    urwid.Edit('Source URL: ', self.r['source_url'], wrap='clip'), 'source_url'),
+                urwid.AttrMap(
+                    urwid.Edit('Author: ', self.r['author']), 'author')
+                ]
+                #urwid.AttrMap(urwid.Edit('Categories (comma separated): ', self.r['categories']), 'categories')]
 
-        self.general_info = urwid.Padding(urwid.Pile(self.general_info), align='left', left=2)
-        
+        self.general_info = urwid.Padding(
+                urwid.Pile(self.general_info), align='left', left=2
+        )
         headings_general_and_dish_types = urwid.GridFlow(
                     [HEADINGS['general_info'], 
                      HEADINGS['dish_types'],
                      HEADINGS['notes'],
                      ], 53, 0, 2, 'left'
-                )
+        )
         headings_ingred_and_method = urwid.GridFlow(
                     [HEADINGS['ingredients'], 
                      HEADINGS['method'],
                      ], 79, 0, 2, 'left'
-                )
-         
+        )
         ingreds, alt_ingreds = self.r.get_ingredients()
         self.ingred_block = IngredientsContainer(ingredients=ingreds, alt_ingredients=alt_ingreds) 
         self.method_block = MethodBlock(self.r.get_method())
@@ -598,7 +605,7 @@ class RecipeEditor:
                 headings_ingred_and_method,
                 BLANK,
                 ingred_and_method
-                ]
+        ]
         
         list_box = urwid.ListBox(urwid.SimpleListWalker(self.listbox_content))
         
