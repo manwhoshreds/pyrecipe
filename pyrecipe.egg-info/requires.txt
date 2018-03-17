@@ -1,7 +1,0 @@
-pint
-urwid
-bs4
-argcomplete
-ruamel.yaml
-inflect
-lxml
