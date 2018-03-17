@@ -486,7 +486,7 @@ class RecipeWebScraper(Recipe):
         try: 
             self.req = urlopen(url)
         except ValueError:
-            sys.exit('You must supply a valid url cooyon!')
+            sys.exit('You must supply a valid url.')
         self.soup = bs4.BeautifulSoup(self.req, 'html.parser')
         self._fetch_recipe_name()
         self._fetch_ingredients()
