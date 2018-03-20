@@ -615,15 +615,16 @@ class RecipeEditor:
         """Pop-up window that appears when you try to quit."""
         text = "Changes have been made. Quit?"
         question = urwid.Text(("bold", text), "center")
-        quit_btn = urwid.AttrMap(urwid.Button(
-            "Quit", self.prompt_answer, "quit"), "red", None)
-        save_btn = urwid.AttrMap(urwid.Button(
-            "Save", self.prompt_answer, "save"), "title", None)
+        
         cancel_btn = urwid.AttrMap(urwid.Button(
             "Cancel", self.prompt_answer, "cancel"), "title", None)
+        save_btn = urwid.AttrMap(urwid.Button(
+            "Save", self.prompt_answer, "save"), "title", None)
+        quit_btn = urwid.AttrMap(urwid.Button(
+            "Quit", self.prompt_answer, "quit"), "red", None)
 
         prompt = urwid.LineBox(urwid.ListBox(urwid.SimpleFocusListWalker(
-            [question, BLANK, BLANK, quit_btn, save_btn, cancel_btn])))
+            [question, BLANK, BLANK, cancel_btn, save_btn, quit_btn])))
         
         overlay = urwid.Overlay(
             prompt, self.loop.widget,
