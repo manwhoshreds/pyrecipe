@@ -60,7 +60,7 @@ PAREN_RE = re.compile(r'\((.*?)\)')
 
 
 class Recipe:
-    """The main recipe class used for I/O operations of recipe files
+    """Open a recipe file and extract its data for futher processing
 
     The recipe class can open .recipe files and read their data. It can
     change the state of a recipe file and then save the new data back to
@@ -94,59 +94,21 @@ class Recipe:
             # dish type should default to main
             self['dish_type'] = 'main'
 
-        # All root keys included in the particular source which may
-        # or may not include all keys from the orf spec
-        self.yaml_root_keys = list(self._recipe_data.keys())
-
         # Scan the recipe to build the xml
         self._scan_recipe()
 
     def _scan_recipe(self):
         """Scan the recipe to build xml."""
-        #FIXME: this method is incomplete.
-        # we nee to build xml here.
+        self.root_keys = list(self._recipe_data.keys())
         self.xml_root = ET.Element('recipe')
-        # recipe name
-        if self['recipe_name']:
-            xml_recipe_name = ET.SubElement(self.xml_root, "name")
-            xml_recipe_name.text = self['recipe_name']
-
-        # recipe_uuid
-        if self['recipe_uuid']:
-            xml_recipe_uuid = ET.SubElement(self.xml_root, "uuid")
-            xml_recipe_uuid.text = str(self['recipe_uuid'])
-
-        # dish_type
-        if self['dish_type']:
-            xml_dish_type = ET.SubElement(self.xml_root, "dish_type")
-            xml_dish_type.text = self['dish_type']
-
-        # category
-        if self['category']:
-            for entry in self['category']:
-                xml_category = ET.SubElement(self.xml_root, "category")
-                xml_category.text = str(entry)
-
-        # author
-        if self['author']:
-            xml_author = ET.SubElement(self.xml_root, "author")
-            xml_author.text = self['author']
-
-        # prep_time
-        if self['prep_time']:
-            xml_prep_time = ET.SubElement(self.xml_root, "prep_time")
-            xml_prep_time.text = str(self['prep_time'])
-
-        # cook_time
-        if self['cook_time']:
-            xml_cook_time = ET.SubElement(self.xml_root, "cook_time")
-            xml_cook_time.text = str(self['cook_time'])
-
-        # bake_time
-        if self['bake_time']:
-            xml_bake_time = ET.SubElement(self.xml_root, "bake_time")
-            xml_bake_time.text = str(self['bake_time'])
-
+        self.xml_root.set('recipe_name', self['recipe_name'])
+        
+        ingredients, alt_ingredients = self.get_ingredients()
+        for item in self.root_keys:
+            if item not in ('ingredients', 'alt_ingredients', 'steps', 'recipe_name'):
+                xml_entry = ET.SubElement(self.xml_root, item)
+                xml_entry.text = self[item]
+        
         # ready_in
         # not actually an ord tag, so is not read from recipe file
         # it is simply calculated within the class
@@ -157,15 +119,6 @@ class Recipe:
         else:
             self['ready_in'] = self['prep_time']
 
-        # notes
-        if self['notes']:
-            pass
-
-        # price
-        if self['price']:
-            xml_price = ET.SubElement(self.xml_root, "price")
-            xml_price.text = str(self['price'])
-
         # oven_temp
         if self['oven_temp']:
             self.oven_temp = self['oven_temp']
@@ -173,34 +126,28 @@ class Recipe:
             self.ot_unit = self['oven_temp']['unit']
             xml_oven_temp = ET.SubElement(self.xml_root, "oven_temp")
             xml_oven_temp.text = str(self.ot_amount) + " " + str(self.ot_unit)
-
-        # yields
-        if self['yields']:
-            xml_yields = ET.SubElement(self.xml_root, "yields")
-            for yeld in self['yields']:
-                xml_servings = ET.SubElement(xml_yields, "servings")
-                xml_servings.text = str(yeld)
         
         # ingredients
-        ingredients, alt_ingredients = self.get_ingredients()
         if ingredients:
             xml_ingredients = ET.SubElement(self.xml_root, "ingredients")
             for ingred in ingredients:
                 xml_ingred = ET.SubElement(xml_ingredients, "ingred")
                 xml_ingred.text = ingred
-
-        if alt_ingredients: 
-            pass
-            #xml_alt_ingredients = ET.SubElement(self.xml_root, "alt_ingredients")
-            #for item in alt_ingredients:
-            #    print(item.values())
         
-        # steps
+        # alt_ingredients 
+        if alt_ingredients:
+            for item in alt_ingredients:
+                xml_alt_ingredients = ET.SubElement(self.xml_root, "alt_ingredients")
+                xml_alt_ingredients.set('alt_name', item)
+                for ingred in alt_ingredients[item]:
+                    xml_alt_ingred = ET.SubElement(xml_alt_ingredients, "ingred")
+                    xml_alt_ingred.text = ingred
+                
         xml_steps = ET.SubElement(self.xml_root, "steps")
         for step in self['steps']:
             steps_of = ET.SubElement(xml_steps, "step")
             steps_of.text = step['step']
-
+        
     def __str__(self):
         """Return the complete string representation of the recipe data."""
         recipe_string = ''
@@ -633,7 +580,7 @@ class IngredientParser:
     def __init__(self):
         omitted = '-/(),.'
         self.punct = ''.join(c for c in string.punctuation if c not in omitted)
-    
+
     def _preprocess_string(self, string):
         """preprocess the string"""
         # this special forward slash character (differs from '/') is encounterd
@@ -652,7 +599,7 @@ class IngredientParser:
 
     def parse(self, string='', return_list=False):
         """parse the ingredient string"""
-        amount = '' 
+        amount = ''
         size = ''
         unit = ''
         name = ''
@@ -663,7 +610,7 @@ class IngredientParser:
 
         # string preprocessing
         ingred_string = self._preprocess_string(string)
-        
+
         # get unit
         match = PORTIONED_UNIT_RE.search(ingred_string)
         if match:
@@ -684,7 +631,7 @@ class IngredientParser:
         elif "pinch of" in ingred_string:
             unit = "pinch of"
             ingred_string = ingred_string.replace(unit, '')
-        
+
         # get note if any
         parens = PAREN_RE.search(ingred_string)
         if parens:
@@ -714,13 +661,13 @@ class IngredientParser:
             if item in ingred_string:
                 size = item
                 ingred_string = ingred_string.replace(item, '')
-        
+
         for item in conf.INGRED_UNITS:
             if item in ingred_string.split():
                 unit = item
                 ingred_string = ingred_string.replace(item, '')
-        
-        try: 
+
+        try:
             assert ',' in ingred_string
             prep = ingred_string.split(',')[-1].strip()
             ingred_string = ingred_string.replace(prep, '')
@@ -735,10 +682,10 @@ class IngredientParser:
         name = ' '.join(ingred_string.split())
         name = name.strip(',')
         ingred_dict['amounts'] = [{'amount': amount, 'unit': unit}]
-        if size: 
+        if size:
             ingred_dict['size'] = size
         ingred_dict['name'] = name
-        if prep: 
+        if prep:
             ingred_dict['prep'] = prep
         if note:
             ingred_dict['note'] = note
