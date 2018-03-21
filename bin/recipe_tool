@@ -40,7 +40,7 @@ def parse_args():
         dest="verbose",
         action="count",
         default=0,
-        help="Verbose output. Use -vv to increase verbosity"
+        help="Verbose output."
     )
     parser.add_argument(
         "-V",
@@ -62,19 +62,32 @@ def parse_args():
 
     # recipe_tool print
     parser_print = subparser.add_parser("print", help="Print the recipe to screen")
-    parser_print.add_argument("source", help="Recipe to print").completer = recipe_completer
+    parser_print.add_argument(
+        "source", 
+        help="Recipe to print"
+    ).completer = recipe_completer
 
     # recipe_tool edit
     parser_edit = subparser.add_parser("edit", help="Edit a recipe data file")
-    parser_edit.add_argument("source", type=str, help="Recipe to edit").completer = recipe_completer
+    parser_edit.add_argument(
+        "source", 
+        type=str, 
+        help="Recipe to edit"
+    ).completer = recipe_completer
 
     # recipe_tool add
     parser_add = subparser.add_parser("add", help='Add a recipe')
-    parser_add.add_argument("name", help='Name of the recipe to add')
+    parser_add.add_argument(
+        "name", 
+        help='Name of the recipe to add'
+    )
 
     # recipe_tool remove
     parser_remove = subparser.add_parser("remove", help='Delete a recipe')
-    parser_remove.add_argument("source", help='Recipe, to delete').completer = recipe_completer
+    parser_remove.add_argument(
+        "source", 
+        help='Recipe to delete'
+    ).completer = recipe_completer
 
     # recipe_tool shop
     parser_shop = subparser.add_parser("shop", help='Make a shopping list')
@@ -100,7 +113,6 @@ def parse_args():
         action="store_true",
         help="Write the shopping list to an xml file"
     )
-
     # recipe_tool dump
     parser_dump = subparser.add_parser(
         "dump",
@@ -110,6 +122,7 @@ def parse_args():
         "source",
         help="Recipe to dump data from"
     ).completer = recipe_completer
+    
     parser_dump.add_argument(
         "-x",
         "--xml",
@@ -144,6 +157,7 @@ def parse_args():
         "source",
         help="Sorce file to export"
     ).completer = recipe_completer
+    
     parser_export.add_argument(
         "-o",
         "--output-dir",
@@ -184,14 +198,17 @@ def parse_args():
         action="store_true",
         help="Save file, default behaviour just prints recipe to stdout."
     )
-
     # auto completion
     argcomplete.autocomplete(parser)
+    
+    args = parser.parse_args()
     import sys
     if len(sys.argv) == 1:
         sys.exit(parser.print_help())
+    elif len(sys.argv) == 2 and args.verbose:
+        sys.exit(parser.print_help())
     else:
-        return parser.parse_args()
+        return args
 
 def main():
     """main entry point of recipe_tool"""
@@ -214,10 +231,10 @@ def main():
     elif args.version:
         action['version'](args)
     else:
-        try:
-            action[args.subparser](args)
-        except KeyError:
-            print('Please specify an action for pyrecipe to invoke.')
+        #try:
+        action[args.subparser](args)
+        #except KeyError:
+        #    print('Please specify an action for pyrecipe to invoke.')
 
 if __name__ == '__main__':
     main()
