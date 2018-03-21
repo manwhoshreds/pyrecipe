@@ -105,7 +105,8 @@ class Recipe:
         
         ingredients, alt_ingredients = self.get_ingredients()
         for item in self.root_keys:
-            if item not in ('ingredients', 'alt_ingredients', 'steps', 'recipe_name'):
+            if item not in ('ingredients', 'alt_ingredients', 'notes', 
+                            'steps', 'recipe_name', 'category'):
                 xml_entry = ET.SubElement(self.xml_root, item)
                 xml_entry.text = self[item]
         
