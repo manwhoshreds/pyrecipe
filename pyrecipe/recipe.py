@@ -52,7 +52,7 @@ import lxml.etree as ET
 import pyrecipe.utils as utils
 import pyrecipe.config as conf
 from pyrecipe.recipe_numbers import RecipeNum
-from pyrecipe import ureg, yaml, p, color
+from pyrecipe import yaml, color
 
 # Global re's
 PORTIONED_UNIT_RE = re.compile(r'\(?\d+\.?\d*? (ounce|pound)\)? (cans?|bags?)') 
@@ -101,14 +101,15 @@ class Recipe:
         """Scan the recipe to build xml."""
         self.root_keys = list(self._recipe_data.keys())
         self.xml_root = ET.Element('recipe')
-        self.xml_root.set('recipe_name', self['recipe_name'])
-        
+        self.xml_root.set('name', self['recipe_name'])
+
         ingredients, alt_ingredients = self.get_ingredients()
+        # Not interested in adding notes to xml, maybe in the future
         for item in self.root_keys:
             if item not in ('ingredients', 'alt_ingredients', 'notes', 
                             'steps', 'recipe_name', 'category'):
                 xml_entry = ET.SubElement(self.xml_root, item)
-                xml_entry.text = self[item]
+                xml_entry.text = str(self[item])
         
         # ready_in
         # not actually an ord tag, so is not read from recipe file
@@ -151,6 +152,7 @@ class Recipe:
         
     def __str__(self):
         """Return the complete string representation of the recipe data."""
+        #FIXME: Im all messed up
         recipe_string = ''
         recipe_string += self['recipe_name'].title() + "\n"
         recipe_string += "\nIngredients:\n"
@@ -172,8 +174,7 @@ class Recipe:
         return recipe_string
 
     def __repr__(self):
-        return "<Recipe(name='{}')>"\
-                .format(self['recipe_name'])
+        return "<Recipe(name='{}')>".format(self['recipe_name'])
 
     def __getitem__(self, key):
         if key in Recipe.orf_keys:
@@ -202,7 +203,7 @@ class Recipe:
     def __hash__(self):
         """Get the recipe hash."""
         return hash(self.get_yaml_string())
-    
+
     @property
     def recipe_data(self):
         """Return the recipe data."""
@@ -217,7 +218,7 @@ class Recipe:
     def ingredients(self, value):
         if not isinstance(value, list):
             raise TypeError('Ingredients must be a list')
-        
+
         ingred_parser = IngredientParser()
         ingredients = []
         for item in value:
@@ -234,6 +235,7 @@ class Recipe:
 
     @alt_ingredients.setter
     def alt_ingredients(self, value):
+        """Set alt ingredients."""
         if not isinstance(value, list):
             raise TypeError('Alt Ingredients must be a list')
         if not isinstance(value[0], dict):
@@ -287,7 +289,7 @@ class Recipe:
         for item in self['ingredients']:
             ingred = Ingredient(item, color=color)
             ingredients.append(str(ingred))
-        
+
         named_ingredients = OrderedDict()
         if self['alt_ingredients']:
             alt_ingreds = self['alt_ingredients']
@@ -298,7 +300,7 @@ class Recipe:
                     ingred = Ingredient(ingredient, color=color)
                     ingred_list.append(str(ingred))
                 named_ingredients[alt_name] = ingred_list
-        
+
         return ingredients, named_ingredients
 
     def print_recipe(self, verb_level=0):
@@ -320,10 +322,10 @@ class Recipe:
             print("Oven temp: {} {}"
                   .format(str(self['oven_temp']['amount']),
                           self['oven_temp']['unit']))
-        
+
         if self['author']:
             print("Author: {}".format(self['author']))
-        
+
         extra_info = False
         if verb_level >= 1:
             if self['price']:
@@ -369,8 +371,8 @@ class Recipe:
 
         # print steps
         wrapped = utils.wrap(self.get_method())
-        for index, string in wrapped:
-            print("{}{}{} {}".format(color.NUMBER, index, color.NORMAL, string))
+        for index, step in wrapped:
+            print("{}{}{} {}".format(color.NUMBER, index, color.NORMAL, step))
 
     def get_method(self):
         """Return a list of steps."""
@@ -396,7 +398,7 @@ class Recipe:
         else:
             raise ValueError('data_type argument must be one of '
                              'raw, yaml, or xml')
-    
+
     def get_yaml_string(self):
         string = io.StringIO()
         yaml.dump(self.recipe_data, string)
@@ -477,7 +479,7 @@ class RecipeWebScraper(Recipe):
 
 class Ingredient:
     """Build an Ingredient object.
-    
+
     Given a dict of ingredient data, Ingredient class can return a string
     :param ingredient: dict of ingredient data
     :param amount_level: choose the yield of the recipe
@@ -516,7 +518,7 @@ class Ingredient:
             color_number = color.NUMBER
             color_normal = color.NORMAL
             color_note = color.INFORM 
-        
+
         if self.note:
             self.note = '{}({}){}'.format(color_note, self.note, color_normal)
 
