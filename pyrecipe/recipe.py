@@ -48,6 +48,8 @@ from zipfile import ZipFile, BadZipFile
 
 import bs4
 import lxml.etree as ET
+from playsound import playsound
+from gtts import gTTS
 
 import pyrecipe.utils as utils
 import pyrecipe.config as conf
@@ -381,6 +383,24 @@ class Recipe:
             steps.append(step['step'])
         return steps
 
+    def read_out_loud(self, data='method', index=''):
+        if not data in ('method', 'ingredients'):
+            raise ValueError('data argument must be one of method or ingredients')
+
+        if data == 'method':
+            methods = self.get_method()
+            if not index:
+                text = ' '.join(methods)
+            else:
+                text = methods[index-1]
+        else:
+            ingredients, alt_ingredients = self.get_ingredients()
+            text = ', '.join(ingredients)
+        
+        tts = gTTS(text=text, lang='en')
+        tts.save('test.mp3')
+        playsound('test.mp3')
+    
     def dump_to_screen(self, data_type=None):
         """Dump a data format to screen.
 
@@ -701,15 +721,5 @@ class IngredientParser:
 
 
 if __name__ == '__main__':
-    r = Recipe('korean pork tacos')
-    i = IngredientParser()
-    test = i.parse('1 (8 ounce) can tomato sauce')
-    test1 = i.parse('1 (15.4 ounce) can tomato sauce')
-    test2 = i.parse('1 (1534 ounce) can tomato sauce')
-    test3 = i.parse('1 (15.34 ounce) can tomato sauce')
-    print(test)
-    print(test1)
-    print(test2)
-    print(test3)
-    #test = i.parse('1 whole cube steak')
-    #ok = Ingredient(test)
+    r = Recipe('alfredo sauce')
+    r.read_out_loud('method')

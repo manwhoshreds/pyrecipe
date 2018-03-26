@@ -115,10 +115,7 @@ class IngredBlock(urwid.WidgetWrap):
         super().__init__(self.ingred_block)
     
     def _get_buttons(self):
-        add_button = urwid.Button('Add Ingredient',
-                    on_press=self.add_ingredient)
-        add_button = urwid.Padding(add_button, 'left', right=8)
-        
+        """Get block buttons."""
         add_name = urwid.Button('Toggle Name',
                     on_press=self.toggle_name)
         add_name = urwid.Padding(add_name, 'left', right=10)
@@ -126,10 +123,8 @@ class IngredBlock(urwid.WidgetWrap):
         del_block = urwid.Button('Delete Block',
                     on_press=self.delete_block)
         del_block = urwid.Padding(del_block, 'left', right=8)
-        buttons = urwid.Columns([add_button, 
-                                 add_name,
-                                 del_block
-                                ])
+        
+        buttons = urwid.Columns([add_name, del_block])
         return buttons
     
     def delete_block(self, button):
@@ -157,11 +152,12 @@ class IngredBlock(urwid.WidgetWrap):
 
     def keypress(self, size, key):
         key = super().keypress(size, key)
-        self.row = self.ingred_block.focus_position
-        try: 
-            self.end_col = len(self.widgets[self.row].edit_text) + 2
-        except:
-            return key
+        row = self.ingred_block.focus_position
+        col = len(self.widgets[row].edit_text) + 2
+        #try: 
+        #    self.end_col = len(self.widgets[self.row].edit_text) + 2
+        #except:
+        #    return key
         
         pressed = {
                 'enter': self.on_enter,
@@ -171,12 +167,10 @@ class IngredBlock(urwid.WidgetWrap):
                 'ctrl down': self.move_entry,
                 }
         try:
-            # I only need to pass key to one function
-            # but i will have to pass to all
-            # this is still a verly clean way to write this
-            # as opossed to if, elif, etc....
-            # perhaps a better way eludes me
-            pressed[key](size, key)
+            # I only need to pass key to one function but i will have to pass 
+            # to all. This is still a verly clean way to write this as opossed 
+            # to if, elif, etc... Perhaps a better way eludes me.
+            pressed[key](size, key, col, row)
         except KeyError:
             return key
     
@@ -193,30 +187,36 @@ class IngredBlock(urwid.WidgetWrap):
         self.ingred_block.move_cursor_to_coords(size, 2, self.row)
         self._refresh(row_plus)
 
-    def del_ingredient(self, size, key):
-        widget = self.widgets[self.row]
+    def del_ingredient(self, size, key, col, row):
+        widget = self.widgets[row]
         if isinstance(widget, (urwid.AttrMap, urwid.Padding, urwid.Columns)):
             return
-        row_minus_one = self.row - 1
+        row_minus_one = row - 1
         row_minus_one = self.widgets[row_minus_one]
         if isinstance(row_minus_one, (urwid.AttrMap, urwid.Columns)):
             return
+        
+        #try: 
+        #    row = self.row
+        #    col = len(self.widgets[row].edit_text) + 2
+        #except IndexError:
+        #    row = self.row
+        #    col = len(self.widgets[row].edit_text) - 2
 
-        try: 
-            row = self.row
-            col = len(self.widgets[row].edit_text) + 2
-        except IndexError:
-            row = self.row
-            col = len(self.widgets[row].edit_text) - 2
-
+         
+        #row = self.row
+        #col = self.col
         self.ingred_block.move_cursor_to_coords(size, col, row)
         try: 
-            item = list(self.widgets)[self.row]
+            item = list(self.widgets)[row]
             self.widgets.remove(item)
         except IndexError:
             pass
-        self._refresh(self.row-1)
-
+        try:
+            self._refresh(row)
+        except IndexError:
+            self._refresh(row-1)
+    
     def move_entry(self, size, key):
         try: 
             row = self.row
@@ -544,10 +544,6 @@ class RecipeEditor:
     
     def setup_listbox(self):
         """The main listbox"""
-        #radio_dish_types = urwid.Pile([urwid.AttrMap(urwid.RadioButton(self.disht_group,
-        #                    txt), 'buttn', 'buttnf')
-        #                    for txt in DISH_TYPES])
-
         radio_dish_types = urwid.GridFlow([urwid.AttrMap(urwid.RadioButton(self.disht_group,
                             txt), 'buttn', 'buttnf')
                             for txt in DISH_TYPES], 15, 0, 2, 'left')
@@ -633,6 +629,35 @@ class RecipeEditor:
         
         self.loop.widget = overlay 
    
+    def test_prompt(self):
+        """Pop-up window that appears when you try to quit."""
+        text = "Changes have been made. Quit?"
+        question = urwid.Text(("bold", text), "center")
+        
+        cancel_btn = urwid.AttrMap(urwid.Button(
+            "Cancel", self.test_answer, "cancel"), "title", None)
+        save_btn = urwid.AttrMap(urwid.Button(
+            "Save", self.test_answer, "save"), "title", None)
+        quit_btn = urwid.AttrMap(urwid.Button(
+            "Quit", self.test_answer, "quit"), "red", None)
+
+        prompt = urwid.LineBox(urwid.ListBox(urwid.SimpleFocusListWalker(
+            [question, BLANK, BLANK, cancel_btn, save_btn, quit_btn])))
+        
+        overlay = urwid.Overlay(
+            prompt, self.loop.widget,
+            "center", 19, "middle", 9,
+            16, 8)
+        
+        self.loop.widget = overlay 
+    
+    def test_answer(self, button, label):
+        """Prompt answer"""
+        self.listbox_content = [BLANK]
+        self.setup_view()
+
+        self.loop.widget = self.frame
+    
     def prompt_answer(self, button, label):
         """Prompt answer"""
         if label == 'quit':
@@ -668,6 +693,10 @@ class RecipeEditor:
     def get_recipe_data(self):
         """Grab the data from the editors."""
         # gen info
+        #FIXME: There is a bug here. If one field has info and
+        # i try to clear it, upon saving the info, it is ignored
+        # in other words when opening the file again, the info
+        # is still there.
         gen_info = self.general_info.original_widget.widget_list
         for item in gen_info:
             attr = item.attr_map[None]

@@ -14,15 +14,19 @@ import pyrecipe.shopper as shopper
 from .config import PP, EDITOR, RECIPE_DATA_FILES
 from pyrecipe.recipe import Recipe, RecipeWebScraper
 from pyrecipe.console_gui.edit_recipe import RecipeEditor
+from pyrecipe.console_gui.make_recipe import RecipeMaker
 
 def dump_data(args):
+    """Dump recipe data in 1 of three formats."""
     r = Recipe(args.source)
     r.dump_to_screen(args.data_type)
 
 def start_gui():
+    """Start the tkinter gui."""
     gui.start()
 
 def print_shopping_list(args):
+    """Print a shopping list."""
     if args.random:
         rr = shopper.RandomShoppingList(args.random)
         rr.print_random(write=args.write)
@@ -38,6 +42,7 @@ def print_shopping_list(args):
         sl.print_list(write=args.write)
 
 def fetch_recipe(args):
+    """Fetch a recipe from a web source."""
     scraper = RecipeWebScraper(args.url)
     if args.save:
         RecipeEditor(scraper, add=True).start()
@@ -45,13 +50,16 @@ def fetch_recipe(args):
         scraper.print_recipe()
 
 def print_recipe(args):
+    """Print a recipe to stdout."""
     r = Recipe(args.source)
     r.print_recipe(verb_level=args.verbose)
 
 def show_stats(args):
+    """Show the statistics information of the recipe database."""
     utils.stats(args.verbose)
 
 def delete_recipe(args):
+    """Delete a recipe from the recipe store."""
     source = args.source
     r = Recipe(source) 
     file_name = r['source']
@@ -63,25 +71,40 @@ def delete_recipe(args):
         print("{} not deleted".format(source))
 
 def edit_recipe(args):
+    """Edit a recipe using the urwid console interface (ncurses)."""
     RecipeEditor(args.source).start()
 
 def add_recipe(args):
+    """Add a recipe to the recipe store."""
     name = utils.get_file_name(args.name)
     if name in RECIPE_DATA_FILES:
         sys.exit('{}ERROR: A recipe with that name already exist.'.format(color.ERROR))
     else:
         RecipeEditor(args.name, add=True).start()
 
+def make_recipe(args):
+    """Make a recipe using the urwid automated script.
+    
+    This script helps you make your recipe by cycling through
+    ingredients and steps. It also hands a hands free voice
+    recognition feature in case your hands are stuck in flour
+    or other ingredients. Who knows, your cooking!!
+    """
+    RecipeMaker(args.source).start()
+
 def print_list(args):
+    """Print a list of all recipe to stdout."""
     recipes = manifest.recipe_names
     lower_recipes = [x.lower() for x in recipes]
     for item in sorted(lower_recipes):
         print(item.title())
 	
 def version(args):
+    """Print pyrecipe version information."""
     print(utils.version())
 
 def export_recipes(args):
+    """Export recipes in xml format."""
     try:
         output_dir = os.path.realpath(args.output_dir)
         os.makedirs(output_dir)

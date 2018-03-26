@@ -81,12 +81,21 @@ def parse_args():
         "name", 
         help='Name of the recipe to add'
     )
-
     # recipe_tool remove
     parser_remove = subparser.add_parser("remove", help='Delete a recipe')
     parser_remove.add_argument(
         "source", 
         help='Recipe to delete'
+    ).completer = recipe_completer
+    
+    # recipe_tool make
+    parser_make = subparser.add_parser(
+        "make", 
+        help='Make a recipe using the urwid automated script'
+    )
+    parser_make.add_argument(
+        "source", 
+        help='Recipe to make'
     ).completer = recipe_completer
 
     # recipe_tool shop
@@ -96,6 +105,7 @@ def parse_args():
         nargs="*",
         help='List of recipe to compile shopping list'
     ).completer = recipe_completer
+    
     parser_shop.add_argument(
         "-r",
         "--random",
@@ -221,6 +231,7 @@ def main():
         'edit': argfunc.edit_recipe,
         'add': argfunc.add_recipe,
         'remove': argfunc.delete_recipe,
+        'make': argfunc.make_recipe,
         'shop': argfunc.print_shopping_list,
         'dump': argfunc.dump_data,
         'export': argfunc.export_recipes,
