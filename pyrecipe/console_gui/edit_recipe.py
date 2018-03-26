@@ -111,6 +111,7 @@ class IngredBlock(urwid.WidgetWrap):
         self._refresh()
 
     def _refresh(self, focus_item=0):
+        """Refresh the entire block to update with changes."""
         self.ingred_block = urwid.Pile(self.widgets, focus_item=focus_item)
         super().__init__(self.ingred_block)
     
@@ -128,12 +129,14 @@ class IngredBlock(urwid.WidgetWrap):
         return buttons
     
     def delete_block(self, button):
+        """Delete entire block of ingredients."""
         self.widgets.clear()
         del self.ingredients
         self.name = ''
         self._refresh()
 
     def toggle_name(self, button):
+        """Toggle between name for ingredients or no name."""
         if not self.name:
             self.alt_name = urwid.AttrMap(urwid.Edit('* ', 'Name'), 'title')
             self.widgets.insert(2, self.alt_name)
@@ -151,14 +154,10 @@ class IngredBlock(urwid.WidgetWrap):
             self._refresh(2)
 
     def keypress(self, size, key):
+        """Capture and process keypress."""
         key = super().keypress(size, key)
-        row = self.ingred_block.focus_position
-        col = len(self.widgets[row].edit_text) + 2
-        #try: 
-        #    self.end_col = len(self.widgets[self.row].edit_text) + 2
-        #except:
-        #    return key
-        
+        self.row = self.ingred_block.focus_position
+        self.col = len(self.widgets[self.row].edit_text) + 2
         pressed = {
                 'enter': self.on_enter,
                 'ctrl d': self.del_ingredient,
@@ -170,62 +169,46 @@ class IngredBlock(urwid.WidgetWrap):
             # I only need to pass key to one function but i will have to pass 
             # to all. This is still a verly clean way to write this as opossed 
             # to if, elif, etc... Perhaps a better way eludes me.
-            pressed[key](size, key, col, row)
+            pressed[key](size, key)
         except KeyError:
             return key
     
     def add_ingredient(self, button=None):
+        """Add an ingredients to the end of the list."""
         ingred_entry = urwid.Edit("- ", '')
         self.widgets.append(ingred_entry)
         new_focus = len(self.widgets) - 1
         self._refresh(new_focus)
     
     def insert_ingredient(self, size, key):
+        """Insert ingredient on next line and move cursor."""
         ingred_entry = urwid.Edit("- ", '')
         row_plus = self.row + 1
         self.widgets.insert(row_plus, ingred_entry)
         self.ingred_block.move_cursor_to_coords(size, 2, self.row)
         self._refresh(row_plus)
 
-    def del_ingredient(self, size, key, col, row):
-        widget = self.widgets[row]
+    def del_ingredient(self, size, key):
+        """Delete an ingredient."""
+        widget = self.widgets[self.row]
         if isinstance(widget, (urwid.AttrMap, urwid.Padding, urwid.Columns)):
             return
-        row_minus_one = row - 1
+        row_minus_one = self.row - 1
         row_minus_one = self.widgets[row_minus_one]
         if isinstance(row_minus_one, (urwid.AttrMap, urwid.Columns)):
             return
         
-        #try: 
-        #    row = self.row
-        #    col = len(self.widgets[row].edit_text) + 2
-        #except IndexError:
-        #    row = self.row
-        #    col = len(self.widgets[row].edit_text) - 2
-
-         
-        #row = self.row
-        #col = self.col
-        self.ingred_block.move_cursor_to_coords(size, col, row)
-        try: 
-            item = list(self.widgets)[row]
-            self.widgets.remove(item)
-        except IndexError:
-            pass
+        self.ingred_block.move_cursor_to_coords(size, self.col, self.row)
+        item = list(self.widgets)[self.row]
+        self.widgets.remove(item)
         try:
-            self._refresh(row)
+            self._refresh(self.row)
         except IndexError:
-            self._refresh(row-1)
+            self._refresh(self.row-1)
     
     def move_entry(self, size, key):
-        try: 
-            row = self.row
-            col = len(self.widgets[row].edit_text) + 2
-        except IndexError:
-            row = self.row
-            col = len(self.widgets[row].edit_text) - 2
-        
-        self.ingred_block.move_cursor_to_coords(size, col, row)
+        """Mover entry up or down."""
+        self.ingred_block.move_cursor_to_coords(size, self.col, self.row)
         if key == 'ctrl up':
             widget = self.widgets[self.row-1]
             if isinstance(widget, (urwid.AttrMap, urwid.Padding, urwid.Columns)):
@@ -245,6 +228,7 @@ class IngredBlock(urwid.WidgetWrap):
             return
     
     def on_enter(self, size, key):
+        """Either move cursor to next line or add ingredient if no next line."""
         try:
             col = len(self.widgets[self.row + 1].edit_text) + 2
             self.ingred_block.move_cursor_to_coords(size, col, self.row + 1)
