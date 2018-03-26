@@ -242,10 +242,10 @@ def main():
     elif args.version:
         action['version'](args)
     else:
-        #try:
-        action[args.subparser](args)
-        #except KeyError:
-        #    print('Please specify an action for pyrecipe to invoke.')
+        try:
+            action[args.subparser](args)
+        except KeyError:
+            print('Please specify an action for pyrecipe to invoke.')
 
 if __name__ == '__main__':
     main()
