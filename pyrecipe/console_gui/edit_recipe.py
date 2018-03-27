@@ -157,7 +157,12 @@ class IngredBlock(urwid.WidgetWrap):
         """Capture and process keypress."""
         key = super().keypress(size, key)
         self.row = self.ingred_block.focus_position
-        self.col = len(self.widgets[self.row].edit_text) + 2
+        try:
+            self.col = len(self.widgets[self.row].edit_text) + 2
+        except AttributeError:
+            # Object has no edit_text attribute. In other words its a 
+            # urwid.attr_map() and not a urwid.Edit()
+            return key
         pressed = {
                 'enter': self.on_enter,
                 'ctrl d': self.del_ingredient,
@@ -191,19 +196,23 @@ class IngredBlock(urwid.WidgetWrap):
     def del_ingredient(self, size, key):
         """Delete an ingredient."""
         widget = self.widgets[self.row]
-        if isinstance(widget, (urwid.AttrMap, urwid.Padding, urwid.Columns)):
-            return
-        row_minus_one = self.row - 1
-        row_minus_one = self.widgets[row_minus_one]
-        if isinstance(row_minus_one, (urwid.AttrMap, urwid.Columns)):
-            return
+        try:
+            # We have an alt_name to account for
+            assert isinstance(self.widgets[2], urwid.AttrMap)
+            one_ingred_left = 3
+        except AssertionError:
+            one_ingred_left = 2
         
         self.ingred_block.move_cursor_to_coords(size, self.col, self.row)
         item = list(self.widgets)[self.row]
         self.widgets.remove(item)
+        if len(self.widgets) == one_ingred_left:
+            self.add_ingredient()
         try:
             self._refresh(self.row)
         except IndexError:
+            # We are at the end of the ingredient list,
+            # start deleting goin back
             self._refresh(self.row-1)
     
     def move_entry(self, size, key):
@@ -219,7 +228,7 @@ class IngredBlock(urwid.WidgetWrap):
             # down
             newfocus = self.row + 1
 
-        item = list(self.widgets)[self.row]
+        item = self.widgets[self.row]
         self.widgets.remove(item)
         self.widgets.insert(newfocus, item)
         try:
@@ -685,9 +694,11 @@ class RecipeEditor:
         for item in gen_info:
             attr = item.attr_map[None]
             edit_text = item.original_widget.get_edit_text()
-            if edit_text != '':
+            if edit_text == '':
+                del self.r[attr]
+            else: 
                 self.r[attr] = edit_text
-         
+        
         for item in self.disht_group:
             if item.get_state() == True:
                 self.r['dish_type'] = item.get_label()
