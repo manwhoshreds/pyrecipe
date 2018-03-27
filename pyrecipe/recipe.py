@@ -197,8 +197,11 @@ class Recipe:
         if key == 'recipe_name':
             self.source = ''
         if key in Recipe.orf_keys:
-            del self.__dict__['_recipe_data'][key]
-            self._scan_recipe()
+            try:
+                del self.__dict__['_recipe_data'][key]
+                self._scan_recipe()
+            except KeyError:
+                pass
         else:
             del self.__dict__[key]
 
