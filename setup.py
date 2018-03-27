@@ -7,12 +7,14 @@ deps = [
         'argcomplete',
         'ruamel.yaml',
         'inflect',
-        'lxml'
+        'lxml',
+        'SpeechRecognition',
+        'gtts'
         ]
 
 setup(
     name='pyrecipe',
-    version='0.5.7',
+    version='0.5.8',
     packages=['pyrecipe', 'pyrecipe/console_gui', 'pyrecipe/gui'],
     package_data={
         'pyrecipe': ['culinary_units.txt']
