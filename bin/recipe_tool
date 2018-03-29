@@ -18,8 +18,8 @@ import pyrecipe.db as db
 
 def recipe_completer(**kwargs):
     """list of recipes for completer"""
-    recipe_list = [x.lower() for x in manifest.recipe_names]
-    #recipe_list = db.get_names()
+    #recipe_list = [x.lower() for x in manifest.recipe_names]
+    recipe_list = db.get_names()
     return recipe_list
 
 def parse_args():
