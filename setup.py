@@ -14,7 +14,7 @@ deps = [
 
 setup(
     name='pyrecipe',
-    version='0.5.14',
+    version='0.5.15',
     packages=['pyrecipe', 'pyrecipe/console_gui'],
     package_data={
         'pyrecipe': ['culinary_units.txt']
