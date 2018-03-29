@@ -8,13 +8,15 @@ import string
 import textwrap
 from zipfile import ZipFile
 
-from pyrecipe  import (__version__, __scriptname__, __email__, p, color)
+from termcolor import cprint
+
 from pyrecipe.config import (RECIPE_DATA_DIR, RECIPE_DATA_FILES,
                              DISH_TYPES, EDITOR, DB_FILE)
-from pyrecipe import yaml
+#from pyrecipe import yaml
 from pyrecipe.recipe_numbers import RecipeNum
 
-
+color = None
+yaml = None
 class RecipeManifest:
     """A manifest of recipe information
     
@@ -48,8 +50,8 @@ class RecipeManifest:
             except EOFError:
                 print(item)
 
-manifest = RecipeManifest()
-
+#manifest = RecipeManifest()
+manifest = None
 def mins_to_hours(mins):
     #days = mins // 1440
     hours = mins // 60
@@ -125,12 +127,6 @@ def columnify(iterable):
     padded = [x.ljust(widest) for x in strings]
     return padded
 
-def all_singular(iterable):
-    words = [p.singular_noun(x) for x in iterable]
-    return words
-
-
-
 def stats(verb=0):
     """Print statistics about your recipe database and exit."""
     
@@ -142,11 +138,10 @@ def stats(verb=0):
         print("Default random recipe: {}".format(RAND_RECIPE_COUNT))
 
 def msg(text, level='INFORM'):
-    msg_level = {'INFORM': color.INFORM,
-                 'ERROR': color.ERROR,
-                 'WARN': color.WARN
-                }
-    print('{}{}{}'.format(msg_level[level], text, color.NORMAL))
+    msg_level = {'INFORM': 'cyan',
+                 'ERROR': 'red',
+                 'WARN': 'yellow'}
+    cprint(text, msg_level[level])
 
 # testing
 if __name__ == '__main__':

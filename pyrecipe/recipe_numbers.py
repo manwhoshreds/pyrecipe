@@ -14,11 +14,11 @@
     :license: GPL, see LICENSE for more details.
 """
 
-from decimal import Decimal
 import math
 import numbers
 import operator
 from fractions import Fraction
+from decimal import Decimal
 
 
 class RecipeNum(Fraction):
@@ -64,7 +64,6 @@ class RecipeNum(Fraction):
         RecipeNum(2, 1, 4)
         >>> RecipeNum(Decimal('1.47'))
         RecipeNum(1, 47, 100)
-
         """
         self = super(RecipeNum, cls).__new__(cls)
 

@@ -9,8 +9,6 @@ import sys
 import pprint
 import configparser
 
-from pyrecipe import p, color
-
 config = configparser.ConfigParser()
 
 CONFIG_DIR = os.path.expanduser('~/.config/pyrecipe/')
@@ -34,7 +32,7 @@ for item in os.listdir(RECIPE_DATA_DIR):
     RECIPE_DATA_FILES.append(RECIPE_DATA_DIR + item)
 
 PP = pprint.PrettyPrinter(compact=True, indent=4)
-S_DIV = color.LINE + "~" * 60 + color.NORMAL
+
 REQUIRED_ORD_KEYS = [
     'recipe_name', 'dish_type', 'prep_time', 'ingredients', 'steps'
 ]
@@ -57,7 +55,7 @@ CAN_UNITS = ['TEST']
 
 _ingr_units = CULINARY_UNITS + PINT_UNDEFINED_UNITS
 _nonplurals = ('each', 'splash')
-_plur_units = [p.plural(x) for x in _ingr_units if x not in _nonplurals]
+_plur_units = [x + 's' for x in _ingr_units if x not in _nonplurals]
 _size_strs = ['large', 'medium', 'small', 'heaping']
 _prp_typs = [
     'softened', 'diced', 'finely diced', 'shredded', 'tightly packed', 
@@ -75,4 +73,5 @@ SIZE_STRINGS          = sorted(_size_strs)
 PREP_TYPES            = sorted(_prp_typs)
 
 if __name__ == '__main__':
-    print(INGRED_UNITS)
+    print(RECIPE_DATA_FILES)
+    #print(INGRED_UNITS)

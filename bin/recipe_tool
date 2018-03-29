@@ -49,19 +49,14 @@ def parse_args():
         action="store_true",
         help="Print version and exit"
     )
-    parser.add_argument(
-        "-g",
-        "--gui-mode",
-        dest="guimode",
-        action="store_true",
-        help="Start the gui frontend to pyrecipe"
-    )
-
     # subparsers start here
     subparser = parser.add_subparsers(dest='subparser')
 
     # recipe_tool print
-    parser_print = subparser.add_parser("print", help="Print the recipe to screen")
+    parser_print = subparser.add_parser(
+        "print", 
+        help="Print the recipe to screen"
+    )
     parser_print.add_argument(
         "source", 
         help="Recipe to print"
@@ -77,10 +72,8 @@ def parse_args():
 
     # recipe_tool add
     parser_add = subparser.add_parser("add", help='Add a recipe')
-    parser_add.add_argument(
-        "name", 
-        help='Name of the recipe to add'
-    )
+    parser_add.add_argument("name", help='Name of the recipe to add')
+    
     # recipe_tool remove
     parser_remove = subparser.add_parser("remove", help='Delete a recipe')
     parser_remove.add_argument(
@@ -157,7 +150,6 @@ def parse_args():
         const="raw",
         help="Dump source data in its raw format"
     )
-
     # recipe_tool export
     parser_export = subparser.add_parser(
         "export",
@@ -190,7 +182,6 @@ def parse_args():
         action='store_true',
         help="Export recipe file"
     )
-
     # recipe_tool fetch
     parser_fetch = subparser.add_parser(
         "fetch",
@@ -225,7 +216,6 @@ def main():
     args = parse_args()
     import pyrecipe.argfuncs as argfunc
     action = {
-        'gui': argfunc.start_gui,
         'version': argfunc.version,
         'print': argfunc.print_recipe,
         'edit': argfunc.edit_recipe,
@@ -237,9 +227,7 @@ def main():
         'export': argfunc.export_recipes,
         'fetch': argfunc.fetch_recipe
         }
-    if args.guimode:
-        action['gui']()
-    elif args.version:
+    if args.version:
         action['version'](args)
     else:
         try:

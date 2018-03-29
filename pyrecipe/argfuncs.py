@@ -3,13 +3,10 @@
 """
 
 import sys
-import subprocess
 import shutil
 import os
-from zipfile import ZipFile
 
 import pyrecipe.utils as utils
-import pyrecipe.gui.maingui as gui
 import pyrecipe.shopper as shopper
 from pyrecipe import version_info
 from .config import PP, EDITOR, RECIPE_DATA_FILES
@@ -21,10 +18,6 @@ def dump_data(args):
     """Dump recipe data in 1 of three formats."""
     r = Recipe(args.source)
     r.dump_to_screen(args.data_type)
-
-def start_gui():
-    """Start the tkinter gui."""
-    gui.start()
 
 def print_shopping_list(args):
     """Print a shopping list."""
@@ -93,16 +86,8 @@ def make_recipe(args):
     """
     RecipeMaker(args.source).start()
 
-def print_list(args):
-    """Print a list of all recipe to stdout."""
-    recipes = manifest.recipe_names
-    lower_recipes = [x.lower() for x in recipes]
-    for item in sorted(lower_recipes):
-        print(item.title())
-	
 def version(args):
     """Print pyrecipe version information."""
-    #print(utils.version())
     print(version_info())
 
 def export_recipes(args):

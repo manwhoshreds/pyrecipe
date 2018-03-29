@@ -51,13 +51,13 @@ import lxml.etree as ET
 from playsound import playsound
 from gtts import gTTS
 
+from pyrecipe import yaml, color, S_DIV
 import pyrecipe.utils as utils
 import pyrecipe.config as conf
 #from pyrecipe.db import update_db
 from pyrecipe.recipe_numbers import RecipeNum
-from pyrecipe import yaml, color
 
-# Global re's
+# GLOBAL REs
 PORTIONED_UNIT_RE = re.compile(r'\(?\d+\.?\d*? (ounce|pound)\)? (cans?|bags?)') 
 PAREN_RE = re.compile(r'\((.*?)\)')
 
@@ -77,8 +77,7 @@ class Recipe:
 
     def __init__(self, source=''):
         self.source = source
-        name = utils.get_file_name(self.source) 
-        print(name)
+        #name = utils.get_file_name(self.source) 
         if self.source:
             self.source = utils.check_source(source)
             try:
@@ -179,7 +178,7 @@ class Recipe:
         return recipe_string
 
     def __repr__(self):
-        return "<Recipe(name='{}')>".format(self['recipe_name'])
+        return "Recipe(name='{}')".format(self['recipe_name'])
 
     def __getitem__(self, key):
         if key in Recipe.orf_keys:
@@ -336,7 +335,7 @@ class Recipe:
 
         extra_info = False
         if verb_level >= 1:
-            print(conf.S_DIV + '\n')
+            print(S_DIV + '\n')
             if self['price']:
                 print("Price: {}".format(self['price']))
                 extra_info = True
@@ -351,7 +350,7 @@ class Recipe:
                 print("Yields: " + str(self['yeilds']))
                 extra_info = True
             if self['notes']:
-                print("\n{}{}\nNotes:{}".format(conf.S_DIV, color.TITLE, color.NORMAL))
+                print("\n{}{}\nNotes:{}".format(S_DIV, color.TITLE, color.NORMAL))
                 wrapped = utils.wrap(self['notes'])
                 for index, note in wrapped:
                     print("{}{}{}{}".format(color.NUMBER, index, color.NORMAL, note))
@@ -360,7 +359,7 @@ class Recipe:
             if not extra_info:
                 utils.msg('\nNo additional inforation', 'ERROR')
 
-        print("\n{}{}\nIngredients:{}".format(conf.S_DIV, color.TITLE, color.NORMAL))
+        print("\n{}{}\nIngredients:{}".format(S_DIV, color.TITLE, color.NORMAL))
 
         # Put together all the ingredients
         ingreds, alt_ingreds = self.get_ingredients(color=True)
@@ -376,7 +375,7 @@ class Recipe:
                 for ingred in alt_ingreds[item]:
                     print(ingred)
 
-        print("\n{}{}\nMethod:{}".format(conf.S_DIV, color.TITLE, color.NORMAL))
+        print("\n{}{}\nMethod:{}".format(S_DIV, color.TITLE, color.NORMAL))
 
         # print steps
         wrapped = utils.wrap(self.get_method())
@@ -724,7 +723,6 @@ class IngredientParser:
             return ingred_list
         return ingred_dict
 
-
 if __name__ == '__main__':
-    r = Recipe('alfredo sauce')
-    r.read_out_loud('ingredients')
+    # testing goes here
+    pass

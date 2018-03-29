@@ -15,9 +15,9 @@ import sys
 import pkg_resources
 from math import ceil
 
+from termcolor import colored
 from pint import UnitRegistry
 from ruamel.yaml import YAML
-import inflect
 
 try:
     __version__ = pkg_resources.get_distribution('pyrecipe').version
@@ -34,6 +34,9 @@ ureg = UnitRegistry()
 dirr = os.path.dirname(__file__)
 definitions = os.path.join(dirr, 'culinary_units.txt')
 ureg.load_definitions(definitions)
+
+# Section divider e.g. "~~~~~~~~~~~~~"
+S_DIV = colored("~" * 60, 'white')
 
 def version_info():
     """Print the current version of pyrecipe and exit."""
@@ -72,40 +75,6 @@ class Q_(ureg.Quantity):
         else:
             return format(self)
 
-# Inflects default behaviour for returning the singular of a word is
-# not very useful to this project because it returns false if
-# it comes across a non-noun word. Therfore, the following is a
-# functional work-a-round
-class InflectEngine(inflect.engine):
-    """An inflect subclass to implement different singular behaviour.
-    
-    """
-    def __init__(self):
-        super().__init__()
-        self.ignored = ['roma', 'canola', 'hummus']
-
-    def singular_noun(self, word):
-        if word in self.ignored:
-            return word
-
-        singular = super().singular_noun(word)
-        if singular:
-            return singular
-        else:
-            return word
-
-    def plural(self, word, count=None):
-        if count: 
-            if count <= 1:
-                return word
-            else:
-                word = super().plural(word)
-                return word
-        else:
-            word = super().plural(word)
-            return word
-
-p = InflectEngine()
 
 class Color:
     """The color class defines various colors for pyrecipe"""
