@@ -11,6 +11,7 @@ from zipfile import ZipFile
 import pyrecipe.utils as utils
 import pyrecipe.gui.maingui as gui
 import pyrecipe.shopper as shopper
+from pyrecipe import version_info
 from .config import PP, EDITOR, RECIPE_DATA_FILES
 from pyrecipe.recipe import Recipe, RecipeWebScraper
 from pyrecipe.console_gui.edit_recipe import RecipeEditor
@@ -101,7 +102,8 @@ def print_list(args):
 	
 def version(args):
     """Print pyrecipe version information."""
-    print(utils.version())
+    #print(utils.version())
+    print(version_info())
 
 def export_recipes(args):
     """Export recipes in xml format."""

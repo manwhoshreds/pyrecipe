@@ -35,6 +35,31 @@ dirr = os.path.dirname(__file__)
 definitions = os.path.join(dirr, 'culinary_units.txt')
 ureg.load_definitions(definitions)
 
+def version_info_bak():
+    """Print the current version of pyrecipe and exit."""
+    ver_str = ''
+    ver_str +=   "                _              _              _   {} v{}".format(__scriptname__, __version__)
+    ver_str += "\n               (_)            | |            | |  The recipe management program."
+    ver_str += "\n  _ __ ___  ___ _ _ __   ___  | |_ ___   ___ | |"
+    ver_str += "\n | '__/ _ \/ __| | '_ \ / _ \ | __/ _ \ / _ \| |  For any questions, contact me at {}".format(__email__)
+    ver_str += "\n | | |  __/ (__| | |_) |  __/ | || (_) | (_) | |  or type recipe_tool --help for more info."
+    ver_str += "\n |_|  \___|\___|_| .__/ \___|  \__\___/ \___/|_|"
+    ver_str += "\n                 | |                              This program may be freely redistributed under"
+    ver_str += "\n                 |_|                              the terms of the GNU General Public License."
+    return ver_str
+
+def version_info():
+    """Print the current version of pyrecipe and exit."""
+    ver_str = ''
+    ver_str +=   "                _              _              _   {} v{}".format(__scriptname__, __version__)
+    ver_str += "\n               (_)            | |            | |  The recipe management program."
+    ver_str += "\n  _ __ ___  ___ _ _ __   ___  | |_ ___   ___ | |"
+    ver_str += "\n | '__/ _ \/ __| | '_ \ / _ \ | __/ _ \ / _ \| |  For any questions, contact me at {}".format(__email__)
+    ver_str += "\n | | |  __/ (__| | |_) |  __/ | || (_) | (_) | |  or type recipe_tool --help for more info."
+    ver_str += "\n |_|  \___|\___|_| .__/ \___|  \__\___/ \___/|_|"
+    ver_str += "\n                 | |                              This program may be freely redistributed under"
+    ver_str += "\n                 |_|                              the terms of the GNU General Public License."
+    return ver_str
 
 class Q_(ureg.Quantity):
     """Subclass to implement a few custom behaviors

@@ -1,6 +1,5 @@
 import os
 import sqlite3
-import pickle
 
 from pyrecipe.config import DB_FILE
 from pyrecipe.recipe import Recipe
@@ -38,7 +37,7 @@ class RecipeDB:
         
         self.c.execute("SELECT id FROM Recipes WHERE name = '%s'" % recipe['recipe_name'])
         recipe_id = self.c.fetchone()[0]
-        for item in recipe.get_ingredients():
+        for item in recipe.get_ingredients()[0]:
             self.c.execute('''INSERT INTO RecipeIngredients (
                                 recipe_id, 
                                 ingredient_str
@@ -64,24 +63,29 @@ class RecipeDB:
         return result
     
     def build_database(self):
-        self.c.execute('''CREATE TABLE Recipes 
-                          (id INTEGER PRIMARY KEY AUTOINCREMENT, 
-                          dish_type TEXT,
-                          name TEXT, 
-                          file_name TEXT, 
-                          author TEXT, 
-                          tags TEXT, 
-                          categories TEXT, 
-                          price TEXT, 
-                          source_url TEXT
-                          )''')
-        
-        self.c.execute('''CREATE TABLE RecipeIngredients 
-                          (
-                           recipe_id INTEGER, 
-                           ingredient_str TEXT,
-                           FOREIGN KEY(recipe_id) REFERENCES Recipes(id)
-                          )''')
+        self.c.execute(
+            '''CREATE TABLE Recipes 
+             (id INTEGER PRIMARY KEY AUTOINCREMENT, 
+              dish_type TEXT,
+              name TEXT NOT NULL, 
+              file_name TEXT NOT NULL, 
+              author TEXT, 
+              tags TEXT, 
+              categories TEXT, 
+              price TEXT, 
+              source_url TEXT,
+              CONSTRAINT unique_name UNIQUE
+              (name, file_name)
+              )'''
+        )
+        self.c.execute(
+            '''CREATE TABLE RecipeIngredients 
+              (
+               recipe_id INTEGER, 
+               ingredient_str TEXT,
+               FOREIGN KEY(recipe_id) REFERENCES Recipes(id)
+              )'''
+        )
 
 def update_db(save_recipe):
     """Decorater for updating pyrecipe db."""
@@ -96,7 +100,6 @@ def get_names():
     names = db.query(sql)
     name_list = []
     for item in sorted(names):
-        #name = "'{}'".format(item[0].lower())
         name = item[0].lower()
         name_list.append(name)
     for item in name_list:
@@ -114,8 +117,8 @@ if not os.path.exists(DB_FILE):
 
 if __name__ == '__main__':
     names = get_names()
-    with open('test.p', 'wb') as fi:
-        pickle.dump(names, fi)
-    for item in names:
-        print(item)
+    db = RecipeDB()
+    sql = 'SELECT * FROM Recipes WHERE name = \'{}\''.format('test') 
+    fn = db.query(sql)
+    print(fn)
 

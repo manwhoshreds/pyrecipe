@@ -4,12 +4,9 @@
 """
 import os
 import sys
-import subprocess
 import string
 import textwrap
-from math import ceil
 from zipfile import ZipFile
-from numbers import Number
 
 from pyrecipe  import (__version__, __scriptname__, __email__, p, color)
 from pyrecipe.config import (RECIPE_DATA_DIR, RECIPE_DATA_FILES,
@@ -132,126 +129,7 @@ def all_singular(iterable):
     words = [p.singular_noun(x) for x in iterable]
     return words
 
-def check_file(source, silent=False):
-    """function to validate Open Recipe Format files"""
-    
-    failure_keys = []
-    failure_units = []
-    failure_prep_types = []
-    # amounts must be numbers
-    failure_amounts = []
-    failed = False
-    
-    for item in self.ingredient_data:
-        try:	
-            amount = item['amounts'][0].get('amount', None)
-            if isinstance(amount, Number):
-                pass
-            else:
-                failure_amounts.append(item['name'])
-                failed = True
-        except KeyError:
-            continue
 
-    for item in REQUIRED_ORD_KEYS:
-        if item not in self.mainkeys:
-            failure_keys.append(item)
-            failed = True
-    
-    for item in self.ingredient_data:
-        try:
-            unit = item['amounts'][0]['unit']
-            if unit not in INGRED_UNITS:
-                failure_units.append(unit)
-                failed = True
-        except KeyError:
-            continue
-    
-    for item in self.ingredient_data:
-        try:
-            prep = item['prep']
-            if prep not in PREP_TYPES and prep not in failure_prep_types:
-                failure_prep_types.append(prep)
-                failed = True
-        except KeyError:
-            continue
-    
-    if failed:
-        if silent:
-            return True
-        else:
-            if len(failure_keys) > 0:
-                print(color.ERROR 
-                    + self.source
-                    + ": The following keys are required by the ORD spec: " 
-                    + ",".join(failure_keys) 
-                    + color.NORMAL)
-            
-            if len(failure_units) > 0:
-                print(color.ERROR 
-                    + self.source
-                    + ": The following units are not allowed by the ORD spec: " 
-                    + ", ".join(failure_units)
-                    + color.NORMAL)
-            
-            if len(failure_amounts) > 0:
-                print(color.ERROR 
-                    + self.source
-                    + ": The following ingredients have no integer amounts: " 
-                    + ", ".join(failure_amounts) 
-                    + color.NORMAL)
-            
-            if len (failure_prep_types) > 0:
-                print(color.ERROR 
-                    + self.source
-                    + ": The following prep types are not allowed by the ORD spec: " 
-                    + ", ".join(failure_prep_types) 
-                    + color.NORMAL)
-            
-            if _recipe_data['dish_type'] not in DISH_TYPES:
-                print(color.ERROR 
-                    + self.source
-                    + ": The current dish type is not in the ORD spec: " 
-                    + _recipe_data['dish_type'] 
-                    + color.NORMAL)
-            
-            if len(self.steps) < 1:
-                print(color.ERROR 
-                    + self.source
-                    + ": You must at least supply one step in the recipe." 
-                    + color.NORMAL)
-    else:	
-        if silent:
-            return False
-        else:
-            print(color.TITLE 
-                + self.source
-                + " is a valid ORD file")
-
-def version(text_only=False):
-    """Print the current version of pyrecipe and exit."""
-    if text_only:
-        ver_str = ''
-        ver_str += "{} v{}".format(__scriptname__, __version__)
-        ver_str += "\nThe recipe management program."
-        ver_str += "\n"
-        ver_str += "\nFor any questions, contact me at {}".format(__email__)
-        ver_str += "\nor type recipe_tool --help for more info."
-        ver_str += "\n"
-        ver_str += "\nThis program may be freely redistributed under"
-        ver_str += "\nthe terms of the GNU General Public License."
-        return ver_str
-    else:
-        ver_str = ''
-        ver_str +=   "                _              _              _   {} v{}".format(__scriptname__, __version__)
-        ver_str += "\n               (_)            | |            | |  The recipe management program."
-        ver_str += "\n  _ __ ___  ___ _ _ __   ___  | |_ ___   ___ | |"
-        ver_str += "\n | '__/ _ \/ __| | '_ \ / _ \ | __/ _ \ / _ \| |  For any questions, contact me at {}".format(__email__)
-        ver_str += "\n | | |  __/ (__| | |_) |  __/ | || (_) | (_) | |  or type recipe_tool --help for more info."
-        ver_str += "\n |_|  \___|\___|_| .__/ \___|  \__\___/ \___/|_|"
-        ver_str += "\n                 | |                              This program may be freely redistributed under"
-        ver_str += "\n                 |_|                              the terms of the GNU General Public License."
-        return ver_str
 
 def stats(verb=0):
     """Print statistics about your recipe database and exit."""

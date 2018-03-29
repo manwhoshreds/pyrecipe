@@ -77,6 +77,8 @@ class Recipe:
 
     def __init__(self, source=''):
         self.source = source
+        name = utils.get_file_name(self.source) 
+        print(name)
         if self.source:
             self.source = utils.check_source(source)
             try:
@@ -429,7 +431,7 @@ class Recipe:
         yaml.dump(self.recipe_data, string)
         return string.getvalue()
     
-    def save(self, save_as=False):
+    def save(self):
         """save state of class
 
         If save_as is true, we first check to see if the file already exisist
@@ -437,14 +439,12 @@ class Recipe:
         wants to edit a file in which case we intend to overwrite the file with
         changes.
         """
-        if save_as:
-            if self.source in conf.RECIPE_DATA_FILES:
-                raise RuntimeError('Recipe already exist with that filename')
-
+        source = os.path.join(conf.RECIPE_DATA_DIR, self.source)
         if not self.source:
             raise RuntimeError('Recipe has no source to save to')
+        #elif os.path.exists(source):
+        #    raise RuntimeError('no no')
         else:
-            source = os.path.join(conf.RECIPE_DATA_DIR, self.source)
             stream = io.StringIO()
             yaml.dump(self.recipe_data, stream)
 

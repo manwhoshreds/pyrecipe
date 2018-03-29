@@ -664,10 +664,7 @@ class RecipeEditor:
     def save_recipe(self):
         """Save the current state of the recipe and exit."""
         recipe = self.get_recipe_data()
-        if self.add:
-            recipe.save(save_as=True)
-        else:
-            recipe.save()
+        recipe.save()
         raise urwid.ExitMainLoop()
 
     def start(self):

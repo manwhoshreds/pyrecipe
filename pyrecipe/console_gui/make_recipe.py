@@ -318,6 +318,6 @@ class RecipeMaker:
         
 
 if __name__ == '__main__':
-    #get_speech()
+    get_speech()
     #time.sleep(4)
-    RecipeMaker('test').start()
+    #RecipeMaker('test').start()
