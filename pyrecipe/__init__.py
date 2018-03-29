@@ -17,7 +17,11 @@ from math import ceil
 
 from termcolor import colored
 from pint import UnitRegistry
-from ruamel.yaml import YAML
+
+
+# Section divider e.g. "~~~~~~~~~~~~~"
+S_DIV = colored("~" * 60, 'white')
+from pyrecipe.recipe import Recipe
 
 try:
     __version__ = pkg_resources.get_distribution('pyrecipe').version
@@ -27,16 +31,10 @@ except:
 __email__ = 'm.k.miller@gmx.com'
 __scriptname__  = os.path.basename(sys.argv[0])
 
-yaml = YAML(typ='safe')
-yaml.default_flow_style = False
-
 ureg = UnitRegistry()
 dirr = os.path.dirname(__file__)
 definitions = os.path.join(dirr, 'culinary_units.txt')
 ureg.load_definitions(definitions)
-
-# Section divider e.g. "~~~~~~~~~~~~~"
-S_DIV = colored("~" * 60, 'white')
 
 def version_info():
     """Print the current version of pyrecipe and exit."""
@@ -74,18 +72,3 @@ class Q_(ureg.Quantity):
             return '{} {}'.format(self.magnitude, p.plural(str(self.units)))
         else:
             return format(self)
-
-
-class Color:
-    """The color class defines various colors for pyrecipe"""
-    NORMAL = '\033[m'
-    ERROR = '\033[1;31m'
-    RECIPENAME = '\033[1;36m'
-    TITLE = '\033[36m'
-    NUMBER = '\033[1;33m'
-    REGULAR = '\033[1;35m'
-    LINE = '\033[1;37m'
-    INFORM = '\033[1;36m'
-    WARN = '\033[1;33m'
-
-color = Color()

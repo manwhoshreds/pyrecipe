@@ -33,9 +33,6 @@ for item in os.listdir(RECIPE_DATA_DIR):
 
 PP = pprint.PrettyPrinter(compact=True, indent=4)
 
-REQUIRED_ORD_KEYS = [
-    'recipe_name', 'dish_type', 'prep_time', 'ingredients', 'steps'
-]
 DISH_TYPES = [
     'main', 'side', 'dessert', 'condiment', 'dip', 
     'salad dressing', 'sauce', 'base', 'garnish', 'seasoning'

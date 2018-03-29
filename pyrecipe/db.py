@@ -2,7 +2,7 @@ import os
 import sqlite3
 
 from pyrecipe.config import DB_FILE, RECIPE_DATA_FILES
-from pyrecipe.recipe import Recipe
+#from pyrecipe import Recipe
 
 
 class RecipeDB:
@@ -46,7 +46,6 @@ class RecipeDB:
 
     def __del__(self):
         self.conn.close()
-        #print('DATABASE CLOSED')
 
     def _commit(self):
         self.conn.commit()
