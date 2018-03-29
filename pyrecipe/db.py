@@ -1,9 +1,8 @@
 import os
 import sqlite3
 
-from pyrecipe.config import DB_FILE
+from pyrecipe.config import DB_FILE, RECIPE_DATA_FILES
 from pyrecipe.recipe import Recipe
-from pyrecipe.utils import manifest
 
 
 class RecipeDB:
@@ -110,8 +109,7 @@ def get_names():
 if not os.path.exists(DB_FILE):
     db = RecipeDB()
     db.build_database()
-    names = manifest.recipe_names
-    for item in names:
+    for item in RECIPE_DATA_FILES:
         r = Recipe(item)
         db.add_recipe(r)
 
