@@ -53,6 +53,7 @@ from gtts import gTTS
 
 import pyrecipe.utils as utils
 import pyrecipe.config as conf
+#from pyrecipe.db import update_db
 from pyrecipe.recipe_numbers import RecipeNum
 from pyrecipe import yaml, color
 
@@ -281,7 +282,7 @@ class Recipe:
                              method='xml',
                              pretty_print=True).decode('utf-8')
         return result
-
+    
     def get_ingredients(self, amount_level=0, color=False):
         """Return a list of ingredient strings.
 
@@ -351,7 +352,7 @@ class Recipe:
                 print("\n{}{}\nNotes:{}".format(conf.S_DIV, color.TITLE, color.NORMAL))
                 wrapped = utils.wrap(self['notes'])
                 for index, note in wrapped:
-                    print(index, note)
+                    print("{}{}{}{}".format(color.NUMBER, index, color.NORMAL, note))
                 extra_info = True
 
             if not extra_info:
@@ -378,8 +379,8 @@ class Recipe:
         # print steps
         wrapped = utils.wrap(self.get_method())
         for index, step in wrapped:
-            print("{}{}{} {}".format(color.NUMBER, index, color.NORMAL, step))
-
+            print("{}{}{}{}".format(color.NUMBER, index, color.NORMAL, step))
+    
     def get_method(self):
         """Return a list of steps."""
         steps = []
@@ -427,7 +428,7 @@ class Recipe:
         string = io.StringIO()
         yaml.dump(self.recipe_data, string)
         return string.getvalue()
-
+    
     def save(self, save_as=False):
         """save state of class
 

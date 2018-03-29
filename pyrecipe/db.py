@@ -23,16 +23,15 @@ class RecipeDB:
                             .format(type(recipe)))
 
         recipe_data = [(
-                       recipe['recipe_name'],
-                       recipe['dish_type'],
-                       recipe['source'],
-                       recipe['author'],
-                       recipe['tags'],
-                       recipe['categories'],
-                       recipe['price'],
-                       recipe['source_url']
-
-                    )]
+            recipe['recipe_name'],
+            recipe['dish_type'],
+            recipe['source'],
+            recipe['author'],
+            recipe['tags'],
+            recipe['categories'],
+            recipe['price'],
+            recipe['source_url']
+        )]
         self.c.executemany('''INSERT INTO Recipes (name, dish_type, file_name, author, tags, categories, price, source_url)
                         VALUES(?, ?, ?, ?, ?, ?, ?, ?)''', recipe_data)
         self._commit()
@@ -83,6 +82,12 @@ class RecipeDB:
                            ingredient_str TEXT,
                            FOREIGN KEY(recipe_id) REFERENCES Recipes(id)
                           )''')
+
+def update_db(save_recipe):
+    """Decorater for updating pyrecipe db."""
+    def wrapper(recipe):
+        save_recipe()
+    return wrapper
 
 def get_names():
     db = RecipeDB()

@@ -144,7 +144,7 @@ class EntryBlock(urwid.WidgetWrap):
         
         wrapped = wrap(entries, wrap_amount)
         for index, item in wrapped:
-            method_entry = urwid.Text('{} {}'.format(str(index), item))
+            method_entry = urwid.Text('{}{}'.format(str(index), item))
             self.widgets.append(method_entry)
         self._refresh()
 
@@ -209,7 +209,7 @@ class RecipeMaker:
             self.welcome = 'Add a Recipe: {}'.format(self.r['recipe_name'])
         else:
             self.r = Recipe(recipe)
-            self.welcome = 'Edit: {}'.format(self.r['recipe_name'])
+            self.welcome = 'Make: {}'.format(self.r['recipe_name'])
         
         self.disht_group = []
         self.initial_hash = hash(self.r)
@@ -318,6 +318,6 @@ class RecipeMaker:
         
 
 if __name__ == '__main__':
-    get_speech()
+    #get_speech()
     #time.sleep(4)
-    #RecipeMaker('test').start()
+    RecipeMaker('test').start()

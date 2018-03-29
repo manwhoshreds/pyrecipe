@@ -85,6 +85,132 @@ class IngredientsContainer(urwid.WidgetWrap):
     def blocks(self):
         return self.ingred_blocks[1:]
 
+class EntryBlock(urwid.WidgetWrap):
+    """Base class for stacked entry widgets."""
+    def __init__(self, entries=[], wrap_amount=70):
+        if not isinstance(entries, list):
+            raise TypeError('{}s only except a list as the first argument,'
+                            ' not {}'.format(__class__, type(entries)))
+        self.widgets = deque()
+        wrapped = wrap(entries, wrap_amount)
+        
+        for index, item in wrapped:
+            entry_widget = urwid.Edit(str(index), item)
+            self.widgets.append(entry_widget)
+        self._refresh()
+    
+    def _refresh(self, focus_item=0):
+        """Refresh the class to reflect changes to the entry stack."""
+        self.entry_block = urwid.Pile(self.widgets, focus_item=focus_item)
+        super().__init__(self.entry_block)
+   
+    def keypress(self, size, key):
+        """Capture and process a keypress."""
+        key = super().keypress(size, key)
+        self.row = self.entry_block.focus_position
+        try:
+            self.col = len(self.widgets[self.row].edit_text) + 2
+        except AttributeError:
+            # Object has no edit_text attribute. In other words its a 
+            # urwid.attr_map() and not a urwid.Edit()
+            return key
+        pressed = {
+                'enter': self.on_enter,
+                'ctrl d': self.del_entry,
+                'ctrl a': self.insert_entry,
+                'ctrl up': self.move_entry,
+                'ctrl down': self.move_entry,
+                }
+        try:
+            # I only need to pass key to one function but i will have to pass 
+            # to all. This is still a verly clean way to write this as opossed 
+            # to if, elif, etc... Perhaps a better way eludes me.
+            pressed[key](size, key)
+        except KeyError:
+            return key
+    
+    def add_entry(self, button=None):
+        """Add an entry to the end of the list."""
+        ingred_entry = urwid.Edit("- ", '')
+        self.widgets.append(ingred_entry)
+        new_focus = len(self.widgets) - 1
+        self._refresh(new_focus)
+    
+    def insert_entry(self, size, key):
+        """Insert entry on next line and move cursor."""
+        ingred_entry = urwid.Edit("- ", '')
+        row_plus = self.row + 1
+        self.widgets.insert(row_plus, ingred_entry)
+        self.entry_block.move_cursor_to_coords(size, 2, self.row)
+        self._refresh(row_plus)
+
+    def del_entry(self, size, key):
+        """Delete an entry."""
+        widget = self.widgets[self.row]
+        try:
+            # We have an alt_name to account for
+            assert isinstance(self.widgets[2], urwid.AttrMap)
+            one_ingred_left = 3
+        except AssertionError:
+            one_ingred_left = 2
+        
+        self.entry_block.move_cursor_to_coords(size, self.col, self.row)
+        item = list(self.widgets)[self.row]
+        self.widgets.remove(item)
+        if len(self.widgets) == one_ingred_left:
+            self.add_entry()
+        try:
+            self._refresh(self.row)
+        except IndexError:
+            # We are at the end of the ingredient list,
+            # start deleting goin back
+            self._refresh(self.row-1)
+    
+    def move_entry(self, size, key):
+        """Move entry up or down."""
+        self.entry_block.move_cursor_to_coords(size, self.col, self.row)
+        if key == 'ctrl up':
+            widget = self.widgets[self.row-1]
+            if isinstance(widget, (urwid.AttrMap, urwid.Padding, urwid.Columns)):
+                return
+            # up
+            newfocus = self.row - 1
+        else:
+            # down
+            newfocus = self.row + 1
+
+        item = self.widgets[self.row]
+        self.widgets.remove(item)
+        self.widgets.insert(newfocus, item)
+        try:
+            self._refresh(newfocus)
+        except IndexError:
+            return
+    
+    def on_enter(self, size, key):
+        """Move cursor to next entry or add an entry if no next entry exists."""
+        try:
+            col = len(self.widgets[self.row + 1].edit_text) + 2
+            self.entry_block.move_cursor_to_coords(size, col, self.row + 1)
+        except IndexError:
+            self.entry_block.move_cursor_to_coords(size, 2, self.row)
+            self.add_ingredient()
+    
+    @property
+    def widget_list(self):
+        """Return a list of widgets from the entry stack."""
+        return self.entry_block.widget_list
+    
+    def get_entries(self):
+        """Retrieve the text from the entries."""
+        entries = []
+        for item in self.widget_list:
+            if isinstance(item, urwid.GridFlow):
+                continue
+            text = item.get_edit_text()
+            text = ' '.join(text.split())
+            entries.append(text)
+        return entries
 
 class IngredBlock(urwid.WidgetWrap):
     """Ingredient block for displaying editable ingredients."""
@@ -261,130 +387,6 @@ class IngredBlock(urwid.WidgetWrap):
             return ingredients
 
 
-class EntryBlock(urwid.WidgetWrap):
-    """Base class for entry piles."""
-    def __init__(self, entries=[], wrap_amount=70):
-        self.widgets = deque()
-        if not isinstance(entries, list):
-            raise TypeError('{} only excepts a list of methods'.format(__class__))
-        
-        wrapped = wrap(entries, wrap_amount)
-        for index, item in wrapped:
-            method_entry = urwid.Edit(str(index) + ' ', item)
-            self.widgets.append(method_entry)
-        self._refresh()
-
-    def _refresh(self, focus_item=0):
-        self.pile = urwid.Pile(self.widgets, focus_item=focus_item)
-        super().__init__(self.pile)
-    
-    def keypress(self, size, key):
-        """Capture and process keypress."""
-        key = super().keypress(size, key)
-        self.row = self.ingred_block.focus_position
-        try:
-            self.col = len(self.widgets[self.row].edit_text) + 2
-        except AttributeError:
-            # Object has no edit_text attribute. In other words its a 
-            # urwid.attr_map() and not a urwid.Edit()
-            return key
-        pressed = {
-                'enter': self.on_enter,
-                'ctrl d': self.del_ingredient,
-                'ctrl a': self.insert_ingredient,
-                'ctrl up': self.move_entry,
-                'ctrl down': self.move_entry,
-                }
-        try:
-            # I only need to pass key to one function but i will have to pass 
-            # to all. This is still a verly clean way to write this as opossed 
-            # to if, elif, etc... Perhaps a better way eludes me.
-            pressed[key](size, key)
-        except KeyError:
-            return key
-    
-    def add_ingredient(self, button=None):
-        """Add an ingredients to the end of the list."""
-        ingred_entry = urwid.Edit("- ", '')
-        self.widgets.append(ingred_entry)
-        new_focus = len(self.widgets) - 1
-        self._refresh(new_focus)
-    
-    def insert_ingredient(self, size, key):
-        """Insert ingredient on next line and move cursor."""
-        ingred_entry = urwid.Edit("- ", '')
-        row_plus = self.row + 1
-        self.widgets.insert(row_plus, ingred_entry)
-        self.ingred_block.move_cursor_to_coords(size, 2, self.row)
-        self._refresh(row_plus)
-
-    def del_ingredient(self, size, key):
-        """Delete an ingredient."""
-        widget = self.widgets[self.row]
-        try:
-            # We have an alt_name to account for
-            assert isinstance(self.widgets[2], urwid.AttrMap)
-            one_ingred_left = 3
-        except AssertionError:
-            one_ingred_left = 2
-        
-        self.ingred_block.move_cursor_to_coords(size, self.col, self.row)
-        item = list(self.widgets)[self.row]
-        self.widgets.remove(item)
-        if len(self.widgets) == one_ingred_left:
-            self.add_ingredient()
-        try:
-            self._refresh(self.row)
-        except IndexError:
-            # We are at the end of the ingredient list,
-            # start deleting goin back
-            self._refresh(self.row-1)
-    
-    def move_entry(self, size, key):
-        """Mover entry up or down."""
-        self.ingred_block.move_cursor_to_coords(size, self.col, self.row)
-        if key == 'ctrl up':
-            widget = self.widgets[self.row-1]
-            if isinstance(widget, (urwid.AttrMap, urwid.Padding, urwid.Columns)):
-                return
-            # up
-            newfocus = self.row - 1
-        else:
-            # down
-            newfocus = self.row + 1
-
-        item = self.widgets[self.row]
-        self.widgets.remove(item)
-        self.widgets.insert(newfocus, item)
-        try:
-            self._refresh(newfocus)
-        except IndexError:
-            return
-    
-    def on_enter(self, size, key):
-        """Either move cursor to next line or add ingredient if no next line."""
-        try:
-            col = len(self.widgets[self.row + 1].edit_text) + 2
-            self.ingred_block.move_cursor_to_coords(size, col, self.row + 1)
-        except IndexError:
-            self.ingred_block.move_cursor_to_coords(size, 2, self.row)
-            self.add_ingredient()
-    @property
-    def widget_list(self):
-        return self.pile.widget_list
-    
-    def get_entries(self):
-        """Retrieve the text from the entries."""
-        entries = []
-        for item in self.widget_list:
-            if isinstance(item, urwid.GridFlow):
-                continue
-            text = item.get_edit_text()
-            text = ' '.join(text.split())
-            entries.append(text)
-        return entries
-
-
 class MethodBlock(EntryBlock):
     """Display an editable list of methods."""
     def __init__(self, method=[]):
@@ -440,7 +442,7 @@ class RecipeEditor:
             self.welcome = 'Add a Recipe: {}'.format(self.r['recipe_name'])
         else:
             self.r = Recipe(recipe)
-            self.welcome = 'Edit you numskeull: {}'.format(self.r['recipe_name'])
+            self.welcome = 'Edit: {}'.format(self.r['recipe_name'])
         
         self.initial_hash = hash(self.r)
         self.data = self.r['_recipe_data']

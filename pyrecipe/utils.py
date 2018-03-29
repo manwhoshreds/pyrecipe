@@ -77,7 +77,7 @@ def wrap(str_list, width=60):
         if index >= 10:
             wrapper.initial_indent = ''
         wrap = wrapper.fill(step)
-        wrapped_str = str(index) + ".", wrap
+        wrapped_str = str(index) + ". ", wrap
         wrapped.append(wrapped_str)
     return wrapped
 
@@ -287,3 +287,4 @@ if __name__ == '__main__':
         return(colo + text + color.NORMAL)
     color = [colorify(x) for x in text]
     print(''.join(x for x in color))
+
