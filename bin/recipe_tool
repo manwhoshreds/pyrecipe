@@ -13,20 +13,18 @@ import argparse
 import argcomplete
 
 from pyrecipe.config import RAND_RECIPE_COUNT
-from pyrecipe.utils import manifest
-import pyrecipe.db as db
+from pyrecipe.db import get_names
 
 def recipe_completer(**kwargs):
     """list of recipes for completer"""
-    #recipe_list = [x.lower() for x in manifest.recipe_names]
-    recipe_list = db.get_names()
-    return recipe_list
+    return get_names()
 
 def parse_args():
     """parse the args"""
     parser = argparse.ArgumentParser(
-        description="Recipe_tool has tab completion functionality. After adding a recipe, \
-                     simply run recipe_tool print <TAB><TAB> to view whats available.",
+        description="Recipe_tool has tab completion functionality. \
+                     After adding a recipe, simply run recipe_tool \
+                     print <TAB><TAB> to view whats available.",
         add_help=False
     )
     parser.add_argument(
@@ -63,7 +61,10 @@ def parse_args():
     ).completer = recipe_completer
 
     # recipe_tool edit
-    parser_edit = subparser.add_parser("edit", help="Edit a recipe data file")
+    parser_edit = subparser.add_parser(
+        "edit", 
+        help="Edit a recipe data file"
+    )
     parser_edit.add_argument(
         "source", 
         type=str, 
