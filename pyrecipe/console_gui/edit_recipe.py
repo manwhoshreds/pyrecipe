@@ -278,74 +278,101 @@ class EntryBlock(urwid.WidgetWrap):
         self.pile = urwid.Pile(self.widgets, focus_item=focus_item)
         super().__init__(self.pile)
     
-    @property
-    def widget_list(self):
-        return self.pile.widget_list
-    
     def keypress(self, size, key):
+        """Capture and process keypress."""
         key = super().keypress(size, key)
-        self.row = self.pile.focus_position
-        try: 
-            self.end_col = len(self.widgets[self.row].edit_text) + 2
-        except:
+        self.row = self.ingred_block.focus_position
+        try:
+            self.col = len(self.widgets[self.row].edit_text) + 2
+        except AttributeError:
+            # Object has no edit_text attribute. In other words its a 
+            # urwid.attr_map() and not a urwid.Edit()
             return key
-        
         pressed = {
                 'enter': self.on_enter,
-                'ctrl d': self.del_entry,
+                'ctrl d': self.del_ingredient,
+                'ctrl a': self.insert_ingredient,
                 'ctrl up': self.move_entry,
-                'ctrl down': self.move_entry
+                'ctrl down': self.move_entry,
                 }
         try:
+            # I only need to pass key to one function but i will have to pass 
+            # to all. This is still a verly clean way to write this as opossed 
+            # to if, elif, etc... Perhaps a better way eludes me.
             pressed[key](size, key)
         except KeyError:
             return key
     
-    def add_entry(self):
-        """Add an entry."""
-        caption = str(len(self.widgets) + 1)
-        entry = urwid.Edit(caption + ". ", '')
-        self.widgets.append(entry)
+    def add_ingredient(self, button=None):
+        """Add an ingredients to the end of the list."""
+        ingred_entry = urwid.Edit("- ", '')
+        self.widgets.append(ingred_entry)
         new_focus = len(self.widgets) - 1
-        self._refresh(focus_item=new_focus)
+        self._refresh(new_focus)
     
-    def del_entry(self, size, key):
-        """Delete an entry."""
-        if len(self.widgets) == 1:
-            return
-        row_minus_one = self.row - 1
-        row_minus_one = self.widgets[row_minus_one]
-        if isinstance(row_minus_one, (urwid.AttrMap, urwid.Columns)):
-            return
+    def insert_ingredient(self, size, key):
+        """Insert ingredient on next line and move cursor."""
+        ingred_entry = urwid.Edit("- ", '')
+        row_plus = self.row + 1
+        self.widgets.insert(row_plus, ingred_entry)
+        self.ingred_block.move_cursor_to_coords(size, 2, self.row)
+        self._refresh(row_plus)
 
-        try: 
-            row = self.row
-            col = len(self.widgets[row].edit_text) + 2
-        except IndexError:
-            row = self.row
-            col = len(self.widgets[row].edit_text) - 2
-
-        self.pile.move_cursor_to_coords(size, col, row)
-        try: 
-            item = list(self.widgets)[self.row]
-            self.widgets.remove(item)
-        except IndexError:
-            pass
-        self._refresh(self.row-1)
-    
-    def move_entry(self):
-        """Move an entry up or down."""
-        pass
+    def del_ingredient(self, size, key):
+        """Delete an ingredient."""
+        widget = self.widgets[self.row]
+        try:
+            # We have an alt_name to account for
+            assert isinstance(self.widgets[2], urwid.AttrMap)
+            one_ingred_left = 3
+        except AssertionError:
+            one_ingred_left = 2
         
+        self.ingred_block.move_cursor_to_coords(size, self.col, self.row)
+        item = list(self.widgets)[self.row]
+        self.widgets.remove(item)
+        if len(self.widgets) == one_ingred_left:
+            self.add_ingredient()
+        try:
+            self._refresh(self.row)
+        except IndexError:
+            # We are at the end of the ingredient list,
+            # start deleting goin back
+            self._refresh(self.row-1)
+    
+    def move_entry(self, size, key):
+        """Mover entry up or down."""
+        self.ingred_block.move_cursor_to_coords(size, self.col, self.row)
+        if key == 'ctrl up':
+            widget = self.widgets[self.row-1]
+            if isinstance(widget, (urwid.AttrMap, urwid.Padding, urwid.Columns)):
+                return
+            # up
+            newfocus = self.row - 1
+        else:
+            # down
+            newfocus = self.row + 1
+
+        item = self.widgets[self.row]
+        self.widgets.remove(item)
+        self.widgets.insert(newfocus, item)
+        try:
+            self._refresh(newfocus)
+        except IndexError:
+            return
+    
     def on_enter(self, size, key):
-        """Respond to the enter key."""
+        """Either move cursor to next line or add ingredient if no next line."""
         try:
             col = len(self.widgets[self.row + 1].edit_text) + 2
-            self.pile.move_cursor_to_coords(size, col, self.row + 1)
+            self.ingred_block.move_cursor_to_coords(size, col, self.row + 1)
         except IndexError:
-            self.pile.move_cursor_to_coords(size, 2, self.row)
-            self.add_entry()
-
+            self.ingred_block.move_cursor_to_coords(size, 2, self.row)
+            self.add_ingredient()
+    @property
+    def widget_list(self):
+        return self.pile.widget_list
+    
     def get_entries(self):
         """Retrieve the text from the entries."""
         entries = []
@@ -369,111 +396,6 @@ class MethodBlock(EntryBlock):
     def get_method(self):
         pass
         
-
-class MethodBlockBAK(urwid.WidgetWrap):
-    """Display an editable list of methods."""
-    def __init__(self, method=[]):
-        self.method_widgets = deque()
-        self.method = method
-        if not isinstance(self.method, list):
-            raise TypeError('MethodBlock only excepts a list of methods')
-        
-        add_button = urwid.Button('Add Method',
-                on_press=self.add_method)
-        self.method_widgets.append(urwid.GridFlow([add_button], 14, 0, 0, 'left'))
-        
-        wrapped = wrap(self.method)
-        for index, item in wrapped:
-            method_entry = urwid.Edit(str(index) + ' ', item)
-            self.method_widgets.append(method_entry)
-            
-        if len(self.method_widgets) > 0:
-            method_pile = urwid.Pile(self.method_widgets)
-        else:
-            method_pile = BLANK
-        self._refresh()
-
-    def _refresh(self, focus_item=1):
-        try:
-            self.pile = urwid.Pile(self.method_widgets, focus_item=focus_item)
-        except IndexError:
-            self.pile = urwid.Pile(self.method_widgets, focus_item=focus_item-1)
-        self.num_widgets = len(self.method_widgets)
-        super().__init__(self.pile)
-    
-    def _renumber(self, focus_item=1):
-        self.method_widgets.clear()
-        wrapped = wrap(self.method)
-        for index, item in wrapped:
-            method_entry = urwid.Edit(str(index) + ' ', item)
-            self.method_widgets.append(method_entry)
-        try:
-            self.pile = urwid.Pile(self.method_widgets, focus_item=focus_item)
-        except IndexError:
-            self.pile = urwid.Pile(self.method_widgets, focus_item=focus_item-1)
-        self.num_widgets = len(self.method_widgets)
-        super().__init__(self.pile)
-
-    def add_method(self, button):
-        caption = str(len(self.method_widgets))
-        method_entry = urwid.Edit(caption + ". ", '')
-        self.method_widgets.append(method_entry)
-        new_focus = len(self.method_widgets) - 1
-        self._refresh(focus_item=new_focus)
-    
-    def del_method(self, size):
-        # dont let the user delete the add button at pos 0
-        if self.focus_pos == 0:
-            return
-        if self.num_widgets == 2:
-            self.method_widgets[1].edit_text = 'add method'
-            return
-        try: 
-            row = self.focus_pos + 1
-            col = len(self.method_widgets[row].edit_text) + 2
-        except IndexError:
-            row = self.focus_pos - 1
-            col = len(self.method_widgets[row].edit_text) - 2
-
-        self.pile.move_cursor_to_coords(size, col, row)
-        try: 
-            item = list(self.method_widgets)[self.focus_pos]
-            self.method_widgets.remove(item)
-        except IndexError:
-            pass
-        self._refresh(self.focus_pos)
-        #self._renumber(self.focus_pos)
-    
-    @property
-    def widget_list(self):
-        return self.pile.widget_list
-
-    def keypress(self, size, key):
-        self.focus_pos = self.pile.focus_position
-        key = super().keypress(size, key)
-        if key == 'enter':
-            self.on_enter(key)
-        elif key == 'ctrl d':
-            self.del_method(size)
-        else:
-            return key
-
-    def on_enter(self, key):
-        try:
-            self.pile.set_focus(self.focus_pos + 1)
-        except IndexError:
-            pass
-    
-    def get_entries(self):
-        entries = []
-        for item in self.widget_list:
-            if isinstance(item, urwid.GridFlow):
-                continue
-            text = item.get_edit_text()
-            text = ' '.join(text.split())
-            entries.append(text)
-        return entries
-
 
 class NoteBlock(EntryBlock):
     """Display an editable list of notes."""
@@ -518,9 +440,8 @@ class RecipeEditor:
             self.welcome = 'Add a Recipe: {}'.format(self.r['recipe_name'])
         else:
             self.r = Recipe(recipe)
-            self.welcome = 'Edit: {}'.format(self.r['recipe_name'])
+            self.welcome = 'Edit you numskeull: {}'.format(self.r['recipe_name'])
         
-        self.disht_group = []
         self.initial_hash = hash(self.r)
         self.data = self.r['_recipe_data']
 
@@ -537,6 +458,7 @@ class RecipeEditor:
     
     def setup_listbox(self):
         """The main listbox"""
+        self.disht_group = []
         radio_dish_types = urwid.GridFlow([urwid.AttrMap(urwid.RadioButton(self.disht_group,
                             txt), 'buttn', 'buttnf')
                             for txt in DISH_TYPES], 15, 0, 2, 'left')

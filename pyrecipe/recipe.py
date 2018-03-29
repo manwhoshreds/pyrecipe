@@ -333,6 +333,7 @@ class Recipe:
 
         extra_info = False
         if verb_level >= 1:
+            print(conf.S_DIV + '\n')
             if self['price']:
                 print("Price: {}".format(self['price']))
                 extra_info = True
@@ -725,4 +726,4 @@ class IngredientParser:
 
 if __name__ == '__main__':
     r = Recipe('alfredo sauce')
-    r.read_out_loud('method')
+    r.read_out_loud('ingredients')

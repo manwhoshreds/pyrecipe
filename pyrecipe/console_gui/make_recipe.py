@@ -11,9 +11,12 @@
 import textwrap
 from collections import deque
 import time
+import random
 
 import urwid
 import speech_recognition as sr
+from gtts import gTTS
+from playsound import playsound
 
 from pyrecipe.config import (DISH_TYPES)
 from pyrecipe.recipe import Recipe, IngredientParser
@@ -47,23 +50,33 @@ BLANK = urwid.Divider()
 
 def get_speech():
     """Get speech from google."""
+    recipe = Recipe('stuffed bell peppers')
     r = sr.Recognizer()
-    text = '' 
-    while text != 'start recipe tool':
-        with sr.Microphone(device_index=6) as source:
-            try:
-                r.adjust_for_ambient_noise(source)
-                print('say something')
-                audio = r.listen(source)
-                text = r.recognize_google(audio)
+    m = sr.Microphone()
+    ingredients = recipe.get_ingredients()
+    with m as source: r.adjust_for_ambient_noise(source)
 
-                if text == "next ingredient":
-                    print('Going to next ingredient')
-                else:
-                    print('{} is pretty cool but its not the response'
-                          ' we were looking for'.format(text))
+
+    #for item in ingredients
+    print('Prepare your mise en place!!!')
+    for item in ingredients[0]:
+        print(item)
+        tts = gTTS(text=item)
+        tts.save('temp.mp3')
+        playsound('temp.mp3')
+        spoken = ''
+        while spoken != "next ingredient":
+            print('say \"Next ingredient\" to proceed..')
+            try:
+                with m as source: audio = r.listen(source)
+                spoken = r.recognize_google(audio)
+                if spoken == "next ingredient":
+                    print('Processing next ingredient')
             except sr.UnknownValueError:
                 print('I could not understand you sir')
+                continue
+            except KeyboardInterrupt:
+                exit('\nAborting...')
 
 
 class IngredBlock(urwid.WidgetWrap):
@@ -79,38 +92,28 @@ class IngredBlock(urwid.WidgetWrap):
             self.alt_name = urwid.AttrMap(urwid.Text('* {}'.format(name)), 'title')
             self.widgets.append(self.alt_name)
        
-        current_focus = 0
-        for index, item in enumerate(self.ingredients):
-            if index == current_focus:
-                ingred_entry = urwid.AttrMap(urwid.Text("- {}".format(item)), 'current_focus')
-            else:
-                ingred_entry = urwid.Text("- {}".format(item))
-            self.widgets.append(ingred_entry)
-        
         self._refresh()
 
-    def _refresh(self, focus_item=1):
+    def _refresh(self, focus_item=3):
+        for index, item in enumerate(self.ingredients):
+            if index == focus_item:
+                ingred_entry = urwid.AttrMap(urwid.Text("- {}".format(item)), 'current_focus')
+            else:
+                ingred_entry = urwid.Edit("- ", "{}".format(item))
+            self.widgets.append(ingred_entry)
         self.ingred_block = urwid.Pile(self.widgets, focus_item=focus_item)
         super().__init__(self.ingred_block)
     
-    def cur_focus_up(self, index):
-        for item in self.widgets:
-            if item.attr_map[None] == 'current_focus':
-                self.widgets.append(urwid.Text("test"))
-
-        self.widgets.append(urwid.Text("- test"))
-        self._refresh()
+    def cur_focus_up(self, size, key, index):
+        self._refresh(random.randint(1,4))
 
     def keypress(self, size, key):
         key = super().keypress(size, key)
-        self.row = self.ingred_block.focus
-        print(self.row)
-        try: 
-            self.end_col = len(self.widgets[self.row].edit_text) + 2
-            print(self.end_col)
-        except:
-            return key
-        print(key) 
+        self.row = self.ingred_block.focus_position
+        try:
+            self.col = len(self.widgets[self.row].edit_text) + 2
+        except ValueError:
+            return
         pressed = {
                 'enter': self.cur_focus_up
                 }
@@ -120,7 +123,7 @@ class IngredBlock(urwid.WidgetWrap):
             # this is still a verly clean way to write this
             # as opossed to if, elif, etc....
             # perhaps a better way eludes me
-            pressed[key](size, key)
+            pressed[key](size, key, 1)
         except KeyError:
             return key
     
@@ -315,6 +318,6 @@ class RecipeMaker:
         
 
 if __name__ == '__main__':
-    #get_speech()
+    get_speech()
     #time.sleep(4)
-    RecipeMaker('test').start()
+    #RecipeMaker('test').start()
