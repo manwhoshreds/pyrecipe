@@ -48,19 +48,23 @@ from zipfile import ZipFile, BadZipFile
 
 import bs4
 import lxml.etree as ET
+from termcolor import colored
+from ruamel.yaml import YAML
 from playsound import playsound
 from gtts import gTTS
 
-from pyrecipe import yaml, color, S_DIV
+from pyrecipe import S_DIV
 import pyrecipe.utils as utils
 import pyrecipe.config as conf
-#from pyrecipe.db import update_db
+from pyrecipe.db import update_db
 from pyrecipe.recipe_numbers import RecipeNum
 
 # GLOBAL REs
 PORTIONED_UNIT_RE = re.compile(r'\(?\d+\.?\d*? (ounce|pound)\)? (cans?|bags?)') 
 PAREN_RE = re.compile(r'\((.*?)\)')
 
+yaml = YAML(typ='safe')
+yaml.default_flow_style = False
 
 class Recipe:
     """Open a recipe file and extract its data for futher processing
@@ -86,12 +90,10 @@ class Recipe:
                         with zfile.open('recipe.yaml', 'r') as stream:
                             self._recipe_data = yaml.load(stream)
                     except KeyError:
-                        sys.exit("{}ERROR: Can not find recipe.yaml."
-                                 " Is this really a recipe file?"
-                                 .format(color.ERROR))
+                        utils.msg("ERROR: Can not find recipe.yaml."
+                                  " Is this really a recipe file?", "ERROR")
             except BadZipFile:
-                sys.exit("{}ERROR: This file is not a zipfile."
-                         .format(color.ERROR))
+                utils.msg("ERROR: This file is not a zipfile.", "ERROR")
 
         else:
             self._recipe_data = {}
@@ -99,7 +101,7 @@ class Recipe:
             self['dish_type'] = 'main'
 
         # Scan the recipe to build the xml
-        self._scan_recipe()
+        #self._scan_recipe()
 
     def _scan_recipe(self):
         """Scan the recipe to build xml."""
@@ -312,75 +314,72 @@ class Recipe:
 
     def print_recipe(self, verb_level=0):
         """Print recipe to standard output."""
-        print(color.RECIPENAME
-              + self['recipe_name'].title()
-              + color.NORMAL
-              + "\n")
-        
-        if self['dish_type']:
-            print("Dish Type: {}"
-                  .format(str(self['dish_type'])))
+        recipe_str = colored(self['recipe_name'], 'cyan')
+        recipe_str += "\n\nDish Type: {}".format(str(self['dish_type']))
         for item in ('prep_time', 'cook_time', 'bake_time', 'ready_in'):
             if self[item]:
-                print("{}: {}"
-                      .format(item.replace('_', ' ').title(),
-                              utils.mins_to_hours(RecipeNum(self[item]))))
+                recipe_str += "\n{}: {}".format(item.replace('_', ' ').title(),
+                              utils.mins_to_hours(RecipeNum(self[item])))
+        
         if self['oven_temp']:
-            print("Oven temp: {} {}"
-                  .format(str(self['oven_temp']['amount']),
-                          self['oven_temp']['unit']))
+            tmp = str(self['oven_temp']['amount'])
+            unt = self['oven_temp']['unit']
+            recipe_str += "Oven temp: {} {}".format(tmp, unt)
 
         if self['author']:
-            print("Author: {}".format(self['author']))
+            recipe_str += "Author: {}".format(self['author'])
 
         extra_info = False
         if verb_level >= 1:
-            print(S_DIV + '\n')
             if self['price']:
-                print("Price: {}".format(self['price']))
+                recipe_str += "\nPrice: {}".format(self['price'])
                 extra_info = True
             if self['source_url']:
-                print("URL: {}".format(self['source_url']))
+                recipe_str += "\nURL: {}".format(self['source_url'])
                 extra_info = True
             if self['category']:
-                print("Category(s): "
-                      + ", ".join(self['category']))
+                recipe_str += ("\nCategory(s): {}"
+                               .format(", ".join(self['category'])))
                 extra_info = True
             if self['yields']:
-                print("Yields: " + str(self['yeilds']))
+                recipe_str += ("\nYields: " + str(self['yeilds']))
                 extra_info = True
             if self['notes']:
-                print("\n{}{}\nNotes:{}".format(S_DIV, color.TITLE, color.NORMAL))
+                recipe_str += colored("\n\nNotes:", "cyan")
                 wrapped = utils.wrap(self['notes'])
                 for index, note in wrapped:
-                    print("{}{}{}{}".format(color.NUMBER, index, color.NORMAL, note))
+                    recipe_str += colored("\n{}".format(index), "yellow")
+                    recipe_str += note
                 extra_info = True
 
             if not extra_info:
                 utils.msg('\nNo additional inforation', 'ERROR')
 
-        print("\n{}{}\nIngredients:{}".format(S_DIV, color.TITLE, color.NORMAL))
-
+        recipe_str += "\n\n{}".format(S_DIV)
+        recipe_str += colored("\nIngredients:", "cyan")
+        
         # Put together all the ingredients
         ingreds, alt_ingreds = self.get_ingredients(color=True)
         for ingred in ingreds:
-            print(ingred)
+            recipe_str += "\n{}".format(ingred)
         
         if alt_ingreds:
             for item in alt_ingreds:
-                print("\n{}{}{}".format(color.TITLE, 
-                                        item.title(), 
-                                        color.NORMAL))
+                recipe_str += colored("\n{}".format(item.title()), "cyan")
 
                 for ingred in alt_ingreds[item]:
-                    print(ingred)
-
-        print("\n{}{}\nMethod:{}".format(S_DIV, color.TITLE, color.NORMAL))
+                    recipe_str += "\n{}".format(ingred)
+        
+        recipe_str += "\n\n{}".format(S_DIV)
+        recipe_str += colored("\nMethod:", "cyan")
 
         # print steps
         wrapped = utils.wrap(self.get_method())
         for index, step in wrapped:
-            print("{}{}{}{}".format(color.NUMBER, index, color.NORMAL, step))
+            recipe_str += "\n{}".format(colored(index, "yellow"))
+            recipe_str += step
+    
+        print(recipe_str)
     
     def get_method(self):
         """Return a list of steps."""
@@ -535,16 +534,8 @@ class Ingredient:
         Calling string on an ingredient object returns the gramatically
         correct representation of the ingredient object.
         """
-        color_number = ''
-        color_normal = ''
-        color_note = ''
-        if self.color:
-            color_number = color.NUMBER
-            color_normal = color.NORMAL
-            color_note = color.INFORM 
-
         if self.note:
-            self.note = '{}({}){}'.format(color_note, self.note, color_normal)
+            self.note = '({})'.format(self.note)
 
         if self.unit == 'to taste':
             return "{} to taste".format(self.name.capitalize())
@@ -557,9 +548,8 @@ class Ingredient:
             if match:
                 unit = match.group().split()
                 self.unit = "({}) {}".format(' '.join(unit[0:2]), unit[-1])
-            ingred_string = "{}{}{} {} {} {}".format(color_number, self.amount,
-                                              color_normal, self.size,
-                                              self.unit, self.name)
+            ingred_string = colored('{}'.format(self.amount), 'yellow')
+            ingred_string += "{} {} {}".format(self.size, self.unit, self.name)
             # the previous line adds unwanted spaces if
             # values are absent, we simply clean that up here.
             ingred_string = " ".join(ingred_string.split())

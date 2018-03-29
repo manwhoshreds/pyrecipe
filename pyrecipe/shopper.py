@@ -25,7 +25,7 @@ import pyrecipe.utils as utils
 from pyrecipe.config import (RAND_RECIPE_COUNT,
                              SHOPPING_LIST_FILE, PP)
 from pyrecipe.recipe import Recipe
-from pyrecipe import Q_, S_DIV, color
+from pyrecipe import Q_, S_DIV
 from pyrecipe.recipe_numbers import RecipeNum
 
 class ShoppingList:
@@ -202,10 +202,9 @@ class RandomShoppingList(ShoppingList):
             self.recipe_sample = random.sample(utils.manifest.maindish_names, self.count)
             self.salad_dressing_random = random.choice(utils.manifest.dressing_names)
         except ValueError:
-            sys.exit("{}ERROR: Random count is higher than "
-                     "the amount of recipes available ({}). "
-                     "Please enter a lower number."
-                     .format(color.ERROR, str(len(utils.manifest.maindish_names))))
+            utils.msg("ERROR: Random count is higher than "
+                      "the amount of recipes available (). "
+                      "Please enter a lower number.", 'ERROR')
         
         self.update(self.salad_dressing_random)
         for dish in self.recipe_sample:

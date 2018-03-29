@@ -6,52 +6,12 @@ import os
 import sys
 import string
 import textwrap
-from zipfile import ZipFile
 
 from termcolor import cprint
 
 from pyrecipe.config import (RECIPE_DATA_DIR, RECIPE_DATA_FILES,
-                             DISH_TYPES, EDITOR, DB_FILE)
-#from pyrecipe import yaml
-from pyrecipe.recipe_numbers import RecipeNum
+                             DISH_TYPES, DB_FILE)
 
-color = None
-yaml = None
-class RecipeManifest:
-    """A manifest of recipe information
-    
-    In the future, this will be entirely handled by sqlite
-    """
-    def __init__(self):
-        self.recipe_names = []
-        self.maindish_names = []
-        self.dressing_names = []
-        self.sauce_names = []
-        self.salad_names = []
-        self.recipe_authors = []
-        self.urls = []
-        for item in RECIPE_DATA_FILES:
-            try:
-                with ZipFile(item, 'r') as zfile:
-                    try: 
-                        with zfile.open('recipe.yaml', 'r') as stream:
-                            _recipe = yaml.load(stream)
-                            self.recipe_names.append(_recipe['recipe_name'].lower())
-                            if _recipe['dish_type'] == 'main':
-                                self.maindish_names.append(_recipe['recipe_name'])
-                            if _recipe['dish_type'] == 'salad dressing':
-                                self.dressing_names.append(_recipe['recipe_name'])
-                            if _recipe['dish_type'] == 'sauce':
-                                self.sauce_names.append(_recipe['recipe_name'])
-                            if _recipe['dish_type'] == 'salad':
-                                self.salad_names.append(_recipe['recipe_name'])
-                    except KeyError:
-                        sys.exit('cannot find recipe.yaml')
-            except EOFError:
-                print(item)
-
-#manifest = RecipeManifest()
-manifest = None
 def mins_to_hours(mins):
     #days = mins // 1440
     hours = mins // 60
