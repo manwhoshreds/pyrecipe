@@ -15,12 +15,11 @@ import sys
 import pkg_resources
 from math import ceil
 
-from termcolor import colored
+from pyrecipe.color import color
 from pint import UnitRegistry
 
-
 # Section divider e.g. "~~~~~~~~~~~~~"
-S_DIV = colored("~" * 60, 'white')
+S_DIV = color("~" * 60, 'white')
 from pyrecipe.recipe import (Recipe, RecipeWebScraper, IngredientParser)
 
 try:

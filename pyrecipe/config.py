@@ -12,9 +12,9 @@ import configparser
 config = configparser.ConfigParser()
 
 CONFIG_DIR = os.path.expanduser('~/.config/pyrecipe/')
-DB_FILE = os.path.expanduser('~/git/pyrecipe/pyrecipe/test.db')
-RECIPE_DATA_DIR = os.path.expanduser('~/.config/pyrecipe/recipe_data/')
-CONFIG_FILE = CONFIG_DIR + 'config'
+DB_FILE = os.path.join(CONFIG_DIR, 'recipes.db')
+RECIPE_DATA_DIR = os.path.join(CONFIG_DIR, 'recipe_data/')
+CONFIG_FILE = os.path.join(CONFIG_DIR + 'config')
 SCRIPT_DIR = os.path.dirname(__file__)
 
 # parse config
@@ -22,10 +22,6 @@ config.read(CONFIG_FILE)
 RECIPE_XML_DIR = os.path.expanduser(config['paths']['recipe_xml_dir'])
 SHOPPING_LIST_FILE = os.path.expanduser(config['paths']['shopping_list_file'])
 RAND_RECIPE_COUNT = config['pyrecipe']['rand_recipe_count']
-
-# env
-EDITOR = os.getenv('EDITOR', 'nano')
-VIM_MODE_LINE = "\n# vim: set expandtab ts=4 syntax=yaml:"
 
 RECIPE_DATA_FILES = []
 for item in os.listdir(RECIPE_DATA_DIR):
@@ -45,10 +41,6 @@ PINT_UNDEFINED_UNITS = [
     'box', 'to taste', 'inch piece', 'stick', 'bottle', 'each', 'bag',
     'whole', 'link', 'sprig', 'stalk', 'pinch of', 'cube', 'splash of'
 ]
-CAN_UNITS = ['TEST']
-# CAN_UNITS are checked later and put in parenthesis
-# its not considered professional recipe writing
-# to use two numbers in a row, for example "1 32 ounce can"
 
 _ingr_units = CULINARY_UNITS + PINT_UNDEFINED_UNITS
 _nonplurals = ('each', 'splash')

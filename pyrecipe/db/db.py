@@ -1,8 +1,14 @@
+"""
+    pyreicpe.db
+    ~~~~~~~~~~~
+    
+    The main database file for pyrecipe.
+"""
 import os
 import sqlite3
 
+from pyrecipe import Recipe
 from pyrecipe.config import DB_FILE, RECIPE_DATA_FILES
-#from pyrecipe import Recipe
 
 
 class RecipeDB:

@@ -56,7 +56,6 @@ import pyrecipe.utils as utils
 import pyrecipe.config as conf
 from pyrecipe.color import color
 from pyrecipe import S_DIV
-from pyrecipe.db import update_db
 from pyrecipe.recipe_numbers import RecipeNum
 
 # GLOBAL REs

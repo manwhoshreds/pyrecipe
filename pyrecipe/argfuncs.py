@@ -8,7 +8,7 @@ import os
 
 import pyrecipe.utils as utils
 import pyrecipe.shopper as shopper
-from .config import PP, EDITOR, RECIPE_DATA_FILES
+from .config import PP, RECIPE_DATA_FILES
 from pyrecipe import Recipe, RecipeWebScraper, version_info
 from pyrecipe.console_gui import RecipeEditor, RecipeMaker
 
