@@ -38,9 +38,9 @@
     :license: GPL, see LICENSE for more details.
 """
 import os
-import sys
 import re
 import io
+import sys
 import string
 from collections import OrderedDict
 from urllib.request import urlopen
@@ -53,9 +53,8 @@ from playsound import playsound
 from gtts import gTTS
 
 import pyrecipe.utils as utils
-import pyrecipe.config as conf
-from pyrecipe.color import color
-from pyrecipe import S_DIV
+import pyrecipe.config as config
+from .format import color, S_DIV
 from pyrecipe.recipe_numbers import RecipeNum
 
 # GLOBAL REs
@@ -415,7 +414,7 @@ class Recipe:
         yaml, and xml.
         """
         if data_type in ('raw', None):
-            conf.PP.pprint(self.recipe_data)
+            config.PP.pprint(self.recipe_data)
         elif data_type == 'yaml':
             yaml.dump(self['_recipe_data'], sys.stdout)
         elif data_type == 'xml':
@@ -437,7 +436,7 @@ class Recipe:
         wants to edit a file in which case we intend to overwrite the file with
         changes.
         """
-        source = os.path.join(conf.RECIPE_DATA_DIR, self.source)
+        source = os.path.join(config.RECIPE_DATA_DIR, self.source)
         if not self.source:
             raise RuntimeError('Recipe has no source to save to')
         #elif os.path.exists(source):
@@ -640,7 +639,7 @@ class IngredientParser:
             ingred_string = ingred_string.replace(match.group(), '')
             unit = self._strip_parens(match.group())
         else:
-            for item in conf.INGRED_UNITS:
+            for item in config.INGRED_UNITS:
                 if item in ingred_string.split():
                     unit = item
                     ingred_string = ingred_string.replace(item, '')
@@ -680,12 +679,12 @@ class IngredientParser:
         ingred_string = ' '.join(ingred_list)
 
 
-        for item in conf.SIZE_STRINGS:
+        for item in config.SIZE_STRINGS:
             if item in ingred_string:
                 size = item
                 ingred_string = ingred_string.replace(item, '')
 
-        for item in conf.INGRED_UNITS:
+        for item in config.INGRED_UNITS:
             if item in ingred_string.split():
                 unit = item
                 ingred_string = ingred_string.replace(item, '')

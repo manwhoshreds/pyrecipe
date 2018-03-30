@@ -7,9 +7,8 @@ import sys
 import string
 import textwrap
 
-from pyrecipe.config import (RECIPE_DATA_DIR, RECIPE_DATA_FILES,
-                             DISH_TYPES, DB_FILE)
-from pyrecipe.color import color
+import pyrecipe.config as config
+from .format import color
 
 def mins_to_hours(mins):
     #days = mins // 1440
@@ -53,7 +52,7 @@ def check_source(source):
     # must be a string name a recipe that exist in the data dir
     else:
         file_name = get_file_name(source)
-        abspath_name = os.path.join(RECIPE_DATA_DIR, file_name)
+        abspath_name = os.path.join(config.RECIPE_DATA_DIR, file_name)
         try:
             assert open(abspath_name)
             return abspath_name
@@ -67,18 +66,8 @@ def get_file_name(source, ext='recipe'):
     file_name = '{}.{}'.format(file_name, ext)
     return file_name
 
-def list_recipes(ret=False):
-    """List all recipes in the database"""
-    
-    recipe_list = manifest.recipe_names
-    if ret:
-        return recipe_list
-    else:
-        for item in columnify(recipe_list):
-            PP.pprint(item)
-        for item in recipe_list: print(item)
 
-def columnify(iterable):
+
     # First convert everything to its repr
     strings = [repr(x) for x in iterable]
     # Now pad all the strings to match the widest
