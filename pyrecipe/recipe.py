@@ -54,8 +54,9 @@ from gtts import gTTS
 
 import pyrecipe.utils as utils
 import pyrecipe.config as config
+from pyrecipe.db import update_db
 from .color import color, S_DIV
-from pyrecipe.recipe_numbers import RecipeNum
+from .recipe_numbers import RecipeNum
 
 # GLOBAL REs
 PORTIONED_UNIT_RE = re.compile(r'\(?\d+\.?\d*? (ounce|pound)\)? (cans?|bags?)') 
@@ -341,7 +342,7 @@ class Recipe:
         
         if alt_ingreds:
             for item in alt_ingreds:
-                recipe_str += color("\n{}".format(item.title()), "cyan")
+                recipe_str += color("\n\n{}".format(item.title()), "cyan")
 
                 for ingred in alt_ingreds[item]:
                     recipe_str += "\n{}".format(ingred)
@@ -404,7 +405,8 @@ class Recipe:
         string = io.StringIO()
         yaml.dump(self.recipe_data, string)
         return string.getvalue()
-    
+   
+    @update_db
     def save(self):
         """save state of class
 

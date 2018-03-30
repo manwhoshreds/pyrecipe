@@ -19,7 +19,9 @@ from pint import UnitRegistry
 import inflect
 
 from .color import (color, S_DIV)
-from pyrecipe.recipe import *
+from .recipe import Recipe, IngredientParser, RecipeWebScraper
+from .config import DB_FILE, RECIPE_DATA_FILES
+from pyrecipe.db import update_db, build_recipe_database
 
 try:
     __version__ = pkg_resources.get_distribution('pyrecipe').version
@@ -28,6 +30,9 @@ except:
 
 __email__ = 'm.k.miller@gmx.com'
 __scriptname__  = os.path.basename(sys.argv[0])
+
+if not os.path.exists(DB_FILE):
+    build_recipe_database(Recipe)
 
 VER_STR = """  
                  _              _              _   {0} v{1}

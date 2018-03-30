@@ -7,9 +7,7 @@
 import os
 import sqlite3
 
-from pyrecipe import Recipe
 from pyrecipe.config import DB_FILE, RECIPE_DATA_FILES
-
 
 class RecipeDB:
     """A database subclass for pyrecipe."""
@@ -22,7 +20,7 @@ class RecipeDB:
 
     def add_recipe(self, recipe):
         '''Add a recipe to the database.'''
-        if not isinstance(recipe, Recipe):
+        if type(recipe).__name__ != 'Recipe':
             raise TypeError('Argument must be a Recipe instance, not {}'
                             .format(type(recipe)))
 
@@ -36,12 +34,21 @@ class RecipeDB:
             recipe['price'],
             recipe['source_url']
         )]
-        self.c.executemany('''INSERT INTO Recipes (name, dish_type, file_name, author, tags, categories, price, source_url)
-                        VALUES(?, ?, ?, ?, ?, ?, ?, ?)''', recipe_data)
+        self.c.executemany('''INSERT OR REPLACE INTO Recipes (
+                                name, 
+                                dish_type, 
+                                file_name, 
+                                author, 
+                                tags, 
+                                categories, 
+                                price, 
+                                source_url
+                                ) VALUES(?, ?, ?, ?, ?, ?, ?, ?)''', recipe_data)
         self._commit()
         
         self.c.execute("SELECT id FROM Recipes WHERE name = '%s'" % recipe['recipe_name'])
         recipe_id = self.c.fetchone()[0]
+
         for item in recipe.get_ingredients()[0]:
             self.c.execute('''INSERT INTO RecipeIngredients (
                                 recipe_id, 
@@ -62,13 +69,16 @@ class RecipeDB:
     def query(self, command):
         if not command.lower().startswith('select'):
             raise TypeError('query string must be one of select')
-        query = self.c.execute(command)
-        result = query.fetchall()
+        try:
+            query = self.c.execute(command)
+            result = query.fetchall()
+        except sqlite3.OperationalError:
+            result = []
         return result
     
-    def build_database(self):
+    def create_database(self):
         self.c.execute(
-            '''CREATE TABLE Recipes 
+            '''CREATE TABLE IF NOT EXISTS Recipes 
              (id INTEGER PRIMARY KEY AUTOINCREMENT, 
               dish_type TEXT,
               name TEXT NOT NULL, 
@@ -83,9 +93,18 @@ class RecipeDB:
               )'''
         )
         self.c.execute(
-            '''CREATE TABLE RecipeIngredients 
+            '''CREATE TABLE IF NOT EXISTS RecipeIngredients 
               (
                recipe_id INTEGER, 
+               ingredient_str TEXT,
+               FOREIGN KEY(recipe_id) REFERENCES Recipes(id)
+              )'''
+        )
+        self.c.execute(
+            '''CREATE TABLE IF NOT EXISTS RecipeAltIngredients
+              (
+               recipe_id INTEGER,
+               alt_name TEXT,
                ingredient_str TEXT,
                FOREIGN KEY(recipe_id) REFERENCES Recipes(id)
               )'''
@@ -104,19 +123,22 @@ class Manifest():
         self.salad_dressings = [x[0] for x in salad_dressings]
         self.recipe_names = sorted([x[0].lower() for x in recipe_names])
 
-def update_db(save_recipe):
+def update_db(func):
     """Decorater for updating pyrecipe db."""
+    db = RecipeDB()
     def wrapper(recipe):
-        save_recipe()
+        db.add_recipe(recipe)
+        func(recipe)
+        print('recipe_updated')     
     return wrapper
 
-if not os.path.exists(DB_FILE):
+def build_recipe_database(Recipe): 
+    """Build the recipe database."""
     db = RecipeDB()
-    db.build_database()
+    db.create_database()
     for item in RECIPE_DATA_FILES:
         r = Recipe(item)
         db.add_recipe(r)
 
 if __name__ == '__main__':
-    test = Manifest()
-    print(test.recipe_names)
+    db = RecipeDB()

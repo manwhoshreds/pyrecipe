@@ -546,7 +546,7 @@ class RecipeEditor:
         
         self.loop.widget = overlay 
    
-    def test_prompt(self):
+    def test_prompt(self, args):
         """Pop-up window that appears when you try to quit."""
         text = "Changes have been made. Quit?"
         question = urwid.Text(("bold", text), "center")
@@ -565,8 +565,8 @@ class RecipeEditor:
             prompt, self.loop.widget,
             "center", 19, "middle", 9,
             16, 8)
-        
-        self.loop.widget = overlay 
+        self.test.append(IngredBlock(ingredients=['hello'])) 
+        self.loop.widget = self.frame
     
     def test_answer(self, button, label):
         """Prompt answer"""
