@@ -91,22 +91,24 @@ class RecipeDB:
               )'''
         )
 
+class Manifest():
+    """A record of all of recipe types in the database."""
+    def __init__(self):
+        db = RecipeDB()
+        disht_sql = "SELECT name FROM Recipes WHERE dish_type = \'%s\'"
+        recipe_names = db.query('SELECT name FROM Recipes')
+        main_dishes = db.query(disht_sql % 'main')
+        salad_dressings = db.query(disht_sql % 'salad dressing')
+        
+        self.main_dishes = [x[0] for x in main_dishes]
+        self.salad_dressings = [x[0] for x in salad_dressings]
+        self.recipe_names = sorted([x[0].lower() for x in recipe_names])
+
 def update_db(save_recipe):
     """Decorater for updating pyrecipe db."""
     def wrapper(recipe):
         save_recipe()
     return wrapper
-
-def get_names():
-    db = RecipeDB()
-    #r = Recipe('pesto')
-    sql = 'SELECT name FROM Recipes'
-    names = db.query(sql)
-    name_list = []
-    for item in sorted(names):
-        name = item[0].lower()
-        name_list.append(name)
-    return name_list
 
 if not os.path.exists(DB_FILE):
     db = RecipeDB()
@@ -116,9 +118,5 @@ if not os.path.exists(DB_FILE):
         db.add_recipe(r)
 
 if __name__ == '__main__':
-    names = get_names()
-    db = RecipeDB()
-    sql = 'SELECT * FROM Recipes WHERE name = \'{}\''.format('test') 
-    fn = db.query(sql)
-    print(fn)
-
+    test = Manifest()
+    print(test.recipe_names)

@@ -22,11 +22,11 @@ from lxml import etree
 import pint.errors
 
 import pyrecipe.utils as utils
-from pyrecipe.config import (RAND_RECIPE_COUNT,
-                             SHOPPING_LIST_FILE, PP)
-from pyrecipe.recipe import Recipe
-from pyrecipe import Q_, S_DIV
+from .db import manifest
+from .format import S_DIV
+from pyrecipe.config import RAND_RECIPE_COUNT, SHOPPING_LIST_FILE, PP
 from pyrecipe.recipe_numbers import RecipeNum
+from pyrecipe import Recipe, Q_
 
 class ShoppingList:
     """Creates a shopping list of ingredients from a list of recipes. 
@@ -199,8 +199,8 @@ class RandomShoppingList(ShoppingList):
         super().__init__()
         self.count = count
         try:
-            self.recipe_sample = random.sample(utils.manifest.maindish_names, self.count)
-            self.salad_dressing_random = random.choice(utils.manifest.dressing_names)
+            self.recipe_sample = random.sample('test', self.count)
+            self.salad_dressing_random = random.choice(db)
         except ValueError:
             utils.msg("ERROR: Random count is higher than "
                       "the amount of recipes available (). "

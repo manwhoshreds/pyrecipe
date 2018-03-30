@@ -13,11 +13,12 @@ import argparse
 import argcomplete
 
 from pyrecipe.config import RAND_RECIPE_COUNT
-from pyrecipe.db import get_names
+from pyrecipe.db import manifest
+
 
 def recipe_completer(**kwargs):
     """list of recipes for completer"""
-    return get_names()
+    return manifest.recipe_names
 
 def parse_args():
     """parse the args"""

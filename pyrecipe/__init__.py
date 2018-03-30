@@ -15,9 +15,9 @@ import sys
 import pkg_resources
 from math import ceil
 
-from .format import (color, S_DIV)
 from pint import UnitRegistry
 
+from .format import (color, S_DIV)
 from pyrecipe.recipe import (Recipe, RecipeWebScraper, IngredientParser)
 
 try:
