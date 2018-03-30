@@ -21,7 +21,7 @@ from pint import UnitRegistry
 
 # Section divider e.g. "~~~~~~~~~~~~~"
 S_DIV = colored("~" * 60, 'white')
-from pyrecipe.recipe import Recipe
+from pyrecipe.recipe import (Recipe, RecipeWebScraper, IngredientParser)
 
 try:
     __version__ = pkg_resources.get_distribution('pyrecipe').version
@@ -31,6 +31,25 @@ except:
 __email__ = 'm.k.miller@gmx.com'
 __scriptname__  = os.path.basename(sys.argv[0])
 
+VER_STR = """  
+                 _              _              _   {0} v{1}
+                (_)            | |            | |  {2}
+   _ __ ___  ___ _ _ __   ___  | |_ ___   ___ | |
+  | '__/ _ \/ __| | '_ \ / _ \ | __/ _ \ / _ \| |  {3} {4}
+  | | |  __/ (__| | |_) |  __/ | || (_) | (_) | |  {5} {0} {6}
+  |_|  \___|\___|_| .__/ \___|  \__\___/ \___/|_|
+                  | |                              {7}
+                  |_|                              {8}
+"""
+VER_STR = VER_STR.format(
+    __scriptname__, __version__,
+    'The recipe management program.',
+    'For any questions, contact me at ', __email__,
+    'or type', '--help for more info.',
+    'This program may be freely redistrubuted under',
+    'the terms of the GNU General Public License.'
+)
+
 ureg = UnitRegistry()
 dirr = os.path.dirname(__file__)
 definitions = os.path.join(dirr, 'culinary_units.txt')
@@ -38,22 +57,7 @@ ureg.load_definitions(definitions)
 
 def version_info():
     """Print the current version of pyrecipe and exit."""
-    ver_str = """
-                   _              _              _   {0} v{1}
-                  (_)            | |            | |  {2}
-     _ __ ___  ___ _ _ __   ___  | |_ ___   ___ | |
-    | '__/ _ \/ __| | '_ \ / _ \ | __/ _ \ / _ \| |  {3} {4}
-    | | |  __/ (__| | |_) |  __/ | || (_) | (_) | |  {5} {0} {6}
-    |_|  \___|\___|_| .__/ \___|  \__\___/ \___/|_|
-                    | |                              {7}
-                    |_|                              {8}
-    """.format(__scriptname__, __version__,
-               'The recipe management program.',
-               'For any questions, contact me at ', __email__,
-               'or type', '--help for more info.',
-               'This program may be freely redistrubuted under',
-               'the terms of the GNU General Public License.')
-    return ver_str
+    return VER_STR
 
 class Q_(ureg.Quantity):
     """Subclass to implement a few custom behaviors

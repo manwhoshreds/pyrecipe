@@ -7,10 +7,9 @@ import sys
 import string
 import textwrap
 
-from termcolor import cprint
-
 from pyrecipe.config import (RECIPE_DATA_DIR, RECIPE_DATA_FILES,
                              DISH_TYPES, DB_FILE)
+from pyrecipe.color import color
 
 def mins_to_hours(mins):
     #days = mins // 1440
@@ -46,9 +45,9 @@ def check_source(source):
                         .format(source), 'ERROR'))
     elif os.path.isfile(source):
         if not source.endswith('.recipe'):
-            return sys.exit("{}ERROR: Pyrecipe can only read "
-                            "files with a .recipe extention"
-                            .format(color.ERROR))
+            return sys.exit(msg("ERROR: Pyrecipe can only read "
+                            "files with a .recipe extention",
+                            'ERROR'))
         else:
             return source
     # must be a string name a recipe that exist in the data dir
@@ -101,7 +100,7 @@ def msg(text, level='INFORM'):
     msg_level = {'INFORM': 'cyan',
                  'ERROR': 'red',
                  'WARN': 'yellow'}
-    cprint(text, msg_level[level])
+    return color(text, msg_level[level])
 
 # testing
 if __name__ == '__main__':

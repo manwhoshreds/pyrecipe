@@ -100,9 +100,6 @@ def get_names():
     for item in sorted(names):
         name = item[0].lower()
         name_list.append(name)
-    for item in name_list:
-        pass
-        #print(item)
     return name_list
 
 if not os.path.exists(DB_FILE):

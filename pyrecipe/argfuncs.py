@@ -8,11 +8,9 @@ import os
 
 import pyrecipe.utils as utils
 import pyrecipe.shopper as shopper
-from pyrecipe import version_info
 from .config import PP, EDITOR, RECIPE_DATA_FILES
-from pyrecipe.recipe import Recipe, RecipeWebScraper
-from pyrecipe.console_gui.edit_recipe import RecipeEditor
-from pyrecipe.console_gui.make_recipe import RecipeMaker
+from pyrecipe import Recipe, RecipeWebScraper, version_info
+from pyrecipe.console_gui import RecipeEditor, RecipeMaker
 
 def dump_data(args):
     """Dump recipe data in 1 of three formats."""
