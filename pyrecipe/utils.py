@@ -8,7 +8,7 @@ import string
 import textwrap
 
 import pyrecipe.config as config
-from .format import color
+from .color import color
 
 def mins_to_hours(mins):
     #days = mins // 1440

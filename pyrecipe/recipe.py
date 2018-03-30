@@ -54,7 +54,7 @@ from gtts import gTTS
 
 import pyrecipe.utils as utils
 import pyrecipe.config as config
-from .format import color, S_DIV
+from .color import color, S_DIV
 from pyrecipe.recipe_numbers import RecipeNum
 
 # GLOBAL REs
@@ -155,29 +155,6 @@ class Recipe:
             steps_of = ET.SubElement(xml_steps, "step")
             steps_of.text = step['step']
         
-    def __str__(self):
-        """Return the complete string representation of the recipe data."""
-        #FIXME: Im all messed up
-        recipe_string = ''
-        recipe_string += self['recipe_name'].title() + "\n"
-        recipe_string += "\nIngredients:\n"
-
-        # Put together all the ingredients
-        ingreds, alt_ingreds = self.get_ingredients()
-        for item in ingreds:
-            recipe_string += "{}\n".format(item)
-        if alt_ingreds: 
-            for item in alt_ingreds:
-                recipe_string += "\n{}\n".format(item.title())
-                for ingred in self.get_ingredients()[1]:
-                    recipe_string += "{}\n".format(ingred)
-
-        recipe_string += "\nMethod:\n"
-        # print steps
-        for index, step in enumerate(self['steps'], start=1):
-            recipe_string += "{}. {}\n".format(index, step['step'])
-        return recipe_string
-
     def __repr__(self):
         return "Recipe(name='{}')".format(self['recipe_name'])
 

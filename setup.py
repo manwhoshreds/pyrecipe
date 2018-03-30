@@ -15,13 +15,13 @@ deps = [
 packages = [
     'pyrecipe', 
     'pyrecipe/console_gui', 
-    'pyrecipe/format',
+    'pyrecipe/color',
     'pyrecipe/db'
 ]
 
 setup(
     name='pyrecipe',
-    version='0.6.0',
+    version='0.6.2',
     packages=packages,
     package_data={
         'pyrecipe': ['culinary_units.txt']

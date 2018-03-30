@@ -23,7 +23,7 @@ import pint.errors
 
 import pyrecipe.utils as utils
 from .db import manifest
-from .format import S_DIV
+from .color import S_DIV
 from pyrecipe.config import RAND_RECIPE_COUNT, SHOPPING_LIST_FILE, PP
 from pyrecipe.recipe_numbers import RecipeNum
 from pyrecipe import Recipe, Q_
@@ -199,8 +199,8 @@ class RandomShoppingList(ShoppingList):
         super().__init__()
         self.count = count
         try:
-            self.recipe_sample = random.sample('test', self.count)
-            self.salad_dressing_random = random.choice(db)
+            self.recipe_sample = random.sample(manifest.main_dishes, self.count)
+            self.salad_dressing_random = random.choice(manifest.salad_dressings)
         except ValueError:
             utils.msg("ERROR: Random count is higher than "
                       "the amount of recipes available (). "

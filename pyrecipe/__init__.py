@@ -16,9 +16,10 @@ import pkg_resources
 from math import ceil
 
 from pint import UnitRegistry
+import inflect
 
-from .format import (color, S_DIV)
-from pyrecipe.recipe import (Recipe, RecipeWebScraper, IngredientParser)
+from .color import (color, S_DIV)
+from pyrecipe.recipe import *
 
 try:
     __version__ = pkg_resources.get_distribution('pyrecipe').version
@@ -55,6 +56,8 @@ ureg.load_definitions(definitions)
 def version_info():
     """Print the current version of pyrecipe and exit."""
     return VER_STR
+
+p = inflect.engine()
 
 class Q_(ureg.Quantity):
     """Subclass to implement a few custom behaviors
