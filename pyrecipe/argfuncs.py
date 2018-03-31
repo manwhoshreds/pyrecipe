@@ -1,5 +1,6 @@
 """
-	pyrecipe.argfuncts
+	pyrecipe.argfuncs
+    ~~~~~~~~~~~~~~~~~
 """
 
 import sys
@@ -8,9 +9,10 @@ import os
 
 import pyrecipe.utils as utils
 import pyrecipe.shopper as shopper
+from . import Recipe, RecipeWebScraper, version_info
 from .config import PP, RECIPE_DATA_FILES
-from pyrecipe import Recipe, RecipeWebScraper, version_info
-from pyrecipe.console_gui import RecipeEditor, RecipeMaker
+from .console_gui import RecipeEditor, RecipeMaker
+from .db import db
 
 def dump_data(args):
     """Dump recipe data in 1 of three formats."""

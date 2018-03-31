@@ -533,7 +533,7 @@ class Ingredient:
                 unit = match.group().split()
                 self.unit = "({}) {}".format(' '.join(unit[0:2]), unit[-1])
             ingred_string = color('{}'.format(self.amount), color_number)
-            ingred_string += "{} {} {}".format(self.size, self.unit, self.name)
+            ingred_string += " {} {} {}".format(self.size, self.unit, self.name)
             # the previous line adds unwanted spaces if
             # values are absent, we simply clean that up here.
             ingred_string = " ".join(ingred_string.split())

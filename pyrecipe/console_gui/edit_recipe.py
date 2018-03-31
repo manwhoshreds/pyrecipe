@@ -610,10 +610,6 @@ class RecipeEditor:
     def get_recipe_data(self):
         """Grab the data from the editors."""
         # gen info
-        #FIXME: There is a bug here. If one field has info and
-        # i try to clear it, upon saving the info, it is ignored
-        # in other words when opening the file again, the info
-        # is still there.
         gen_info = self.general_info.original_widget.widget_list
         for item in gen_info:
             attr = item.attr_map[None]

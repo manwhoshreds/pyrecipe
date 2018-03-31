@@ -50,7 +50,7 @@ class RecipeDB:
         recipe_id = self.c.fetchone()[0]
 
         for item in recipe.get_ingredients()[0]:
-            self.c.execute('''INSERT INTO RecipeIngredients (
+            self.c.execute('''INSERT OR REPLACE INTO RecipeIngredients (
                                 recipe_id, 
                                 ingredient_str
                                 ) VALUES(?, ?)''', (recipe_id, item)) 
@@ -113,23 +113,28 @@ class RecipeDB:
 class Manifest():
     """A record of all of recipe types in the database."""
     def __init__(self):
-        db = RecipeDB()
+        self.db = RecipeDB()
+        self.recipe_names = []
+        self.dish_types = {}
+        self.get_stats()
+
+
+    def get_stats(self):
         disht_sql = "SELECT name FROM Recipes WHERE dish_type = \'%s\'"
-        recipe_names = db.query('SELECT name FROM Recipes')
-        main_dishes = db.query(disht_sql % 'main')
-        salad_dressings = db.query(disht_sql % 'salad dressing')
+        recipe_names = self.db.query('SELECT name FROM Recipes')
+        main_dishes = self.db.query(disht_sql % 'main')
+        salad_dressings = self.db.query(disht_sql % 'salad dressing')
         
         self.main_dishes = [x[0] for x in main_dishes]
         self.salad_dressings = [x[0] for x in salad_dressings]
         self.recipe_names = sorted([x[0].lower() for x in recipe_names])
 
-def update_db(func):
+def update_db(save):
     """Decorater for updating pyrecipe db."""
     db = RecipeDB()
     def wrapper(recipe):
         db.add_recipe(recipe)
-        func(recipe)
-        print('recipe_updated')     
+        save(recipe)
     return wrapper
 
 def build_recipe_database(Recipe): 
