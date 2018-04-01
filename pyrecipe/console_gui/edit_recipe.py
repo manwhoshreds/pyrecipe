@@ -194,7 +194,7 @@ class EntryBlock(urwid.WidgetWrap):
             self.entry_block.move_cursor_to_coords(size, col, self.row + 1)
         except IndexError:
             self.entry_block.move_cursor_to_coords(size, 2, self.row)
-            self.add_ingredient()
+            self.add_entry()
     
     @property
     def widget_list(self):
@@ -432,8 +432,7 @@ class RecipeEditor:
         ('key', "Ctrl-d"), ('footer', ' Delete item  ')
     ])
     def __init__(self, recipe='', add=False):
-        self.add = add
-        if self.add:
+        if add:
             if isinstance(recipe, Recipe):
                 self.r = recipe
             else:

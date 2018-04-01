@@ -11,7 +11,7 @@
               recipe instance an ORF source and all data can be accessed
               like a python dict. You can also assign new attributes or
               change current ones. Use the print_recipe() method to print
-              the recipe to standard output and dump() to save the data
+              the recipe to standard output and save() to save the data
               back to the same file or one of your own choosing.
 
               An instance of a recipe class contains all the information
@@ -41,6 +41,7 @@ import os
 import re
 import io
 import sys
+import uuid
 import string
 from collections import OrderedDict
 from urllib.request import urlopen
@@ -54,9 +55,9 @@ from gtts import gTTS
 
 import pyrecipe.utils as utils
 import pyrecipe.config as config
-from pyrecipe.db import update_db
-from .color import color, S_DIV
-from .recipe_numbers import RecipeNum
+from pyrecipe.db import update_db, RecipeDB
+from pyrecipe.color import color, S_DIV
+from pyrecipe.recipe_numbers import RecipeNum
 
 # GLOBAL REs
 PORTIONED_UNIT_RE = re.compile(r'\(?\d+\.?\d*? (ounce|pound)\)? (cans?|bags?)') 
@@ -64,6 +65,7 @@ PAREN_RE = re.compile(r'\((.*?)\)')
 
 yaml = YAML(typ='safe')
 yaml.default_flow_style = False
+db = RecipeDB()
 
 class Recipe:
     """Open a recipe file and extract its data for futher processing
@@ -80,11 +82,13 @@ class Recipe:
 
     def __init__(self, source=''):
         self.source = source
-        #name = utils.get_file_name(self.source) 
+        if os.path.isfile(self.source):
+            self.file_name = self.source
+        else:
+            self.file_name = db.get_file_name(self.source) 
         if self.source:
-            self.source = utils.check_source(source)
             try:
-                with ZipFile(self.source, 'r') as zfile:
+                with ZipFile(self.file_name, 'r') as zfile:
                     try:
                         with zfile.open('recipe.yaml', 'r') as stream:
                             self._recipe_data = yaml.load(stream)
@@ -94,12 +98,12 @@ class Recipe:
                         sys.exit(msg)
             except BadZipFile:
                 sys.exit(utils.msg("This file is not a zipfile.", "ERROR"))
-
         else:
             self._recipe_data = {}
             # dish type should default to main
             self['dish_type'] = 'main'
-
+            self.file_name = str(uuid.uuid4()).replace('-', '') + '.recipe'
+        
         # Scan the recipe to build the xml
         self._scan_recipe()
 
@@ -242,15 +246,6 @@ class Recipe:
 
         self['alt_ingredients'] = alt_ingredients
         self._scan_recipe()
-
-    @property
-    def file_name(self):
-        """Return the file name of the recipe."""
-        if self.source:
-            name = self.source.split('/')[-1]
-        else:
-            name = None
-        return name
 
     @property
     def xml_data(self):
@@ -415,7 +410,8 @@ class Recipe:
         wants to edit a file in which case we intend to overwrite the file with
         changes.
         """
-        source = os.path.join(config.RECIPE_DATA_DIR, self.source)
+        #source = os.path.join(config.RECIPE_DATA_DIR, self.source)
+        source = self.file_name
         if not self.source:
             raise RuntimeError('Recipe has no source to save to')
         #elif os.path.exists(source):
@@ -699,4 +695,5 @@ class IngredientParser:
 
 if __name__ == '__main__':
     # testing goes here
-    pass
+    r = Recipe('pesto')
+    print(r.file_name)

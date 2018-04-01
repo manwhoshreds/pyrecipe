@@ -12,10 +12,12 @@ import configparser
 config = configparser.ConfigParser()
 
 CONFIG_DIR = os.path.expanduser('~/.config/pyrecipe/')
-DB_FILE = os.path.join(CONFIG_DIR, 'recipes.db')
-RECIPE_DATA_DIR = os.path.join(CONFIG_DIR, 'recipe_data/')
+#DB_FILE = os.path.join(CONFIG_DIR, 'recipes.db')
+#RECIPE_DATA_DIR = os.path.join(CONFIG_DIR, 'recipe_data/')
+RECIPE_DATA_DIR = os.path.expanduser('~/git/pyrecipe/test/recipe_data/')
 CONFIG_FILE = os.path.join(CONFIG_DIR + 'config')
 SCRIPT_DIR = os.path.dirname(__file__)
+DB_FILE = os.path.expanduser('~/git/pyrecipe/test/test.db')
 
 # parse config
 config.read(CONFIG_FILE)
