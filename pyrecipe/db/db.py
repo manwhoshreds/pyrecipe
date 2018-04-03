@@ -7,7 +7,9 @@
 import os
 import sqlite3
 
-from pyrecipe.config import DB_FILE, RECIPE_DATA_FILES
+#DB_FILE = os.path.expanduser('~/.conifg/pyrecipe/recipes.db')
+DB_FILE = os.path.expanduser('~/git/pyrecipe/test/test.db')
+
 class RecipeDB:
     """A database subclass for pyrecipe."""
     def __init__(self):
@@ -75,8 +77,13 @@ class RecipeDB:
         return result
 
     def get_file_name(self, source):
-        file_name = self.query('SELECT file_name FROM Recipes WHERE name = \'{}\''.format(source))
-        return file_name[0][0]
+        file_name = self.query(
+            "SELECT file_name FROM Recipes WHERE name = \'{}\'".format(source)
+        )
+        if len(file_name) == 0:
+            return None
+        else:
+            return file_name[0][0]
         
     def create_database(self):
         self.c.execute(
@@ -94,58 +101,44 @@ class RecipeDB:
               (name, file_name)
               )'''
         )
-        #self.c.execute(
-        #    '''CREATE TABLE IF NOT EXISTS RecipeIngredients 
-        #      (
-        #       recipe_id INTEGER, 
-        #       ingredient_str TEXT,
-        #       FOREIGN KEY(recipe_id) REFERENCES Recipes(id)
-        #      )'''
-        #)
-        #self.c.execute(
-        #    '''CREATE TABLE IF NOT EXISTS RecipeAltIngredients
-        #      (
-        #       recipe_id INTEGER,
-        #       alt_name TEXT,
-        #       ingredient_str TEXT,
-        #       FOREIGN KEY(recipe_id) REFERENCES Recipes(id)
-        #      )'''
-        #)
+        self.c.execute(
+            '''CREATE TABLE IF NOT EXISTS RecipeIngredients 
+              (
+               recipe_id INTEGER, 
+               ingredient_str TEXT,
+               FOREIGN KEY(recipe_id) REFERENCES Recipes(id)
+              )'''
+        )
+        self.c.execute(
+            '''CREATE TABLE IF NOT EXISTS RecipeAltIngredients
+              (
+               recipe_id INTEGER,
+               alt_name TEXT,
+               ingredient_str TEXT,
+               FOREIGN KEY(recipe_id) REFERENCES Recipes(id)
+              )'''
+        )
 
-class Manifest():
-    """A record of all of recipe types in the database."""
-    def __init__(self):
-        self.db = RecipeDB()
-        self.recipe_names = []
-        self.dish_types = {}
-        self.get_stats()
-
-
-    def get_stats(self):
-        disht_sql = "SELECT name FROM Recipes WHERE dish_type = \'%s\'"
-        recipe_names = self.db.query('SELECT name FROM Recipes')
-        main_dishes = self.db.query(disht_sql % 'main')
-        salad_dressings = self.db.query(disht_sql % 'salad dressing')
-        
-        self.main_dishes = [x[0] for x in main_dishes]
-        self.salad_dressings = [x[0] for x in salad_dressings]
-        self.recipe_names = sorted([x[0].lower() for x in recipe_names])
-
-def update_db(save):
+def update_db(save_func):
     """Decorater for updating pyrecipe db."""
-    db = RecipeDB()
     def wrapper(recipe):
+        db = RecipeDB()
         db.add_recipe(recipe)
-        save(recipe)
+        save_func(recipe)
     return wrapper
 
-def build_recipe_database(Recipe):
-    """Build the recipe database."""
-    db = RecipeDB()
-    db.create_database()
-    for item in RECIPE_DATA_FILES:
-        r = Recipe(item)
-        db.add_recipe(r)
+def delete_recipe(delete_func):
+    """Decorater for updating pyrecipe db."""
+    def wrapper(args):
+        print(args)
+        answer = delete_func(args)
+        if answer.strip() == 'yes'
+            #db = RecipeDB()
+            #sql = 'DELETE FROM Recipes WHERE'
+            #db.execute('
+            print('yep')
+
+    return wrapper
 
 if __name__ == '__main__':
     pass

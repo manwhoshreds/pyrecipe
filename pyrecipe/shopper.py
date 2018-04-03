@@ -22,8 +22,8 @@ from lxml import etree
 import pint.errors
 
 import pyrecipe.utils as utils
-from .db import manifest
-from .color import S_DIV
+#from pyrecipe.db import manifest
+from pyrecipe.color import S_DIV
 from pyrecipe.config import RAND_RECIPE_COUNT, SHOPPING_LIST_FILE, PP
 from pyrecipe.recipe_numbers import RecipeNum
 from pyrecipe import Recipe, Q_

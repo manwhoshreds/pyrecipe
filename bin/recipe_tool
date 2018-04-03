@@ -4,24 +4,22 @@
 """
     recipe_tool
     ~~~~~~~~~~~
-
-    recipe_tool is the front end commandline tool for use
-    with the pyrecipe library
+    
+    recipe_tool is the frontend commandline interface to
+    the pyrecipe library.
 """
 import argparse
 
 import argcomplete
 
-from pyrecipe.config import RAND_RECIPE_COUNT
-from pyrecipe.db import manifest
-
+from pyrecipe import recipe_names, config
 
 def recipe_completer(**kwargs):
     """list of recipes for completer"""
-    return manifest.recipe_names
+    return recipe_names
 
 def parse_args():
-    """parse the args"""
+    """Parse args for recipe_tool."""
     parser = argparse.ArgumentParser(
         description="Recipe_tool has tab completion functionality. \
                      After adding a recipe, simply run recipe_tool \
@@ -39,7 +37,8 @@ def parse_args():
         dest="verbose",
         action="count",
         default=0,
-        help="Verbose output."
+        help="Increase the verbosity of output. \
+              Only works with print and show subcommands."
     )
     parser.add_argument(
         "-V",
@@ -92,7 +91,7 @@ def parse_args():
         "source", 
         help='Recipe to make'
     ).completer = recipe_completer
-
+    
     # recipe_tool shop
     parser_shop = subparser.add_parser("shop", help='Make a shopping list')
     parser_shop.add_argument(
@@ -105,7 +104,7 @@ def parse_args():
         "-r",
         "--random",
         nargs='?',
-        const=RAND_RECIPE_COUNT,
+        const=config.RAND_RECIPE_COUNT,
         type=int,
         metavar="NUM",
         dest="random",
@@ -184,6 +183,11 @@ def parse_args():
         action='store_true',
         help="Export recipe file"
     )
+    # recipe_tool show
+    parser_show = subparser.add_parser(
+        "show",
+        help="Show statistic from the reicpe database"
+    )
     # recipe_tool fetch
     parser_fetch = subparser.add_parser(
         "fetch",
@@ -209,6 +213,9 @@ def parse_args():
     if len(sys.argv) == 1:
         sys.exit(parser.print_help())
     elif len(sys.argv) == 2 and args.verbose:
+        # if recipe_tool is invoked with only a verbose flag it 
+        # causes an exception so here we offer help if no other 
+        # flags are given
         sys.exit(parser.print_help())
     else:
         return args
@@ -224,18 +231,20 @@ def main():
         'add': argfunc.add_recipe,
         'remove': argfunc.delete_recipe,
         'make': argfunc.make_recipe,
+        'fetch': argfunc.fetch_recipe,
         'shop': argfunc.print_shopping_list,
         'dump': argfunc.dump_data,
         'export': argfunc.export_recipes,
-        'fetch': argfunc.fetch_recipe
-        }
+        'show': argfunc.show_statistics,
+    }
     if args.version:
         action['version'](args)
     else:
         try:
             action[args.subparser](args)
         except KeyError:
-            print('Please specify an action for pyrecipe to invoke.')
+            # Oops, we must have gotten an unexpected argument
+            print('Oops, wrong argument. Type recipe_tool -h for more info.')
 
 if __name__ == '__main__':
     main()

@@ -4,14 +4,17 @@
 """
 import os
 import sys
+import uuid
 import string
 import textwrap
 
-import pyrecipe.config as config
-from .color import color
+from pyreicpe import config
+from pyrecipe.db.db import RecipeDB
+from pyrecipe.color import color
 
 def mins_to_hours(mins):
-    #days = mins // 1440
+    """Convert minutes to hours."""
+    days = mins // 1440
     hours = mins // 60
     minutes = mins - hours * 60
     if not hours:
@@ -21,6 +24,7 @@ def mins_to_hours(mins):
     return len
 
 def wrap(str_list, width=60):
+    """Textwrap for recipes."""
     if not isinstance(str_list, list):
         raise TypeError('First argument must be a list.')
     wrapped = []
@@ -39,73 +43,59 @@ def wrap(str_list, width=60):
     return wrapped
 
 def check_source(source):
+    """Closer inspection of the source.
+    
+    If all is well, the function returns the source. 
+    """
+    # We got an empty string
+    if not source:
+        return source
+    
     if os.path.isdir(source):
-        return sys.exit(msg('{} is a directory'
-                        .format(source), 'ERROR'))
+        sys.exit(msg("{} is a directory.".format(source), "ERROR"))
     elif os.path.isfile(source):
         if not source.endswith('.recipe'):
-            return sys.exit(msg("ERROR: Pyrecipe can only read "
-                            "files with a .recipe extention",
-                            'ERROR'))
+            sys.exit(msg("Pyrecipe can only read files with a"
+                         " .recipe extention.", "ERROR"))
         else:
             return source
-    # must be a string name a recipe that exist in the data dir
     else:
-        file_name = get_file_name(source)
-        abspath_name = os.path.join(config.RECIPE_DATA_DIR, file_name)
-        try:
-            assert open(abspath_name)
-            return abspath_name
-        except FileNotFoundError:
-            return sys.exit(msg("ERROR: {} does not exist."
-                            .format(file_name), 'ERROR'))
-    
-def get_file_name(source, ext='recipe'):
-    strip_punc = ''.join(c for c in source if c not in string.punctuation)
-    file_name = strip_punc.replace(" ", "_").lower()
-    file_name = '{}.{}'.format(file_name, ext)
+        # We must have asked for the recipe using only its name
+        # after all, this is the intended way to call the recipe.
+        db = RecipeDB()
+        name = db.get_file_name(source)
+        if name is None:
+            pass
+            #sys.exit(msg("{} does not seem to exist in the database."
+            #             .format(source), "ERROR"))
+        else:
+            name = os.path.join(config.RECIPE_DATA_DIR, name)
+            return name
+
+def generate_filename():
+    """Generate a filename for a recipe."""
+    file_name = str(uuid.uuid4()).replace('-', '') + '.recipe'
     return file_name
-
-
-
-    # First convert everything to its repr
-    strings = [repr(x) for x in iterable]
-    # Now pad all the strings to match the widest
-    widest = max(len(x) for x in strings)
-    padded = [x.ljust(widest) for x in strings]
-    return padded
 
 def stats(verb=0):
     """Print statistics about your recipe database and exit."""
-    
-    version()
-    print("Recipes: {}".format(len(RECIPE_DATA_FILES)))
+    print("Recipes: {}".format(len(config.RECIPE_DATA_FILES)))
     if verb >= 1:
-        print("Recipe data directory: {}".format(RECIPE_DATA_DIR))
-        print("Recipe xml directory: {}".format(RECIPE_XML_DIR))
-        print("Default random recipe: {}".format(RAND_RECIPE_COUNT))
+        print("Recipe data directory: {}".format(config.RECIPE_DATA_DIR))
+        print("Recipe xml directory: {}".format(config.RECIPE_XML_DIR))
+        print("Default random recipe: {}".format(config.RAND_RECIPE_COUNT))
 
 def msg(text, level='INFORM'):
+    """Pyrecipe message function with color."""
+    if level == 'ERROR':
+        text = 'ERROR: ' + text
+    
     msg_level = {'INFORM': 'cyan',
                  'ERROR': 'red',
                  'WARN': 'yellow'}
+
     return color(text, msg_level[level])
 
-# testing
 if __name__ == '__main__':
-    #sys.exit(msg('hello', 'WARN'))
-    import random
-    text = 'ok so what'
-    def colorify(text):
-        rand = random.randint(1,3)
-        if rand == 1:
-            colo = color.INFORM
-        elif rand == 2:
-            colo = color.WARN
-        elif rand == 3:
-            colo = color.ERROR 
-        
-        return(colo + text + color.NORMAL)
-    color = [colorify(x) for x in text]
-    print(''.join(x for x in color))
+    pass
 

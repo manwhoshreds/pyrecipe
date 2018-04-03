@@ -41,7 +41,6 @@ import os
 import re
 import io
 import sys
-import uuid
 import string
 from collections import OrderedDict
 from urllib.request import urlopen
@@ -55,7 +54,7 @@ from gtts import gTTS
 
 import pyrecipe.utils as utils
 import pyrecipe.config as config
-from pyrecipe.db import update_db, RecipeDB
+from pyrecipe.db import update_db
 from pyrecipe.color import color, S_DIV
 from pyrecipe.recipe_numbers import RecipeNum
 
@@ -65,7 +64,6 @@ PAREN_RE = re.compile(r'\((.*?)\)')
 
 yaml = YAML(typ='safe')
 yaml.default_flow_style = False
-db = RecipeDB()
 
 class Recipe:
     """Open a recipe file and extract its data for futher processing
@@ -74,27 +72,24 @@ class Recipe:
     change the state of a recipe file and then save the new data back to
     the reicpe file.
     """
-    # All keys applicable to the Open Recipe Format
+    # All keys applicable to the Open Recipe 
     orf_keys = ['recipe_name', 'recipe_uuid', 'dish_type', 'category',
                 'cook_time', 'prep_time', 'author', 'oven_temp', 'bake_time',
                 'yields', 'ingredients', 'alt_ingredients', 'notes',
                 'source_url', 'steps', 'tags', 'source_book', 'price']
 
     def __init__(self, source=''):
-        self.source = source
-        if os.path.isfile(self.source):
-            self.file_name = self.source
-        else:
-            self.file_name = db.get_file_name(self.source) 
+        self.source = utils.check_source(source)
         if self.source:
+            self.file_name = self.source.split('/')[-1]
             try:
-                with ZipFile(self.file_name, 'r') as zfile:
+                with ZipFile(self.source, 'r') as zfile:
                     try:
                         with zfile.open('recipe.yaml', 'r') as stream:
                             self._recipe_data = yaml.load(stream)
                     except KeyError:
                         msg = utils.msg("Can not find recipe.yaml. Is this"
-                                        " really a recipe file?", 'ERROR')
+                                        " really a recipe file?", "ERROR")
                         sys.exit(msg)
             except BadZipFile:
                 sys.exit(utils.msg("This file is not a zipfile.", "ERROR"))
@@ -102,8 +97,8 @@ class Recipe:
             self._recipe_data = {}
             # dish type should default to main
             self['dish_type'] = 'main'
-            self.file_name = str(uuid.uuid4()).replace('-', '') + '.recipe'
-        
+            self.file_name = utils.generate_filename()
+            
         # Scan the recipe to build the xml
         self._scan_recipe()
 
@@ -170,8 +165,6 @@ class Recipe:
             return self.__dict__.get(key, '')
 
     def __setitem__(self, key, value):
-        if key == 'recipe_name':
-            self.source = utils.get_file_name(value)
         if key in Recipe.orf_keys:
             self.__dict__['_recipe_data'][key] = value
             self._scan_recipe()
@@ -179,8 +172,6 @@ class Recipe:
             self.__dict__[key] = value
 
     def __delitem__(self, key):
-        if key == 'recipe_name':
-            self.source = ''
         if key in Recipe.orf_keys:
             try:
                 del self.__dict__['_recipe_data'][key]
@@ -410,12 +401,9 @@ class Recipe:
         wants to edit a file in which case we intend to overwrite the file with
         changes.
         """
-        #source = os.path.join(config.RECIPE_DATA_DIR, self.source)
-        source = self.file_name
+        source = os.path.join(config.RECIPE_DATA_DIR, self.file_name)
         if not self.source:
             raise RuntimeError('Recipe has no source to save to')
-        #elif os.path.exists(source):
-        #    raise RuntimeError('no no')
         else:
             stream = io.StringIO()
             yaml.dump(self.recipe_data, stream)

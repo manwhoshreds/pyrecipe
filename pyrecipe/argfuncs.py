@@ -1,6 +1,9 @@
 """
 	pyrecipe.argfuncs
     ~~~~~~~~~~~~~~~~~
+    We must first build the database before moving on
+    also if one wishes to rebuild the database for whatever reason,
+    simply delete the db file and run the recipe_tool to rebuild
 """
 
 import sys
@@ -9,10 +12,22 @@ import os
 
 import pyrecipe.utils as utils
 import pyrecipe.shopper as shopper
-from . import Recipe, RecipeWebScraper, version_info
-from .config import PP, RECIPE_DATA_FILES
-from .console_gui import RecipeEditor, RecipeMaker
-from .db import db
+from pyrecipe import (Recipe, RecipeWebScraper, version_info, 
+                      RecipeDB, config)
+from pyrecipe.db import delete_recipe
+from pyrecipe.console_gui import RecipeEditor, RecipeMaker
+
+# Build the DB
+def build_recipe_database():
+    """Build the recipe database."""
+    db = RecipeDB(config.DB_FILE)
+    db.create_database()
+    for item in config.RECIPE_DATA_FILES:
+        r = Recipe(item)
+        db.add_recipe(r)
+
+if not os.path.exists(config.DB_FILE):
+    build_recipe_database()
 
 def dump_data(args):
     """Dump recipe data in 1 of three formats."""
@@ -48,10 +63,11 @@ def print_recipe(args):
     r = Recipe(args.source)
     r.print_recipe(verb_level=args.verbose)
 
-def show_stats(args):
+def show_statistics(args):
     """Show the statistics information of the recipe database."""
     utils.stats(args.verbose)
 
+@delete_recipe
 def delete_recipe(args):
     """Delete a recipe from the recipe store."""
     source = args.source
@@ -63,6 +79,7 @@ def delete_recipe(args):
         print("{} has been deleted".format(source))
     else:
         print("{} not deleted".format(source))
+    return answer
 
 def edit_recipe(args):
     """Edit a recipe using the urwid console interface (ncurses)."""
@@ -71,7 +88,7 @@ def edit_recipe(args):
 def add_recipe(args):
     """Add a recipe to the recipe store."""
     name = utils.get_file_name(args.name)
-    if name in RECIPE_DATA_FILES:
+    if name in config.RECIPE_DATA_FILES:
         sys.exit('{}ERROR: A recipe with that name already exist.'.format(color.ERROR))
     else:
         RecipeEditor(args.name, add=True).start()
