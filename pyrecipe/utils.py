@@ -4,7 +4,6 @@
 """
 import os
 import sys
-import uuid
 import string
 import textwrap
 
@@ -65,7 +64,7 @@ def get_source_path(source):
         # after all, this is the intended way to lookup the recipe.
         file_name = get_file_name(source)
         if file_name is None:
-            sys.exit(msg("{} does not seem to exist in the database."
+            sys.exit(msg("{} does not exist in the database."
                          .format(source), "ERROR"))
         else:
             return file_name
@@ -83,8 +82,21 @@ def get_file_name(source):
         return file_name
 
 def get_file_name_from_uuid(uuid):
+    """Return a file name using the recipes uuid."""
     file_name = uuid.replace('-', '') + ".recipe"
     file_name = os.path.join(config.RECIPE_DATA_DIR, file_name)
+    return file_name
+
+def strip_punctuation(phrase):
+    """Returns a phrase without punctuation."""
+    phrase = ''.join(c for c in phrase if c not in string.punctuation)
+    return phrase
+
+def get_file_name_from_recipe(recipe_name, file_extention='recipe'):
+    """Return a file name using the name of the recipe."""
+    recipe_name = strip_punctuation(recipe_name)
+    recipe_name = recipe_name.replace(' ', '_')
+    file_name = '{}.{}'.format(recipe_name, file_extention)
     return file_name
 
 def stats(verb=0):
@@ -107,6 +119,6 @@ def msg(text, level='INFORM'):
     return color(text, msg_level[level])
 
 if __name__ == '__main__':
-    name = get_file_name('pesto')
-    print(name)
+    test = get_file_name_from_recipe('michael miller\'s pot roast', 'xml')
+    print(test)
 

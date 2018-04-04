@@ -14,11 +14,9 @@ from collections import deque
 import urwid
 
 from pyrecipe.config import (DISH_TYPES)
-from pyrecipe.recipe import Recipe, IngredientParser
+from pyrecipe.recipe import Recipe
 from pyrecipe.utils import wrap
 
-
-ingred_parser = IngredientParser()
 
 PALETTE = ([
     ('header', 'white', 'black', 'bold'),

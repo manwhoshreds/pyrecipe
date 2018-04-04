@@ -8,8 +8,6 @@ import os
 import sqlite3
 from pyrecipe.config import DB_FILE
 
-#DB_FILE = os.path.expanduser('~/.config/pyrecipe/recipes.db')
-
 class RecipeDB:
     """A database subclass for pyrecipe."""
     def __init__(self):
@@ -18,6 +16,7 @@ class RecipeDB:
         except sqlite3.OperationalError:
             sys.exit('Something unexpected happened....')
         self.c = self.conn.cursor()
+        self.c.execute("PRAGMA foreign_keys = ON")
 
     def add_recipe(self, recipe):
         '''Add a recipe to the database.'''
@@ -48,14 +47,13 @@ class RecipeDB:
                 ) VALUES(?, ?, ?, ?, ?, ?, ?, ?)''', recipe_data
         )
         self._commit()
-        #self.c.execute("SELECT id FROM Recipes WHERE name = '%s'" % recipe['recipe_name'])
-        #recipe_id = self.c.fetchone()[0]
-        #for item in recipe.get_ingredients()[0]:
-        #    self.c.execute('''INSERT OR REPLACE INTO RecipeIngredients (
-        #                        recipe_id, 
-        #                        ingredient_str
-        #                        ) VALUES(?, ?)''', (recipe_id, item)) 
-        #self._commit()
+        recipe_id = self.query("SELECT id FROM Recipes WHERE name = \'{}\'".format(recipe['recipe_name'].lower()))
+        for item in recipe.get_ingredients()[0]:
+            self.c.execute('''INSERT OR REPLACE INTO RecipeIngredients (
+                                recipe_id, 
+                                ingredient_str
+                                ) VALUES(?, ?)''', (recipe_id[0][0], item)) 
+        self._commit()
         
     def __del__(self):
         self.conn.close()
@@ -78,37 +76,39 @@ class RecipeDB:
         return result
 
     def create_database(self):
+        """Create the recipe database."""
         self.c.execute(
             '''CREATE TABLE IF NOT EXISTS Recipes 
-             (id INTEGER PRIMARY KEY AUTOINCREMENT, 
-              recipe_uuid TEXT NOT NULL, 
-              dish_type TEXT,
-              name TEXT NOT NULL, 
-              author TEXT, 
-              tags TEXT, 
-              categories TEXT, 
-              price TEXT, 
-              source_url TEXT,
-              CONSTRAINT unique_name UNIQUE
-              (name, recipe_uuid)
-              )'''
+               ( id INTEGER PRIMARY KEY AUTOINCREMENT, 
+                 recipe_uuid TEXT NOT NULL, 
+                 dish_type TEXT,
+                 name TEXT NOT NULL, 
+                 author TEXT, 
+                 tags TEXT, 
+                 categories TEXT, 
+                 price TEXT, 
+                 source_url TEXT,
+                 CONSTRAINT unique_name UNIQUE
+                 (name, recipe_uuid)
+                )'''
         )
         self.c.execute(
             '''CREATE TABLE IF NOT EXISTS RecipeIngredients 
-              (
-               recipe_id INTEGER, 
-               ingredient_str TEXT,
-               FOREIGN KEY(recipe_id) REFERENCES Recipes(id)
-              )'''
+               ( recipe_id INTEGER,
+                 ingredient_str TEXT,
+                 CONSTRAINT fk
+                    FOREIGN KEY(recipe_id) 
+                    REFERENCES Recipes(id) 
+                    ON DELETE CASCADE
+               )'''
         )
         self.c.execute(
             '''CREATE TABLE IF NOT EXISTS RecipeAltIngredients
-              (
-               recipe_id INTEGER,
-               alt_name TEXT,
-               ingredient_str TEXT,
-               FOREIGN KEY(recipe_id) REFERENCES Recipes(id)
-              )'''
+               ( recipe_id INTEGER,
+                 alt_name TEXT,
+                 ingredient_str TEXT,
+                 FOREIGN KEY(recipe_id) REFERENCES Recipes(id)
+               )'''
         )
 
 def update_db(save_func):

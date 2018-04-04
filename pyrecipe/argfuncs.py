@@ -12,8 +12,8 @@ import os
 
 import pyrecipe.utils as utils
 import pyrecipe.shopper as shopper
-from pyrecipe import (Recipe, RecipeWebScraper, version_info, 
-                      RecipeDB, config)
+from pyrecipe import (Recipe, RecipeWebScraper, 
+                      version_info, config)
 from pyrecipe.db import delete_recipe
 from pyrecipe.console_gui import RecipeEditor, RecipeMaker
 
@@ -105,25 +105,30 @@ def export_recipes(args):
         output_dir = os.path.realpath(args.output_dir)
         os.makedirs(output_dir)
     except FileExistsError:
-        sys.exit('{}ERROR: A directory with name {} already exists.'
-                 .format(color.ERROR, output_dir))
+        sys.exit(utils.msg("A directory with that name already exists.", 
+                           "ERROR"))
     except TypeError:
+        # no output dir indicated on the cmdline throws a type error we
+        # can use to default to the current working directory.
         output_dir = os.getcwd()
         
     recipe_name = args.source
     r = Recipe(args.source)
     xml = r.xml_data
-    file_name = utils.get_file_name(args.source, 'xml')
+    file_name = utils.get_file_name_from_recipe(args.source, 'xml')
     file_name = os.path.join(output_dir, file_name)
+    
     if args.xml:
-        print("{}Writing to file: {}{}".format(color.INFORM, file_name, color.NORMAL))
+        file_name = utils.get_file_name_from_recipe(args.source, 'xml')
+        print(utils.msg("Writing to file: {}".format(file_name), "INFORM"))
         with open(file_name, "w") as file:
-                file.write(str(xml))
+            file.write(str(xml))
+    
     if args.recipe:
+        file_name = utils.get_file_name_from_recipe(args.source)
         src = r.source
         dst = os.path.join(output_dir, r.file_name)
         if os.path.isfile(dst):
-            sys.exit('{}ERROR: File already exists.'
-                    .format(color.ERROR))
+            sys.exit(utils.msg("File already exists.", "ERROR"))
         else:
             shutil.copyfile(src, dst)

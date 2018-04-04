@@ -22,11 +22,9 @@ from lxml import etree
 import pint.errors
 
 import pyrecipe.utils as utils
-#from pyrecipe.db import manifest
 from pyrecipe.color import S_DIV
-from pyrecipe.config import RAND_RECIPE_COUNT, SHOPPING_LIST_FILE, PP
 from pyrecipe.recipe_numbers import RecipeNum
-from pyrecipe import Recipe, Q_
+from pyrecipe import Recipe, Q_, RecipeDB, config
 
 class ShoppingList:
     """Creates a shopping list of ingredients from a list of recipes. 
@@ -35,6 +33,7 @@ class ShoppingList:
     """	
     def __init__(self):
         # Get xml ready
+        db = RecipeDB()
         self.xml_root = etree.Element('shopping_list')
         date = datetime.date
         today = date.today()
@@ -46,8 +45,20 @@ class ShoppingList:
 
         self.shopping_list = {}
         self.recipe_names = []
+        self.main_dishes = []
+        self.salad_dressings = []
         self.dressing_names = []
-        
+        main = db.query("SELECT name FROM Recipes WHERE dish_type = \'{}\'"
+                        .format('main'))
+
+        salad = db.query("SELECT name FROM Recipes WHERE dish_type = \'{}\'"
+                        .format('salad dressing'))
+        for item in main:
+            self.main_dishes.append(item[0])
+       
+        for item in salad:
+            self.salad_dressings.append(item[0])
+    
     def _proc_ingreds(self, source, alt_ingred=""):
         sl = self.shopping_list
         r = Recipe(source)
@@ -144,7 +155,7 @@ class ShoppingList:
             xml_main_dish.text = str(item)
         
         # the salad dressing names
-        for item in self.dressing_names:
+        for item in self.salad_dressings:
             xml_dressing_name = etree.SubElement(self.xml_salad_dressing, "name")
             xml_dressing_name.text = str(item)
 
@@ -164,8 +175,8 @@ class ShoppingList:
                                 method='xml',
                                 pretty_print=True).decode("utf-8")
         
-        utils.msg("Writing shopping list to %s" % SHOPPING_LIST_FILE, 'INFORM')
-        with open(SHOPPING_LIST_FILE, "w") as f:
+        utils.msg("Writing shopping list to %s" % config.SHOPPING_LIST_FILE, 'INFORM')
+        with open(config.SHOPPING_LIST_FILE, "w") as f:
             f.write(result)
     
     def return_list(self):
@@ -188,22 +199,22 @@ class ShoppingList:
 
 
 class RandomShoppingList(ShoppingList):
-    """The Random Shopping List class
+    """The Random Shopping List class.
 
-    Used to create a shopping list from 
-    a random sample of recipes
+    Used to create a shopping list from a random sample of recipes
     given as an iterger argument.
     """
     
-    def __init__(self, count=RAND_RECIPE_COUNT):
+    def __init__(self, count=config.RAND_RECIPE_COUNT):
         super().__init__()
         self.count = count
         try:
-            self.recipe_sample = random.sample(manifest.main_dishes, self.count)
-            self.salad_dressing_random = random.choice(manifest.salad_dressings)
+            self.recipe_sample = random.sample(self.main_dishes, self.count)
+            self.salad_dressing_random = random.choice(self.salad_dressings)
         except ValueError:
-            utils.msg("Random count is higher than the amount of recipes"
-                      " available ().Please enter a lower number.", "ERROR")
+            utils.msg("Random count is higher than the amount of"
+                      " recipes available ({}). Please enter a lower"
+                      " number.".format('2'), "ERROR")
         
         self.update(self.salad_dressing_random)
         for dish in self.recipe_sample:

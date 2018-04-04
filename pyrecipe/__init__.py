@@ -19,7 +19,7 @@ from pint import UnitRegistry
 import inflect
 
 import pyrecipe.config as config
-from pyrecipe.db import RecipeDB, DB_FILE
+from pyrecipe.db import RecipeDB
 from pyrecipe.recipe import Recipe, IngredientParser, RecipeWebScraper
 from pyrecipe.color import (color, S_DIV)
 
@@ -30,6 +30,12 @@ except:
 
 __email__ = 'm.k.miller@gmx.com'
 __scriptname__  = os.path.basename(sys.argv[0])
+
+ureg = UnitRegistry()
+dirr = os.path.dirname(__file__)
+definitions = os.path.join(dirr, 'culinary_units.txt')
+ureg.load_definitions(definitions)
+p = inflect.engine()
 
 VER_STR = """  
                  _              _              _   {0} v{1}
@@ -49,17 +55,10 @@ VER_STR = VER_STR.format(
     'This program may be freely redistrubuted under',
     'the terms of the GNU General Public License.'
 )
-
-ureg = UnitRegistry()
-dirr = os.path.dirname(__file__)
-definitions = os.path.join(dirr, 'culinary_units.txt')
-ureg.load_definitions(definitions)
-
 def version_info():
     """Print the current version of pyrecipe and exit."""
     return VER_STR
 
-p = inflect.engine()
 
 class Q_(ureg.Quantity):
     """Subclass to implement a few custom behaviors
@@ -67,7 +66,6 @@ class Q_(ureg.Quantity):
     Capabilities include always rounding up to the nearest whole
     and printing plural units dependent upon the objects magnitude
     """
-
     def round_up(self):
         return self.__class__(ceil(self._magnitude), self._units)
 

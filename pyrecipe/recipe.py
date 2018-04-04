@@ -37,7 +37,6 @@
     :copyright: 2017 by Michael Miller
     :license: GPL, see LICENSE for more details.
 """
-import os
 import re
 import io
 import sys
@@ -60,7 +59,7 @@ from pyrecipe.color import color, S_DIV
 from pyrecipe.recipe_numbers import RecipeNum
 
 # GLOBAL REs
-PORTIONED_UNIT_RE = re.compile(r'\(?\d+\.?\d*? (ounce|pound)\)? (cans?|bags?)') 
+PORTIONED_UNIT_RE = re.compile(r'\(?\d+\.?\d*? (ounce|pound)\)? (cans?|bags?)')
 PAREN_RE = re.compile(r'\((.*?)\)')
 
 yaml = YAML(typ='safe')
@@ -71,7 +70,7 @@ class Recipe:
 
     The recipe class can open .recipe files and read their data. It can
     change the state of a recipe file and then save the new data back to
-    the reicpe file.
+    the reicpe file.    
     """
     # All keys applicable to the Open Recipe 
     orf_keys = ['recipe_name', 'recipe_uuid', 'dish_type', 'category',
@@ -99,10 +98,10 @@ class Recipe:
             self['dish_type'] = 'main'
             self['recipe_uuid'] = str(uuid.uuid4())
             self.source = utils.get_file_name_from_uuid(self['recipe_uuid'])
-            
+
         # Scan the recipe to build the xml
         self._scan_recipe()
-    
+
     def _scan_recipe(self):
         """Scan the recipe to build xml."""
         self.root_keys = list(self._recipe_data.keys())
@@ -112,11 +111,11 @@ class Recipe:
         ingredients, alt_ingredients = self.get_ingredients()
         # Not interested in adding notes to xml, maybe in the future
         for item in self.root_keys:
-            if item not in ('ingredients', 'alt_ingredients', 'notes', 
+            if item not in ('ingredients', 'alt_ingredients', 'notes',
                             'steps', 'recipe_name', 'category'):
                 xml_entry = ET.SubElement(self.xml_root, item)
                 xml_entry.text = str(self[item])
-        
+
         # ready_in
         # not actually an ord tag, so is not read from recipe file
         # it is simply calculated within the class
@@ -134,14 +133,14 @@ class Recipe:
             self.ot_unit = self['oven_temp']['unit']
             xml_oven_temp = ET.SubElement(self.xml_root, "oven_temp")
             xml_oven_temp.text = str(self.ot_amount) + " " + str(self.ot_unit)
-        
+
         # ingredients
         if ingredients:
             xml_ingredients = ET.SubElement(self.xml_root, "ingredients")
             for ingred in ingredients:
                 xml_ingred = ET.SubElement(xml_ingredients, "ingred")
                 xml_ingred.text = ingred
-        
+
         # alt_ingredients 
         if alt_ingredients:
             for item in alt_ingredients:
@@ -150,12 +149,12 @@ class Recipe:
                 for ingred in alt_ingredients[item]:
                     xml_alt_ingred = ET.SubElement(xml_alt_ingredients, "ingred")
                     xml_alt_ingred.text = ingred
-                
+
         xml_steps = ET.SubElement(self.xml_root, "steps")
         for step in self['steps']:
             steps_of = ET.SubElement(xml_steps, "step")
             steps_of.text = step['step']
-        
+
     def __repr__(self):
         return "Recipe(name='{}')".format(self['recipe_name'])
 
@@ -218,7 +217,7 @@ class Recipe:
             raise TypeError('Alt Ingredients must be a list')
         if not isinstance(value[0], dict):
             raise TypeError('Alt Ingredients must be a list of dicts')
-        
+
         ingred_parser = IngredientParser()
         alt_ingredients = []
         for item in value:
@@ -245,7 +244,7 @@ class Recipe:
                              method='xml',
                              pretty_print=True).decode('utf-8')
         return result
-    
+
     def get_ingredients(self, amount_level=0, color=False):
         """Return a list of ingredient strings.
 
@@ -274,13 +273,13 @@ class Recipe:
 
     def print_recipe(self, verb_level=0):
         """Print recipe to standard output."""
-        recipe_str = color(self['recipe_name'], 'cyan')
+        recipe_str = color(self['recipe_name'].title(), 'cyan')
         recipe_str += "\n\nDish Type: {}".format(str(self['dish_type']))
         for item in ('prep_time', 'cook_time', 'bake_time', 'ready_in'):
             if self[item]:
                 recipe_str += "\n{}: {}".format(item.replace('_', ' ').title(),
                               utils.mins_to_hours(RecipeNum(self[item])))
-        
+
         if self['oven_temp']:
             tmp = str(self['oven_temp']['amount'])
             unt = self['oven_temp']['unit']
@@ -317,7 +316,7 @@ class Recipe:
 
         recipe_str += "\n\n{}".format(S_DIV)
         recipe_str += color("\nIngredients:", "cyan")
-        
+
         # Put together all the ingredients
         ingreds, alt_ingreds = self.get_ingredients(color=True)
         for ingred in ingreds:
@@ -338,9 +337,9 @@ class Recipe:
         for index, step in wrapped:
             recipe_str += "\n{}".format(color(index, "yellow"))
             recipe_str += step
-    
+
         print(recipe_str)
-    
+
     def get_method(self):
         """Return a list of steps."""
         steps = []
@@ -361,7 +360,7 @@ class Recipe:
         else:
             ingredients, alt_ingredients = self.get_ingredients()
             text = ', '.join(ingredients)
-        
+
         tts = gTTS(text=text, lang='en')
         tts.save('test.mp3')
         playsound('test.mp3')
@@ -414,7 +413,7 @@ class RecipeWebScraper(Recipe):
     def __init__(self, url):
         super().__init__()
         self['source_url'] = url
-        try: 
+        try:
             self.req = urlopen(url)
         except ValueError:
             sys.exit('You must supply a valid url.')
@@ -523,7 +522,7 @@ class Ingredient:
                 ingred_string += ", " + self.prep
             if self.note:
                 ingred_string += " {}".format(self.note)
-            
+
             return ingred_string
 
 

@@ -12,7 +12,7 @@ import argparse
 
 import argcomplete
 
-from pyrecipe import config, DB_FILE, RecipeDB, Recipe
+from pyrecipe import config, RecipeDB, Recipe
 
 def recipe_completer(**kwargs):
     """list of recipes for completer"""
@@ -59,7 +59,7 @@ def parse_args():
         action="store_true",
         help="Print version and exit"
     )
-    # subparsers start here
+    # <-- Subparsers start here -->
     subparser = parser.add_subparsers(dest='subparser')
 
     # recipe_tool print
@@ -179,7 +179,12 @@ def parse_args():
         dest="output_dir",
         type=str,
         nargs="?",
-        help="Choose a directory to output xml file"
+        help="Choose a directory to output file"
+    )
+    parser_export.add_argument(
+        "-a",
+        "--all",
+        help="Export all files in the database"
     )
     parser_export.add_argument(
         "-x",
@@ -259,8 +264,8 @@ def main():
             print('Oops, wrong argument. Type recipe_tool -h for more info.')
 
 if __name__ == '__main__':
-    # Build the data base first if it doesnt exist
+    # Build the database first if it doesnt exist
     import os 
-    if not os.path.exists(DB_FILE):
+    if not os.path.exists(config.DB_FILE):
         build_recipe_database()
     main()
