@@ -7,8 +7,7 @@
 import os
 import sqlite3
 
-#DB_FILE = os.path.expanduser('~/.conifg/pyrecipe/recipes.db')
-DB_FILE = os.path.expanduser('~/git/pyrecipe/test/test.db')
+DB_FILE = os.path.expanduser('~/.conifg/pyrecipe/recipes.db')
 
 class RecipeDB:
     """A database subclass for pyrecipe."""
@@ -26,9 +25,9 @@ class RecipeDB:
                             .format(type(recipe)))
 
         recipe_data = [(
+            recipe['recipe_uuid'],
             recipe['recipe_name'].lower(),
             recipe['dish_type'],
-            recipe['file_name'],
             recipe['author'],
             recipe['tags'],
             recipe['categories'],
@@ -37,9 +36,9 @@ class RecipeDB:
         )]
         self.c.executemany(
             '''INSERT OR REPLACE INTO Recipes (
+                recipe_uuid, 
                 name, 
                 dish_type, 
-                file_name, 
                 author, 
                 tags, 
                 categories, 
@@ -64,7 +63,8 @@ class RecipeDB:
         self.conn.commit()
 
     def execute(self, command):
-        return self.c.execute(command)
+        self.c.execute(command)
+        self._commit()
 
     def query(self, command):
         if not command.lower().startswith('select'):
@@ -76,29 +76,20 @@ class RecipeDB:
             result = []
         return result
 
-    def get_file_name(self, source):
-        file_name = self.query(
-            "SELECT file_name FROM Recipes WHERE name = \'{}\'".format(source)
-        )
-        if len(file_name) == 0:
-            return None
-        else:
-            return file_name[0][0]
-        
     def create_database(self):
         self.c.execute(
             '''CREATE TABLE IF NOT EXISTS Recipes 
              (id INTEGER PRIMARY KEY AUTOINCREMENT, 
+              recipe_uuid TEXT NOT NULL, 
               dish_type TEXT,
               name TEXT NOT NULL, 
-              file_name TEXT NOT NULL, 
               author TEXT, 
               tags TEXT, 
               categories TEXT, 
               price TEXT, 
               source_url TEXT,
               CONSTRAINT unique_name UNIQUE
-              (name, file_name)
+              (name, recipe_uuid)
               )'''
         )
         self.c.execute(
@@ -130,14 +121,11 @@ def update_db(save_func):
 def delete_recipe(delete_func):
     """Decorater for updating pyrecipe db."""
     def wrapper(args):
-        print(args)
-        answer = delete_func(args)
-        if answer.strip() == 'yes'
-            #db = RecipeDB()
-            #sql = 'DELETE FROM Recipes WHERE'
-            #db.execute('
-            print('yep')
-
+        deleted_file = delete_func(args)
+        if deleted_file:
+            db = RecipeDB()
+            sql = "DELETE FROM Recipes WHERE recipe_uuid = \'{}\'".format(deleted_file)
+            db.execute(sql)
     return wrapper
 
 if __name__ == '__main__':

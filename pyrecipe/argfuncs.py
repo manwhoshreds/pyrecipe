@@ -17,18 +17,6 @@ from pyrecipe import (Recipe, RecipeWebScraper, version_info,
 from pyrecipe.db import delete_recipe
 from pyrecipe.console_gui import RecipeEditor, RecipeMaker
 
-# Build the DB
-def build_recipe_database():
-    """Build the recipe database."""
-    db = RecipeDB(config.DB_FILE)
-    db.create_database()
-    for item in config.RECIPE_DATA_FILES:
-        r = Recipe(item)
-        db.add_recipe(r)
-
-if not os.path.exists(config.DB_FILE):
-    build_recipe_database()
-
 def dump_data(args):
     """Dump recipe data in 1 of three formats."""
     r = Recipe(args.source)
@@ -77,9 +65,10 @@ def delete_recipe(args):
     if answer.strip() == 'yes':
         os.remove(file_name)
         print("{} has been deleted".format(source))
+        return r['recipe_uuid']
     else:
         print("{} not deleted".format(source))
-    return answer
+        return None
 
 def edit_recipe(args):
     """Edit a recipe using the urwid console interface (ncurses)."""
@@ -89,7 +78,10 @@ def add_recipe(args):
     """Add a recipe to the recipe store."""
     name = utils.get_file_name(args.name)
     if name in config.RECIPE_DATA_FILES:
-        sys.exit('{}ERROR: A recipe with that name already exist.'.format(color.ERROR))
+        sys.exit(
+            utils.msg('A recipe with that name already'
+                      ' exist in the database.', 'ERROR')
+        )
     else:
         RecipeEditor(args.name, add=True).start()
 

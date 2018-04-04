@@ -19,7 +19,7 @@ from pint import UnitRegistry
 import inflect
 
 import pyrecipe.config as config
-from pyrecipe.db import RecipeDB
+from pyrecipe.db import RecipeDB, DB_FILE
 from pyrecipe.recipe import Recipe, IngredientParser, RecipeWebScraper
 from pyrecipe.color import (color, S_DIV)
 
@@ -30,11 +30,6 @@ except:
 
 __email__ = 'm.k.miller@gmx.com'
 __scriptname__  = os.path.basename(sys.argv[0])
-
-db = RecipeDB(config.DB_FILE)
-sql = 'SELECT name FROM Recipes'
-recipe_names = db.query(sql)
-recipe_names = sorted([x[0] for x in recipe_names])
 
 VER_STR = """  
                  _              _              _   {0} v{1}

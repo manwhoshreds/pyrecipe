@@ -8,8 +8,8 @@ import uuid
 import string
 import textwrap
 
-from pyreicpe import config
-from pyrecipe.db.db import RecipeDB
+from pyrecipe import config
+from pyrecipe.db import RecipeDB
 from pyrecipe.color import color
 
 def mins_to_hours(mins):
@@ -42,12 +42,13 @@ def wrap(str_list, width=60):
         wrapped.append(wrapped_str)
     return wrapped
 
-def check_source(source):
+def get_source_path(source):
     """Closer inspection of the source.
     
-    If all is well, the function returns the source. 
+    If all is well, the function returns the source path. 
     """
-    # We got an empty string
+    # We got an empty string. User is using a Recipe instance
+    # to build a recipe from scratch so we dont have a source yet.
     if not source:
         return source
     
@@ -61,20 +62,29 @@ def check_source(source):
             return source
     else:
         # We must have asked for the recipe using only its name
-        # after all, this is the intended way to call the recipe.
-        db = RecipeDB()
-        name = db.get_file_name(source)
-        if name is None:
-            pass
-            #sys.exit(msg("{} does not seem to exist in the database."
-            #             .format(source), "ERROR"))
+        # after all, this is the intended way to lookup the recipe.
+        file_name = get_file_name(source)
+        if file_name is None:
+            sys.exit(msg("{} does not seem to exist in the database."
+                         .format(source), "ERROR"))
         else:
-            name = os.path.join(config.RECIPE_DATA_DIR, name)
-            return name
+            return file_name
 
-def generate_filename():
-    """Generate a filename for a recipe."""
-    file_name = str(uuid.uuid4()).replace('-', '') + '.recipe'
+def get_file_name(source):
+    """Get the file name for a recipe source that is in the database"""
+    db = RecipeDB()
+    recipe_uuid = db.query(
+        "SELECT recipe_uuid FROM Recipes WHERE name = \'{}\'".format(source)
+    )
+    if len(recipe_uuid) == 0:
+        return None
+    else:
+        file_name = get_file_name_from_uuid(recipe_uuid[0][0])
+        return file_name
+
+def get_file_name_from_uuid(uuid):
+    file_name = uuid.replace('-', '') + ".recipe"
+    file_name = os.path.join(config.RECIPE_DATA_DIR, file_name)
     return file_name
 
 def stats(verb=0):
@@ -97,5 +107,6 @@ def msg(text, level='INFORM'):
     return color(text, msg_level[level])
 
 if __name__ == '__main__':
-    pass
+    name = get_file_name('pesto')
+    print(name)
 

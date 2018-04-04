@@ -41,6 +41,7 @@ import os
 import re
 import io
 import sys
+import uuid
 import string
 from collections import OrderedDict
 from urllib.request import urlopen
@@ -79,9 +80,8 @@ class Recipe:
                 'source_url', 'steps', 'tags', 'source_book', 'price']
 
     def __init__(self, source=''):
-        self.source = utils.check_source(source)
+        self.source = utils.get_source_path(source)
         if self.source:
-            self.file_name = self.source.split('/')[-1]
             try:
                 with ZipFile(self.source, 'r') as zfile:
                     try:
@@ -97,11 +97,12 @@ class Recipe:
             self._recipe_data = {}
             # dish type should default to main
             self['dish_type'] = 'main'
-            self.file_name = utils.generate_filename()
+            self['recipe_uuid'] = str(uuid.uuid4())
+            self.source = utils.get_file_name_from_uuid(self['recipe_uuid'])
             
         # Scan the recipe to build the xml
         self._scan_recipe()
-
+    
     def _scan_recipe(self):
         """Scan the recipe to build xml."""
         self.root_keys = list(self._recipe_data.keys())
@@ -186,17 +187,13 @@ class Recipe:
         return hash(self.get_yaml_string())
 
     @property
-    def recipe_data(self):
-        """Return the recipe data."""
-        return self['_recipe_data']
-
-    @property
     def ingredients(self):
         """Return ingredient data."""
         return self['ingredients']
 
     @ingredients.setter
     def ingredients(self, value):
+        """Set the ingredients of a recipe."""
         if not isinstance(value, list):
             raise TypeError('Ingredients must be a list')
 
@@ -291,7 +288,7 @@ class Recipe:
 
         if self['author']:
             recipe_str += "\nAuthor: {}".format(self['author'])
-
+        
         extra_info = False
         if verb_level >= 1:
             if self['price']:
@@ -378,7 +375,7 @@ class Recipe:
         yaml, and xml.
         """
         if data_type in ('raw', None):
-            config.PP.pprint(self.recipe_data)
+            config.PP.pprint(self['_recipe_data'])
         elif data_type == 'yaml':
             yaml.dump(self['_recipe_data'], sys.stdout)
         elif data_type == 'xml':
@@ -389,7 +386,7 @@ class Recipe:
 
     def get_yaml_string(self):
         string = io.StringIO()
-        yaml.dump(self.recipe_data, string)
+        yaml.dump(self['_recipe_data'], string)
         return string.getvalue()
    
     @update_db
@@ -401,14 +398,13 @@ class Recipe:
         wants to edit a file in which case we intend to overwrite the file with
         changes.
         """
-        source = os.path.join(config.RECIPE_DATA_DIR, self.file_name)
         if not self.source:
             raise RuntimeError('Recipe has no source to save to')
         else:
             stream = io.StringIO()
-            yaml.dump(self.recipe_data, stream)
+            yaml.dump(self['_recipe_data'], stream)
 
-            with ZipFile(source, 'w') as zfile:
+            with ZipFile(self.source, 'w') as zfile:
                 zfile.writestr('recipe.yaml', stream.getvalue())
                 zfile.writestr('MIMETYPE', 'application/recipe+zip')
 

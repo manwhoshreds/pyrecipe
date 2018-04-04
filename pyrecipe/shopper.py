@@ -202,9 +202,8 @@ class RandomShoppingList(ShoppingList):
             self.recipe_sample = random.sample(manifest.main_dishes, self.count)
             self.salad_dressing_random = random.choice(manifest.salad_dressings)
         except ValueError:
-            utils.msg("ERROR: Random count is higher than "
-                      "the amount of recipes available (). "
-                      "Please enter a lower number.", 'ERROR')
+            utils.msg("Random count is higher than the amount of recipes"
+                      " available ().Please enter a lower number.", "ERROR")
         
         self.update(self.salad_dressing_random)
         for dish in self.recipe_sample:

@@ -9,15 +9,15 @@ import sys
 import pprint
 import configparser
 
-config = configparser.ConfigParser()
 
 CONFIG_DIR = os.path.expanduser('~/.config/pyrecipe/')
-#RECIPE_DATA_DIR = os.path.join(CONFIG_DIR, 'recipe_data/')
-RECIPE_DATA_DIR = os.path.expanduser('~/git/pyrecipe/test/recipe_data/')
+RECIPE_DATA_DIR = os.path.join(CONFIG_DIR, 'recipe_data/')
+#RECIPE_DATA_DIR = os.path.expanduser('~/git/pyrecipe/test/recipe_data/')
 CONFIG_FILE = os.path.join(CONFIG_DIR + 'config')
 SCRIPT_DIR = os.path.dirname(__file__)
 
 # parse config
+config = configparser.ConfigParser()
 config.read(CONFIG_FILE)
 RECIPE_XML_DIR = os.path.expanduser(config['paths']['recipe_xml_dir'])
 SHOPPING_LIST_FILE = os.path.expanduser(config['paths']['shopping_list_file'])
