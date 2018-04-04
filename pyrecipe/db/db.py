@@ -6,8 +6,9 @@
 """
 import os
 import sqlite3
+from pyrecipe.config import DB_FILE
 
-DB_FILE = os.path.expanduser('~/.conifg/pyrecipe/recipes.db')
+#DB_FILE = os.path.expanduser('~/.config/pyrecipe/recipes.db')
 
 class RecipeDB:
     """A database subclass for pyrecipe."""

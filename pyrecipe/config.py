@@ -5,14 +5,21 @@
 """
 
 import os
+import shutil
 import sys
 import pprint
 import configparser
 
+python_binary = shutil.which('python')
 
 CONFIG_DIR = os.path.expanduser('~/.config/pyrecipe/')
-RECIPE_DATA_DIR = os.path.join(CONFIG_DIR, 'recipe_data/')
-#RECIPE_DATA_DIR = os.path.expanduser('~/git/pyrecipe/test/recipe_data/')
+if python_binary == '/usr/bin/python':
+    RECIPE_DATA_DIR = os.path.join(CONFIG_DIR, 'recipe_data/')
+    DB_FILE = os.path.join(CONFIG_DIR, 'recipes.db')
+else:
+    RECIPE_DATA_DIR = os.path.expanduser('~/git/pyrecipe/test/recipe_data/')
+    DB_FILE = os.path.expanduser('~/git/pyrecipe/test/recipes_test.db')
+
 CONFIG_FILE = os.path.join(CONFIG_DIR + 'config')
 SCRIPT_DIR = os.path.dirname(__file__)
 
@@ -62,5 +69,5 @@ SIZE_STRINGS          = sorted(_size_strs)
 PREP_TYPES            = sorted(_prp_typs)
 
 if __name__ == '__main__':
-    print(RECIPE_DATA_FILES)
+    print(python_binary)
     #print(INGRED_UNITS)
