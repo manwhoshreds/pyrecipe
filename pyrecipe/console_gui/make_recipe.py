@@ -18,12 +18,9 @@ import speech_recognition as sr
 from gtts import gTTS
 from playsound import playsound
 
-from pyrecipe.config import (DISH_TYPES)
-from pyrecipe.recipe import Recipe, IngredientParser
 from pyrecipe.utils import wrap
+from pyrecipe import Recipe, db
 
-
-ingred_parser = IngredientParser()
 
 PALETTE = ([
     ('header', 'white', 'black', 'bold'),

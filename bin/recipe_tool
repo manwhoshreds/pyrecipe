@@ -12,23 +12,21 @@ import argparse
 
 import argcomplete
 
-from pyrecipe import config, RecipeDB, Recipe
+from pyrecipe import config, Recipe, db
 
 def recipe_completer(**kwargs):
-    """list of recipes for completer"""
-    db = RecipeDB()
-    sql = 'SELECT name FROM Recipes'
-    recipe_names = db.query(sql)
-    recipe_names = sorted([x[0] for x in recipe_names])
+    """List of recipes for completer."""
+    data = db.get_data()
+    recipe_names = data['recipe_names']
     return recipe_names
 
 def build_recipe_database():
     """Build the recipe database."""
-    db = RecipeDB()
-    db.create_database()
+    database = db.RecipeDB()
+    database.create_database()
     for item in config.RECIPE_DATA_FILES:
         r = Recipe(item)
-        db.add_recipe(r)
+        database.add_recipe(r)
 
 def parse_args():
     """Parse args for recipe_tool."""
@@ -238,7 +236,7 @@ def parse_args():
         return args
 
 def main():
-    """main entry point of recipe_tool"""
+    """Main entry point of recipe_tool"""
     args = parse_args()
     import pyrecipe.argfuncs as argfunc
     action = {
@@ -257,14 +255,10 @@ def main():
     if args.version:
         action['version'](args)
     else:
-        try:
-            action[args.subparser](args)
-        except KeyError:
-            # Oops, we must have gotten an unexpected argument
-            print('Oops, wrong argument. Type recipe_tool -h for more info.')
+        action[args.subparser](args)
 
 if __name__ == '__main__':
-    # Build the database first if it doesnt exist
+    """Build the database first if it doesnt exist."""
     import os 
     if not os.path.exists(config.DB_FILE):
         build_recipe_database()

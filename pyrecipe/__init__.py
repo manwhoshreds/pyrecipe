@@ -19,7 +19,7 @@ from pint import UnitRegistry
 import inflect
 
 import pyrecipe.config as config
-from pyrecipe.db import RecipeDB
+import pyrecipe.db as db
 from pyrecipe.recipe import Recipe, IngredientParser, RecipeWebScraper
 from pyrecipe.color import (color, S_DIV)
 

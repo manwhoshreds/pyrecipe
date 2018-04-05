@@ -24,7 +24,7 @@ import pint.errors
 import pyrecipe.utils as utils
 from pyrecipe.color import S_DIV
 from pyrecipe.recipe_numbers import RecipeNum
-from pyrecipe import Recipe, Q_, RecipeDB, config
+from pyrecipe import Recipe, Q_, db, config
 
 class ShoppingList:
     """Creates a shopping list of ingredients from a list of recipes. 
@@ -33,7 +33,6 @@ class ShoppingList:
     """	
     def __init__(self):
         # Get xml ready
-        db = RecipeDB()
         self.xml_root = etree.Element('shopping_list')
         date = datetime.date
         today = date.today()
@@ -42,22 +41,11 @@ class ShoppingList:
         self.xml_maindish_names = etree.SubElement(self.xml_root, "main_dishes")
         self.xml_salad_dressing = etree.SubElement(self.xml_root, "salad_dressing")
         self.xml_ingredients = etree.SubElement(self.xml_root, "ingredients")
+        self.db_data = db.get_data()
 
         self.shopping_list = {}
-        self.recipe_names = []
-        self.main_dishes = []
-        self.salad_dressings = []
         self.dressing_names = []
-        main = db.query("SELECT name FROM Recipes WHERE dish_type = \'{}\'"
-                        .format('main'))
-
-        salad = db.query("SELECT name FROM Recipes WHERE dish_type = \'{}\'"
-                        .format('salad dressing'))
-        for item in main:
-            self.main_dishes.append(item[0])
-       
-        for item in salad:
-            self.salad_dressings.append(item[0])
+        self.recipe_names = []
     
     def _proc_ingreds(self, source, alt_ingred=""):
         sl = self.shopping_list
@@ -209,13 +197,14 @@ class RandomShoppingList(ShoppingList):
         super().__init__()
         self.count = count
         try:
-            self.recipe_sample = random.sample(self.main_dishes, self.count)
-            self.salad_dressing_random = random.choice(self.salad_dressings)
+            self.recipe_sample = random.sample(self.db_data['main_names'], self.count)
+            self.salad_dressing_random = random.choice(self.db_data['salad_dressing_names'])
         except ValueError:
-            utils.msg("Random count is higher than the amount of"
-                      " recipes available ({}). Please enter a lower"
-                      " number.".format('2'), "ERROR")
-        
+            sys.exit(utils.msg(
+                "Random count is higher than the amount of recipes"
+                " available ({}). Please enter a lower number."
+                .format(len(self.db_data['main_names'])), "ERROR"
+            ))
         self.update(self.salad_dressing_random)
         for dish in self.recipe_sample:
             self.update(dish)
@@ -261,17 +250,10 @@ class MultiQuantity:
     def units(self):
         return 'n/a'
 
-# testing
 if __name__ == '__main__':
-    #shopper = ShoppingList()    
-    #shopper.update('pesto')
-    #shopper.update('pot sticker dumplings')
-    #test = shopper.return_list()
-    #print(test)
-    foo = Q_(RecipeNum(1), 'teaspoon')
-    bar = Q_(RecipeNum(2), 'tablespoon')
-    ok = bar + foo
-    print(ok.round_up())
+    test = db.get_data()
+    config.PP.pprint(test)
+
 
 
 

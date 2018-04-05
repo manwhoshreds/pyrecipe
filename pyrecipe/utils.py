@@ -7,8 +7,7 @@ import sys
 import string
 import textwrap
 
-from pyrecipe import config
-from pyrecipe.db import RecipeDB
+from pyrecipe import config, db
 from pyrecipe.color import color
 
 def mins_to_hours(mins):
@@ -70,16 +69,14 @@ def get_source_path(source):
             return file_name
 
 def get_file_name(source):
-    """Get the file name for a recipe source that is in the database"""
-    db = RecipeDB()
-    recipe_uuid = db.query(
-        "SELECT recipe_uuid FROM Recipes WHERE name = \'{}\'".format(source)
-    )
-    if len(recipe_uuid) == 0:
+    """Get the file name for a recipe source that is in the database."""
+    try: 
+        recipe_uuid = db.get_data()['uuids'][source]
+    except KeyError:
         return None
-    else:
-        file_name = get_file_name_from_uuid(recipe_uuid[0][0])
-        return file_name
+    
+    file_name = get_file_name_from_uuid(recipe_uuid)
+    return file_name
 
 def get_file_name_from_uuid(uuid):
     """Return a file name using the recipes uuid."""

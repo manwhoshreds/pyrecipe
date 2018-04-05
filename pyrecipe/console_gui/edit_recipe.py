@@ -13,8 +13,7 @@ from collections import deque
 
 import urwid
 
-from pyrecipe.config import (DISH_TYPES)
-from pyrecipe.recipe import Recipe
+from pyrecipe import Recipe, db
 from pyrecipe.utils import wrap
 
 
@@ -460,7 +459,7 @@ class RecipeEditor:
         self.disht_group = []
         radio_dish_types = urwid.GridFlow([urwid.AttrMap(urwid.RadioButton(self.disht_group,
                             txt), 'buttn', 'buttnf')
-                            for txt in DISH_TYPES], 15, 0, 2, 'left')
+                            for txt in db.DISH_TYPES], 15, 0, 2, 'left')
         
         for item in self.disht_group:
             if item.get_label() == self.r['dish_type']:

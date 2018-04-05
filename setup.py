@@ -1,4 +1,5 @@
 from distutils.core import setup
+import os
 
 deps = [
     'pint',
@@ -19,6 +20,9 @@ packages = [
     'pyrecipe/db'
 ]
 
+data_files = [
+    ('/etc/pyrecipe/', ['config/pyrecipe.cfg'])
+]
 setup(
     name='pyrecipe',
     version='0.7.0',
@@ -26,6 +30,7 @@ setup(
     package_data={
         'pyrecipe': ['culinary_units.txt']
         },
+    data_files=data_files,
     license='GNU General Public License',
     long_description='A python tool for managing recipes',
     install_requires=deps,

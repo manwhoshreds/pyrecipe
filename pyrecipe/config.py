@@ -9,17 +9,17 @@ import shutil
 import pprint
 import configparser
 
-python_binary = shutil.which('python')
+#python_binary = shutil.which('python')
 
 CONFIG_DIR = os.path.expanduser('~/.config/pyrecipe/')
-if python_binary == '/usr/bin/python':
-    RECIPE_DATA_DIR = os.path.join(CONFIG_DIR, 'recipe_data/')
-    DB_FILE = os.path.join(CONFIG_DIR, 'recipes.db')
-else:
-    RECIPE_DATA_DIR = os.path.expanduser('~/git/pyrecipe/test/recipe_data/')
-    DB_FILE = os.path.expanduser('~/git/pyrecipe/test/recipes_test.db')
+#if python_binary == '/usr/bin/python':
+RECIPE_DATA_DIR = os.path.join(CONFIG_DIR, 'recipe_data/')
+DB_FILE = os.path.join(CONFIG_DIR, 'recipes.db')
+#else:
+#    RECIPE_DATA_DIR = os.path.expanduser('~/git/pyrecipe/test/recipe_data/')
+#    DB_FILE = os.path.expanduser('~/git/pyrecipe/test/recipes_test.db')
 
-CONFIG_FILE = os.path.join(CONFIG_DIR + 'config')
+CONFIG_FILE = os.path.join(CONFIG_DIR + 'pyrecipe.cfg')
 SCRIPT_DIR = os.path.dirname(__file__)
 
 # parse config
@@ -35,10 +35,6 @@ for item in os.listdir(RECIPE_DATA_DIR):
 
 PP = pprint.PrettyPrinter(compact=True, indent=4)
 
-DISH_TYPES = [
-    'main', 'side', 'dessert', 'condiment', 'dip', 
-    'salad dressing', 'sauce', 'base', 'garnish', 'seasoning'
-]
 CULINARY_UNITS = [
     'teaspoon', 'tablespoon', 'ounce', 'fulid ounce', 
     'cup', 'quart', 'gallon', 'pound', 'pint', 'gram', 'mililiter'
