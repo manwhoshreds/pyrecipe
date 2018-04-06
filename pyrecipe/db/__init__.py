@@ -11,7 +11,7 @@ def get_data():
     recipe_data = {}
     
     # recipe names
-    recipe_names = db.query('SELECT name FROM Recipes')
+    recipe_names = db.query("SELECT name FROM Recipes")
     recipe_names = [x[0] for x in recipe_names]
     recipe_data['recipe_names'] = recipe_names
 
@@ -26,13 +26,25 @@ def get_data():
 
     # recipe uuid's
     uuids = db.query(
-        'SELECT name, recipe_uuid FROM Recipes'
+        "SELECT name, recipe_uuid FROM Recipes"
     )
     recipe_data['uuids'] = {}
-    for item in uuids:
-        recipe_data['uuids'][item[0]] = item[1]
+    for uuid in uuids:
+        recipe_data['uuids'][uuid[0]] = uuid[1]
     
-
+    # recipe authors
+    recipe_data['authors'] = {}
+    authors = db.query(
+        "SELECT author FROM Recipes"
+    )
+    authors = [x[0] for x in authors]
+    for author in authors:
+        author_recipes = db.query(
+            "SELECT name FROM Recipes WHERE author = \'{}\'".format(author)
+        )
+        author_recipes = [x[0] for x in author_recipes]
+        recipe_data['authors'][author.lower()] = author_recipes
+        
     return recipe_data
 
 

@@ -62,7 +62,8 @@ def get_speech():
         tts.save('temp.mp3')
         playsound('temp.mp3')
         spoken = ''
-        while spoken != "next ingredient":
+        while spoken not in ("next ingredient", "next", "continue",
+                             "next one", "move on", "go on"):
             print('say \"Next ingredient\" to proceed..')
             try:
                 with m as source: audio = r.listen(source)
@@ -315,6 +316,5 @@ class RecipeMaker:
         
 
 if __name__ == '__main__':
-    #get_speech()
-    #time.sleep(4)
-    RecipeMaker('test').start()
+    get_speech()
+    #RecipeMaker('test').start()

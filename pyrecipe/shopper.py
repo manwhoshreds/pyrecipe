@@ -22,7 +22,6 @@ from lxml import etree
 import pint.errors
 
 import pyrecipe.utils as utils
-from pyrecipe.color import S_DIV
 from pyrecipe.recipe_numbers import RecipeNum
 from pyrecipe import Recipe, Q_, db, config
 
@@ -110,13 +109,13 @@ class ShoppingList:
         print("Recipes:\n")
         for item in mdn:
             print(item)
-        print("\n" + S_DIV)
+        print("\n" + utils.S_DIV)
 
         if len(dn) > 0:
             print("Salad Dressings:\n")
             for item in dn:
                 print(item)
-            print("\n{}".format(S_DIV))
+            print("\n{}".format(utils.S_DIV))
         
         # Print list	
         padding = max(len(x) for x in sl.keys()) + 1

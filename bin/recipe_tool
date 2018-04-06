@@ -13,6 +13,7 @@ import argparse
 import argcomplete
 
 from pyrecipe import config, Recipe, db
+from termcolor import colored
 
 def recipe_completer(**kwargs):
     """List of recipes for completer."""

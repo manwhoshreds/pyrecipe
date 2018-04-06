@@ -48,6 +48,7 @@ from zipfile import ZipFile, BadZipFile
 
 import bs4
 import lxml.etree as ET
+from termcolor import colored
 from ruamel.yaml import YAML
 from playsound import playsound
 from gtts import gTTS
@@ -55,7 +56,6 @@ from gtts import gTTS
 import pyrecipe.utils as utils
 import pyrecipe.config as config
 from pyrecipe.db import update_db
-from pyrecipe.color import color, S_DIV
 from pyrecipe.recipe_numbers import RecipeNum
 
 # GLOBAL REs
@@ -100,7 +100,7 @@ class Recipe:
             self.source = utils.get_file_name_from_uuid(self['recipe_uuid'])
 
         # Scan the recipe to build the xml
-        self._scan_recipe()
+        #self._scan_recipe()
 
     def _scan_recipe(self):
         """Scan the recipe to build xml."""
@@ -273,7 +273,7 @@ class Recipe:
 
     def print_recipe(self, verb_level=0):
         """Print recipe to standard output."""
-        recipe_str = color(self['recipe_name'].title(), 'cyan')
+        recipe_str = colored(self['recipe_name'].title(), 'cyan', attrs=['bold'])
         recipe_str += "\n\nDish Type: {}".format(str(self['dish_type']))
         for item in ('prep_time', 'cook_time', 'bake_time', 'ready_in'):
             if self[item]:
@@ -304,18 +304,18 @@ class Recipe:
                 recipe_str += ("\nYields: " + str(self['yeilds']))
                 extra_info = True
             if self['notes']:
-                recipe_str += color("\n\nNotes:", "cyan")
+                recipe_str += colored("\n\nNotes:", "cyan")
                 wrapped = utils.wrap(self['notes'])
                 for index, note in wrapped:
-                    recipe_str += color("\n{}".format(index), "yellow")
+                    recipe_str += colored("\n{}".format(index), "yellow")
                     recipe_str += note
                 extra_info = True
 
             if not extra_info:
                 utils.msg('\nNo additional inforation', 'ERROR')
 
-        recipe_str += "\n\n{}".format(S_DIV)
-        recipe_str += color("\nIngredients:", "cyan")
+        recipe_str += "\n\n{}".format(utils.S_DIV)
+        recipe_str += colored("\nIngredients:", "cyan", attrs=['underline'])
 
         # Put together all the ingredients
         ingreds, alt_ingreds = self.get_ingredients(color=True)
@@ -324,18 +324,18 @@ class Recipe:
         
         if alt_ingreds:
             for item in alt_ingreds:
-                recipe_str += color("\n\n{}".format(item.title()), "cyan")
+                recipe_str += colored("\n\n{}".format(item.title()), "cyan")
 
                 for ingred in alt_ingreds[item]:
                     recipe_str += "\n{}".format(ingred)
         
-        recipe_str += "\n\n{}".format(S_DIV)
-        recipe_str += color("\nMethod:", "cyan")
+        recipe_str += "\n\n{}".format(utils.S_DIV)
+        recipe_str += colored("\nMethod:", "cyan", attrs=["underline"])
 
         # print steps
         wrapped = utils.wrap(self.get_method())
         for index, step in wrapped:
-            recipe_str += "\n{}".format(color(index, "yellow"))
+            recipe_str += "\n{}".format(colored(index, "yellow"))
             recipe_str += step
 
         print(recipe_str)
@@ -390,13 +390,7 @@ class Recipe:
    
     @update_db
     def save(self):
-        """save state of class
-
-        If save_as is true, we first check to see if the file already exisist
-        so we dont clobber an existing recipe. If not save_as, we assume user
-        wants to edit a file in which case we intend to overwrite the file with
-        changes.
-        """
+        """save state of class."""
         if not self.source:
             raise RuntimeError('Recipe has no source to save to')
         else:
@@ -491,14 +485,14 @@ class Ingredient:
         Calling string on an ingredient object returns the gramatically
         correct representation of the ingredient object.
         """
-        color_number = ''
-        color_note = ''
+        color_number = None
+        color_note = None
         if self.color:
             color_number = 'yellow'
             color_note = 'cyan'
         
         if self.note:
-            self.note = color('({})'.format(self.note), color_note)
+            self.note = '({})'.format(self.note)
 
         if self.unit == 'to taste':
             return "{} to taste".format(self.name.capitalize())
@@ -511,7 +505,7 @@ class Ingredient:
             if match:
                 unit = match.group().split()
                 self.unit = "({}) {}".format(' '.join(unit[0:2]), unit[-1])
-            ingred_string = color('{}'.format(self.amount), color_number)
+            ingred_string = '{}'.format(self.amount)
             ingred_string += " {} {} {}".format(self.size, self.unit, self.name)
             # the previous line adds unwanted spaces if
             # values are absent, we simply clean that up here.
@@ -678,5 +672,4 @@ class IngredientParser:
 
 if __name__ == '__main__':
     # testing goes here
-    r = Recipe('pesto')
-    print(r.file_name)
+    pass

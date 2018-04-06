@@ -45,9 +45,6 @@ class IngredientsContainer(urwid.WidgetWrap):
     def __init__(self, ingredients=[], alt_ingredients=None):
         self.ingredients = ingredients
         self.alt_ingredients = alt_ingredients
-        if not isinstance(self.ingredients, list):
-            raise TypeError('IngredientBlock only excepts a list of ingredients')
-
         add_ingred_block = urwid.Button('Add Ingredient Block',
                 on_press=self._add_block)
         
@@ -82,12 +79,10 @@ class IngredientsContainer(urwid.WidgetWrap):
     def blocks(self):
         return self.ingred_blocks[1:]
 
+
 class EntryBlock(urwid.WidgetWrap):
     """Base class for stacked entry widgets."""
     def __init__(self, entries=[], wrap_amount=70):
-        if not isinstance(entries, list):
-            raise TypeError('{}s only except a list as the first argument,'
-                            ' not {}'.format(__class__, type(entries)))
         self.widgets = deque()
         wrapped = wrap(entries, wrap_amount)
         
@@ -144,17 +139,10 @@ class EntryBlock(urwid.WidgetWrap):
     def del_entry(self, size, key):
         """Delete an entry."""
         widget = self.widgets[self.row]
-        try:
-            # We have an alt_name to account for
-            assert isinstance(self.widgets[2], urwid.AttrMap)
-            one_ingred_left = 3
-        except AssertionError:
-            one_ingred_left = 2
-        
         self.entry_block.move_cursor_to_coords(size, self.col, self.row)
         item = list(self.widgets)[self.row]
         self.widgets.remove(item)
-        if len(self.widgets) == one_ingred_left:
+        if len(self.widgets) == 0:
             self.add_entry()
         try:
             self._refresh(self.row)
@@ -209,14 +197,11 @@ class EntryBlock(urwid.WidgetWrap):
             entries.append(text)
         return entries
 
-class IngredBlock(urwid.WidgetWrap):
+class IngredBlock(EntryBlock):
     """Ingredient block for displaying editable ingredients."""
     def __init__(self, ingredients=[], name=None):
         self.ingredients = ingredients
         self.name = name
-        if not isinstance(self.ingredients, list):
-            raise TypeError('IngredBlock only excepts a list of ingredients')
-        
         self.widgets = deque([BLANK])
         buttons = self._get_buttons()
         self.widgets.append(buttons)
@@ -233,11 +218,6 @@ class IngredBlock(urwid.WidgetWrap):
                 self.widgets.append(ingred_entry)
         self._refresh()
 
-    def _refresh(self, focus_item=0):
-        """Refresh the entire block to update with changes."""
-        self.ingred_block = urwid.Pile(self.widgets, focus_item=focus_item)
-        super().__init__(self.ingred_block)
-    
     def _get_buttons(self):
         """Get block buttons."""
         add_name = urwid.Button('Toggle Name',
@@ -257,7 +237,7 @@ class IngredBlock(urwid.WidgetWrap):
         del self.ingredients
         self.name = ''
         self._refresh()
-
+    
     def toggle_name(self, button):
         """Toggle between name for ingredients or no name."""
         if not self.name:
@@ -275,49 +255,9 @@ class IngredBlock(urwid.WidgetWrap):
                 except AttributeError:
                     pass
             self._refresh(2)
-
-    def keypress(self, size, key):
-        """Capture and process keypress."""
-        key = super().keypress(size, key)
-        self.row = self.ingred_block.focus_position
-        try:
-            self.col = len(self.widgets[self.row].edit_text) + 2
-        except AttributeError:
-            # Object has no edit_text attribute. In other words its a 
-            # urwid.attr_map() and not a urwid.Edit()
-            return key
-        pressed = {
-                'enter': self.on_enter,
-                'ctrl d': self.del_ingredient,
-                'ctrl a': self.insert_ingredient,
-                'ctrl up': self.move_entry,
-                'ctrl down': self.move_entry,
-                }
-        try:
-            # I only need to pass key to one function but i will have to pass 
-            # to all. This is still a verly clean way to write this as opossed 
-            # to if, elif, etc... Perhaps a better way eludes me.
-            pressed[key](size, key)
-        except KeyError:
-            return key
     
-    def add_ingredient(self, button=None):
-        """Add an ingredients to the end of the list."""
-        ingred_entry = urwid.Edit("- ", '')
-        self.widgets.append(ingred_entry)
-        new_focus = len(self.widgets) - 1
-        self._refresh(new_focus)
-    
-    def insert_ingredient(self, size, key):
-        """Insert ingredient on next line and move cursor."""
-        ingred_entry = urwid.Edit("- ", '')
-        row_plus = self.row + 1
-        self.widgets.insert(row_plus, ingred_entry)
-        self.ingred_block.move_cursor_to_coords(size, 2, self.row)
-        self._refresh(row_plus)
-
-    def del_ingredient(self, size, key):
-        """Delete an ingredient."""
+    def del_entry(self, size, key):
+        """Delete an entry."""
         widget = self.widgets[self.row]
         try:
             # We have an alt_name to account for
@@ -326,11 +266,11 @@ class IngredBlock(urwid.WidgetWrap):
         except AssertionError:
             one_ingred_left = 2
         
-        self.ingred_block.move_cursor_to_coords(size, self.col, self.row)
+        self.entry_block.move_cursor_to_coords(size, self.col, self.row)
         item = list(self.widgets)[self.row]
         self.widgets.remove(item)
         if len(self.widgets) == one_ingred_left:
-            self.add_ingredient()
+            self.add_entry()
         try:
             self._refresh(self.row)
         except IndexError:
@@ -338,36 +278,6 @@ class IngredBlock(urwid.WidgetWrap):
             # start deleting goin back
             self._refresh(self.row-1)
     
-    def move_entry(self, size, key):
-        """Mover entry up or down."""
-        self.ingred_block.move_cursor_to_coords(size, self.col, self.row)
-        if key == 'ctrl up':
-            widget = self.widgets[self.row-1]
-            if isinstance(widget, (urwid.AttrMap, urwid.Padding, urwid.Columns)):
-                return
-            # up
-            newfocus = self.row - 1
-        else:
-            # down
-            newfocus = self.row + 1
-
-        item = self.widgets[self.row]
-        self.widgets.remove(item)
-        self.widgets.insert(newfocus, item)
-        try:
-            self._refresh(newfocus)
-        except IndexError:
-            return
-    
-    def on_enter(self, size, key):
-        """Either move cursor to next line or add ingredient if no next line."""
-        try:
-            col = len(self.widgets[self.row + 1].edit_text) + 2
-            self.ingred_block.move_cursor_to_coords(size, col, self.row + 1)
-        except IndexError:
-            self.ingred_block.move_cursor_to_coords(size, 2, self.row)
-            self.add_ingredient()
-
     def get_ingredients(self):
         ingredients = []
         alt_ingreds = {}
@@ -392,9 +302,6 @@ class MethodBlock(EntryBlock):
             self.method = ['Add method here.']
         super().__init__(self.method)
 
-    def get_method(self):
-        pass
-        
 
 class NoteBlock(EntryBlock):
     """Display an editable list of notes."""
@@ -457,34 +364,53 @@ class RecipeEditor:
     def setup_listbox(self):
         """The main listbox"""
         self.disht_group = []
-        radio_dish_types = urwid.GridFlow([urwid.AttrMap(urwid.RadioButton(self.disht_group,
-                            txt), 'buttn', 'buttnf')
-                            for txt in db.DISH_TYPES], 15, 0, 2, 'left')
-        
+        radio_dish_types = urwid.GridFlow(
+            [urwid.AttrMap(
+                urwid.RadioButton(self.disht_group, txt), 'buttn', 'buttnf')
+                                  for txt in db.DISH_TYPES], 15, 0, 2, 'left'
+        )
         for item in self.disht_group:
             if item.get_label() == self.r['dish_type']:
                 item.set_state(True)
 
         self.general_info = [
-                urwid.AttrMap(
-                    urwid.Edit('Recipe Name: ', self.r['recipe_name'], wrap='clip'), 'recipe_name'),
-                urwid.AttrMap(
-                    urwid.IntEdit('Prep Time: ', self.r['prep_time']), 'prep_time'),
-                urwid.AttrMap(
-                    urwid.IntEdit('Cook Time: ', self.r['cook_time']), 'cook_time'),
-                urwid.AttrMap(
-                    urwid.IntEdit('Bake Time: ', self.r['bake_time']), 'bake_time'),
-                urwid.AttrMap(
-                    urwid.Edit('Price($): ', self.r['price']), 'price'),
-                urwid.AttrMap(
-                    urwid.Edit('Source URL: ', self.r['source_url'], wrap='clip'), 'source_url'),
-                urwid.AttrMap(
-                    urwid.Edit('Author: ', self.r['author']), 'author')
-                ]
-                #urwid.AttrMap(urwid.Edit('Categories (comma separated): ', self.r['categories']), 'categories')]
+            urwid.AttrMap(
+                urwid.Edit(
+                    'Recipe Name: ', 
+                    self.r['recipe_name'], 
+                    wrap='clip'), 'recipe_name'
+            ),
+            urwid.AttrMap(
+                urwid.IntEdit(
+                    'Prep Time: ', self.r['prep_time']), 'prep_time'
+                ),
+            urwid.AttrMap(
+                urwid.IntEdit(
+                    'Cook Time: ', self.r['cook_time']), 'cook_time'
+                ),
+            urwid.AttrMap(
+                urwid.IntEdit(
+                    'Bake Time: ', self.r['bake_time']), 'bake_time'
+                ),
+            urwid.AttrMap(
+                urwid.Edit(
+                    'Price($): ', self.r['price']), 'price'
+                ),
+            urwid.AttrMap(
+                urwid.Edit(
+                    'Source URL: ', 
+                    self.r['source_url'], 
+                    wrap='clip'), 
+                    'source_url'
+            ),
+            urwid.AttrMap(
+                urwid.Edit(
+                    'Author: ', self.r['author']), 'author'
+                )
+        ]
 
         self.general_info = urwid.Padding(
-                urwid.Pile(self.general_info), align='left', left=2
+            urwid.Pile(self.general_info), align='left', left=2
         )
         headings_general_and_dish_types = urwid.GridFlow(
                     [HEADINGS['general_info'], 
@@ -498,26 +424,32 @@ class RecipeEditor:
                      ], 79, 0, 2, 'left'
         )
         ingreds, alt_ingreds = self.r.get_ingredients()
-        self.ingred_block = IngredientsContainer(ingredients=ingreds, alt_ingredients=alt_ingreds) 
-        self.method_block = MethodBlock(self.r.get_method())
-        self.notes_block = NoteBlock(self.r['notes'])
         
-        general_and_dish = urwid.GridFlow([self.general_info, radio_dish_types, self.notes_block], 53, 0, 2, 'left')
-        ingred_and_method = urwid.GridFlow([self.ingred_block, self.method_block], 79, 0, 2, 'left')
-        
+        self.ingred_block = IngredientsContainer(
+            ingredients=ingreds, alt_ingredients=alt_ingreds
+        ) 
+        self.method_block = MethodBlock(
+            self.r.get_method()
+        )
+        self.notes_block = NoteBlock(
+            self.r['notes']
+        )
+        general_and_dish = urwid.GridFlow(
+            [self.general_info, 
+            radio_dish_types, 
+            self.notes_block], 53, 0, 2, 'left'
+        )
+        ingred_and_method = urwid.GridFlow(
+            [self.ingred_block, 
+            self.method_block], 79, 0, 2, 'left'
+        )
         self.listbox_content = [
-                BLANK,
-                headings_general_and_dish_types,
-                BLANK,
-                general_and_dish,
-                BLANK,
-                headings_ingred_and_method,
-                BLANK,
-                ingred_and_method
+            BLANK, headings_general_and_dish_types,
+            BLANK, general_and_dish,
+            BLANK, headings_ingred_and_method,
+            BLANK, ingred_and_method
         ]
-        
         list_box = urwid.ListBox(urwid.SimpleListWalker(self.listbox_content))
-        
         return list_box
     
     def quit_prompt(self):

@@ -7,21 +7,24 @@ import sys
 import string
 import textwrap
 
+from termcolor import colored
+
 from pyrecipe import config, db
-from pyrecipe.color import color
+
+S_DIV = colored('~' * 79, 'white')
 
 def mins_to_hours(mins):
     """Convert minutes to hours."""
-    days = mins // 1440
+    #days = mins // 1440
     hours = mins // 60
     minutes = mins - hours * 60
     if not hours:
         return "{} m".format(mins)
     else:
-        len = "%d h %02d m" % (hours, minutes)
-    return len
+        converted_time = "%d h %02d m" % (hours, minutes)
+    return converted_time
 
-def wrap(str_list, width=60):
+def wrap(str_list, width=79):
     """Textwrap for recipes."""
     if not isinstance(str_list, list):
         raise TypeError('First argument must be a list.')
@@ -35,21 +38,21 @@ def wrap(str_list, width=60):
     for index, step in enumerate(str_list, start=1):
         if index >= 10:
             wrapper.initial_indent = ''
-        wrap = wrapper.fill(step)
-        wrapped_str = str(index) + ". ", wrap
+        wrapp = wrapper.fill(step)
+        wrapped_str = str(index) + ". ", wrapp
         wrapped.append(wrapped_str)
     return wrapped
 
 def get_source_path(source):
     """Closer inspection of the source.
-    
-    If all is well, the function returns the source path. 
+
+    If all is well, the function returns the source path.
     """
     # We got an empty string. User is using a Recipe instance
     # to build a recipe from scratch so we dont have a source yet.
     if not source:
         return source
-    
+
     if os.path.isdir(source):
         sys.exit(msg("{} is a directory.".format(source), "ERROR"))
     elif os.path.isfile(source):
@@ -70,11 +73,9 @@ def get_source_path(source):
 
 def get_file_name(source):
     """Get the file name for a recipe source that is in the database."""
-    try: 
-        recipe_uuid = db.get_data()['uuids'][source]
-    except KeyError:
+    recipe_uuid = db.get_data()['uuids'].get(source, None)
+    if recipe_uuid is None:
         return None
-    
     file_name = get_file_name_from_uuid(recipe_uuid)
     return file_name
 
@@ -107,15 +108,16 @@ def stats(verb=0):
 def msg(text, level='INFORM'):
     """Pyrecipe message function with color."""
     if level == 'ERROR':
-        text = 'ERROR: ' + text
+        text = colored('ERROR:', on_color='on_red') + " " + colored(text, 'white')
     
     msg_level = {'INFORM': 'cyan',
                  'ERROR': 'red',
                  'WARN': 'yellow'}
 
-    return color(text, msg_level[level])
+    #return colored(text, msg_level[level])
+    return text
 
 if __name__ == '__main__':
-    test = get_file_name_from_recipe('michael miller\'s pot roast', 'xml')
-    print(test)
-
+    source = 'stir fry'
+    recipe_uuid = db.get_data()['uuids'].get(source, None)
+    print(recipe_uuid)

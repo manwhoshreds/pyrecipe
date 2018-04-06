@@ -5,21 +5,24 @@
 """
 
 import os
-import shutil
 import pprint
 import configparser
 
-#python_binary = shutil.which('python')
+_usr_config_path = os.path.expanduser('~/.config/pyrecipe')
+_recipe_data_path = os.path.join(_usr_config_path, 'recipe_data/')
+if not os.path.exists(_usr_config_path):
+    os.makedirs(_usr_config_path)
+    os.makedirs(_recipe_data_path)
 
-CONFIG_DIR = os.path.expanduser('~/.config/pyrecipe/')
-#if python_binary == '/usr/bin/python':
-RECIPE_DATA_DIR = os.path.join(CONFIG_DIR, 'recipe_data/')
-DB_FILE = os.path.join(CONFIG_DIR, 'recipes.db')
-#else:
-#    RECIPE_DATA_DIR = os.path.expanduser('~/git/pyrecipe/test/recipe_data/')
-#    DB_FILE = os.path.expanduser('~/git/pyrecipe/test/recipes_test.db')
+_conf = os.path.join(_usr_config_path, 'pyrecipe.cfg')
+if os.path.exists(_conf):
+    CONFIG_FILE = _conf
+else:
+    CONFIG_FILE = '/etc/pyrecipe/pyrecipe.cfg'
 
-CONFIG_FILE = os.path.join(CONFIG_DIR + 'pyrecipe.cfg')
+RECIPE_DATA_DIR = os.path.join(_usr_config_path, 'recipe_data/')
+DB_FILE = os.path.join(_usr_config_path, 'recipes.db')
+
 SCRIPT_DIR = os.path.dirname(__file__)
 
 # parse config

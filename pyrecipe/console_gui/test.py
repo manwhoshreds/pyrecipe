@@ -26,4 +26,8 @@ def text_ts():
     text = '. '.join(method)
     tts = gTTS(text=text, lang='en')
     tts.save('test.mp3')
-text_ts()
+
+try:
+    text_ts()
+except KeyboardInterrupt:
+    exit()
