@@ -24,7 +24,7 @@ data_files = [
 ]
 setup(
     name='pyrecipe',
-    version='0.7.10',
+    version='1.0.0',
     packages=packages,
     package_data={
         'pyrecipe': ['culinary_units.txt']
