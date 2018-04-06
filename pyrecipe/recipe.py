@@ -87,11 +87,10 @@ class Recipe:
                         with zfile.open('recipe.yaml', 'r') as stream:
                             self._recipe_data = yaml.load(stream)
                     except KeyError:
-                        msg = utils.msg("Can not find recipe.yaml. Is this"
-                                        " really a recipe file?", "ERROR")
-                        sys.exit(msg)
-            except BadZipFile:
-                sys.exit(utils.msg("This file is not a zipfile.", "ERROR"))
+                        sys.exit(utils.msg("Can not find recipe.yaml. Is this"
+                                           " really a recipe file?", "ERROR"))
+            except BadZipFile as e:
+                sys.exit(utils.msg("{}".format(e), "ERROR"))
         else:
             self._recipe_data = {}
             # dish type should default to main
@@ -100,7 +99,7 @@ class Recipe:
             self.source = utils.get_file_name_from_uuid(self['recipe_uuid'])
 
         # Scan the recipe to build the xml
-        #self._scan_recipe()
+        self._scan_recipe()
 
     def _scan_recipe(self):
         """Scan the recipe to build xml."""

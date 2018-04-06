@@ -127,7 +127,7 @@ def export_recipes(args):
     if args.recipe:
         file_name = utils.get_file_name_from_recipe(args.source)
         src = r.source
-        dst = os.path.join(output_dir, r.file_name)
+        dst = os.path.join(output_dir, file_name)
         if os.path.isfile(dst):
             sys.exit(utils.msg("File already exists.", "ERROR"))
         else:

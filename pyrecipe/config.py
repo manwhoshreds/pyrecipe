@@ -3,7 +3,6 @@
 	~~~~~~~~~~~~~~~~~~
 	pyrecipe configurations and globals
 """
-
 import os
 import pprint
 import configparser

@@ -42,7 +42,7 @@ BLANK = urwid.Divider()
 
 class IngredientsContainer(urwid.WidgetWrap):
     """Main container for holding ingredient blocks."""
-    def __init__(self, ingredients=[], alt_ingredients=None):
+    def __init__(self, ingredients=None, alt_ingredients=None):
         self.ingredients = ingredients
         self.alt_ingredients = alt_ingredients
         add_ingred_block = urwid.Button('Add Ingredient Block',
@@ -52,7 +52,8 @@ class IngredientsContainer(urwid.WidgetWrap):
         
         self.ingred_blocks = []
         self.ingred_blocks.append(add_ingred_block)
-        self._add_block(self.ingredients)
+        if self.ingredients:
+            self._add_block(self.ingredients)
         if self.alt_ingredients:
             for item in self.alt_ingredients:
                 ingreds = self.alt_ingredients[item]

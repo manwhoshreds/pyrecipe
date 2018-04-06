@@ -57,8 +57,8 @@ def get_source_path(source):
         sys.exit(msg("{} is a directory.".format(source), "ERROR"))
     elif os.path.isfile(source):
         if not source.endswith('.recipe'):
-            sys.exit(msg("Pyrecipe can only read files with a"
-                         " .recipe extention.", "ERROR"))
+            sys.exit(msg("Pyrecipe can only read files with a "
+                         ".recipe extention.", "ERROR"))
         else:
             return source
     else:
@@ -108,15 +108,14 @@ def stats(verb=0):
 def msg(text, level='INFORM'):
     """Pyrecipe message function with color."""
     if level == 'ERROR':
-        text = colored('ERROR:', on_color='on_red') + " " + colored(text, 'white')
+        text = '{} {}'.format(colored('ERROR:', on_color='on_red'),
+                              colored(text, 'white'))
+        return text
     
-    msg_level = {'INFORM': 'cyan',
-                 'ERROR': 'red',
-                 'WARN': 'yellow'}
-
-    #return colored(text, msg_level[level])
-    return text
-
+    if level == 'INFORM':
+        text = colored(text, 'cyan', attrs=['bold'])
+        return text
+    
 if __name__ == '__main__':
     source = 'stir fry'
     recipe_uuid = db.get_data()['uuids'].get(source, None)
