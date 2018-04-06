@@ -241,7 +241,6 @@ def main():
     args = parse_args()
     import pyrecipe.argfuncs as argfunc
     action = {
-        'version': argfunc.version,
         'print': argfunc.print_recipe,
         'edit': argfunc.edit_recipe,
         'add': argfunc.add_recipe,
@@ -254,7 +253,7 @@ def main():
         'show': argfunc.show_statistics,
     }
     if args.version:
-        action['version'](args)
+        argfunc.version(args)
     else:
         action[args.subparser](args)
 
