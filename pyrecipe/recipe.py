@@ -68,7 +68,7 @@ yaml.default_flow_style = False
 class Recipe:
     """Open a recipe file and extract its data for futher processing
 
-    The recipe class can open .recipe files and read their data. It can
+    The recipe class can open recipe files and read their data. It can
     change the state of a recipe file and then save the new data back to
     the reicpe file.    
     """
