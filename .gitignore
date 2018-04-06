@@ -3,3 +3,4 @@ test/
 dist/
 MANIFEST
 *egg-info*
+.bumpversion.cfg
