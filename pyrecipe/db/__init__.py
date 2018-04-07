@@ -6,7 +6,7 @@ DISH_TYPES = [
 ]
 
 def get_data():
-    """Get data as dict."""
+    """Get data from the database as a dict."""
     db = RecipeDB()
     recipe_data = {}
     

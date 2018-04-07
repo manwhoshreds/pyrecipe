@@ -50,20 +50,9 @@ _ingr_units = CULINARY_UNITS + PINT_UNDEFINED_UNITS
 _nonplurals = ('each', 'splash')
 _plur_units = [x + 's' for x in _ingr_units if x not in _nonplurals]
 _size_strs = ['large', 'medium', 'small', 'heaping']
-_prp_typs = [
-    'softened', 'diced', 'finely diced', 'shredded', 'tightly packed', 
-    'drained', 'drained and rinsed', 'deviened', 'cubed', 'chopped', 
-    'finely chopped', 'freshly ground', 'very finely chopped', 'minced', 
-    'finely minced', 'peeled and finely minced', 'sliced', 'grated', 'squeezed',
-    'freshly grated', 'peeled', 'quartered', 'julienned', 'puréed', 'crushed', 
-    'coarsely chopped', 'coarsely cracked', 'cut up', 'melted', 
-    'seeded and deviened', 'uncooked', 'peeled and grated', 'lightly packed', 
-    'thinly sliced', 'finely sliced', 'roasted', 'boiling'
-]
 
-INGRED_UNITS          = sorted(_ingr_units + _plur_units)
-SIZE_STRINGS          = sorted(_size_strs)
-PREP_TYPES            = sorted(_prp_typs)
+INGRED_UNITS = sorted(_ingr_units + _plur_units)
+SIZE_STRINGS = sorted(_size_strs)
 
 if __name__ == '__main__':
     print(python_binary)

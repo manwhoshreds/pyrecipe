@@ -119,9 +119,13 @@ class Recipe:
         # not actually an ord tag, so is not read from recipe file
         # it is simply calculated within the class
         if self['prep_time'] and self['cook_time']:
-            self['ready_in'] = RecipeNum(self['prep_time']) + RecipeNum(self['cook_time'])
+            self['ready_in'] = RecipeNum(
+                self['prep_time']) + RecipeNum(self['cook_time']
+            )
         elif self['prep_time'] and self['bake_time']:
-            self['ready_in'] = RecipeNum(self['prep_time']) + RecipeNum(self['bake_time'])
+            self['ready_in'] = RecipeNum(
+                self['prep_time']) + RecipeNum(self['bake_time']
+            )
         else:
             self['ready_in'] = self['prep_time']
 
@@ -271,6 +275,9 @@ class Recipe:
         return ingredients, named_ingredients
 
     def print_recipe(self, verb_level=0):
+        print(self.__str__())
+    
+    def __str__(self, verb_level=0):
         """Print recipe to standard output."""
         recipe_str = colored(self['recipe_name'].title(), 'cyan', attrs=['bold'])
         recipe_str += "\n\nDish Type: {}".format(str(self['dish_type']))
@@ -337,7 +344,7 @@ class Recipe:
             recipe_str += "\n{}".format(colored(index, "yellow"))
             recipe_str += step
 
-        print(recipe_str)
+        return recipe_str
 
     def get_method(self):
         """Return a list of steps."""
