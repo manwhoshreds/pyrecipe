@@ -515,7 +515,6 @@ class Ingredient:
                 ingred_string += ", " + self.prep
             if self.note:
                 ingred_string += " {}".format(self.note)
-
             return ingred_string
 
 
