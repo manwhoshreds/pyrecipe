@@ -327,7 +327,7 @@ class Recipe:
 
             if not extra_info:
                 recipe_str += '\n'
-                recipe_str += utils.msg('No additional inforation', 'WARN')
+                recipe_str += utils.msg('No additional information', 'WARN')
 
         recipe_str += "\n\n{}".format(utils.S_DIV)
         recipe_str += colored("\nIngredients:", "cyan", attrs=['underline'])
