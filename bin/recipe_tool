@@ -45,9 +45,7 @@ def parse_args():
     parser.add_argument(
         "-v",
         "--verbose",
-        dest="verbose",
-        action="count",
-        default=0,
+        action="store_true",
         help="Increase the verbosity of output. \
               Only works with print and show subcommands."
     )

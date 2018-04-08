@@ -112,8 +112,12 @@ def msg(text, level='INFORM'):
                               colored(text, 'white'))
         return text
     
-    if level == 'INFORM':
+    elif level == 'INFORM':
         text = colored(text, 'cyan', attrs=['bold'])
+        return text
+    
+    elif level == 'WARN':
+        text = colored(text, 'yellow', attrs=['bold'])
         return text
     
 if __name__ == '__main__':

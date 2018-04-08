@@ -20,7 +20,7 @@ class RecipeDB:
 
     def add_recipe(self, recipe):
         '''Add a recipe to the database.'''
-        if type(recipe).__name__ != 'Recipe':
+        if type(recipe).__name__ not in ('Recipe', 'RecipeWebScraper'):
             raise TypeError('Argument must be a Recipe instance, not {}'
                             .format(type(recipe)))
 
@@ -47,7 +47,10 @@ class RecipeDB:
                 ) VALUES(?, ?, ?, ?, ?, ?, ?, ?)''', recipe_data
         )
         self._commit()
-        recipe_id = self.query("SELECT id FROM Recipes WHERE name = \'{}\'".format(recipe['recipe_name'].lower()))
+        recipe_id = self.query(
+            "SELECT id FROM Recipes WHERE name = \'{}\'"
+            .format(recipe['recipe_name'].lower())
+        )
         for item in recipe.get_ingredients()[0]:
             self.c.execute('''INSERT OR REPLACE INTO RecipeIngredients (
                                 recipe_id, 
@@ -125,7 +128,10 @@ def delete_recipe(delete_func):
         deleted_file = delete_func(args)
         if deleted_file:
             db = RecipeDB()
-            sql = "DELETE FROM Recipes WHERE recipe_uuid = \'{}\'".format(deleted_file)
+            sql = (
+                "DELETE FROM Recipes WHERE recipe_uuid = \'{}\'"
+                .format(deleted_file)
+            )
             db.execute(sql)
     return wrapper
 

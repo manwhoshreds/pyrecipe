@@ -258,7 +258,11 @@ class Recipe:
         """
         ingredients = []
         for item in self['ingredients']:
-            ingred = Ingredient(item, color=color)
+            ingred = Ingredient(
+                item, 
+                color=color,
+                amount_level=amount_level
+            )
             ingredients.append(str(ingred))
 
         named_ingredients = OrderedDict()
@@ -268,16 +272,20 @@ class Recipe:
                 alt_name = list(item.keys())[0]
                 ingred_list = []
                 for ingredient in list(item.values())[0]:
-                    ingred = Ingredient(ingredient, color=color)
+                    ingred = Ingredient(
+                        ingredient, 
+                        color=color,
+                        amount_level=amount_level
+                    )
                     ingred_list.append(str(ingred))
                 named_ingredients[alt_name] = ingred_list
 
         return ingredients, named_ingredients
 
-    def print_recipe(self, verb_level=0):
-        print(self.__str__())
+    def print_recipe(self, verbose=False, amount_level=0):
+        print(self.__str__(verbose, amount_level))
     
-    def __str__(self, verb_level=0):
+    def __str__(self, verbose=False, amount_level=0):
         """Print recipe to standard output."""
         recipe_str = colored(self['recipe_name'].title(), 'cyan', attrs=['bold'])
         recipe_str += "\n\nDish Type: {}".format(str(self['dish_type']))
@@ -295,7 +303,7 @@ class Recipe:
             recipe_str += "\nAuthor: {}".format(self['author'])
         
         extra_info = False
-        if verb_level >= 1:
+        if verbose:
             if self['price']:
                 recipe_str += "\nPrice: {}".format(self['price'])
                 extra_info = True
@@ -318,13 +326,17 @@ class Recipe:
                 extra_info = True
 
             if not extra_info:
-                utils.msg('\nNo additional inforation', 'ERROR')
+                recipe_str += '\n'
+                recipe_str += utils.msg('No additional inforation', 'WARN')
 
         recipe_str += "\n\n{}".format(utils.S_DIV)
         recipe_str += colored("\nIngredients:", "cyan", attrs=['underline'])
 
         # Put together all the ingredients
-        ingreds, alt_ingreds = self.get_ingredients(color=True)
+        ingreds, alt_ingreds = self.get_ingredients(
+            color=True,
+            amount_level=amount_level
+        )
         for ingred in ingreds:
             recipe_str += "\n{}".format(ingred)
         
