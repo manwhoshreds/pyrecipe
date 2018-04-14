@@ -259,5 +259,6 @@ if __name__ == '__main__':
     """Build the database first if it doesnt exist."""
     import os 
     if not os.path.exists(config.DB_FILE):
+        print('Building recipe database...')
         build_recipe_database()
     main()

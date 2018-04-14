@@ -47,16 +47,17 @@ from urllib.request import urlopen
 from zipfile import ZipFile, BadZipFile
 
 import bs4
-import lxml.etree as ET
+#import lxml.etree as ET
+import xml.etree.ElementTree as ET
 from termcolor import colored
 from ruamel.yaml import YAML
-from playsound import playsound
-from gtts import gTTS
 
 import pyrecipe.utils as utils
 import pyrecipe.config as config
 from pyrecipe.db import update_db
 from pyrecipe.recipe_numbers import RecipeNum
+
+__all__ = ['Recipe', 'RecipeWebScraper', 'IngredientParser']
 
 # GLOBAL REs
 PORTIONED_UNIT_RE = re.compile(r'\(?\d+\.?\d*? (ounce|pound)\)? (cans?|bags?)')
@@ -240,12 +241,14 @@ class Recipe:
     @property
     def xml_data(self):
         """Return the xml data."""
-        result = ET.tostring(self.xml_root,
+        """result = ET.tostring(self.xml_root,
                              xml_declaration=True,
                              encoding='utf-8',
                              with_tail=False,
                              method='xml',
-                             pretty_print=True).decode('utf-8')
+                             pretty_print=True).decode('utf-8')"""
+        result = ET.tostring(self.xml_root).decode('utf-8')
+        #config.PP.pprint(result)
         return result
 
     def get_ingredients(self, amount_level=0, color=False):
@@ -365,24 +368,6 @@ class Recipe:
             steps.append(step['step'])
         return steps
 
-    def read_out_loud(self, data='method', index=''):
-        if not data in ('method', 'ingredients'):
-            raise ValueError('data argument must be one of method or ingredients')
-
-        if data == 'method':
-            methods = self.get_method()
-            if not index:
-                text = ' '.join(methods)
-            else:
-                text = methods[index-1]
-        else:
-            ingredients, alt_ingredients = self.get_ingredients()
-            text = ', '.join(ingredients)
-
-        tts = gTTS(text=text, lang='en')
-        tts.save('test.mp3')
-        playsound('test.mp3')
-    
     def dump_to_screen(self, data_type=None):
         """Dump a data format to screen.
 
@@ -688,5 +673,4 @@ class IngredientParser:
         return ingred_dict
 
 if __name__ == '__main__':
-    # testing goes here
     pass

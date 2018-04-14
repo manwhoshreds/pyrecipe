@@ -20,7 +20,7 @@ import inflect
 
 import pyrecipe.config as config
 import pyrecipe.db as db
-from pyrecipe.recipe import Recipe, IngredientParser, RecipeWebScraper
+from pyrecipe.recipe import *
 
 try:
     __version__ = pkg_resources.get_distribution('pyrecipe').version

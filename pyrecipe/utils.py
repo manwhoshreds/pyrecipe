@@ -72,7 +72,12 @@ def get_source_path(source):
             return file_name
 
 def get_file_name(source):
-    """Get the file name for a recipe source that is in the database."""
+    """Get the file name for a recipe source that is in the database.
+    
+    The file names given to the recipes are derrived from the uuid associated
+    with the recipe. This function looks up and returns the uuid from the
+    database.
+    """
     recipe_uuid = db.get_data()['uuids'].get(source, None)
     if recipe_uuid is None:
         return None

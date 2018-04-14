@@ -8,7 +8,6 @@
     :copyright: 2017 by Michael Miller
     :license: GPL, see LICENSE for more details.
 """
-import textwrap
 from collections import deque
 
 import urwid
@@ -43,7 +42,10 @@ BLANK = urwid.Divider()
 class IngredientsContainer(urwid.WidgetWrap):
     """Main container for holding ingredient blocks."""
     def __init__(self, ingredients=None, alt_ingredients=None):
-        self.ingredients = ingredients
+        if not ingredients:
+            self.ingredients = ['add ingredient']
+        else:
+            self.ingredients = ingredients
         self.alt_ingredients = alt_ingredients
         add_ingred_block = urwid.Button('Add Ingredient Block',
                 on_press=self._add_block)
@@ -338,11 +340,8 @@ class RecipeEditor:
     ])
     def __init__(self, recipe='', add=False):
         if add:
-            if isinstance(recipe, Recipe):
-                self.r = recipe
-            else:
-                self.r = Recipe()
-                self.r['recipe_name'] = recipe
+            self.r = Recipe()
+            self.r['recipe_name'] = recipe
             self.welcome = 'Add a Recipe: {}'.format(self.r['recipe_name'])
         else:
             self.r = Recipe(recipe)
