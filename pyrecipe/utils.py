@@ -11,7 +11,7 @@ from termcolor import colored
 
 from pyrecipe import config, db
 
-S_DIV = colored('~' * 79, 'white')
+S_DIV = lambda m: colored('~' * m, 'white')
 
 def mins_to_hours(mins):
     """Convert minutes to hours."""

@@ -42,7 +42,7 @@ def fetch_recipe(args):
     """Fetch a recipe from a web source."""
     scraper = RecipeWebScraper(args.url)
     if args.save:
-        RecipeEditor(scraper, add=True).start()
+        RecipeEditor(scraper).start()
     else:
         scraper.print_recipe()
 
@@ -72,7 +72,8 @@ def delete_recipe(args):
 
 def edit_recipe(args):
     """Edit a recipe using the urwid console interface (ncurses)."""
-    RecipeEditor(args.source).start()
+    r = Recipe(args.source)
+    RecipeEditor(r).start()
 
 def add_recipe(args):
     """Add a recipe to the recipe store."""

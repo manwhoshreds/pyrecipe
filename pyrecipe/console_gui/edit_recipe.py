@@ -338,13 +338,13 @@ class RecipeEditor:
         ('key', "Ctrl-a"), ('footer', ' Insert item  '),
         ('key', "Ctrl-d"), ('footer', ' Delete item  ')
     ])
-    def __init__(self, recipe='', add=False):
+    def __init__(self, recipe, add=False):
         if add:
             self.r = Recipe()
             self.r['recipe_name'] = recipe
             self.welcome = 'Add a Recipe: {}'.format(self.r['recipe_name'])
         else:
-            self.r = Recipe(recipe)
+            self.r = recipe
             self.welcome = 'Edit: {}'.format(self.r['recipe_name'])
         
         self.initial_hash = hash(self.r)

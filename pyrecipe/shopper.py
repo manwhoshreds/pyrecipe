@@ -109,13 +109,13 @@ class ShoppingList:
         print("Recipes:\n")
         for item in mdn:
             print(item)
-        print("\n" + utils.S_DIV)
+        print("\n" + utils.S_DIV(45))
 
         if len(dn) > 0:
             print("Salad Dressings:\n")
             for item in dn:
                 print(item)
-            print("\n{}".format(utils.S_DIV))
+            print("\n{}".format(utils.S_DIV(45)))
         
         # Print list	
         padding = max(len(x) for x in sl.keys()) + 1

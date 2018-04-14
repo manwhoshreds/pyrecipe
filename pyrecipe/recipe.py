@@ -332,7 +332,7 @@ class Recipe:
                 recipe_str += '\n'
                 recipe_str += utils.msg('No additional information', 'WARN')
 
-        recipe_str += "\n\n{}".format(utils.S_DIV)
+        recipe_str += "\n\n{}".format(utils.S_DIV(79))
         recipe_str += colored("\nIngredients:", "cyan", attrs=['underline'])
 
         # Put together all the ingredients
@@ -350,7 +350,7 @@ class Recipe:
                 for ingred in alt_ingreds[item]:
                     recipe_str += "\n{}".format(ingred)
         
-        recipe_str += "\n\n{}".format(utils.S_DIV)
+        recipe_str += "\n\n{}".format(utils.S_DIV(79))
         recipe_str += colored("\nMethod:", "cyan", attrs=["underline"])
 
         # print steps
