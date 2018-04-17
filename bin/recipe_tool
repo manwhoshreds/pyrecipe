@@ -69,6 +69,16 @@ def parse_args():
         help="Recipe to print"
     ).completer = recipe_completer
 
+    parser_print.add_argument(
+        "-y", 
+        "--yield",
+        default=0,
+        nargs='?',
+        type=int,
+        dest="yield_amount",
+        help="Specify a yield for the recipe."
+    ).completer = recipe_completer
+    
     # recipe_tool edit
     parser_edit = subparser.add_parser(
         "edit", 

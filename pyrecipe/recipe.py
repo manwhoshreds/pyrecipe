@@ -47,8 +47,7 @@ from urllib.request import urlopen
 from zipfile import ZipFile, BadZipFile
 
 import bs4
-#import lxml.etree as ET
-import xml.etree.ElementTree as ET
+import lxml.etree as ET
 from termcolor import colored
 from ruamel.yaml import YAML
 
@@ -238,18 +237,17 @@ class Recipe:
         self['alt_ingredients'] = alt_ingredients
         self._scan_recipe()
 
-    @property
-    def xml_data(self):
+    def get_xml_data(self):
         """Return the xml data."""
-        """result = ET.tostring(self.xml_root,
-                             xml_declaration=True,
-                             encoding='utf-8',
-                             with_tail=False,
-                             method='xml',
-                             pretty_print=True).decode('utf-8')"""
-        result = ET.tostring(self.xml_root).decode('utf-8')
-        #config.PP.pprint(result)
-        return result
+        result = ET.tostring(
+            self.xml_root,
+            xml_declaration=True,
+            encoding='utf-8',
+            with_tail=False,
+            method='xml',
+            pretty_print=True
+        )
+        return result.decode('utf-8')
 
     def get_ingredients(self, amount_level=0, color=False):
         """Return a list of ingredient strings.
@@ -381,7 +379,7 @@ class Recipe:
         elif data_type == 'yaml':
             yaml.dump(self['_recipe_data'], sys.stdout)
         elif data_type == 'xml':
-            print(self.xml_data)
+            print(self.get_xml_data())
         else:
             raise ValueError('data_type argument must be one of '
                              'raw, yaml, or xml')

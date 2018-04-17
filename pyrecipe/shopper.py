@@ -142,7 +142,7 @@ class ShoppingList:
             xml_main_dish.text = str(item)
         
         # the salad dressing names
-        for item in self.salad_dressings:
+        for item in self.dressing_names:
             xml_dressing_name = etree.SubElement(self.xml_salad_dressing, "name")
             xml_dressing_name.text = str(item)
 
@@ -162,7 +162,9 @@ class ShoppingList:
                                 method='xml',
                                 pretty_print=True).decode("utf-8")
         
-        utils.msg("Writing shopping list to %s" % config.SHOPPING_LIST_FILE, 'INFORM')
+        print(utils.msg(
+            "Writing shopping list to %s" 
+            % config.SHOPPING_LIST_FILE, 'INFORM'))
         with open(config.SHOPPING_LIST_FILE, "w") as f:
             f.write(result)
     

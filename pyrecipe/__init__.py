@@ -46,6 +46,7 @@ VER_STR = """
                   | |                              {7}
                   |_|                              {8}
 """
+
 VER_STR = VER_STR.format(
     __scriptname__, __version__,
     'The recipe management program.',
@@ -54,6 +55,7 @@ VER_STR = VER_STR.format(
     'This program may be freely redistrubuted under',
     'the terms of the GNU General Public License.'
 )
+
 def version_info():
     """Print the current version of pyrecipe and exit."""
     return VER_STR

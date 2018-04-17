@@ -81,37 +81,34 @@ class RecipeDB:
     def create_database(self):
         """Create the recipe database."""
         self.c.execute(
-            '''CREATE TABLE IF NOT EXISTS Recipes 
-               ( id INTEGER PRIMARY KEY AUTOINCREMENT, 
-                 recipe_uuid TEXT NOT NULL, 
-                 dish_type TEXT,
-                 name TEXT NOT NULL, 
-                 author TEXT, 
-                 tags TEXT, 
-                 categories TEXT, 
-                 price TEXT, 
-                 source_url TEXT,
-                 CONSTRAINT unique_name UNIQUE
-                 (name, recipe_uuid)
-                )'''
+            '''CREATE TABLE IF NOT EXISTS Recipes ( 
+                id INTEGER PRIMARY KEY AUTOINCREMENT, 
+                recipe_uuid TEXT NOT NULL, 
+                dish_type TEXT,
+                name TEXT NOT NULL, 
+                author TEXT, 
+                tags TEXT, 
+                categories TEXT, 
+                price TEXT, 
+                source_url TEXT,
+                CONSTRAINT unique_name UNIQUE
+                (name, recipe_uuid))'''
         )
         self.c.execute(
-            '''CREATE TABLE IF NOT EXISTS RecipeIngredients 
-               ( recipe_id INTEGER,
-                 ingredient_str TEXT,
-                 CONSTRAINT fk
+            '''CREATE TABLE IF NOT EXISTS RecipeIngredients ( 
+                recipe_id INTEGER,
+                ingredient_str TEXT,
+                CONSTRAINT fk
                     FOREIGN KEY(recipe_id) 
                     REFERENCES Recipes(id) 
-                    ON DELETE CASCADE
-               )'''
+                    ON DELETE CASCADE)'''
         )
         self.c.execute(
-            '''CREATE TABLE IF NOT EXISTS RecipeAltIngredients
-               ( recipe_id INTEGER,
-                 alt_name TEXT,
-                 ingredient_str TEXT,
-                 FOREIGN KEY(recipe_id) REFERENCES Recipes(id)
-               )'''
+            '''CREATE TABLE IF NOT EXISTS RecipeAltIngredients ( 
+                recipe_id INTEGER,
+                alt_name TEXT,
+                ingredient_str TEXT,
+                FOREIGN KEY(recipe_id) REFERENCES Recipes(id))'''
         )
 
 def update_db(save_func):
