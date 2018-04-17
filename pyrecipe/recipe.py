@@ -168,7 +168,18 @@ class Recipe:
             return self.__dict__.get(key, '')
 
     def __setitem__(self, key, value):
-        if key in Recipe.orf_keys:
+        if key == 'oven_temp':
+            value = value.split()
+            try:
+                assert len(value) == 2
+            except AssertionError:
+                raise RuntimeError("oven_temp format must be '300 F'")
+            self.__dict__['_recipe_data'][key] = {
+                'amount': value[0],
+                'unit': value[1]
+            }
+            self._scan_recipe()
+        elif key in Recipe.orf_keys:
             self.__dict__['_recipe_data'][key] = value
             self._scan_recipe()
         else:

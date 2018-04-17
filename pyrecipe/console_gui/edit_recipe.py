@@ -378,35 +378,53 @@ class RecipeEditor:
                 urwid.Edit(
                     'Recipe Name: ', 
                     self.r['recipe_name'], 
-                    wrap='clip'), 'recipe_name'
+                    wrap='clip'
+                ), 'recipe_name'
             ),
             urwid.AttrMap(
                 urwid.IntEdit(
-                    'Prep Time: ', self.r['prep_time']), 'prep_time'
-                ),
+                    'Prep Time: ', 
+                    self.r['prep_time']
+                ), 'prep_time'
+            ),
             urwid.AttrMap(
                 urwid.IntEdit(
-                    'Cook Time: ', self.r['cook_time']), 'cook_time'
-                ),
+                    'Cook Time: ', 
+                    self.r['cook_time']
+                ), 'cook_time'
+            ),
             urwid.AttrMap(
                 urwid.IntEdit(
-                    'Bake Time: ', self.r['bake_time']), 'bake_time'
-                ),
+                    'Bake Time: ', 
+                    self.r['bake_time']
+                ), 'bake_time'
+            ),
             urwid.AttrMap(
                 urwid.Edit(
-                    'Price($): ', self.r['price']), 'price'
-                ),
+                    'Oven Temp: ',
+                    '{} {}'.format(self.r['oven_temp']['amount'],
+                                   self.r['oven_temp']['unit'])
+                ), 'oven_temp'
+            ),
+            urwid.AttrMap(
+                urwid.Edit(
+                    'Price($): ', 
+                    self.r['price']
+                ), 'price'
+            ),
             urwid.AttrMap(
                 urwid.Edit(
                     'Source URL: ', 
                     self.r['source_url'], 
-                    wrap='clip'), 
-                    'source_url'
+                    wrap='clip'
+                ), 'source_url'
             ),
             urwid.AttrMap(
                 urwid.Edit(
-                    'Author: ', self.r['author']), 'author'
-                )
+                    'Author: ', 
+                    self.r['author']
+                ), 'author'
+            )
         ]
 
         self.general_info = urwid.Padding(
