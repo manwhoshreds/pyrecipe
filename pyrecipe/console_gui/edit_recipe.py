@@ -42,8 +42,8 @@ BLANK = urwid.Divider()
 class IngredientsContainer(urwid.WidgetWrap):
     """Main container for holding ingredient blocks."""
     def __init__(self, ingredients=None, alt_ingredients=None):
-        if not ingredients:
-            self.ingredients = ['add ingredient']
+        if not ingredients and not alt_ingredients:
+            self.ingredients = ['Add ingredient']
         else:
             self.ingredients = ingredients
         self.alt_ingredients = alt_ingredients
@@ -212,13 +212,9 @@ class IngredBlock(EntryBlock):
             self.alt_name = urwid.AttrMap(urwid.Edit('* ', name), 'title')
             self.widgets.append(self.alt_name)
         
-        if len(self.ingredients) < 1:
-            ingred_entry = urwid.Edit("- ", 'add ingredient')
+        for item in self.ingredients:
+            ingred_entry = urwid.Edit("- ", item)
             self.widgets.append(ingred_entry)
-        else:
-            for item in self.ingredients:
-                ingred_entry = urwid.Edit("- ", item)
-                self.widgets.append(ingred_entry)
         self._refresh()
 
     def _get_buttons(self):
@@ -399,13 +395,13 @@ class RecipeEditor:
                     self.r['bake_time']
                 ), 'bake_time'
             ),
-            urwid.AttrMap(
-                urwid.Edit(
-                    'Oven Temp: ',
-                    '{} {}'.format(self.r['oven_temp']['amount'],
-                                   self.r['oven_temp']['unit'])
-                ), 'oven_temp'
-            ),
+            #urwid.AttrMap(
+            #    urwid.Edit(
+            #        'Oven Temp: ',
+            #        '{} {}'.format(self.r['oven_temp']['amount'],
+            #                       self.r['oven_temp']['unit'])
+            #    ), 'oven_temp'
+            #),
             urwid.AttrMap(
                 urwid.Edit(
                     'Price($): ', 
@@ -580,7 +576,14 @@ class RecipeEditor:
                 names += list(ingreds.keys())
             else:
                 ingredients += ingreds
-        self.r.ingredients = ingredients
+        
+        if len(ingredients) > 0:
+            self.r.ingredients = ingredients
+        else:
+            try: 
+                del self.r['ingredients']
+            except KeyError:
+                pass
         
         if len(alt_ingreds) > 0:
             self.r.alt_ingredients = alt_ingreds
