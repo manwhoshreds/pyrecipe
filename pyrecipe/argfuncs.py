@@ -40,11 +40,12 @@ def print_shopping_list(args):
 
 def fetch_recipe(args):
     """Fetch a recipe from a web source."""
-    scraper = RecipeWebScraper(args.url)
-    if args.save:
-        RecipeEditor(scraper).start()
-    else:
-        scraper.print_recipe()
+    print("This feature is currently under development")
+    #scraper = RecipeWebScraper(args.url)
+    #if args.save:
+    #    RecipeEditor(scraper).start()
+    #else:
+    #    scraper.print_recipe()
 
 def print_recipe(args):
     """Print a recipe to stdout."""
