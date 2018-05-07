@@ -23,8 +23,8 @@ from urllib.parse import urlencode
 
 import bs4
 
+import pyrecipe.utils as utils
 from pyrecipe import (Recipe, IngredientParser)
-
 
 class RecipeWebScraper(Recipe):
     """Scrape recipes from a web source.
@@ -33,18 +33,38 @@ class RecipeWebScraper(Recipe):
     Scraped recipes shoul be used as a template for a
     recipe.
     """
-    SEARCHABLE_SITES = ['tasty.com']
-    
     def __init__(self):
         super().__init__()
-
-    def search(self, site='tasty.com'):
-        pass
-         
-
+    
+    def search(self, search_str, site='tasty'):
+        site = site.lower()
+        base_urls = {
+            'tasty': 'https://tasty.co/search?'
+        }
+        try:
+            base_url = base_urls[site]
+        except KeyError:
+            sys.exit(utils.msg(
+                "Site is not searchable from pyrecipe", level="ERROR")
+            )
         
+        encoded_search = urlencode({"q": search_str})
+        search = "{}{}".format(base_url, encoded_search)
+        req = urlopen(search)
+        soup = bs4.BeautifulSoup(req, 'html.parser')
+        
+        # feed-item corresponds to link items from the search
+        search_results = soup.find_all('a', attrs={'class': 'feed-item'})
+        
+        results = {}
+        for item in search_results:
+            url = item.get('href')
+            name = url.split('/')[-1].replace("-", " ").title()
+            results[name] = url
+        
+        return results
+    
     def scrape(self, url):
-        self['source_url'] = url
         try:
             self.req = urlopen(url)
         except ValueError:
@@ -54,6 +74,7 @@ class RecipeWebScraper(Recipe):
         self._fetch_ingredients()
         self._fetch_author()
         self._fetch_method()
+    
     def _fetch_recipe_name(self):
         name_box = self.soup.find('h2', attrs={'class': 'modal-title'})
         self['recipe_name'] = name_box.text.strip()
@@ -72,8 +93,7 @@ class RecipeWebScraper(Recipe):
     def _fetch_method(self):
         method_box = self.soup.find('div', attrs={'class': 'directions-inner container-xs'})
         litags = method_box.find_all('li')
-        # last litag is "submit a correction", we dont need that
-        del litags[-1]
+        # last litag is "submit a correction", we dont need that del litags[-1]
         recipe_steps = []
         for item in litags:
             step_dict = {}
@@ -90,6 +110,10 @@ class RecipeWebScraper(Recipe):
         
 
 if __name__ == '__main__':
-    test = RecipeWebScraper.SEARCHABLE_SITES
-    print(test)
+    test = RecipeWebScraper()
+    search = test.search("test")
+    print(bool(search))
+    for key, value in search.items():
+        print("{}: {}".format(key, value))
+    
     
