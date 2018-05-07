@@ -301,7 +301,6 @@ class MethodBlock(EntryBlock):
             self.method = ['Add method here.']
         super().__init__(self.method)
 
-
 class NoteBlock(EntryBlock):
     """Display an editable list of notes."""
     def __init__(self, notes=[]):
@@ -611,7 +610,7 @@ class RecipeEditor:
         recipe = self.get_recipe_data()
         recipe.save()
         raise urwid.ExitMainLoop()
-
+    
     def start(self):
         """Main entry point of the recipe editor."""
         self.loop = self.setup_view()
@@ -619,4 +618,5 @@ class RecipeEditor:
         
 
 if __name__ == '__main__':
-    RecipeEditor('test').start()
+    r = Recipe('test')
+    RecipeEditor(r).start()

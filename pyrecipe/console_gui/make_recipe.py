@@ -113,7 +113,8 @@ class IngredBlock(urwid.WidgetWrap):
         except ValueError:
             return
         pressed = {
-                'enter': self.cur_focus_up
+                #'enter': self.cur_focus_up
+                'enter': print(self.selectable)
                 }
         try:
             # I only need to pass key to one function
@@ -121,7 +122,9 @@ class IngredBlock(urwid.WidgetWrap):
             # this is still a verly clean way to write this
             # as opossed to if, elif, etc....
             # perhaps a better way eludes me
-            pressed[key](size, key, 1)
+            pressed[key]
+            #pressed[key](size, key, 1)
+            print(self.selectable)
         except KeyError:
             return key
     
@@ -153,6 +156,9 @@ class EntryBlock(urwid.WidgetWrap):
     @property
     def widget_list(self):
         return self.pile.widget_list
+   
+    def selectable(self):
+        return True
     
     def keypress(self, size, key):
         key = super().keypress(size, key)
@@ -316,5 +322,5 @@ class RecipeMaker:
         
 
 if __name__ == '__main__':
-    get_speech()
-    #RecipeMaker('test').start()
+    #get_speech()
+    RecipeMaker('test').start()

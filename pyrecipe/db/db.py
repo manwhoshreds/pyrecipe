@@ -8,6 +8,38 @@ import os
 import sqlite3
 from pyrecipe.config import DB_FILE
 
+TABLES = {}
+TABLES['Recipes'] = (
+    "CREATE TABLE IF NOT EXISTS Recipes("
+    "   id INTEGER PRIMARY KEY AUTOINCREMENT,"
+    "   recipe_uuid TEXT NOT NULL,"
+    "   dish_type TEXT,"
+    "   name TEXT NOT NULL,"
+    "   author TEXT," 
+    "   tags TEXT,"
+    "   categories TEXT,"
+    "   price TEXT,"
+    "   source_url TEXT,"
+    "   CONSTRAINT unique_name UNIQUE"
+    "   (name, recipe_uuid))"
+)
+TABLES['RecipeIngredients'] = (
+    "CREATE TABLE IF NOT EXISTS RecipeIngredients("
+    "   recipe_id INTEGER,"
+    "   ingredient_str TEXT,"
+    "   CONSTRAINT fk"
+    "       FOREIGN KEY(recipe_id)"
+    "       REFERENCES Recipes(id)"
+    "       ON DELETE CASCADE)"
+)
+TABLES['RecipeAltIngredients'] = (
+    "CREATE TABLE IF NOT EXISTS RecipeAltIngredients("
+    "   recipe_id INTEGER,"
+    "   alt_name TEXT,"
+    "   ingredient_str TEXT,"
+    "   FOREIGN KEY(recipe_id) REFERENCES Recipes(id))"
+)
+
 class RecipeDB:
     """A database subclass for pyrecipe."""
     def __init__(self):

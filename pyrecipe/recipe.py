@@ -44,6 +44,7 @@ import uuid
 import string
 from collections import OrderedDict
 from urllib.request import urlopen
+from urllib.parse import urlencode
 from zipfile import ZipFile, BadZipFile
 
 import bs4
@@ -682,4 +683,6 @@ class IngredientParser:
         return ingred_dict
 
 if __name__ == '__main__':
-    pass
+    req = urlopen('test')
+    print(req)
+    
