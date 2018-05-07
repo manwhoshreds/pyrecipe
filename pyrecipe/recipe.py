@@ -43,11 +43,8 @@ import sys
 import uuid
 import string
 from collections import OrderedDict
-from urllib.request import urlopen
-from urllib.parse import urlencode
 from zipfile import ZipFile, BadZipFile
 
-import bs4
 import lxml.etree as ET
 from termcolor import colored
 from ruamel.yaml import YAML
@@ -57,7 +54,7 @@ import pyrecipe.config as config
 from pyrecipe.db import update_db
 from pyrecipe.recipe_numbers import RecipeNum
 
-__all__ = ['Recipe', 'RecipeWebScraper', 'IngredientParser']
+__all__ = ['Recipe', 'IngredientParser']
 
 # GLOBAL REs
 PORTIONED_UNIT_RE = re.compile(r'\(?\d+\.?\d*? (ounce|pound)\)? (cans?|bags?)')
@@ -296,10 +293,10 @@ class Recipe:
         return ingredients, named_ingredients
 
     def print_recipe(self, verbose=False, amount_level=0):
+        """Print recipe to standard output."""
         print(self.__str__(verbose, amount_level))
     
     def __str__(self, verbose=False, amount_level=0):
-        """Print recipe to standard output."""
         recipe_str = colored(self['recipe_name'].title(), 'cyan', attrs=['bold'])
         recipe_str += "\n\nDish Type: {}".format(str(self['dish_type']))
         for item in ('prep_time', 'cook_time', 'bake_time', 'ready_in'):
@@ -413,55 +410,6 @@ class Recipe:
             with ZipFile(self.source, 'w') as zfile:
                 zfile.writestr('recipe.yaml', stream.getvalue())
                 zfile.writestr('MIMETYPE', 'application/recipe+zip')
-
-
-class RecipeWebScraper(Recipe):
-    """Scrape recipes from web sources."""
-    def __init__(self, url):
-        super().__init__()
-        self['source_url'] = url
-        try:
-            self.req = urlopen(url)
-        except ValueError:
-            sys.exit('You must supply a valid url.')
-        self.soup = bs4.BeautifulSoup(self.req, 'html.parser')
-        self._fetch_recipe_name()
-        self._fetch_ingredients()
-        self._fetch_author()
-        self._fetch_method()
-
-    def _fetch_recipe_name(self):
-        name_box = self.soup.find('h2', attrs={'class': 'modal-title'})
-        self['recipe_name'] = name_box.text.strip()
-
-    def _fetch_ingredients(self):
-        ingred_box = self.soup.find_all('ul', attrs={'class': 'ingredient-list'})
-        ingred_parser = IngredientParser()
-        ingredients = []
-        for item in ingred_box:
-            for litag in item.find_all('li'):
-                ingred_text = ' '.join(litag.text.strip().split())
-                ingred = ingred_parser.parse(ingred_text)
-                ingredients.append(ingred)
-        self['ingredients'] = ingredients
-
-    def _fetch_method(self):
-        method_box = self.soup.find('div', attrs={'class': 'directions-inner container-xs'})
-        litags = method_box.find_all('li')
-        # last litag is "submit a correction", we dont need that
-        del litags[-1]
-        recipe_steps = []
-        for item in litags:
-            step_dict = {}
-            step_dict['step'] = item.text.strip()
-            recipe_steps.append(step_dict)
-
-        self['steps'] = recipe_steps
-
-    def _fetch_author(self):
-        name_box = self.soup.find('h6', attrs={'class': 'byline'})
-        recipe_by = name_box.text.strip()
-        self['author'] = ' '.join(recipe_by.split(' ')[2:]).strip()
 
 
 class Ingredient:
@@ -683,6 +631,9 @@ class IngredientParser:
         return ingred_dict
 
 if __name__ == '__main__':
-    req = urlopen('test')
-    print(req)
+    color = False
+    colored = colored if color else lambda a, kw: None
+    print(colored)
+    #req = urlopen('http://test')
+    #print(req)
     

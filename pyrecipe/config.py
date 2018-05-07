@@ -27,9 +27,16 @@ SCRIPT_DIR = os.path.dirname(__file__)
 # parse config
 config = configparser.ConfigParser()
 config.read(CONFIG_FILE)
-RECIPE_XML_DIR = os.path.expanduser(config['paths']['recipe_xml_dir'])
-SHOPPING_LIST_FILE = os.path.expanduser(config['paths']['shopping_list_file'])
-RAND_RECIPE_COUNT = config['pyrecipe']['rand_recipe_count']
+
+# --Paths
+RECIPE_XML_DIR = os.path.expanduser(config['paths'].get('recipe_xml_dir', None))
+SHOPPING_LIST_FILE = os.path.expanduser(config['paths'].get('shopping_list_file', None))
+
+# --Pyrecipe
+RAND_RECIPE_COUNT = config['pyrecipe'].get('rand_recipe_count', 4)
+PYRECIPE_COLOR = config['pyrecipe'].get('color', None)
+
+# --End parse config
 
 RECIPE_DATA_FILES = []
 for item in os.listdir(RECIPE_DATA_DIR):
@@ -55,5 +62,5 @@ INGRED_UNITS = sorted(_ingr_units + _plur_units)
 SIZE_STRINGS = sorted(_size_strs)
 
 if __name__ == '__main__':
-    print(python_binary)
+    pass
     #print(INGRED_UNITS)
