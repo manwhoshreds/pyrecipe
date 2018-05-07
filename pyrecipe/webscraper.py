@@ -29,11 +29,21 @@ from pyrecipe import (Recipe, IngredientParser)
 class RecipeWebScraper(Recipe):
     """Scrape recipes from a web source.
     
-    Main use is to make a template for a recipe on which
-    to develop further.
+    This is a base class used to scrape a web source.
+    Scraped recipes shoul be used as a template for a
+    recipe.
     """
-    def __init__(self, url):
+    SEARCHABLE_SITES = ['tasty.com']
+    
+    def __init__(self):
         super().__init__()
+
+    def search(self, site='tasty.com'):
+        pass
+         
+
+        
+    def scrape(self, url):
         self['source_url'] = url
         try:
             self.req = urlopen(url)
@@ -44,7 +54,6 @@ class RecipeWebScraper(Recipe):
         self._fetch_ingredients()
         self._fetch_author()
         self._fetch_method()
-
     def _fetch_recipe_name(self):
         name_box = self.soup.find('h2', attrs={'class': 'modal-title'})
         self['recipe_name'] = name_box.text.strip()
@@ -78,8 +87,9 @@ class RecipeWebScraper(Recipe):
         recipe_by = name_box.text.strip()
         self['author'] = ' '.join(recipe_by.split(' ')[2:]).strip()
 
+        
 
 if __name__ == '__main__':
-    req = urlopen('test')
-    print(req)
+    test = RecipeWebScraper.SEARCHABLE_SITES
+    print(test)
     
