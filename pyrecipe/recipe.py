@@ -18,7 +18,7 @@
               in a recipe.
 
               The current recipe data understood by the recipe class can
-              be found in the class variable: orf_keys
+              be found in the class variable: ORF_KEYS
 
 
     - RecipeWebScraper: The pyrecipe web_scraper class is a web
@@ -39,7 +39,7 @@
 """
 import re
 import io
-import sys
+import sys 
 import uuid
 import string
 from collections import OrderedDict
@@ -71,10 +71,12 @@ class Recipe:
     the reicpe file.    
     """
     # All keys applicable to the Open Recipe 
-    orf_keys = ['recipe_name', 'recipe_uuid', 'dish_type', 'category',
-                'cook_time', 'prep_time', 'author', 'oven_temp', 'bake_time',
-                'yields', 'ingredients', 'alt_ingredients', 'notes',
-                'source_url', 'steps', 'tags', 'source_book', 'price']
+    ORF_KEYS = [
+        'recipe_name', 'recipe_uuid', 'dish_type', 'category',
+        'cook_time', 'prep_time', 'author', 'oven_temp', 'bake_time',
+        'yields', 'ingredients', 'alt_ingredients', 'notes',
+        'source_url', 'steps', 'tags', 'source_book', 'price'
+    ]
 
     def __init__(self, source=''):
         self.source = utils.get_source_path(source)
@@ -160,7 +162,7 @@ class Recipe:
         return "Recipe(name='{}')".format(self['recipe_name'])
 
     def __getitem__(self, key):
-        if key in Recipe.orf_keys:
+        if key in Recipe.ORF_KEYS:
             return self.__dict__['_recipe_data'].get(key, '')
         else:
             return self.__dict__.get(key, '')
@@ -177,15 +179,15 @@ class Recipe:
                 'unit': value[1]
             }
             self._scan_recipe()
-        elif key in Recipe.orf_keys:
+        elif key in Recipe.ORF_KEYS:
             self.__dict__['_recipe_data'][key] = value
             self._scan_recipe()
         else:
             self.__dict__[key] = value
 
     def __delitem__(self, key):
-        if key in Recipe.orf_keys:
-            try:
+        if key in Recipe.ORF_KEYS:
+        if key in Recipe.ORF_KEYS:
                 del self.__dict__['_recipe_data'][key]
                 self._scan_recipe()
             except KeyError:
