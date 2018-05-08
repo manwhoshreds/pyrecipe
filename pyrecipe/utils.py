@@ -13,6 +13,16 @@ from pyrecipe import config, db
 
 S_DIV = lambda m: colored('~' * m, 'white')
 
+def format_text(string):
+    """Format text for use in pyrecipe function.
+    
+    Formats the text so that it is more consistant and
+    can be used throughout pyrecipe. Text is striped of 
+    extraneous whitepace and lower cased. This function
+    is mainly used when string input is recieved from the user.
+    """
+    return string.lower().strip()
+
 def mins_to_hours(mins):
     """Convert minutes to hours."""
     #days = mins // 1440

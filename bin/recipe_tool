@@ -215,19 +215,25 @@ def parse_args():
     parser_fetch = subparser.add_parser(
         "fetch",
         help="Fetch a recipe from a website. \
-              (currently only supports www.geniuskitchen.com, more to come)"
+              (currently only supports tasty.co, more to come)"
     )
     parser_fetch.add_argument(
         "url",
+        nargs="?",
+        default=None,
         help="url of recipe to fetch"
     )
     parser_fetch.add_argument(
         "-s",
         "--save",
-        dest="save",
         action="store_true",
         help="Save file, default behaviour just prints recipe to stdout."
     )
+    parser_fetch.add_argument(
+        "--search",
+        help="Search the web for a recipe to scrape"
+    )
+
     # auto completion
     argcomplete.autocomplete(parser)
     

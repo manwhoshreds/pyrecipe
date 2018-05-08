@@ -26,6 +26,41 @@ import bs4
 import pyrecipe.utils as utils
 from pyrecipe import (Recipe, IngredientParser)
 
+
+def search(self, search_str, site='tasty'):
+    """ This search function works with tasty.
+    I havent figured out how to implement this inside the individual
+    web scraper subclasses yet so im leting it hang out until i figuered it out
+    """
+    search_str = utils.format_text(search_str)
+    site = site.lower()
+    base_urls = {
+        'tasty': 'https://tasty.co/search?'
+    }
+    try:
+        base_url = base_urls[site]
+    except KeyError:
+        sys.exit(utils.msg(
+            "Site is not searchable from pyrecipe", level="ERROR")
+        )
+    
+    encoded_search = urlencode({"q": search_str})
+    search = "{}{}".format(base_url, encoded_search)
+    req = urlopen(search)
+    soup = bs4.BeautifulSoup(req, 'html.parser')
+    
+    # feed-item corresponds to link items from the search
+    search_results = soup.find_all('a', attrs={'class': 'feed-item'})
+    
+    results = {}
+    for item in search_results:
+        url = item.get('href')
+        name = url.split('/')[-1].replace("-", " ").title()
+        results[name] = url
+    
+    return results
+
+
 class RecipeWebScraper(Recipe):
     """Scrape recipes from a web source.
     
@@ -33,64 +68,68 @@ class RecipeWebScraper(Recipe):
     Scraped recipes shoul be used as a template for a
     recipe.
     """
-    def __init__(self):
-        super().__init__()
-    
-    def search(self, search_str, site='tasty'):
-        site = site.lower()
-        base_urls = {
-            'tasty': 'https://tasty.co/search?'
+    def __new__(cls, url):
+        scrapers = {
+            'https://tasty.co/': TastyWebScraper,
+            'http://www.geniuskitchen.com/': GeniusWebScraper
         }
-        try:
-            base_url = base_urls[site]
-        except KeyError:
+        cls.scrapeable_sites = list(scrapers.keys())
+        scrapeable = [s for s in cls.scrapeable_sites if url.startswith(s)][0]
+        if not scrapeable:
             sys.exit(utils.msg(
-                "Site is not searchable from pyrecipe", level="ERROR")
-            )
+                "{} is not scrapeable by pyrecipe".format(url), "WARN"))
         
-        encoded_search = urlencode({"q": search_str})
-        search = "{}{}".format(base_url, encoded_search)
-        req = urlopen(search)
-        soup = bs4.BeautifulSoup(req, 'html.parser')
-        
-        # feed-item corresponds to link items from the search
-        search_results = soup.find_all('a', attrs={'class': 'feed-item'})
-        
-        results = {}
-        for item in search_results:
-            url = item.get('href')
-            name = url.split('/')[-1].replace("-", " ").title()
-            results[name] = url
-        
-        return results
+        return scrapers[scrapeable].__new__(cls)
     
-    def scrape(self, url):
-        try:
-            self.req = urlopen(url)
-        except ValueError:
-            sys.exit('You must supply a valid url.')
-        self.soup = bs4.BeautifulSoup(self.req, 'html.parser')
-        self._fetch_recipe_name()
-        self._fetch_ingredients()
-        self._fetch_author()
-        self._fetch_method()
-    
-    def _fetch_recipe_name(self):
-        name_box = self.soup.find('h2', attrs={'class': 'modal-title'})
-        self['recipe_name'] = name_box.text.strip()
+    def __init__(self, url):
+        super().__init__()
+        self.url = url
+        req = urlopen(self.url)
+        self.soup = bs4.BeautifulSoup(req, 'html.parser')
 
-    def _fetch_ingredients(self):
+
+    
+    def scrape(self):
+        self['source_url'] = self.url
+        self['recipe_name'] = self.recipe_name
+        self['author'] = self.author
+        self.ingredients = self.scraped_ingredients
+        self['steps'] = self.scraped_method
+
+
+class GeniusWebScraper(RecipeWebScraper):
+    
+    def __new__(cls):
+        return object.__new__(GeniusWebScraper)
+    
+    def __init__(self, url):
+        super().__init__(url)
+    
+    @property
+    def recipe_name(self):
+        name_box = self.soup.find('h2', attrs={'class': 'modal-title'})
+        recipe_name = name_box.text.strip()
+        return recipe_name
+ 
+    @property
+    def author(self):
+        name_box = self.soup.find('h6', attrs={'class': 'byline'})
+        recipe_by = name_box.text.strip()
+        author = ' '.join(recipe_by.split(' ')[2:]).strip()
+        return author
+    
+    @property
+    def scraped_ingredients(self):
         ingred_box = self.soup.find_all('ul', attrs={'class': 'ingredient-list'})
-        ingred_parser = IngredientParser()
         ingredients = []
         for item in ingred_box:
             for litag in item.find_all('li'):
-                ingred_text = ' '.join(litag.text.strip().split())
-                ingred = ingred_parser.parse(ingred_text)
+                ingred = ' '.join(litag.text.strip().split())
                 ingredients.append(ingred)
-        self['ingredients'] = ingredients
-
-    def _fetch_method(self):
+        return ingredients
+    
+    @property
+    def scraped_method(self):
         method_box = self.soup.find('div', attrs={'class': 'directions-inner container-xs'})
         litags = method_box.find_all('li')
         # last litag is "submit a correction", we dont need that del litags[-1]
@@ -100,20 +139,66 @@ class RecipeWebScraper(Recipe):
             step_dict['step'] = item.text.strip()
             recipe_steps.append(step_dict)
 
-        self['steps'] = recipe_steps
+        steps = recipe_steps
+        return steps
 
-    def _fetch_author(self):
-        name_box = self.soup.find('h6', attrs={'class': 'byline'})
-        recipe_by = name_box.text.strip()
-        self['author'] = ' '.join(recipe_by.split(' ')[2:]).strip()
 
-        
+class TastyWebScraper(RecipeWebScraper):
+    
+    def __new__(cls):
+        return object.__new__(TastyWebScraper)
+    
+    def __init__(self, url):
+        super().__init__(url)
+    
+    @property
+    def recipe_name(self):
+        """Recipe name."""
+        name_box = self.soup.find('h1', attrs={'class': 'recipe-name'})
+        recipe_name = name_box.text.strip()
+        return recipe_name
+ 
+    @property
+    def author(self):
+        """Recipe author."""
+        author = ''
+        name_box = self.soup.find('h3', attrs={'class': 'xs-text-5'})
+        if name_box:
+            recipe_by = name_box.text.strip()
+            author = ' '.join(recipe_by.split('by')).strip()
+        return author
+    
+    @property
+    def scraped_ingredients(self):
+        """Recipe ingredients."""
+        ingred_box = self.soup.find('ul', attrs={'class': 'list-unstyled'})
+        ingredients = []
+        for litag in ingred_box.find_all('li'):
+            ingred = ' '.join(litag.text.strip().split())
+            ingredients.append(ingred)
+        return ingredients
+    
+    @property
+    def scraped_method(self):
+        """Recipe method."""
+        method_box = self.soup.find('ol', attrs={'class': 'prep-steps'})
+        litags = method_box.find_all('li')
+        # Quite often, a recipe site has something unnessasary at the end of 
+        # the steps such as Enjoy! or 'submit a correction'. be on the look out
+        # for such behavior and uncomment the next line if need be.
+        #del litags[-1]
+        recipe_steps = []
+        for item in litags:
+            step_dict = {}
+            step_dict['step'] = item.text.strip()
+            recipe_steps.append(step_dict)
+        return recipe_steps
 
 if __name__ == '__main__':
-    test = RecipeWebScraper()
-    search = test.search("test")
-    print(bool(search))
-    for key, value in search.items():
-        print("{}: {}".format(key, value))
-    
-    
+    test = RecipeWebScraper('https://tasty.co/recipe/one-pan-teriyaki-salmon-dinner')
+    print(test.scrapeable_sites)
+
+    test.scrape()
+    test.print_recipe()
+    #test = RecipeWebScraper()
+    #test.search('hamburger')

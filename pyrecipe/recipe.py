@@ -187,7 +187,10 @@ class Recipe:
 
     def __delitem__(self, key):
         if key in Recipe.ORF_KEYS:
-            del self.__dict__['_recipe_data'][key]
+            try:
+                del self.__dict__['_recipe_data'][key]
+            except KeyError:
+                pass
             self._scan_recipe()
         else:
             del self.__dict__[key]
