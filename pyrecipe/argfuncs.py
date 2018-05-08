@@ -12,8 +12,8 @@ import os
 
 import pyrecipe.utils as utils
 import pyrecipe.shopper as shopper
-from pyrecipe import (Recipe, RecipeWebScraper, 
-                      version_info, config)
+from pyrecipe import (Recipe, RecipeWebScraper,
+                      SCRAPEABLE_SITES, version_info, config)
 from pyrecipe.db import delete_recipe
 from pyrecipe.console_gui import RecipeEditor, RecipeMaker
 
@@ -40,23 +40,17 @@ def print_shopping_list(args):
 
 def fetch_recipe(args):
     """Fetch a recipe from a web source."""
-    scraper = RecipeWebScraper(args.url)
-    if args.url:
-        scraper.scrape() 
-        RecipeEditor(scraper).start()
-        scraper.print_recipe()
-    else:
-        if args.search:
-            results = scraper.search(args.search)
-            if results:
-                print(results)
-            else:
-                sys.exit(utils.msg(
-                    "Could not find any recipes using using the "
-                    "search term \"{}\".".format(args.search), "WARN")
-                )
+    if args.list_sites:
+        sys.exit(print('\n'.join(SCRAPEABLE_SITES)))
     
-
+    scraper = RecipeWebScraper(args.url)
+    if args.edit:
+        scraper = RecipeWebScraper(args.url)
+        RecipeEditor(scraper).start()
+    else:
+        scraper.scrape() 
+        scraper.print_recipe()
+    
 def print_recipe(args):
     """Print a recipe to stdout."""
     r = Recipe(args.source)

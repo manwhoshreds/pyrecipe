@@ -21,7 +21,7 @@ import inflect
 import pyrecipe.config as config
 import pyrecipe.db as db
 from pyrecipe.recipe import *
-from pyrecipe.webscraper import RecipeWebScraper
+from pyrecipe.webscraper import (RecipeWebScraper, SCRAPEABLE_SITES)
 
 try:
     __version__ = pkg_resources.get_distribution('pyrecipe').version

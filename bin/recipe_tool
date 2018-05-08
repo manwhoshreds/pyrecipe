@@ -12,7 +12,7 @@ import argparse
 
 import argcomplete
 
-from pyrecipe import config, Recipe, db
+from pyrecipe import config, Recipe, db, __scriptname__
 
 def recipe_completer(**kwargs):
     """List of recipes for completer."""
@@ -221,13 +221,18 @@ def parse_args():
         "url",
         nargs="?",
         default=None,
-        help="url of recipe to fetch"
+        help="Url of a recipe to fetch"
     )
     parser_fetch.add_argument(
-        "-s",
-        "--save",
+        "-e",
+        "--edit",
         action="store_true",
-        help="Save file, default behaviour just prints recipe to stdout."
+        help="Open the recipe in the editor. Select this to save the recipe"
+    )
+    parser_fetch.add_argument(
+        "--list-sites",
+        action="store_true",
+        help="List the sites that {} can download from".format(__scriptname__)
     )
     parser_fetch.add_argument(
         "--search",

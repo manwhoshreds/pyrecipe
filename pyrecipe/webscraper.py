@@ -27,6 +27,13 @@ import pyrecipe.utils as utils
 from pyrecipe import (Recipe, IngredientParser)
 
 
+SCRAPERS = {
+    'https://tasty.co/': 'TastyWebScraper',
+    'http://www.geniuskitchen.com/': 'GeniusWebScraper'
+}
+SCRAPEABLE_SITES = list(SCRAPERS.keys())
+
+
 def search(self, search_str, site='tasty'):
     """ This search function works with tasty.
     I havent figured out how to implement this inside the individual
@@ -69,17 +76,17 @@ class RecipeWebScraper(Recipe):
     recipe.
     """
     def __new__(cls, url):
-        scrapers = {
-            'https://tasty.co/': TastyWebScraper,
-            'http://www.geniuskitchen.com/': GeniusWebScraper
-        }
-        cls.scrapeable_sites = list(scrapers.keys())
-        scrapeable = [s for s in cls.scrapeable_sites if url.startswith(s)][0]
-        if not scrapeable:
+        scrapeable = [s for s in SCRAPEABLE_SITES if url.startswith(s)]
+        if scrapeable:
+            scrapeable = scrapeable[0]
+        else:
+            sites = '\n\t'.join(SCRAPEABLE_SITES)
             sys.exit(utils.msg(
-                "{} is not scrapeable by pyrecipe".format(url), "WARN"))
+                "{} is not scrapeable by pyrecipe. Please select from the "
+                "following sites:\n\n\t".format(url), "WARN") + 
+                utils.msg(sites))
         
-        return scrapers[scrapeable].__new__(cls)
+        return eval(SCRAPERS[scrapeable]).__new__(cls)
     
     def __init__(self, url):
         super().__init__()
@@ -196,7 +203,6 @@ class TastyWebScraper(RecipeWebScraper):
 
 if __name__ == '__main__':
     test = RecipeWebScraper('https://tasty.co/recipe/one-pan-teriyaki-salmon-dinner')
-    print(test.scrapeable_sites)
 
     test.scrape()
     test.print_recipe()
