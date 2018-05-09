@@ -52,10 +52,7 @@ class RecipeDB:
 
     def add_recipe(self, recipe):
         '''Add a recipe to the database.'''
-        if type(recipe).__name__ not in ('Recipe', 'RecipeWebScraper'):
-            raise TypeError('Argument must be a Recipe instance, not {}'
-                            .format(type(recipe)))
-
+        
         recipe_data = [(
             recipe['recipe_uuid'],
             recipe['recipe_name'].lower(),

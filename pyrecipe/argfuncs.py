@@ -44,11 +44,10 @@ def fetch_recipe(args):
         sys.exit(print('\n'.join(SCRAPEABLE_SITES)))
     
     scraper = RecipeWebScraper(args.url)
+    scraper.scrape()
     if args.edit:
-        scraper = RecipeWebScraper(args.url)
         RecipeEditor(scraper).start()
     else:
-        scraper.scrape() 
         scraper.print_recipe()
     
 def print_recipe(args):
