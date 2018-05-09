@@ -139,7 +139,8 @@ class GeniusWebScraper(RecipeWebScraper):
     def scraped_method(self):
         method_box = self.soup.find('div', attrs={'class': 'directions-inner container-xs'})
         litags = method_box.find_all('li')
-        # last litag is "submit a correction", we dont need that del litags[-1]
+        # last litag is "submit a correction", we dont need that  
+        del litags[-1] 
         recipe_steps = []
         for item in litags:
             step_dict = {}
