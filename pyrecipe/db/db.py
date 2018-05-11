@@ -162,4 +162,8 @@ def delete_recipe(delete_func):
     return wrapper
 
 if __name__ == '__main__':
-    pass
+    from pyrecipe.db import get_data
+    import pprint
+    PP = pprint.PrettyPrinter()
+    test = get_data()
+    PP.pprint(test)

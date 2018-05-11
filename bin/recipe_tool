@@ -119,6 +119,26 @@ def parse_args():
     ).completer = recipe_completer
     
     parser_shop.add_argument(
+        "-a",
+        "--add",
+        nargs='?',
+        type=str,
+        help="Add an ingredient or a list of ingredients to the current "
+             "shopping list."
+    )
+    parser_shop.add_argument(
+        "-c",
+        "--commit",
+        action="store_true",
+        help="Commit the current shopping list to a remote server."
+    )
+    parser_shop.add_argument(
+        "-p",
+        "--print-list",
+        action="store_true",
+        help="Print the current shopping list."
+    )
+    parser_shop.add_argument(
         "-r",
         "--random",
         nargs='?',
@@ -129,11 +149,10 @@ def parse_args():
         help="Pick n random recipes for the week"
     )
     parser_shop.add_argument(
-        "-w",
-        "--write",
-        dest="write",
+        "-s",
+        "--save",
         action="store_true",
-        help="Write the shopping list to an xml file"
+        help="Save the current shopping list."
     )
     # recipe_tool dump
     parser_dump = subparser.add_parser(

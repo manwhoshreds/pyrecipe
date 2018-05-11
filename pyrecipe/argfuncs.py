@@ -26,7 +26,7 @@ def print_shopping_list(args):
     """Print a shopping list."""
     if args.random:
         rr = shopper.RandomShoppingList(args.random)
-        rr.print_random(write=args.write)
+        rr.print_random(write=args.save)
     else:
         menu_items = args.recipes	
         if len(menu_items) == 0:
@@ -36,7 +36,7 @@ def print_shopping_list(args):
         sl = shopper.ShoppingList()
         for item in menu_items:
             sl.update(item)
-        sl.print_list(write=args.write)
+        sl.print_list(write=args.save)
 
 def fetch_recipe(args):
     """Fetch a recipe from a web source."""

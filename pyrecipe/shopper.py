@@ -31,7 +31,6 @@ class ShoppingList:
     If duplicate entries are found, ingredients are added together.
     """	
     def __init__(self):
-        # Get xml ready
         self.xml_root = etree.Element('shopping_list')
         date = datetime.date
         today = date.today()
@@ -252,8 +251,8 @@ class MultiQuantity:
         return 'n/a'
 
 if __name__ == '__main__':
-    test = db.get_data()
-    config.PP.pprint(test)
+    test = ShoppingList()
+    test.update
 
 
 

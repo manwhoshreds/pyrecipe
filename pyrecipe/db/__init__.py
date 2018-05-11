@@ -47,4 +47,3 @@ def get_data():
         
     return recipe_data
 
-

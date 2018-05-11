@@ -633,9 +633,4 @@ class IngredientParser:
         return ingred_dict
 
 if __name__ == '__main__':
-    color = False
-    colored = colored if color else lambda a, kw: None
-    print(colored)
-    #req = urlopen('http://test')
-    #print(req)
-    
+    pass

@@ -2,9 +2,9 @@
 """
     pyrecipe.webscraper
     ~~~~~~~~~~~~~~~~~~~
-    The recipe module contains the main recipe
-    class used to interact with ORF (open recipe format) files.
-    You can simply print the recipe or print the xml dump.
+    The recipe webscraper class lets you download recipes from some sites. 
+    You can either keep the recipe the way it is and just use it with pyrecipe
+    or you can use the recipe as a template for your own recpipe development.
 
     - RecipeWebScraper: The pyrecipe web_scraper class is a web
                         scraping utility used to download and analyze
@@ -13,7 +13,13 @@
                         by pyrecipe.
                         Currently supported sites: www.geniuskitchen.com
     * Inherits from Recipe
-
+    
+    Subclasses of RecipeWebScraper are use to create scrapers for individual
+    sites. Here are the currently supported site. More to come!
+    
+    https://tasty.co/
+    http://www.geniuskitchen.com/
+    
     :copyright: 2017 by Michael Miller
     :license: GPL, see LICENSE for more details.
 """
@@ -22,6 +28,7 @@ from urllib.request import urlopen
 from urllib.parse import urlencode
 
 import bs4
+from termcolor import colored
 
 import pyrecipe.utils as utils
 from pyrecipe import (Recipe, IngredientParser)
@@ -32,40 +39,6 @@ SCRAPERS = {
     'http://www.geniuskitchen.com/': 'GeniusWebScraper'
 }
 SCRAPEABLE_SITES = list(SCRAPERS.keys())
-
-
-def search(self, search_str, site='tasty'):
-    """ This search function works with tasty.
-    I havent figured out how to implement this inside the individual
-    web scraper subclasses yet so im leting it hang out until i figuered it out
-    """
-    search_str = utils.format_text(search_str)
-    site = site.lower()
-    base_urls = {
-        'tasty': 'https://tasty.co/search?'
-    }
-    try:
-        base_url = base_urls[site]
-    except KeyError:
-        sys.exit(utils.msg(
-            "Site is not searchable from pyrecipe", level="ERROR")
-        )
-    
-    encoded_search = urlencode({"q": search_str})
-    search = "{}{}".format(base_url, encoded_search)
-    req = urlopen(search)
-    soup = bs4.BeautifulSoup(req, 'html.parser')
-    
-    # feed-item corresponds to link items from the search
-    search_results = soup.find_all('a', attrs={'class': 'feed-item'})
-    
-    results = {}
-    for item in search_results:
-        url = item.get('href')
-        name = url.split('/')[-1].replace("-", " ").title()
-        results[name] = url
-    
-    return results
 
 
 class RecipeWebScraper(Recipe):
@@ -91,12 +64,13 @@ class RecipeWebScraper(Recipe):
     def __init__(self, url):
         super().__init__()
         self.url = url
+        self.search_mode = bool(self.url in SCRAPEABLE_SITES)
+        
+    def scrape(self):
+        if self.search_mode:
+            raise RuntimeError('Search mode is active, cannot scrape site')
         req = urlopen(self.url)
         self.soup = bs4.BeautifulSoup(req, 'html.parser')
-
-
-    
-    def scrape(self):
         self['source_url'] = self.url
         self['recipe_name'] = self.recipe_name
         self['author'] = self.author
@@ -114,12 +88,14 @@ class GeniusWebScraper(RecipeWebScraper):
     
     @property
     def recipe_name(self):
+        """Recipe name."""
         name_box = self.soup.find('h2', attrs={'class': 'modal-title'})
         recipe_name = name_box.text.strip()
         return recipe_name
  
     @property
     def author(self):
+        """Author."""
         name_box = self.soup.find('h6', attrs={'class': 'byline'})
         recipe_by = name_box.text.strip()
         author = ' '.join(recipe_by.split(' ')[2:]).strip()
@@ -127,6 +103,7 @@ class GeniusWebScraper(RecipeWebScraper):
     
     @property
     def scraped_ingredients(self):
+        """Ingredients."""
         ingred_box = self.soup.find_all('ul', attrs={'class': 'ingredient-list'})
         ingredients = []
         for item in ingred_box:
@@ -137,6 +114,7 @@ class GeniusWebScraper(RecipeWebScraper):
     
     @property
     def scraped_method(self):
+        """Method."""
         method_box = self.soup.find('div', attrs={'class': 'directions-inner container-xs'})
         litags = method_box.find_all('li')
         # last litag is "submit a correction", we dont need that  
@@ -149,7 +127,11 @@ class GeniusWebScraper(RecipeWebScraper):
 
         steps = recipe_steps
         return steps
-
+    
+    def search(self):
+        """Search the site for recipe."""
+        # Not implemented yet
+        return
 
 class TastyWebScraper(RecipeWebScraper):
     
@@ -162,8 +144,10 @@ class TastyWebScraper(RecipeWebScraper):
     @property
     def recipe_name(self):
         """Recipe name."""
+        recipe_name = ""
         name_box = self.soup.find('h1', attrs={'class': 'recipe-name'})
-        recipe_name = name_box.text.strip()
+        if name_box:
+            recipe_name = name_box.text.strip()
         return recipe_name
  
     @property
@@ -202,10 +186,49 @@ class TastyWebScraper(RecipeWebScraper):
             recipe_steps.append(step_dict)
         return recipe_steps
 
-if __name__ == '__main__':
-    test = RecipeWebScraper('https://tasty.co/recipe/one-pan-teriyaki-salmon-dinner')
+    def search(self, search_str, site='tasty'):
+        """ This search function works with tasty.
+        I havent figured out how to implement this inside the individual
+        web scraper subclasses yet so im leting it hang out until i figuered it out
+        """
+        search_str = utils.format_text(search_str)
+        site = site.lower()
+        base_urls = {
+            'tasty': 'https://tasty.co/search?'
+        }
+        try:
+            base_url = base_urls[site]
+        except KeyError:
+            sys.exit(utils.msg(
+                "Site is not searchable from pyrecipe", level="ERROR")
+            )
+        
+        encoded_search = urlencode({"q": search_str})
+        search = "{}{}".format(base_url, encoded_search)
+        req = urlopen(search)
+        soup = bs4.BeautifulSoup(req, 'html.parser')
+        
+        # feed-item corresponds to link items from the search
+        search_results = soup.find_all('a', attrs={'class': 'feed-item'})
+        
+        results = {}
+        for item in search_results:
+            url = item.get('href')
+            name = url.split('/')[-1].replace("-", " ").title()
+            if name == '{{ Slug }}':
+                break
+            results[name] = url
+        
+        return results
 
-    test.scrape()
-    test.print_recipe()
-    #test = RecipeWebScraper()
-    #test.search('hamburger')
+if __name__ == '__main__':
+    #test = RecipeWebScraper('https://tasty.co/recipe/one-pan-teriyaki-salmon-dinner')
+    #test = RecipeWebScraper('http://www.geniuskitchen.com/recipe/famous-barrs-french-onion-soup-607')
+    test = RecipeWebScraper('https://tasty.co/')
+    #test.scrape()
+    #test.print_recipe()
+    results = test.search('french onion soup')
+    if not results:
+        sys.exit('Couldnt find any thing with that search term')
+    for item, url in results.items():
+        print("{}: {}".format(colored(item, 'yellow'), colored(url, 'blue')))
