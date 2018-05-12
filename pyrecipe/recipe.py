@@ -523,6 +523,15 @@ class IngredientParser:
         # on some sites througout the web. There maybe others
         if '⁄' in string:
             string = string.replace('⁄', '/')
+        unicode_fractions = {
+            '¼': '1/4',
+            '½': '1/2',
+            '¾': '3/4'
+        }
+        for frac in unicode_fractions.keys():
+            if frac in string:
+                string = string.replace(frac, unicode_fractions[frac])
+        
         lower_stripd_punc = ''.join(c for c in string if c not in self.punct).lower()
         return lower_stripd_punc
 
@@ -633,4 +642,7 @@ class IngredientParser:
         return ingred_dict
 
 if __name__ == '__main__':
-    pass
+    test = IngredientParser()
+    ok = test.parse('2 tablespoon onion')
+    print(ok)
+

@@ -167,7 +167,7 @@ class ShoppingList:
         with open(config.SHOPPING_LIST_FILE, "w") as f:
             f.write(result)
     
-    def return_list(self):
+    def get_list(self):
         return self.shopping_list
     
     def update(self, source):
@@ -252,7 +252,9 @@ class MultiQuantity:
 
 if __name__ == '__main__':
     test = ShoppingList()
-    test.update
+    test.update('french onion soup')
+    print(test.shopping_list)
+    #ingreds = test.get_shopping_list()
 
 
 

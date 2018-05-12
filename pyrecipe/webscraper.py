@@ -38,6 +38,7 @@ SCRAPERS = {
     'https://tasty.co/': 'TastyWebScraper',
     'http://www.geniuskitchen.com/': 'GeniusWebScraper'
 }
+
 SCRAPEABLE_SITES = list(SCRAPERS.keys())
 
 
@@ -65,7 +66,7 @@ class RecipeWebScraper(Recipe):
         super().__init__()
         self.url = url
         self.search_mode = bool(self.url in SCRAPEABLE_SITES)
-        
+    
     def scrape(self):
         if self.search_mode:
             raise RuntimeError('Search mode is active, cannot scrape site')
@@ -79,6 +80,7 @@ class RecipeWebScraper(Recipe):
 
 
 class GeniusWebScraper(RecipeWebScraper):
+    """Web Scraper for http://www.geniuskitchen.com"""
     
     def __new__(cls):
         return object.__new__(GeniusWebScraper)
@@ -104,7 +106,8 @@ class GeniusWebScraper(RecipeWebScraper):
     @property
     def scraped_ingredients(self):
         """Ingredients."""
-        ingred_box = self.soup.find_all('ul', attrs={'class': 'ingredient-list'})
+        attrs = {'class': 'ingredient-list'}
+        ingred_box = self.soup.find_all('ul', attrs=attrs)
         ingredients = []
         for item in ingred_box:
             for litag in item.find_all('li'):
@@ -115,7 +118,8 @@ class GeniusWebScraper(RecipeWebScraper):
     @property
     def scraped_method(self):
         """Method."""
-        method_box = self.soup.find('div', attrs={'class': 'directions-inner container-xs'})
+        attrs = {'class': 'directions-inner container-xs'}
+        method_box = self.soup.find('div', attrs=attrs)
         litags = method_box.find_all('li')
         # last litag is "submit a correction", we dont need that  
         del litags[-1] 
@@ -223,9 +227,10 @@ class TastyWebScraper(RecipeWebScraper):
 
 if __name__ == '__main__':
     #test = RecipeWebScraper('https://tasty.co/recipe/one-pan-teriyaki-salmon-dinner')
-    #test = RecipeWebScraper('http://www.geniuskitchen.com/recipe/famous-barrs-french-onion-soup-607')
-    test = RecipeWebScraper('https://tasty.co/')
-    #test.scrape()
+    test = RecipeWebScraper.get_scraper('http://www.geniuskitchen.com/recipe/famous-barrs-french-onion-soup-607')
+    test()
+    test.scrape()
+    exit()
     #test.print_recipe()
     results = test.search('french onion soup')
     if not results:

@@ -7,6 +7,9 @@ import os
 import pprint
 import configparser
 
+
+
+# start pyrecipe config
 _usr_config_path = os.path.expanduser('~/.config/pyrecipe')
 _recipe_data_path = os.path.join(_usr_config_path, 'recipe_data/')
 if not os.path.exists(_usr_config_path):
@@ -21,22 +24,25 @@ else:
 
 RECIPE_DATA_DIR = os.path.join(_usr_config_path, 'recipe_data/')
 DB_FILE = os.path.join(_usr_config_path, 'recipes.db')
-
 SCRIPT_DIR = os.path.dirname(__file__)
 
-# parse config
+
+# END pyrecipe config
+
+# start user config
 config = configparser.ConfigParser()
 config.read(CONFIG_FILE)
 
 # --Paths
-RECIPE_XML_DIR = os.path.expanduser(config['paths'].get('recipe_xml_dir', None))
-SHOPPING_LIST_FILE = os.path.expanduser(config['paths'].get('shopping_list_file', None))
+userdir = os.path.expanduser
+RECIPE_XML_DIR = userdir(config['paths'].get('recipe_xml_dir', None))
+SHOPPING_LIST_FILE = userdir(config['paths'].get('shopping_list_file', None))
 
 # --Pyrecipe
 RAND_RECIPE_COUNT = config['pyrecipe'].get('rand_recipe_count', 4)
 PYRECIPE_COLOR = config['pyrecipe'].get('color', None)
 
-# --End parse config
+# --End user config
 
 RECIPE_DATA_FILES = []
 for item in os.listdir(RECIPE_DATA_DIR):

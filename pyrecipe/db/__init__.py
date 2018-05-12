@@ -11,14 +11,14 @@ def get_data():
     recipe_data = {}
     
     # recipe names
-    recipe_names = db.query("SELECT name FROM Recipes")
+    recipe_names = db.query("SELECT name FROM recipes")
     recipe_names = [x[0] for x in recipe_names]
     recipe_data['recipe_names'] = recipe_names
 
     # dish type names, look how elegant and compact. :)
     for item in DISH_TYPES:
         names = db.query(
-            "SELECT name FROM Recipes WHERE dish_type = \'{}\'".format(item)
+            "SELECT name FROM recipes WHERE dish_type = \'{}\'".format(item)
         )
         names = [x[0] for x in names]
         dict_key = '{}_names'.format(item.replace(' ', '_'))
@@ -26,7 +26,7 @@ def get_data():
 
     # recipe uuid's
     uuids = db.query(
-        "SELECT name, recipe_uuid FROM Recipes"
+        "SELECT name, recipe_uuid FROM recipes"
     )
     recipe_data['uuids'] = {}
     for uuid in uuids:
@@ -35,12 +35,12 @@ def get_data():
     # recipe authors
     recipe_data['authors'] = {}
     authors = db.query(
-        "SELECT author FROM Recipes"
+        "SELECT author FROM recipes"
     )
     authors = [x[0] for x in authors]
     for author in authors:
         author_recipes = db.query(
-            "SELECT name FROM Recipes WHERE author = \'{}\'".format(author)
+            "SELECT name FROM recipes WHERE author = \'{}\'".format(author)
         )
         author_recipes = [x[0] for x in author_recipes]
         recipe_data['authors'][author.lower()] = author_recipes
