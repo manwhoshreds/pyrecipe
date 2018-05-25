@@ -7,6 +7,7 @@ import sys
 import string
 import textwrap
 
+import lxml.etree as ET
 from termcolor import colored
 
 from pyrecipe import config, db
@@ -134,8 +135,85 @@ def msg(text, level='INFORM'):
     elif level == 'WARN':
         text = colored(text, 'yellow', attrs=['bold'])
         return text
+
+def recipe2xml(func):
+    """Get the xml representation of a recipe."""
+    def get_xml_string(xml_root):
+        result = ET.tostring(
+            xml_root,
+            xml_declaration=True,
+            encoding='utf-8',
+            with_tail=False,
+            method='xml',
+            pretty_print=True
+        )
+        return result.decode('utf-8')
+
+
+    def wrapper(recipe):
+        root_keys = list(recipe._recipe_data.keys())
+        
+        xml_root = ET.Element('recipe')
+        xml_root.set('name', recipe['recipe_name'])
+
+        # Not interested in adding notes to xml, maybe in the future
+        for item in root_keys:
+            if item not in ('ingredients', 'alt_ingredients', 'notes',
+                            'steps', 'recipe_name', 'category'):
+                xml_entry = ET.SubElement(xml_root, item)
+                xml_entry.text = str(recipe[item])
+
+        # ready_in
+        # not actually an ord tag, so is not read from recipe file
+        # it is simply calculated within the class
+        #if recipe['prep_time'] and recipe['cook_time']:
+        #    recipe['ready_in'] = RecipeNum(
+        #        self['prep_time']) + RecipeNum(self['cook_time']
+        #    )
+        #elif self['prep_time'] and self['bake_time']:
+        #    self['ready_in'] = RecipeNum(
+        #        self['prep_time']) + RecipeNum(self['bake_time']
+        #    )
+        #else:
+        #    self['ready_in'] = self['prep_time']
+
+        # oven_temp
+        #if recipe['oven_temp']:
+        #    recipe.oven_temp = self['oven_temp']
+        #    recipe.ot_amount = self['oven_temp']['amount']
+        #    self.ot_unit = self['oven_temp']['unit']
+        #    xml_oven_temp = ET.SubElement(self.xml_root, "oven_temp")
+        #    xml_oven_temp.text = str(self.ot_amount) + " " + str(self.ot_unit)
+
+        ingredients, alt_ingredients = recipe.get_ingredients()
+        
+        # ingredients
+        if ingredients:
+            xml_ingredients = ET.SubElement(xml_root, "ingredients")
+            for ingred in ingredients:
+                xml_ingred = ET.SubElement(xml_ingredients, "ingred")
+                xml_ingred.text = ingred
+
+        # alt_ingredients 
+        if alt_ingredients:
+            for item in alt_ingredients:
+                xml_alt_ingredients = ET.SubElement(xml_root, "alt_ingredients")
+                xml_alt_ingredients.set('alt_name', item)
+                for ingred in alt_ingredients[item]:
+                    xml_alt_ingred = ET.SubElement(xml_alt_ingredients, "ingred")
+                    xml_alt_ingred.text = ingred
+
+        xml_steps = ET.SubElement(xml_root, "steps")
+        for step in recipe['steps']:
+            steps_of = ET.SubElement(xml_steps, "step")
+            steps_of.text = step['step']
+        
+        return get_xml_string(xml_root)
     
+    return wrapper
+
+
 if __name__ == '__main__':
-    source = 'stir fry'
-    recipe_uuid = db.get_data()['uuids'].get(source, None)
-    print(recipe_uuid)
+    r = Recipe('pesto')
+    test = get_recipe_xml(r)
+    print(test)

@@ -36,12 +36,12 @@ import string
 from collections import OrderedDict
 from zipfile import ZipFile, BadZipFile
 
-import lxml.etree as ET
 from termcolor import colored
 from ruamel.yaml import YAML
 
 import pyrecipe.utils as utils
 import pyrecipe.config as config
+from pyrecipe.utils import recipe2xml
 from pyrecipe.db import update_db
 from pyrecipe.recipe_numbers import RecipeNum
 
@@ -63,13 +63,13 @@ class Recipe:
     """
     # All keys applicable to the Open Recipe 
     ORF_KEYS = [
-        'recipe_name', 'recipe_uuid', 'dish_type', 'category',
-        'cook_time', 'prep_time', 'author', 'oven_temp', 'bake_time',
-        'yields', 'ingredients', 'alt_ingredients', 'notes',
-        'source_url', 'steps', 'tags', 'source_book', 'price'
+        'recipe_name', 'recipe_uuid', 'dish_type', 'category', 'cook_time', 
+        'prep_time', 'author', 'oven_temp', 'bake_time', 'yields', 
+        'ingredients', 'alt_ingredients', 'notes', 'source_url', 'steps', 
+        'tags', 'source_book', 'price'
     ]
 
-    def __init__(self, source=''):
+    def __init__(self, source='', recipe_yield=0):
         self.source = utils.get_source_path(source)
         if self.source:
             try:
@@ -87,68 +87,20 @@ class Recipe:
             # dish type should default to main
             self['dish_type'] = 'main'
             self['recipe_uuid'] = str(uuid.uuid4())
+            self['yields'] = [0]
             self.source = utils.get_file_name_from_uuid(self['recipe_uuid'])
 
         # Scan the recipe to build the xml
         self._scan_recipe()
 
+        # Yield of the recipe
+        #if yield_exist(recipe_yield):
+        #    self.recipe_yield = recipe_yeild
+        #else:
+    
     def _scan_recipe(self):
-        """Scan the recipe to build xml."""
-        self.root_keys = list(self._recipe_data.keys())
-        self.xml_root = ET.Element('recipe')
-        self.xml_root.set('name', self['recipe_name'])
-
-        ingredients, alt_ingredients = self.get_ingredients()
-        # Not interested in adding notes to xml, maybe in the future
-        for item in self.root_keys:
-            if item not in ('ingredients', 'alt_ingredients', 'notes',
-                            'steps', 'recipe_name', 'category'):
-                xml_entry = ET.SubElement(self.xml_root, item)
-                xml_entry.text = str(self[item])
-
-        # ready_in
-        # not actually an ord tag, so is not read from recipe file
-        # it is simply calculated within the class
-        if self['prep_time'] and self['cook_time']:
-            self['ready_in'] = RecipeNum(
-                self['prep_time']) + RecipeNum(self['cook_time']
-            )
-        elif self['prep_time'] and self['bake_time']:
-            self['ready_in'] = RecipeNum(
-                self['prep_time']) + RecipeNum(self['bake_time']
-            )
-        else:
-            self['ready_in'] = self['prep_time']
-
-        # oven_temp
-        if self['oven_temp']:
-            self.oven_temp = self['oven_temp']
-            self.ot_amount = self['oven_temp']['amount']
-            self.ot_unit = self['oven_temp']['unit']
-            xml_oven_temp = ET.SubElement(self.xml_root, "oven_temp")
-            xml_oven_temp.text = str(self.ot_amount) + " " + str(self.ot_unit)
-
-        # ingredients
-        if ingredients:
-            xml_ingredients = ET.SubElement(self.xml_root, "ingredients")
-            for ingred in ingredients:
-                xml_ingred = ET.SubElement(xml_ingredients, "ingred")
-                xml_ingred.text = ingred
-
-        # alt_ingredients 
-        if alt_ingredients:
-            for item in alt_ingredients:
-                xml_alt_ingredients = ET.SubElement(self.xml_root, "alt_ingredients")
-                xml_alt_ingredients.set('alt_name', item)
-                for ingred in alt_ingredients[item]:
-                    xml_alt_ingred = ET.SubElement(xml_alt_ingredients, "ingred")
-                    xml_alt_ingred.text = ingred
-
-        xml_steps = ET.SubElement(self.xml_root, "steps")
-        for step in self['steps']:
-            steps_of = ET.SubElement(xml_steps, "step")
-            steps_of.text = step['step']
-
+        pass
+    
     def __repr__(self):
         return "Recipe(name='{}')".format(self['recipe_name'])
 
@@ -239,17 +191,10 @@ class Recipe:
         self['alt_ingredients'] = alt_ingredients
         self._scan_recipe()
 
+    @recipe2xml
     def get_xml_data(self):
         """Return the xml data."""
-        result = ET.tostring(
-            self.xml_root,
-            xml_declaration=True,
-            encoding='utf-8',
-            with_tail=False,
-            method='xml',
-            pretty_print=True
-        )
-        return result.decode('utf-8')
+        pass
 
     def get_ingredients(self, yield_amount=0, color=False):
         """Return a list of ingredient strings.
