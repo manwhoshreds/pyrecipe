@@ -19,16 +19,7 @@
 
               The current recipe data understood by the recipe class can
               be found in the class variable: ORF_KEYS
-
-
-    - RecipeWebScraper: The pyrecipe web_scraper class is a web
-                        scraping utility used to download and analyze
-                        recipes found on websites in an attempt to
-                        save the recipe data in the format understood
-                        by pyrecipe.
-                        Currently supported sites: www.geniuskitchen.com
-    * Inherits from Recipe
-
+              
     - Ingredient: Used to parse a dict of ingredient data into a string
 
     - IngredientParser: Converts an ingredient string into a list or dict
@@ -260,20 +251,19 @@ class Recipe:
         )
         return result.decode('utf-8')
 
-    def get_ingredients(self, amount_level=0, color=False):
+    def get_ingredients(self, yield_amount=0, color=False):
         """Return a list of ingredient strings.
 
         args:
 
-        - amount_level: in aticipation of a future feature, this is for multiple
-                        recipe yields.
+        - yield_amount: This will output the desired yield amount
         """
         ingredients = []
         for item in self['ingredients']:
             ingred = Ingredient(
                 item, 
                 color=color,
-                amount_level=amount_level
+                yield_amount=yield_amount
             )
             ingredients.append(str(ingred))
 
@@ -287,18 +277,18 @@ class Recipe:
                     ingred = Ingredient(
                         ingredient, 
                         color=color,
-                        amount_level=amount_level
+                        yield_amount=yield_amount
                     )
                     ingred_list.append(str(ingred))
                 named_ingredients[alt_name] = ingred_list
 
         return ingredients, named_ingredients
 
-    def print_recipe(self, verbose=False, amount_level=0):
+    def print_recipe(self, verbose=False, yield_amount=0):
         """Print recipe to standard output."""
-        print(self.__str__(verbose, amount_level))
+        print(self.__str__(verbose, yield_amount))
     
-    def __str__(self, verbose=False, amount_level=0):
+    def __str__(self, verbose=False, yield_amount=0):
         recipe_str = colored(self['recipe_name'].title(), 'cyan', attrs=['bold'])
         recipe_str += "\n\nDish Type: {}".format(str(self['dish_type']))
         for item in ('prep_time', 'cook_time', 'bake_time', 'ready_in'):
@@ -347,7 +337,7 @@ class Recipe:
         # Put together all the ingredients
         ingreds, alt_ingreds = self.get_ingredients(
             color=True,
-            amount_level=amount_level
+            yield_amount=yield_amount
         )
         for ingred in ingreds:
             recipe_str += "\n{}".format(ingred)
@@ -419,10 +409,10 @@ class Ingredient:
 
     Given a dict of ingredient data, Ingredient class can return a string
     :param ingredient: dict of ingredient data
-    :param amount_level: choose the yield of the recipe
+    :param yield_amount: choose the yield of the recipe
     :param color: return string with color data for color output
     """
-    def __init__(self, ingredient={}, amount_level=0, color=False):
+    def __init__(self, ingredient={}, yield_amount=0, color=False):
         if not isinstance(ingredient, dict):
             raise TypeError('Ingredient only except dict as its first argument')
         self.color = color
@@ -435,10 +425,10 @@ class Ingredient:
         self.amounts = ingredient.get('amounts', '')
         if self.amounts:
             try: 
-                self.amount = RecipeNum(self.amounts[amount_level].get('amount', ''))
+                self.amount = RecipeNum(self.amounts[yield_amount].get('amount', ''))
             except ValueError:
                 self.amount = ''
-            self.unit = self.amounts[amount_level]['unit']
+            self.unit = self.amounts[yield_amount]['unit']
         if self.unit == 'each':
             self.unit = ''
 

@@ -1,5 +1,7 @@
+# testing, reverse enginering, templates etc...
+.project
+
 __pycache__
-test/
 dist/
 MANIFEST
 *egg-info*

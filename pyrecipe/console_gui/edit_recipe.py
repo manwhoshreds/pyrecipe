@@ -342,6 +342,7 @@ class RecipeEditor:
             self.r = recipe
             self.welcome = 'Edit: {}'.format(self.r['recipe_name'])
         
+        self.original_name = self.r['recipe_name']
         self.initial_hash = hash(self.r)
         self.data = self.r['_recipe_data']
 
@@ -548,6 +549,26 @@ class RecipeEditor:
             changed = True
         return changed
     
+    def get_recipe_name(self, name):
+        """Check to see if name is already in database.
+        
+        We dont want a database with more than one recipe with the same name.
+        This does a check and names the recipe with a number if it already
+        exists in the database.
+        """
+        names = db.get_data()['recipe_names']
+        name = name.lower()
+        if name != self.original_name:
+            if name in names:
+                i = 2
+                new_name = '{} ({})'.format(name, i)
+                while new_name in names:
+                    new_name = '{} ({})'.format(name, i)
+                    i += 1
+                name = new_name
+        
+        return name
+
     def get_recipe_data(self):
         """Grab the data from the editors."""
         # gen info
@@ -558,6 +579,10 @@ class RecipeEditor:
             if edit_text == '':
                 del self.r[attr]
             else: 
+                # If the name is the same as another recipe
+                # we name it 'recipe_name (2)' 3 4 ... etc
+                if attr == 'recipe_name':
+                    edit_text = self.get_recipe_name(edit_text)
                 self.r[attr] = edit_text
         
         for item in self.disht_group:
@@ -620,3 +645,5 @@ class RecipeEditor:
 if __name__ == '__main__':
     r = Recipe('test')
     RecipeEditor(r).start()
+
+    

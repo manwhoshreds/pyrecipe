@@ -54,10 +54,7 @@ def fetch_recipe(args):
 def print_recipe(args):
     """Print a recipe to stdout."""
     r = Recipe(args.source)
-    r.print_recipe(
-        verbose=args.verbose,
-        amount_level=args.yield_amount
-    )
+    r.print_recipe(verbose=args.verbose, yield_amount=args.yield_amount-1)
 
 def show_statistics(args):
     """Show the statistics information of the recipe database."""
