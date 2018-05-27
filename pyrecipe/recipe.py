@@ -69,7 +69,7 @@ class Recipe:
         'tags', 'source_book', 'price'
     ]
 
-    def __init__(self, source='', recipe_yield=0):
+    def __init__(self, source='', verbose=False, recipe_yield=0):
         self.source = utils.get_source_path(source)
         if self.source:
             try:
@@ -78,8 +78,8 @@ class Recipe:
                         with zfile.open('recipe.yaml', 'r') as stream:
                             self._recipe_data = yaml.load(stream)
                     except KeyError:
-                        sys.exit(utils.msg("Can not find recipe.yaml. Is this"
-                                           " really a recipe file?", "ERROR"))
+                        sys.exit(utils.msg("Can not find recipe.yaml. Is this "
+                                           "really a recipe file?", "ERROR"))
             except BadZipFile as e:
                 sys.exit(utils.msg("{}".format(e), "ERROR"))
         else:
@@ -87,19 +87,22 @@ class Recipe:
             # dish type should default to main
             self['dish_type'] = 'main'
             self['recipe_uuid'] = str(uuid.uuid4())
-            self['yields'] = [0]
+            self['yields'] = [1]
             self.source = utils.get_file_name_from_uuid(self['recipe_uuid'])
-
-        # Scan the recipe to build the xml
-        self._scan_recipe()
-
+        
+        # Verbosity
+        self.verbose = verbose
         # Yield of the recipe
-        #if yield_exist(recipe_yield):
-        #    self.recipe_yield = recipe_yeild
-        #else:
+        self.recipe_yield = recipe_yield
+        if self.yield_exists(recipe_yield):
+            pass
+            #print("yield exist")
+            #self.recipe_yield = recipe_yeild
     
-    def _scan_recipe(self):
-        pass
+    def yield_exists(self, recipe_yield):
+        """See if the recipe yield exists."""
+        self['yields'] = [1]
+        return recipe_yield in self['yields']
     
     def __repr__(self):
         return "Recipe(name='{}')".format(self['recipe_name'])
@@ -121,10 +124,8 @@ class Recipe:
                 'amount': value[0],
                 'unit': value[1]
             }
-            self._scan_recipe()
         elif key in Recipe.ORF_KEYS:
             self.__dict__['_recipe_data'][key] = value
-            self._scan_recipe()
         else:
             self.__dict__[key] = value
 
@@ -134,13 +135,16 @@ class Recipe:
                 del self.__dict__['_recipe_data'][key]
             except KeyError:
                 pass
-            self._scan_recipe()
         else:
             del self.__dict__[key]
 
     def __hash__(self):
         """Get the recipe hash."""
         return hash(self.get_yaml_string())
+    
+    @property
+    def yields(self):
+        return ', '.join(self['yields'])
 
     @property
     def ingredients(self):
@@ -160,7 +164,6 @@ class Recipe:
             ingredients.append(ingred)
 
         self['ingredients'] = ingredients
-        self._scan_recipe()
 
     @property
     def alt_ingredients(self):
@@ -189,12 +192,6 @@ class Recipe:
             alt_ingredients.append(entry)
 
         self['alt_ingredients'] = alt_ingredients
-        self._scan_recipe()
-
-    @recipe2xml
-    def get_xml_data(self):
-        """Return the xml data."""
-        pass
 
     def get_ingredients(self, yield_amount=0, color=False):
         """Return a list of ingredient strings.
@@ -229,11 +226,7 @@ class Recipe:
 
         return ingredients, named_ingredients
 
-    def print_recipe(self, verbose=False, yield_amount=0):
-        """Print recipe to standard output."""
-        print(self.__str__(verbose, yield_amount))
-    
-    def __str__(self, verbose=False, yield_amount=0):
+    def __str__(self):
         recipe_str = colored(self['recipe_name'].title(), 'cyan', attrs=['bold'])
         recipe_str += "\n\nDish Type: {}".format(str(self['dish_type']))
         for item in ('prep_time', 'cook_time', 'bake_time', 'ready_in'):
@@ -250,7 +243,7 @@ class Recipe:
             recipe_str += "\nAuthor: {}".format(self['author'])
         
         extra_info = False
-        if verbose:
+        if self.verbose:
             if self['price']:
                 recipe_str += "\nPrice: {}".format(self['price'])
                 extra_info = True
@@ -282,7 +275,7 @@ class Recipe:
         # Put together all the ingredients
         ingreds, alt_ingreds = self.get_ingredients(
             color=True,
-            yield_amount=yield_amount
+            yield_amount=self.recipe_yield
         )
         for ingred in ingreds:
             recipe_str += "\n{}".format(ingred)
@@ -312,6 +305,11 @@ class Recipe:
             steps.append(step['step'])
         return steps
 
+    @recipe2xml
+    def get_xml_data(self):
+        """Return the xml data."""
+        pass
+    
     def dump_to_screen(self, data_type=None):
         """Dump a data format to screen.
 
@@ -357,9 +355,10 @@ class Ingredient:
     :param yield_amount: choose the yield of the recipe
     :param color: return string with color data for color output
     """
-    def __init__(self, ingredient={}, yield_amount=0, color=False):
+    def __init__(self, ingredient, yield_amount=0, color=False):
         if not isinstance(ingredient, dict):
-            raise TypeError('Ingredient only except dict as its first argument')
+            raise TypeError('{} only except dict as its first '
+                            'argument.'.format(__class__))
         self.color = color
         self.name = ingredient['name']
         self.size = ingredient.get('size', '')
@@ -370,7 +369,8 @@ class Ingredient:
         self.amounts = ingredient.get('amounts', '')
         if self.amounts:
             try: 
-                self.amount = RecipeNum(self.amounts[yield_amount].get('amount', ''))
+                amount = self.amounts[yield_amount].get('amount', '')
+                self.amount = RecipeNum(amount)
             except ValueError:
                 self.amount = ''
             self.unit = self.amounts[yield_amount]['unit']

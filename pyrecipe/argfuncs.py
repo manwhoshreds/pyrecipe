@@ -53,8 +53,8 @@ def fetch_recipe(args):
     
 def print_recipe(args):
     """Print a recipe to stdout."""
-    r = Recipe(args.source)
-    r.print_recipe(verbose=args.verbose, yield_amount=args.yield_amount-1)
+    recipe = Recipe(args.source, verbose=args.verbose)
+    print(recipe)
 
 def show_statistics(args):
     """Show the statistics information of the recipe database."""
@@ -89,7 +89,8 @@ def add_recipe(args):
                       ' exist in the database.', 'ERROR')
         )
     else:
-        RecipeEditor(args.name, add=True).start()
+        name = args.name.strip()
+        RecipeEditor(name, add=True).start()
 
 def make_recipe(args):
     """Make a recipe using the urwid automated script.

@@ -69,10 +69,10 @@ def parse_args():
     ).completer = recipe_completer
 
     parser_print.add_argument(
-        "-y", 
         "--yield",
         default=0,
         nargs='?',
+        metavar='AMOUNT',
         type=int,
         dest="yield_amount",
         help="Specify a yield for the recipe."
@@ -297,7 +297,9 @@ def main():
 if __name__ == '__main__':
     """Build the database first if it doesnt exist."""
     import os, sys
-    if not os.path.exists(config.DB_FILE):
+    db_exists = os.path.exists(config.DB_FILE)
+    recipe_exists = len(config.RECIPE_DATA_FILES) > 0
+    if not db_exists and recipe_exists:
         print('Building recipe database...')
         build_recipe_database()
     sys.exit(main())
