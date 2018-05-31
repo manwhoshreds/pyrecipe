@@ -131,7 +131,7 @@ class RecipeDB:
 
     def search(self, string):
         """Search the database."""
-        query = "SELECT name FROM recipesearch WHERE recipesearch MATCH \"{}\""
+        query = 'SELECT name FROM recipesearch WHERE recipesearch MATCH "{}"'
         result = self.query(query.format(string))
         result = [i[0] for i in result]
         return result
