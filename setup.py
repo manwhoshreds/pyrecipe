@@ -24,7 +24,7 @@ data_files = [
 ]
 setup(
     name='pyrecipe',
-    version='1.1.14',
+    version='1.1.15',
     packages=packages,
     keywords='recipe culinary food',
     package_data={
