@@ -9,6 +9,10 @@ import sqlite3
 from pyrecipe.config import DB_FILE
 
 TABLES = {}
+TABLES['recipesearch'] = """
+    CREATE VIRTUAL TABLE {0}
+    USING FTS5(id, name, author, tags, categories, price, source_url)
+"""
 TABLES['recipes'] = """
     CREATE TABLE IF NOT EXISTS {0}(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -75,6 +79,24 @@ class RecipeDB:
                 source_url
                 ) VALUES(?, ?, ?, ?, ?, ?, ?, ?)''', recipe_data
         )
+        recipe_data_search = [(
+            recipe['recipe_name'].lower(),
+            recipe['author'],
+            recipe['tags'],
+            recipe['categories'],
+            recipe['price'],
+            recipe['source_url']
+        )]
+        self.c.executemany(
+            '''INSERT OR REPLACE INTO recipesearch (
+                name, 
+                author, 
+                tags, 
+                categories, 
+                price, 
+                source_url
+                ) VALUES(?, ?, ?, ?, ?, ?)''', recipe_data_search
+        )
         self._commit()
         recipe_id = self.query(
             "SELECT id FROM recipes WHERE name = \'{}\'"
@@ -107,6 +129,13 @@ class RecipeDB:
             result = []
         return result
 
+    def search(self, string):
+        """Search the database."""
+        query = "SELECT name FROM recipesearch WHERE recipesearch MATCH \"{}\""
+        result = self.query(query.format(string))
+        result = [i[0] for i in result]
+        return result
+        
     def create_database(self):
         """Create the recipe database."""
         for name, statement in TABLES.items():
@@ -136,6 +165,8 @@ def delete_recipe(delete_func):
 if __name__ == '__main__':
     from pyrecipe.db import get_data
     import pprint
-    PP = pprint.PrettyPrinter()
-    for key, item in TABLES.items():
-        print(item.format(key))
+    db = RecipeDB()
+    test = db.search('michael')
+    print(", ".join(test))
+
+

@@ -14,13 +14,20 @@ import pyrecipe.utils as utils
 import pyrecipe.shopper as shopper
 from pyrecipe import (Recipe, RecipeWebScraper,
                       SCRAPEABLE_SITES, version_info, config)
-from pyrecipe.db import delete_recipe
+import pyrecipe.db as DB
 from pyrecipe.console_gui import RecipeEditor, RecipeMaker
 
 def dump_data(args):
     """Dump recipe data in 1 of three formats."""
     r = Recipe(args.source)
     r.dump_to_screen(args.data_type)
+
+def search_recipes(args):
+    """Search the recipe database."""
+    db = DB.RecipeDB()
+    results = db.search(args.search)
+    results = "\n".join(results)
+    print(results)
 
 def print_shopping_list(args):
     """Print a shopping list."""
@@ -60,7 +67,7 @@ def show_statistics(args):
     """Show the statistics information of the recipe database."""
     utils.stats(args.verbose)
 
-@delete_recipe
+@DB.delete_recipe
 def delete_recipe(args):
     """Delete a recipe from the recipe store."""
     source = args.source

@@ -110,6 +110,15 @@ def parse_args():
         help='Recipe to make'
     ).completer = recipe_completer
     
+    # recipe_tool search
+    parser_search = subparser.add_parser(
+        "search", 
+        help='Search the recipe database'
+    )
+    parser_search.add_argument(
+        "search",
+        help='Search the recipe database'
+    )
     # recipe_tool shop
     parser_shop = subparser.add_parser("shop", help='Make a shopping list')
     parser_shop.add_argument(
@@ -266,9 +275,9 @@ def parse_args():
     if len(sys.argv) == 1:
         sys.exit(parser.print_help())
     elif len(sys.argv) == 2 and args.verbose:
-        # if recipe_tool is invoked with only a verbose flag it 
-        # causes an exception so here we offer help if no other 
-        # flags are given
+        # if recipe_tool is invoked with only a 
+        # verbose flag it causes an exception so 
+        # here we offer help if no other flags are given
         sys.exit(parser.print_help())
     else:
         return args
@@ -284,6 +293,7 @@ def main():
         'remove': argfunc.delete_recipe,
         'make': argfunc.make_recipe,
         'fetch': argfunc.fetch_recipe,
+        'search': argfunc.search_recipes,
         'shop': argfunc.print_shopping_list,
         'dump': argfunc.dump_data,
         'export': argfunc.export_recipes,

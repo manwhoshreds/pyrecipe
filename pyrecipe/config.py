@@ -8,7 +8,6 @@ import pprint
 import configparser
 
 
-
 # start pyrecipe config
 _usr_config_path = os.path.expanduser('~/.config/pyrecipe')
 _recipe_data_path = os.path.join(_usr_config_path, 'recipe_data/')
