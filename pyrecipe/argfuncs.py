@@ -26,6 +26,9 @@ def search_recipes(args):
     """Search the recipe database."""
     db = DB.RecipeDB()
     results = db.search(args.search)
+    numres = len(results)
+    if numres == 0:
+        sys.exit("\"{}\" produced no results".format(args.search))
     results = "\n".join(results)
     print(results)
 

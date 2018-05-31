@@ -1,8 +1,7 @@
 """
     pyreicpe.db
     ~~~~~~~~~~~
-    
-    The main database file for pyrecipe.
+    Dump the database
 """
 from pyrecipe.db import get_data
 import pprint
