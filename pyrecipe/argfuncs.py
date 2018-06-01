@@ -1,5 +1,5 @@
 """
-	pyrecipe.argfuncs
+    pyrecipe.argfuncs
     ~~~~~~~~~~~~~~~~~
     We must first build the database before moving on
     also if one wishes to rebuild the database for whatever reason,
@@ -12,8 +12,8 @@ import os
 
 import pyrecipe.utils as utils
 import pyrecipe.shopper as shopper
-from pyrecipe import (Recipe, RecipeWebScraper,
-                      SCRAPEABLE_SITES, version_info, config)
+from pyrecipe import (Recipe, RecipeWebScraper, SCRAPEABLE_SITES, 
+                      version_info, config, spell_check)
 import pyrecipe.db as DB
 from pyrecipe.console_gui import RecipeEditor, RecipeMaker
 
@@ -24,8 +24,14 @@ def dump_data(args):
 
 def search_recipes(args):
     """Search the recipe database."""
+    search = args.search
+    check = spell_check(args.search)
+    if check != args.search:
+        print("Nothing found. Showing results for \"{}\" instead.".format(check))
+        search = check
+    
     db = DB.RecipeDB()
-    results = db.search(args.search)
+    results = db.search(search)
     numres = len(results)
     if numres == 0:
         sys.exit(

@@ -11,7 +11,7 @@ from pyrecipe.config import DB_FILE
 TABLES = {}
 TABLES['recipesearch'] = """
     CREATE VIRTUAL TABLE {0}
-    USING FTS5(id, name, author, tags, categories, price, source_url)
+    USING FTS5(name, author, tags, categories)
 """
 TABLES['recipes'] = """
     CREATE TABLE IF NOT EXISTS {0}(
@@ -84,18 +84,14 @@ class RecipeDB:
             recipe['author'],
             recipe['tags'],
             recipe['categories'],
-            recipe['price'],
-            recipe['source_url']
         )]
         self.c.executemany(
             '''INSERT OR REPLACE INTO recipesearch (
                 name, 
                 author, 
                 tags, 
-                categories, 
-                price, 
-                source_url
-                ) VALUES(?, ?, ?, ?, ?, ?)''', recipe_data_search
+                categories
+                ) VALUES(?, ?, ?, ?)''', recipe_data_search
         )
         self._commit()
         recipe_id = self.query(
@@ -128,7 +124,21 @@ class RecipeDB:
         except sqlite3.OperationalError:
             result = []
         return result
-
+    
+    @property
+    def words(self):
+        """A complete list of searchable words from the database."""
+        words = []
+        query = 'SELECT * FROM recipesearch'
+        result = self.query(query)
+        for w in result:
+            # Get rid of empty strings
+            w = [i for i in w if i]
+            # Split words at spaces 
+            w = [w for s in w for w in s.split()]
+            words += w
+        return set(words)
+    
     def search(self, string):
         """Search the database."""
         query = 'SELECT name FROM recipesearch WHERE recipesearch MATCH "{}"'
@@ -166,7 +176,7 @@ if __name__ == '__main__':
     from pyrecipe.db import get_data
     import pprint
     db = RecipeDB()
-    test = db.search('michael')
-    print(", ".join(test))
+    for item in db.words:
+        print(item)
 
 

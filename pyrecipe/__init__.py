@@ -20,6 +20,7 @@ import inflect
 
 import pyrecipe.config as config
 import pyrecipe.db as db
+from pyrecipe.spell import spell_check
 from pyrecipe.recipe import *
 from pyrecipe.webscraper import (RecipeWebScraper, SCRAPEABLE_SITES)
 
