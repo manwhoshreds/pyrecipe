@@ -60,7 +60,7 @@ VER_STR = VER_STR.format(
 
 def version_info():
     """Print the current version of pyrecipe and exit."""
-    return VER_STR
+    return print(VER_STR)
 
 
 class Q_(ureg.Quantity):

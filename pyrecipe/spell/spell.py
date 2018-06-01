@@ -1,24 +1,21 @@
 import re
 from collections import Counter
-from pyrecipe import db
+from pyrecipe.db import RecipeDB
 
 class SpellChecker:
     """Check the spelling of a word."""
     
     def __init__(self):
-        #self.words = []
-        #for word in _words:
-        #    self.words += word.split()
-        words = db.RecipeDB().words
+        words = RecipeDB().words
         self.words = Counter(words)
 
-    def P(self, word): 
+    def _prob(self, word): 
         "Probability of `word`."
         return self.words[word] / sum(self.words.values())
 
     def check(self, word): 
         "Most probable spelling correction for word."
-        return max(self.candidates(word), key=self.P)
+        return max(self.candidates(word), key=self._prob)
 
     def candidates(self, word): 
         "Generate possible spelling corrections for word."
@@ -41,3 +38,16 @@ class SpellChecker:
     def edits2(self, word): 
         "All edits that are two edits away from `word`."
         return (e2 for e1 in self.edits1(word) for e2 in self.edits1(e1))
+
+if __name__ == '__main__':
+    sc = SpellChecker()
+    #print(sc.words)
+
+    check = sc.check('hello')
+    print(check)
+    
+    def spell_check(word):
+        spell_checker = SpellChecker()
+        check = spell_checker.check(word)
+        return check
+    
