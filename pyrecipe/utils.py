@@ -63,7 +63,11 @@ def get_source_path(source):
     # to build a recipe from scratch so we dont have a source yet.
     if not source:
         return source
-
+    
+    # testing
+    if "_" in source:
+        source = source.replace("_", " ")
+    
     if os.path.isdir(source):
         sys.exit(msg("{} is a directory.".format(source), "ERROR"))
     elif os.path.isfile(source):

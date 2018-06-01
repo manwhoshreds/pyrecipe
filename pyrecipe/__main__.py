@@ -5,7 +5,7 @@
     recipe_tool
     pyrecipe.argfuncs
     ~~~~~~~~~~~
-
+    
     recipe_tool is the frontend commandline interface to
     the pyrecipe library.
     We must first build the database before moving on
@@ -21,7 +21,7 @@ import argcomplete
 
 import pyrecipe.utils as utils
 import pyrecipe.shopper as shopper
-from pyrecipe import (Recipe, RecipeWebScraper, SCRAPEABLE_SITES,
+from pyrecipe import (Recipe, RecipeWebScraper, SCRAPEABLE_SITES, 
                       version_info, config, spell_check, __scriptname__)
 import pyrecipe.db as DB
 from pyrecipe.console_gui import RecipeEditor, RecipeMaker
@@ -34,9 +34,9 @@ def cmd_print(args):
     print(recipe)
 
 def cmd_edit(args):
-    """Start the recipe editor using the urwid console interface (ncurses)."""
-    recipe = Recipe(args.source)
-    RecipeEditor(recipe).start()
+    """Edit a recipe using the urwid console interface (ncurses)."""
+    r = Recipe(args.source)
+    RecipeEditor(r).start()
 
 def cmd_add(args):
     """Add a recipe to the recipe store."""
@@ -54,20 +54,20 @@ def cmd_add(args):
 def cmd_remove(args):
     """Delete a recipe from the recipe store."""
     source = args.source
-    recipe = Recipe(source)
-    file_name = recipe['source']
+    r = Recipe(source) 
+    file_name = r['source']
     answer = input("Are you sure your want to delete {}? yes/no ".format(source))
     if answer.strip() == 'yes':
         os.remove(file_name)
         print("{} has been deleted".format(source))
-        return recipe['recipe_uuid']
-
-    print("{} not deleted".format(source))
-    return None
+        return r['recipe_uuid']
+    else:
+        print("{} not deleted".format(source))
+        return None
 
 def cmd_make(args):
     """Make a recipe using the urwid automated script.
-
+    
     This script helps you make your recipe by cycling through
     ingredients and steps. It also hands a hands free voice
     recognition feature in case your hands are stuck in flour
@@ -82,9 +82,9 @@ def cmd_search(args):
     if check != args.search:
         print("Nothing found. Showing results for \"{}\" instead.".format(check))
         search = check
-
-    database = DB.RecipeDB()
-    results = database.search(search)
+    
+    db = DB.RecipeDB()
+    results = db.search(search)
     numres = len(results)
     if numres == 0:
         sys.exit(
@@ -95,23 +95,23 @@ def cmd_search(args):
 def cmd_shop(args):
     """Print a shopping list."""
     if args.random:
-        rshopper = shopper.RandomShoppingList(args.random)
-        rshopper.print_random(write=args.save)
+        rr = shopper.RandomShoppingList(args.random)
+        rr.print_random(write=args.save)
     else:
-        menu_items = args.recipes
-        if not menu_items:
+        menu_items = args.recipes	
+        if len(menu_items) == 0:
             sys.exit('You must supply at least one recipe'
                      ' to build your shopping list from!')
-
-        shopping_list = shopper.ShoppingList()
+            
+        sl = shopper.ShoppingList()
         for item in menu_items:
-            shopping_list.update(item)
-        shopping_list.print_list(write=args.save)
+            sl.update(item)
+        sl.print_list(write=args.save)
 
 def cmd_dump(args):
     """Dump recipe data in 1 of three formats."""
-    recipe = Recipe(args.source)
-    recipe.dump_to_screen(args.data_type)
+    r = Recipe(args.source)
+    r.dump_to_screen(args.data_type)
 
 def cmd_export(args):
     """Export recipes in xml format."""
@@ -119,27 +119,28 @@ def cmd_export(args):
         output_dir = os.path.realpath(args.output_dir)
         os.makedirs(output_dir)
     except FileExistsError:
-        sys.exit(utils.msg("A directory with that name already exists.",
+        sys.exit(utils.msg("A directory with that name already exists.", 
                            "ERROR"))
     except TypeError:
         # no output dir indicated on the cmdline throws a type error we
         # can use to default to the current working directory.
         output_dir = os.getcwd()
-
-    recipe = Recipe(args.source)
-    xml = recipe.get_xml_data()
+        
+    recipe_name = args.source
+    r = Recipe(args.source)
+    xml = r.xml_data
     file_name = utils.get_file_name_from_recipe(args.source, 'xml')
     file_name = os.path.join(output_dir, file_name)
-
+    
     if args.xml:
         file_name = utils.get_file_name_from_recipe(args.source, 'xml')
         print(utils.msg("Writing to file: {}".format(file_name), "INFORM"))
         with open(file_name, "w") as file:
             file.write(str(xml))
-
+    
     if args.recipe:
         file_name = utils.get_file_name_from_recipe(args.source)
-        src = recipe.source
+        src = r.source
         dst = os.path.join(output_dir, file_name)
         if os.path.isfile(dst):
             sys.exit(utils.msg("File already exists.", "ERROR"))
@@ -154,14 +155,14 @@ def cmd_fetch(args):
     """Fetch a recipe from a web source."""
     if args.list_sites:
         sys.exit(print('\n'.join(SCRAPEABLE_SITES)))
-
+    
     scraper = RecipeWebScraper(args.url)
     print('Looking up recipe now...')
     scraper.scrape()
     if args.edit:
         RecipeEditor(scraper).start()
     else:
-        print(scraper)
+        scraper.print_recipe()
 
 def version():
     """Print pyrecipe version information."""
@@ -177,11 +178,11 @@ def recipe_completer(**kwargs):
 
 def build_recipe_database():
     """Build the recipe database."""
-    database = DB.RecipeDB()
+    database = db.RecipeDB()
     database.create_database()
     for item in config.RECIPE_DATA_FILES:
-        recipe = Recipe(item)
-        database.add_recipe(recipe)
+        r = Recipe(item)
+        database.add_recipe(r)
 
 def parse_args():
     """Parse args for recipe_tool."""
@@ -215,11 +216,11 @@ def parse_args():
 
     # recipe_tool print
     parser_print = subparser.add_parser(
-        "print",
+        "print", 
         help="Print the recipe to screen"
     )
     parser_print.add_argument(
-        "source",
+        "source", 
         help="Recipe to print"
     ).completer = recipe_completer
 
@@ -232,42 +233,42 @@ def parse_args():
         dest="yield_amount",
         help="Specify a yield for the recipe."
     ).completer = recipe_completer
-
+    
     # recipe_tool edit
     parser_edit = subparser.add_parser(
-        "edit",
+        "edit", 
         help="Edit a recipe data file"
     )
     parser_edit.add_argument(
-        "source",
-        type=str,
+        "source", 
+        type=str, 
         help="Recipe to edit"
     ).completer = recipe_completer
 
     # recipe_tool add
     parser_add = subparser.add_parser("add", help='Add a recipe')
     parser_add.add_argument("name", help='Name of the recipe to add')
-
+    
     # recipe_tool remove
     parser_remove = subparser.add_parser("remove", help='Delete a recipe')
     parser_remove.add_argument(
-        "source",
+        "source", 
         help='Recipe to delete'
     ).completer = recipe_completer
-
+    
     # recipe_tool make
     parser_make = subparser.add_parser(
-        "make",
+        "make", 
         help='Make a recipe using the urwid automated script'
     )
     parser_make.add_argument(
-        "source",
+        "source", 
         help='Recipe to make'
     ).completer = recipe_completer
-
+    
     # recipe_tool search
     parser_search = subparser.add_parser(
-        "search",
+        "search", 
         help='Search the recipe database'
     )
     parser_search.add_argument(
@@ -281,7 +282,7 @@ def parse_args():
         nargs="*",
         help='List of recipe to compile shopping list'
     ).completer = recipe_completer
-
+    
     parser_shop.add_argument(
         "-a",
         "--add",
@@ -327,7 +328,7 @@ def parse_args():
         "source",
         help="Recipe to dump data from"
     ).completer = recipe_completer
-
+    
     parser_dump.add_argument(
         "-x",
         "--xml",
@@ -361,7 +362,7 @@ def parse_args():
         "source",
         help="Sorce file to export"
     ).completer = recipe_completer
-
+    
     parser_export.add_argument(
         "-o",
         "--output-dir",
@@ -390,7 +391,7 @@ def parse_args():
         help="Export recipe file"
     )
     # recipe_tool show
-    subparser.add_parser(
+    parser_show = subparser.add_parser(
         "show",
         help="Show statistic from the reicpe database"
     )
@@ -424,13 +425,14 @@ def parse_args():
 
     # auto completion
     argcomplete.autocomplete(parser)
-
+    
     args = parser.parse_args()
+    import sys
     if len(sys.argv) == 1:
         sys.exit(parser.print_help())
     elif len(sys.argv) == 2 and args.verbose:
-        # if recipe_tool is invoked with only a
-        # verbose flag it causes an exception so
+        # if recipe_tool is invoked with only a 
+        # verbose flag it causes an exception so 
         # here we offer help if no other flags are given
         sys.exit(parser.print_help())
     else:
@@ -438,12 +440,15 @@ def parse_args():
 
 def main():
     """Main entry point of recipe_tool."""
+    # Build the databse first if it does not exist.
+    # Useful for rebuilding db. Just delete the db file.
     db_exists = os.path.exists(config.DB_FILE)
     recipe_exists = len(config.RECIPE_DATA_FILES) > 0
     if not db_exists and recipe_exists:
         print('Building recipe database...')
         build_recipe_database()
-
+    
+    # Now parse the args
     args = parse_args()
     case = {
         'print': cmd_print,

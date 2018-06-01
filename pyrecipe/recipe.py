@@ -177,7 +177,7 @@ class Recipe:
             raise TypeError('Alt Ingredients must be a list')
         if not isinstance(value[0], dict):
             raise TypeError('Alt Ingredients must be a list of dicts')
-
+        
         ingred_parser = IngredientParser()
         alt_ingredients = []
         for item in value:

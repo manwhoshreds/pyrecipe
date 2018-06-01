@@ -41,13 +41,13 @@ SCRAPERS = {
 
 SCRAPEABLE_SITES = list(SCRAPERS.keys())
 
-
+#TODO: add propert for scraping named ingredients
 class RecipeWebScraper(Recipe):
     """Scrape recipes from a web source.
     
-    This is a base class used to scrape a web source.
-    Scraped recipes shoul be used as a template for a
-    recipe.
+    This is a base class for scraping a web source.
+    Scraped recipes should be used as a template or
+    inspiration for creating your own recipes.
     """
     def __new__(cls, url):
         scrapeable = [s for s in SCRAPEABLE_SITES if url.startswith(s)]
