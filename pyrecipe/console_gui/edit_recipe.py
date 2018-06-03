@@ -110,12 +110,12 @@ class EntryBlock(urwid.WidgetWrap):
             # urwid.attr_map() and not a urwid.Edit()
             return key
         pressed = {
-                'enter': self.on_enter,
-                'ctrl d': self.del_entry,
-                'ctrl a': self.insert_entry,
-                'ctrl up': self.move_entry,
-                'ctrl down': self.move_entry,
-                }
+            'enter': self.on_enter,
+            'ctrl d': self.del_entry,
+            'ctrl a': self.insert_entry,
+            'ctrl up': self.move_entry,
+            'ctrl down': self.move_entry,
+        }
         try:
             # The closest thing to php's switch statement that I can think of.
             pressed[key](size, key)

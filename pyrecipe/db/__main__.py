@@ -13,7 +13,7 @@ import pprint
 test = get_data()['recipe_names']
 words = []
 for item in test:
-    i = item.replace(' ', '_')
+    i = item.replace(' ', '\ ')
     words.append(i)
 
 words = ' '.join(words)

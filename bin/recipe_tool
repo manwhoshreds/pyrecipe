@@ -3,14 +3,9 @@
 # PYTHON_ARGCOMPLETE_OK
 """
     recipe_tool
-    pyrecipe.argfuncs
     ~~~~~~~~~~~
-
-    recipe_tool is the frontend commandline interface to
-    the pyrecipe library.
-    We must first build the database before moving on
-    also if one wishes to rebuild the database for whatever reason,
-    simply delete the db file and run the recipe_tool to rebuild
+    
+    A frontend commandline interface to pyrecipe.
 """
 import os
 import sys

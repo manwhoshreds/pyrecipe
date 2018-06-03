@@ -3,14 +3,10 @@
 # PYTHON_ARGCOMPLETE_OK
 """
     recipe_tool
-    pyrecipe.argfuncs
     ~~~~~~~~~~~
     
     recipe_tool is the frontend commandline interface to
     the pyrecipe library.
-    We must first build the database before moving on
-    also if one wishes to rebuild the database for whatever reason,
-    simply delete the db file and run the recipe_tool to rebuild
 """
 import os
 import sys
@@ -441,7 +437,8 @@ def parse_args():
 def main():
     """Main entry point of recipe_tool."""
     # Build the databse first if it does not exist.
-    # Useful for rebuilding db. Just delete the db file.
+    # A good way to rebuild the db is to delete the 
+    # db file.
     db_exists = os.path.exists(config.DB_FILE)
     recipe_exists = len(config.RECIPE_DATA_FILES) > 0
     if not db_exists and recipe_exists:
