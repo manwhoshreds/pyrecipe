@@ -22,6 +22,7 @@ packages = [
 data_files = [
     ('/etc/pyrecipe/', ['config/pyrecipe.cfg'])
 ]
+
 setup(
     name='pyrecipe',
     version='1.2.3',
@@ -30,14 +31,13 @@ setup(
     package_data={
         'pyrecipe': ['culinary_units.txt']
         },
-    #entry_points={
-    #    'console_scripts': [
-    #        'recipe_tool = pyrecipe.__main__:main'
-    #    ]
-    #},
+    entry_points={
+        'console_scripts': [
+            'recipe_tool = pyrecipe.__main__:main'
+        ]
+    },
     data_files=data_files,
     license='GNU General Public License',
     long_description='A python tool for managing recipes',
     install_requires=deps,
-    scripts=['bin/recipe_tool']
 )
