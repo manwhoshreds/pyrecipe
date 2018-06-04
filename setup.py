@@ -16,7 +16,8 @@ deps = [
 packages = [
     'pyrecipe', 
     'pyrecipe/console_gui', 
-    'pyrecipe/db'
+    'pyrecipe/db',
+    'pyrecipe/spell', 
 ]
 
 data_files = [
@@ -25,7 +26,7 @@ data_files = [
 
 setup(
     name='pyrecipe',
-    version='1.2.3',
+    version='1.2.5',
     packages=packages,
     keywords='recipe culinary food',
     package_data={
