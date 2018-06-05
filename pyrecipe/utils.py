@@ -127,10 +127,10 @@ def stats(verb=0):
 
 def msg(text, level='INFORM'):
     """Pyrecipe message function with color."""
-    if level == 'ERROR':
+    if level == 'FATAL':
         text = '{} {}'.format(colored('ERROR:', on_color='on_red'),
                               colored(text, 'white'))
-        return text
+        return sys.exit(text)
     
     elif level == 'INFORM':
         text = colored(text, 'cyan', attrs=['bold'])
