@@ -6,5 +6,3 @@ dist/
 build/
 MANIFEST
 *egg-info*
-.bumpversion.cfg
-webscraper.py
