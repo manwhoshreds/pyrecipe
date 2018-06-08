@@ -14,6 +14,9 @@ from pyrecipe import config, db
 
 S_DIV = lambda m: colored('~' * m, 'white')
 
+class RecipeNotFound(Exception):
+    pass
+
 def format_text(string):
     """Format text for use in pyrecipe function.
     
@@ -95,7 +98,7 @@ def get_file_name(source):
     """
     recipe_uuid = db.get_data()['uuids'].get(source, None)
     if recipe_uuid is None:
-        return None
+        raise RecipeNotFound("The recipe was not found in the database")
     file_name = get_file_name_from_uuid(recipe_uuid)
     return file_name
 

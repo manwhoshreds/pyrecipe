@@ -256,9 +256,3 @@ if __name__ == '__main__':
     print(test.shopping_list)
     #ingreds = test.get_shopping_list()
 
-
-
-
-
-
-

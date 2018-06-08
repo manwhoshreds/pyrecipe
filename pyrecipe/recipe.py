@@ -105,7 +105,7 @@ class Recipe:
         return recipe_yield in self['yields']
     
     def __repr__(self):
-        return "Recipe(name='{}')".format(self['recipe_name'])
+        return "<Recipe(name='{}')>".format(self['recipe_name'])
 
     def __getitem__(self, key):
         if key in Recipe.ORF_KEYS:
@@ -145,6 +145,10 @@ class Recipe:
     @property
     def yields(self):
         return ', '.join(self['yields'])
+    
+    @property
+    def recipe_name(self):
+        return self['recipe_name']
 
     @property
     def ingredients(self):
@@ -153,7 +157,10 @@ class Recipe:
 
     @ingredients.setter
     def ingredients(self, value):
-        """Set the ingredients of a recipe."""
+        """Set the ingredients of a recipe.
+        
+        Ingredients should be passed in as a list of ingredient strings.
+        """
         if not isinstance(value, list):
             raise TypeError('Ingredients must be a list')
 
@@ -356,24 +363,18 @@ class Ingredient:
     :param color: return string with color data for color output
     """
     def __init__(self, ingredient, yield_amount=0, color=False):
-        if not isinstance(ingredient, dict):
-            raise TypeError('{} only except dict as its first '
-                            'argument.'.format(__class__))
         self.color = color
         self.name = ingredient['name']
         self.size = ingredient.get('size', '')
         self.prep = ingredient.get('prep', '')
         self.note = ingredient.get('note', '')
-        self.amount = ''
-        self.unit = ''
         self.amounts = ingredient.get('amounts', '')
-        if self.amounts:
-            try: 
-                amount = self.amounts[yield_amount].get('amount', '')
-                self.amount = RecipeNum(amount)
-            except ValueError:
-                self.amount = ''
-            self.unit = self.amounts[yield_amount]['unit']
+        try: 
+            amount = self.amounts[yield_amount].get('amount', '')
+            self.amount = RecipeNum(amount)
+        except ValueError:
+            self.amount = ''
+        self.unit = self.amounts[yield_amount]['unit']
         if self.unit == 'each':
             self.unit = ''
 
@@ -580,4 +581,6 @@ if __name__ == '__main__':
     test = IngredientParser()
     ok = test.parse('2 tablespoon onion')
     print(ok)
+    ingred = Ingredient(ok)
+    print(ingred)
 

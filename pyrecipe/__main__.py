@@ -95,7 +95,7 @@ def cmd_shop(args):
         rr.print_random(write=args.save)
     else:
         menu_items = args.recipes	
-        if len(menu_items) == 0:
+        if not menu_items:
             sys.exit('You must supply at least one recipe'
                      ' to build your shopping list from!')
             
@@ -103,6 +103,7 @@ def cmd_shop(args):
         for item in menu_items:
             sl.update(item)
         sl.print_list(write=args.save)
+        print(sl.shopping_list)
 
 def cmd_dump(args):
     """Dump recipe data in 1 of three formats."""
