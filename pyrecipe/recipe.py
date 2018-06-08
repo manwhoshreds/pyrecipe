@@ -70,6 +70,13 @@ class Recipe:
     ]
 
     def __init__(self, source='', verbose=False, recipe_yield=0):
+        # One of two things need to happen for us to return a source or else
+        # we build a new recipe object with the bare minumum (else clause).
+        # 1) The source is a recipe name that exist in the database. In this
+        #    case. we simply retrieve the file name from the database and 
+        #    open the zip to read the recipe data.
+        # 2) The source is an actual recipe file that must be named with a
+        #    .recipe extention. 
         self.source = utils.get_source_path(source)
         if self.source:
             try:
@@ -150,6 +157,10 @@ class Recipe:
     def recipe_name(self):
         return self['recipe_name']
 
+    @recipe_name.setter
+    def recipe_name(self, value):
+        self['recipe_name'] = value
+    
     @property
     def ingredients(self):
         """Return ingredient data."""

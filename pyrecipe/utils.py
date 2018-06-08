@@ -98,7 +98,7 @@ def get_file_name(source):
     """
     recipe_uuid = db.get_data()['uuids'].get(source, None)
     if recipe_uuid is None:
-        raise RecipeNotFound("The recipe was not found in the database")
+        return None
     file_name = get_file_name_from_uuid(recipe_uuid)
     return file_name
 

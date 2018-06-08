@@ -175,7 +175,7 @@ def recipe_completer(**kwargs):
 
 def build_recipe_database():
     """Build the recipe database."""
-    database = db.RecipeDB()
+    database = DB.RecipeDB()
     database.create_database()
     for item in config.RECIPE_DATA_FILES:
         r = Recipe(item)
