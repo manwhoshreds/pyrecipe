@@ -446,7 +446,7 @@ class RecipeEditor:
             ingredients=ingreds, alt_ingredients=alt_ingreds
         )
         self.method_block = MethodBlock(
-            self.recipe.get_method()
+            self.recipe.method
         )
         self.notes_block = NoteBlock(
             self.recipe['notes']

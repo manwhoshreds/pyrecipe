@@ -62,15 +62,7 @@ def get_source_path(source):
 
     If all is well, the function returns the source path.
     """
-    # We got an empty string. User is using a Recipe instance
-    # to build a recipe from scratch so we dont have a source yet.
-    if not source:
-        return source
-    
-    # experimenting with writing my own bash completion
-    #if "_" in source:
-    #    source = source.replace("_", " ")
-    
+    source = source.replace("_", " ")
     if os.path.isdir(source):
         sys.exit(msg("{} is a directory.".format(source), "ERROR"))
     elif os.path.isfile(source):

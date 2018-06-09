@@ -69,16 +69,9 @@ class Recipe:
         'tags', 'source_book', 'price'
     ]
 
-    def __init__(self, source='', verbose=False, recipe_yield=0):
-        # One of two things need to happen for us to return a source or else
-        # we build a new recipe object with the bare minumum (else clause).
-        # 1) The source is a recipe name that exist in the database. In this
-        #    case. we simply retrieve the file name from the database and 
-        #    open the zip to read the recipe data.
-        # 2) The source is an actual recipe file that must be named with a
-        #    .recipe extention. 
-        self.source = utils.get_source_path(source)
-        if self.source:
+    def __init__(self, source="", verbose=False, recipe_yield=0):
+        if source:
+            self.source = utils.get_source_path(source)
             try:
                 with ZipFile(self.source, 'r') as zfile:
                     try:
@@ -210,7 +203,20 @@ class Recipe:
             alt_ingredients.append(entry)
 
         self['alt_ingredients'] = alt_ingredients
-
+    
+    @property
+    def method(self):
+        """Return a list of steps."""
+        steps = []
+        for step in self['steps']:
+            steps.append(step['step'])
+        return steps
+    
+    @method.setter
+    def method(self, value):
+        value = [{"step": v} for v in value]
+        self['steps'] = value
+    
     def get_ingredients(self, yield_amount=0, color=False):
         """Return a list of ingredient strings.
 
@@ -309,7 +315,7 @@ class Recipe:
         recipe_str += colored("\nMethod:", "cyan", attrs=["underline"])
 
         # print steps
-        wrapped = utils.wrap(self.get_method())
+        wrapped = utils.wrap(self.method)
         for index, step in wrapped:
             recipe_str += "\n{}".format(colored(index, "yellow"))
             recipe_str += step
@@ -318,10 +324,11 @@ class Recipe:
 
     def get_method(self):
         """Return a list of steps."""
-        steps = []
-        for step in self['steps']:
-            steps.append(step['step'])
-        return steps
+        raise RuntimeError("get_method is depricated, get the method as a property")
+        #steps = []
+        #for step in self['steps']:
+        #    steps.append(step['step'])
+        #return steps
 
     @recipe2xml
     def get_xml_data(self):

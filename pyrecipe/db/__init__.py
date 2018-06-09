@@ -30,7 +30,7 @@ def get_data():
     )
     recipe_data['uuids'] = {}
     for uuid in uuids:
-        recipe_data['uuids'][uuid[0]] = uuid[1]
+        recipe_data['uuids'][uuid[0].lower()] = uuid[1]
     
     # recipe authors
     recipe_data['authors'] = {}

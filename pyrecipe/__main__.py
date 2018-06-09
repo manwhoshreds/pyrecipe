@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # -*- encoding: UTF-8 -*-
-# PYTHON_ARGCOMPLETE_OK
 """
     recipe_tool
     ~~~~~~~~~~~
@@ -13,14 +12,13 @@ import sys
 import shutil
 import argparse
 
-import argcomplete
-
 import pyrecipe.utils as utils
 import pyrecipe.shopper as shopper
 from pyrecipe import (Recipe, RecipeWebScraper, SCRAPEABLE_SITES, 
                       version_info, config, spell_check, __scriptname__)
 import pyrecipe.db as DB
 from pyrecipe.console_gui import RecipeEditor, RecipeMaker
+from pyrecipe.ocr import RecipeOCR
 
 ## Start command functions
 
@@ -85,7 +83,7 @@ def cmd_search(args):
     if numres == 0:
         sys.exit(
             "Your search for \"{}\" produced no results".format(args.search))
-    results = "\n".join(results)
+    results = "\n".join(s.lower() for s in results)
     print(results)
 
 def cmd_shop(args):
@@ -144,6 +142,14 @@ def cmd_export(args):
         else:
             shutil.copyfile(src, dst)
 
+def cmd_ocr(args):
+    """Optical character recognition"""
+    recipe = RecipeOCR(args.source)
+    if args.imprt:
+        recipe.save()
+    else:
+        print(recipe)
+
 def cmd_show(args):
     """Show the statistics information of the recipe database."""
     utils.stats(args.verbose)
@@ -166,12 +172,6 @@ def version():
     sys.exit(version_info())
 
 ## End command funtions
-
-def recipe_completer(**kwargs):
-    """List of recipes for completer."""
-    data = DB.get_data()
-    recipe_names = data['recipe_names']
-    return recipe_names
 
 def build_recipe_database():
     """Build the recipe database."""
@@ -219,8 +219,7 @@ def parse_args():
     parser_print.add_argument(
         "source", 
         help="Recipe to print"
-    ).completer = recipe_completer
-
+    )
     parser_print.add_argument(
         "--yield",
         default=0,
@@ -229,8 +228,7 @@ def parse_args():
         type=int,
         dest="yield_amount",
         help="Specify a yield for the recipe."
-    ).completer = recipe_completer
-    
+    )
     # recipe_tool edit
     parser_edit = subparser.add_parser(
         "edit", 
@@ -240,8 +238,7 @@ def parse_args():
         "source", 
         type=str, 
         help="Recipe to edit"
-    ).completer = recipe_completer
-
+    )
     # recipe_tool add
     parser_add = subparser.add_parser("add", help='Add a recipe')
     parser_add.add_argument("name", help='Name of the recipe to add')
@@ -251,7 +248,7 @@ def parse_args():
     parser_remove.add_argument(
         "source", 
         help='Recipe to delete'
-    ).completer = recipe_completer
+    )
     
     # recipe_tool make
     parser_make = subparser.add_parser(
@@ -261,7 +258,7 @@ def parse_args():
     parser_make.add_argument(
         "source", 
         help='Recipe to make'
-    ).completer = recipe_completer
+    )
     
     # recipe_tool search
     parser_search = subparser.add_parser(
@@ -272,13 +269,14 @@ def parse_args():
         "search",
         help='Search the recipe database'
     )
+    
     # recipe_tool shop
     parser_shop = subparser.add_parser("shop", help='Make a shopping list')
     parser_shop.add_argument(
         "recipes",
         nargs="*",
         help='List of recipe to compile shopping list'
-    ).completer = recipe_completer
+    )
     
     parser_shop.add_argument(
         "-a",
@@ -324,8 +322,7 @@ def parse_args():
     parser_dump.add_argument(
         "source",
         help="Recipe to dump data from"
-    ).completer = recipe_completer
-    
+    )
     parser_dump.add_argument(
         "-x",
         "--xml",
@@ -350,6 +347,7 @@ def parse_args():
         const="raw",
         help="Dump source data in its raw format"
     )
+    
     # recipe_tool export
     parser_export = subparser.add_parser(
         "export",
@@ -358,7 +356,7 @@ def parse_args():
     parser_export.add_argument(
         "source",
         help="Sorce file to export"
-    ).completer = recipe_completer
+    )
     
     parser_export.add_argument(
         "-o",
@@ -376,17 +374,32 @@ def parse_args():
     parser_export.add_argument(
         "-x",
         "--xml",
-        dest="xml",
         action='store_true',
         help="Export file in xml format"
     )
     parser_export.add_argument(
         "-r",
         "--recipe",
-        dest="recipe",
         action='store_true',
         help="Export recipe file"
     )
+    # recipe_tool ocr
+    parser_ocr = subparser.add_parser(
+        "ocr",
+        help="Pyrecipe Optical Character Recognition"
+    )
+    parser_ocr.add_argument(
+        "source",
+        help="File to read"
+    )
+    parser_ocr.add_argument(
+        "-i",
+        "--import",
+        dest="imprt",
+        action="store_true",
+        help="Import the data into the database"
+    )
+
     # recipe_tool show
     parser_show = subparser.add_parser(
         "show",
@@ -420,9 +433,6 @@ def parse_args():
         help="Search the web for a recipe to scrape"
     )
 
-    # auto completion
-    argcomplete.autocomplete(parser)
-    
     args = parser.parse_args()
     import sys
     if len(sys.argv) == 1:
@@ -458,6 +468,7 @@ def main():
         'shop': cmd_shop,
         'dump': cmd_dump,
         'export': cmd_export,
+        'ocr': cmd_ocr,
         'show': cmd_show,
         'fetch': cmd_fetch,
     }
