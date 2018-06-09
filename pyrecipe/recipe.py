@@ -59,7 +59,7 @@ class Recipe:
 
     The recipe class can open recipe files and read their data. It can
     change the state of a recipe file and then save the new data back to
-    the reicpe file.    
+    the recipe file.    
     """
     # All keys applicable to the Open Recipe 
     ORF_KEYS = [

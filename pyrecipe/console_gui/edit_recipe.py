@@ -560,9 +560,10 @@ class RecipeEditor:
         exists in the database.
         """
         names = db.get_data()['recipe_names']
-        name = name.lower()
-        if name != self.original_name:
-            if name in names:
+        # case insensitive
+        lower_name = name.lower()
+        if lower_name != self.original_name.lower():
+            if lower_name in names:
                 i = 2
                 new_name = '{} ({})'.format(name, i)
                 while new_name in names:

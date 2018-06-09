@@ -1,0 +1,28 @@
+# recipe_tool auto completion
+
+_test()
+{
+    local iter use cur
+    cur=${COMP_WORDS[COMP_CWORD]}
+    #use="nick\ mason syd-barrett david_gilmour roger\ waters richard\ wright"
+    use=`python -m pyrecipe.db`
+    # swap out escaped spaces temporarily
+    use="${use//\\ /___}"
+    # split on all spaces
+    for iter in $use; do
+        # only reply with completions
+        if [[ $iter =~ ^$cur ]]; then
+            # swap back our escaped spaces
+            COMPREPLY+=( "${iter//___/ }" )
+        fi
+    done
+}
+
+_pyrecipe()
+{
+	local words=`python -m pyrecipe.db`
+	local cur=${COMP_WORDS[COMP_CWORD]}
+	COMPREPLY=($(compgen -W "$words" -- $cur))
+}
+#complete -F _pyrecipe recipe_tool
+complete -F _test recipe_tool
