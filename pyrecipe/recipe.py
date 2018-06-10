@@ -157,6 +157,7 @@ class Recipe:
     @property
     def ingredients(self):
         """Return ingredient data."""
+        print(what)
         return self['ingredients']
 
     @ingredients.setter
@@ -366,7 +367,6 @@ class Recipe:
         else:
             stream = io.StringIO()
             yaml.dump(self['_recipe_data'], stream)
-
             with ZipFile(self.source, 'w') as zfile:
                 zfile.writestr('recipe.yaml', stream.getvalue())
                 zfile.writestr('MIMETYPE', 'application/recipe+zip')

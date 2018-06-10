@@ -171,7 +171,6 @@ class ShoppingList:
         return self.shopping_list
     
     def update(self, source):
-
         r = Recipe(source)
         if r['dish_type'] == "salad dressing":
             self.dressing_names.append(r['recipe_name'])
@@ -210,6 +209,7 @@ class RandomShoppingList(ShoppingList):
             self.update(dish)
     
     def print_random(self, write=False):
+        print("hello")
         self.print_list(write=write)
 
 
