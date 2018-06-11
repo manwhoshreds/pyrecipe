@@ -24,10 +24,14 @@ from pyrecipe.ocr import RecipeOCR
 
 def cmd_print(args):
     """Print a recipe to stdout."""
-    recipe = Recipe(
-            args.source, 
-            verbose=args.verbose,
-            recipe_yield=args.yield_amount)
+    try: 
+        recipe = Recipe(
+                args.source, 
+                verbose=args.verbose,
+                recipe_yield=args.yield_amount)
+    except utils.RecipeNotFound:
+        sys.exit(utils.msg(
+            "{} was not found in the database".format(args.source), "ERROR"))
     print(recipe)
 
 def cmd_edit(args):
@@ -91,20 +95,19 @@ def cmd_search(args):
 
 def cmd_shop(args):
     """Print a shopping list."""
+    shoplist = shopper.ShoppingList()
     if args.random:
-        rr = shopper.RandomShoppingList(args.random)
-        rr.print_random(write=args.save)
+        shoplist.choose_random(count=args.random, write=args.save)
+        shoplist.print_list(write=args.save)
     else:
         menu_items = args.recipes
         if not menu_items:
             sys.exit('You must supply at least one recipe'
                      ' to build your shopping list from!')
 
-        sl = shopper.ShoppingList()
         for item in menu_items:
-            sl.update(item)
-        sl.print_list(write=args.save)
-        print(sl.shopping_list)
+            shoplist.update(item)
+        shoplist.print_list(write=args.save)
 
 def cmd_dump(args):
     """Dump recipe data in 1 of three formats."""

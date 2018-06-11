@@ -73,6 +73,17 @@ class Q_(ureg.Quantity):
     def round_up(self):
         return self.__class__(ceil(self._magnitude), self._units)
 
+    def reduce(self):
+        """Experimental."""
+        import pint.errors
+        try:
+            print(self.magnitude)
+            print(type(self.magnitude))
+            #return self.to("cup")
+        except pint.errors.DimensionalityError:
+            return self
+
+
     def __str__(self):
         if str(self.units) == 'each':
             return format(self)

@@ -157,7 +157,6 @@ class Recipe:
     @property
     def ingredients(self):
         """Return ingredient data."""
-        print(what)
         return self['ingredients']
 
     @ingredients.setter

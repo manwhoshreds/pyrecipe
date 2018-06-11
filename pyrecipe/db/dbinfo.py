@@ -1,49 +1,33 @@
-from .db import *
+from pyrecipe.db import RecipeDB
 
-DISH_TYPES = [
-    'main', 'side', 'dessert', 'condiment', 'dip', 'prep',
-    'salad dressing', 'sauce', 'base', 'garnish', 'seasoning'
-]
-
-def get_data():
+class DBInfo():
     """Get data from the database as a dict."""
-    db = RecipeDB()
-    recipe_data = {}
+    def __init__(self):
+        self.db = RecipeDB()
     
-    # recipe names
-    recipe_names = db.query("SELECT name FROM recipes")
-    recipe_names = [x[0] for x in recipe_names]
-    recipe_data['recipe_names'] = recipe_names
-
-    # dish type names, look how elegant and compact. :)
-    for item in DISH_TYPES:
-        names = db.query(
-            "SELECT name FROM recipes WHERE dish_type = \'{}\'".format(item)
+    def get_recipe_names(self):
+        """Return all of the recipe names in the database."""
+        names = self.db.query("SELECT name FROM recipes")
+        names = [x[0] for x in names]
+        return names
+    
+    def get_dishtype(self, dishtype):
+        """Get recipenames of a cirtain dishtype.""" 
+        names = self.db.query(
+            "SELECT name FROM recipes WHERE dish_type = \'{}\'".format(dishtype)
         )
         names = [x[0] for x in names]
-        dict_key = '{}_names'.format(item.replace(' ', '_'))
-        recipe_data[dict_key] = names
-
-    # recipe uuid's
-    uuids = db.query(
-        "SELECT name, recipe_uuid FROM recipes"
-    )
-    recipe_data['uuids'] = {}
-    for uuid in uuids:
-        recipe_data['uuids'][uuid[0].lower()] = uuid[1]
+        return names
     
-    # recipe authors
-    recipe_data['authors'] = {}
-    authors = db.query(
-        "SELECT author FROM recipes"
-    )
-    authors = [x[0] for x in authors]
-    for author in authors:
-        author_recipes = db.query(
-            "SELECT name FROM recipes WHERE author = \'{}\'".format(author)
-        )
-        author_recipes = [x[0] for x in author_recipes]
-        recipe_data['authors'][author.lower()] = author_recipes
-        
-    return recipe_data
+    def get_uuid(self, name):
+        """Get the uuid of the recipe."""
+        uuid = self.db.query(
+            "SELECT recipe_uuid FROM recipes WHERE name = \'{}\' COLLATE NOCASE".format(name)
+        )[0][0]
+        return uuid
 
+
+if __name__ == "__main__":
+    test = DBInfo()
+    print(len(test.get_recipe_names()))
+    print(test.get_uuid('pesto'))

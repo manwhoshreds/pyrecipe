@@ -76,8 +76,9 @@ def get_source_path(source):
         # after all, this is the intended way to lookup the recipe.
         file_name = get_file_name(source)
         if file_name is None:
-            sys.exit(msg("{} does not exist in the database."
-                         .format(source), "ERROR"))
+            raise RecipeNotFound(
+                "{} does not exist in the database.".format(source)
+            )
         else:
             return file_name
 
@@ -88,7 +89,7 @@ def get_file_name(source):
     with the recipe. This function looks up and returns the uuid from the
     database.
     """
-    recipe_uuid = db.get_data()['uuids'].get(source, None)
+    recipe_uuid = db.get_data()['uuids'].get(source.lower(), None)
     if recipe_uuid is None:
         return None
     file_name = get_file_name_from_uuid(recipe_uuid)
@@ -122,7 +123,7 @@ def stats(verb=0):
 
 def msg(text, level='INFORM'):
     """Pyrecipe message function with color."""
-    if level == 'FATAL':
+    if level == 'ERROR':
         text = '{} {}'.format(colored('ERROR:', on_color='on_red'),
                               colored(text, 'white'))
         return sys.exit(text)

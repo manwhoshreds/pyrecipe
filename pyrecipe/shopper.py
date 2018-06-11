@@ -10,7 +10,8 @@
                           random an builds a shopping list.
     
     - MultiQuantity: A pint Quantity container that holds Quantities of
-                     differing dimensionalities.
+                     differing dimensionalities because they cannot be added
+                     together.
     
 """
 
@@ -31,33 +32,22 @@ class ShoppingList:
     If duplicate entries are found, ingredients are added together.
     """	
     def __init__(self):
-        self.xml_root = etree.Element('shopping_list')
-        date = datetime.date
-        today = date.today()
-        date = etree.SubElement(self.xml_root, "date")
-        date.text = str(today)
-        self.xml_maindish_names = etree.SubElement(self.xml_root, "main_dishes")
-        self.xml_salad_dressing = etree.SubElement(self.xml_root, "salad_dressing")
-        self.xml_ingredients = etree.SubElement(self.xml_root, "ingredients")
-        self.db_data = db.get_data()
-
+        self.recipes = []
         self.shopping_list = {}
-        self.dressing_names = []
-        self.recipe_names = []
     
-    def _proc_ingreds(self, source, alt_ingred=""):
-        sl = self.shopping_list
-        r = Recipe(source)
-        if alt_ingred:
-            for item in r['alt_ingredients']:
-                try:
-                    ingreds = item[alt_ingred]
-                except KeyError:
-                    pass
-        else:
-            ingreds = r['ingredients']
-        
-        for item in ingreds:
+    def _process(self, recipe):
+        """Process the ingredients in a recipe."""
+        ingredients = recipe.ingredients
+        alt_ingredients = recipe.alt_ingredients
+        self._process_ingredients(ingredients)
+        if alt_ingredients:
+            for item in alt_ingredients:
+                ingreds = list(item.values())[0]
+                self._process_ingredients(ingreds)
+
+    def _process_ingredients(self, ingredients):
+        """Process ingredients."""
+        for item in ingredients:
             name = item['name']
             try:
                 # links are recipe ingredients that are also 
@@ -87,43 +77,36 @@ class ShoppingList:
             try: 
                 quant = Q_(amount, unit)
             except ValueError:
-                print(amount, unit)
-                exit()
+                print("errors", amount, unit)
+                continue
             
-            if name in sl.keys():
-                orig_ingred = sl[name]
+            if name in self.shopping_list.keys():
+                orig_ingred = self.shopping_list[name]
                 try:
                     addition = orig_ingred + quant
-                    sl[name] = addition
+                    self.shopping_list[name] = addition
                 except pint.errors.DimensionalityError:
-                    sl[name] = MultiQuantity(orig_ingred, quant)
+                    self.shopping_list[name] = MultiQuantity(orig_ingred, quant)
             else:
-                sl[name] = quant
+                self.shopping_list[name] = quant
 
     def print_list(self, write=False):
-        mdn = self.recipe_names
-        sl = self.shopping_list
-        dn = self.dressing_names
-        
+        """Print the shopping list to stdout."""
         print("Recipes:\n")
-        for item in mdn:
+        for item in self.recipe_names:
             print(item)
         print("\n" + utils.S_DIV(45))
 
-        if len(dn) > 0:
-            print("Salad Dressings:\n")
-            for item in dn:
-                print(item)
-            print("\n{}".format(utils.S_DIV(45)))
-        
         # Print list	
-        padding = max(len(x) for x in sl.keys()) + 1
-        for key, value in sl.items():
+        padding = max(len(x) for x in self.shopping_list.keys()) + 1
+        for key, value in self.shopping_list.items():
             if value.units in ['splash of', 'to taste', 'pinch of']:
                 print("{} {}".format(key.ljust(padding, '.'), 'N/A'))
             else:    
                 try:
-                    print("{} {}".format(key.ljust(padding, '.'), str(value.round_up())))
+                    #value = value.round_up().reduce()
+                    #value = value.reduce()
+                    print("{} {}".format(key.ljust(padding, '.'), str(value)))
                 except AttributeError:
                     print("{} {}".format(key.ljust(padding, '.'), value))
 
@@ -131,6 +114,12 @@ class ShoppingList:
         if write:	
             self.write_to_xml()
     
+    @property
+    def recipe_names(self):
+        """Get the recipe names."""
+        names = [r.recipe_name for r in self.recipes]
+        return names
+
     def write_to_xml(self):
         """Write the shopping list to an xml file after
            building.
@@ -167,51 +156,34 @@ class ShoppingList:
         with open(config.SHOPPING_LIST_FILE, "w") as f:
             f.write(result)
     
-    def get_list(self):
-        return self.shopping_list
-    
-    def update(self, source):
-        r = Recipe(source)
-        if r['dish_type'] == "salad dressing":
-            self.dressing_names.append(r['recipe_name'])
-        else:
-            self.recipe_names.append(r['recipe_name'])
+    def add_item(self, item, amount):
+        """Add a single item to the shopping list."""
+        self.shopping_list[item] = amount
 
-        
-        self._proc_ingreds(source)
-        alt_ingreds = r['alt_ingreds']
-        if alt_ingreds:
-            for item in alt_ingreds:
-                self._proc_ingreds(source, alt_ingred=item)
-
-
-class RandomShoppingList(ShoppingList):
-    """The Random Shopping List class.
-
-    Used to create a shopping list from a random sample of recipes
-    given as an iterger argument.
-    """
-    
-    def __init__(self, count=config.RAND_RECIPE_COUNT):
-        super().__init__()
-        self.count = count
+    def choose_random(self, count=int(config.RAND_RECIPE_COUNT), write=False):
         try:
-            self.recipe_sample = random.sample(self.db_data['main_names'], self.count)
-            self.salad_dressing_random = random.choice(self.db_data['salad_dressing_names'])
+            recipe_sample = random.sample(db.get_data()['main_names'], count)
+            rand_salad_dressing = random.choice(db.get_data()['salad_dressing_names'])
         except ValueError:
             sys.exit(utils.msg(
                 "Random count is higher than the amount of recipes"
                 " available ({}). Please enter a lower number."
-                .format(len(self.db_data['main_names'])), "ERROR"
+                .format(len(db.get_data()['main_names'])), "ERROR"
             ))
-        self.update(self.salad_dressing_random)
-        for dish in self.recipe_sample:
+        self.update(rand_salad_dressing)
+        for dish in recipe_sample:
             self.update(dish)
     
-    def print_random(self, write=False):
-        print("hello")
-        self.print_list(write=write)
-
+    def update(self, source):
+        """Update the shopping list with ingredients from source."""
+        try:
+            recipe = Recipe(source)
+        except utils.RecipeNotFound:
+            print("{} not found in database. Skipping...".format(source))
+            return
+        self.recipes.append(recipe)
+        self._process(recipe)
+    
 
 class MultiQuantity:
     """Class to deal with quantities of different dimentions"""
@@ -251,8 +223,11 @@ class MultiQuantity:
         return 'n/a'
 
 if __name__ == '__main__':
-    test = ShoppingList()
-    test.update('french onion soup')
-    print(test.shopping_list)
-    #ingreds = test.get_shopping_list()
+    shoplist = ShoppingList()
+    shoplist.print_random()
+    #shoplist.update('korean pork tacos')
+    #shoplist.update('french onion soup')
+    #shoplist.update('test')
+    #shoplist.update('pesto')
+    #shoplist.print_list()
 
