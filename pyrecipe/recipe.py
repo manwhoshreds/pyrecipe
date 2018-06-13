@@ -69,7 +69,7 @@ class Recipe:
         'tags', 'source_book', 'price'
     ]
 
-    def __init__(self, source="", verbose=False, recipe_yield=0):
+    def __init__(self, source="", recipe_yield=0):
         if source:
             self.source = utils.get_source_path(source)
             try:
@@ -95,8 +95,6 @@ class Recipe:
         self._named_ingredients_cache = OrderedDict()
         self._cache_ingredients()
         
-        # Verbosity
-        self.verbose = verbose
         # Yield of the recipe
         self.recipe_yield = recipe_yield
         if self.yield_exists(recipe_yield):
@@ -252,8 +250,9 @@ class Recipe:
     def method(self, value):
         value = [{"step": v} for v in value]
         self['steps'] = value
-        
-    def __str__(self):
+    
+    def print_recipe(self, verbose=False, color=True):
+        """Print the recipe to standard output."""
         recipe_str = colored(self['recipe_name'].title(), 'cyan', attrs=['bold'])
         recipe_str += "\n\nDish Type: {}".format(str(self['dish_type']))
         for item in ('prep_time', 'cook_time', 'bake_time', 'ready_in'):
@@ -270,7 +269,7 @@ class Recipe:
             recipe_str += "\nAuthor: {}".format(self['author'])
         
         extra_info = False
-        if self.verbose:
+        if verbose:
             if self['price']:
                 recipe_str += "\nPrice: {}".format(self['price'])
                 extra_info = True
@@ -323,7 +322,7 @@ class Recipe:
             recipe_str += "\n{}".format(colored(index, "yellow"))
             recipe_str += step
 
-        return recipe_str
+        print(recipe_str)
 
     def get_method(self):
         """Return a list of steps."""
@@ -602,7 +601,9 @@ class IngredientParser:
 
 if __name__ == '__main__':
     r = Recipe('korean pork tacos')
-    print(r.get_ingredients())
+    #print(dir(r))
+    print(r.__dict__)
+    #print(r.get_ingredients())
     #print(r._ingredients_cache)
     #print(r._named_ingredients_cache)
     #print(r.ingredients)

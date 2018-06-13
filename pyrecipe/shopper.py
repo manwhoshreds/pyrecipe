@@ -1,18 +1,18 @@
 """
     pyrecipe.shopper
     ~~~~~~~~~~~~~~~~
-    The shopper module allows you to build a shopping list of ingredients 
+    The shopper module allows you to build a shopping list of ingredients
     from your recipes.
 
-    - ShoppingList: The main shopper class 
+    - ShoppingList: The main shopper class
 
-    - RandomShoppingList: A ShoppingList subclass that chooses recipes at 
+    - RandomShoppingList: A ShoppingList subclass that chooses recipes at
                           random an builds a shopping list.
-    
+
     - MultiQuantity: A pint Quantity container that holds Quantities of
                      differing dimensionalities because they cannot be added
                      together.
-    
+
 """
 
 import random
@@ -27,14 +27,14 @@ from pyrecipe.recipe_numbers import RecipeNum
 from pyrecipe import Recipe, Q_, db, config
 
 class ShoppingList:
-    """Creates a shopping list of ingredients from a list of recipes. 
-    
+    """Creates a shopping list of ingredients from a list of recipes.
+
     If duplicate entries are found, ingredients are added together.
-    """	
+    """
     def __init__(self):
         self.recipes = []
         self.shopping_list = {}
-    
+
     def _process(self, recipe):
         """Process the ingredients in a recipe."""
         ingredients = recipe.ingredients
@@ -50,7 +50,7 @@ class ShoppingList:
         for item in ingredients:
             name = item['name']
             try:
-                # links are recipe ingredients that are also 
+                # links are recipe ingredients that are also
                 # recipes so we add it to the list here.
                 link = item['link']
                 self.update(link)
@@ -58,7 +58,7 @@ class ShoppingList:
                     continue
             except KeyError:
                 pass
-                    
+
             if name == "s&p":
                 continue
             try:
@@ -68,18 +68,18 @@ class ShoppingList:
             unit = item['amounts'][0].get('unit', '')
             if unit in ['splash of', 'to taste', 'pinch of']:
                 continue
-            
+
             # FIXME:
             # pint cannot handle units such as '16 ounce can' etc....
             # this is a workaround until a better solution is found
             if 'can' in unit:
                 unit = 'can'
-            try: 
+            try:
                 quant = Q_(amount, unit)
             except ValueError:
                 print("errors", amount, unit)
                 continue
-            
+
             if name in self.shopping_list.keys():
                 orig_ingred = self.shopping_list[name]
                 try:
@@ -97,12 +97,12 @@ class ShoppingList:
             print("({}) {}".format(dishtype, name))
         print("\n" + utils.S_DIV(45))
 
-        # Print list	
+        # Print list
         padding = max(len(x) for x in self.shopping_list.keys()) + 1
         for key, value in self.shopping_list.items():
             if value.units in ['splash of', 'to taste', 'pinch of']:
                 print("{} {}".format(key.ljust(padding, '.'), 'N/A'))
-            else:    
+            else:
                 try:
                     #value = value.round_up().reduce()
                     #value = value.reduce()
@@ -111,9 +111,9 @@ class ShoppingList:
                     print("{} {}".format(key.ljust(padding, '.'), value))
 
         # write the list to an xml file	if True
-        if write:	
+        if write:
             self.write_to_xml()
-    
+
     @property
     def recipe_names(self):
         """Get the recipe names."""
@@ -126,7 +126,7 @@ class ShoppingList:
         names = [r.recipe_name for r in self.recipes]
         dish_types = [r['dish_type'] for r in self.recipes]
         return zip(names, dish_types)
-    
+
     def write_to_xml(self):
         """Write the shopping list to an xml file after
            building.
@@ -135,7 +135,7 @@ class ShoppingList:
         for item in self.recipe_names:
             xml_main_dish = etree.SubElement(self.xml_maindish_names, "name")
             xml_main_dish.text = str(item)
-        
+
         # the salad dressing names
         for item in self.dressing_names:
             xml_dressing_name = etree.SubElement(self.xml_salad_dressing, "name")
@@ -143,26 +143,26 @@ class ShoppingList:
 
         # finally, ingreds
         for key, value in self.shopping_list.items():
-            try: 
+            try:
                 ingred = "{} {}".format(key, str(value.round_up()))
             except AttributeError:
                 ingred = "{} {}".format(key, str(value))
             xml_shopping_list_item = etree.SubElement(self.xml_ingredients, "ingredient")
             xml_shopping_list_item.text = str(ingred)
-                
+
         result = etree.tostring(self.xml_root,
                                 xml_declaration=True,
                                 encoding='utf-8',
                                 with_tail=False,
                                 method='xml',
                                 pretty_print=True).decode("utf-8")
-        
+
         print(utils.msg(
-            "Writing shopping list to %s" 
+            "Writing shopping list to %s"
             % config.SHOPPING_LIST_FILE, 'INFORM'))
         with open(config.SHOPPING_LIST_FILE, "w") as f:
             f.write(result)
-    
+
     def add_item(self, item, amount):
         """Add a single item to the shopping list."""
         self.shopping_list[item] = amount
@@ -180,7 +180,7 @@ class ShoppingList:
         self.update(rand_salad_dressing)
         for dish in recipe_sample:
             self.update(dish)
-    
+
     def update(self, source):
         """Update the shopping list with ingredients from source."""
         try:
@@ -190,7 +190,7 @@ class ShoppingList:
             return
         self.recipes.append(recipe)
         self._process(recipe)
-    
+
 
 class MultiQuantity:
     """Class to deal with quantities of different dimentions"""
@@ -206,7 +206,7 @@ class MultiQuantity:
                 self.quants.append(item)
 
     def __str__(self):
-        test = [str(x) for x in self.quants] 
+        test = [str(x) for x in self.quants]
         return ' + '.join(test)
 
     def __repr__(self):
@@ -224,7 +224,7 @@ class MultiQuantity:
             except pint.errors.DimensionalityError:
                 continue
         return self
-    
+
     @property
     def units(self):
         return 'n/a'

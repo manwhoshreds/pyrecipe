@@ -24,15 +24,15 @@ from pyrecipe.ocr import RecipeOCR
 
 def cmd_print(args):
     """Print a recipe to stdout."""
-    try: 
+    try:
         recipe = Recipe(
-                args.source, 
-                verbose=args.verbose,
-                recipe_yield=args.yield_amount)
+            args.source,
+            recipe_yield=args.yield_amount
+        )
     except utils.RecipeNotFound:
         sys.exit(utils.msg(
             "{} was not found in the database".format(args.source), "ERROR"))
-    print(recipe)
+    recipe.print_recipe(args.verbose)
 
 def cmd_edit(args):
     """Edit a recipe using the urwid console interface (ncurses)."""
@@ -62,7 +62,7 @@ def cmd_remove(args):
         os.remove(file_name)
         print("{} has been deleted".format(source))
         return recipe['recipe_uuid']
-    
+
     print("{} not deleted".format(source))
     return None
 
@@ -111,8 +111,8 @@ def cmd_shop(args):
 
 def cmd_dump(args):
     """Dump recipe data in 1 of three formats."""
-    r = Recipe(args.source)
-    r.dump_to_screen(args.data_type)
+    recipe = Recipe(args.source)
+    recipe.dump_to_screen(args.data_type)
 
 def cmd_export(args):
     """Export recipes in xml format."""
@@ -127,8 +127,8 @@ def cmd_export(args):
         # can use to default to the current working directory.
         output_dir = os.getcwd()
 
-    r = Recipe(args.source)
-    xml = r.xml_data
+    recipe = Recipe(args.source)
+    xml = recipe.get_xml_data()
     file_name = utils.get_file_name_from_recipe(args.source, 'xml')
     file_name = os.path.join(output_dir, file_name)
 
@@ -140,7 +140,7 @@ def cmd_export(args):
 
     if args.recipe:
         file_name = utils.get_file_name_from_recipe(args.source)
-        src = r.source
+        src = recipe.source
         dst = os.path.join(output_dir, file_name)
         if os.path.isfile(dst):
             sys.exit(utils.msg("File already exists.", "ERROR"))
@@ -183,8 +183,8 @@ def build_recipe_database():
     database = DB.RecipeDB()
     database.create_database()
     for item in config.RECIPE_DATA_FILES:
-        r = Recipe(item)
-        database.add_recipe(r)
+        recipe = Recipe(item)
+        database.add_recipe(recipe)
 
 def parse_args():
     """Parse args for recipe_tool."""
@@ -213,7 +213,7 @@ def parse_args():
         action="store_true",
         help="Print version and exit"
     )
-    
+
     # <-- Subparsers start here -->
     subparser = parser.add_subparsers(dest='subparser')
 
@@ -235,6 +235,7 @@ def parse_args():
         dest="yield_amount",
         help="Specify a yield for the recipe."
     )
+
     # recipe_tool edit
     parser_edit = subparser.add_parser(
         "edit",
@@ -283,7 +284,6 @@ def parse_args():
         nargs="*",
         help='List of recipe to compile shopping list'
     )
-
     parser_shop.add_argument(
         "-a",
         "--add",
@@ -320,6 +320,7 @@ def parse_args():
         action="store_true",
         help="Save the current shopping list."
     )
+
     # recipe_tool dump
     parser_dump = subparser.add_parser(
         "dump",
@@ -363,7 +364,6 @@ def parse_args():
         "source",
         help="Sorce file to export"
     )
-
     parser_export.add_argument(
         "-o",
         "--output-dir",
@@ -389,6 +389,7 @@ def parse_args():
         action='store_true',
         help="Export recipe file"
     )
+
     # recipe_tool ocr
     parser_ocr = subparser.add_parser(
         "ocr",
@@ -411,6 +412,12 @@ def parse_args():
         "show",
         help="Show statistic from the recipe database"
     )
+    parser_show.add_argument(
+        "-v",
+        "--verbose",
+        help="Show more statistics about the recipe database"
+    )
+
     # recipe_tool fetch
     parser_fetch = subparser.add_parser(
         "fetch",
