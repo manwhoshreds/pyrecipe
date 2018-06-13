@@ -174,7 +174,7 @@ class Recipe:
                 self._named_ingredients_cache[alt_name] = ingred_list
     
     def get_ingredients(self, yield_amount=0, color=False):
-        return self.ingredients, self.alt_ingredients
+        return self.ingredients, self._named_ingredients_cache
 
     @property
     def yields(self):
@@ -307,6 +307,7 @@ class Recipe:
             recipe_str += "\n{}".format(ingred)
         
         if alt_ingreds:
+            print(alt_ingreds)
             for item in alt_ingreds:
                 recipe_str += colored("\n\n{}".format(item.title()), "cyan")
 
