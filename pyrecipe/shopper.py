@@ -93,8 +93,8 @@ class ShoppingList:
     def print_list(self, write=False):
         """Print the shopping list to stdout."""
         print("Recipes:\n")
-        for item in self.recipe_names:
-            print(item)
+        for name, dishtype in self.dish_types:
+            print("({}) {}".format(dishtype, name))
         print("\n" + utils.S_DIV(45))
 
         # Print list	
@@ -120,6 +120,13 @@ class ShoppingList:
         names = [r.recipe_name for r in self.recipes]
         return names
 
+    @property
+    def dish_types(self):
+        """Get the recipe names."""
+        names = [r.recipe_name for r in self.recipes]
+        dish_types = [r['dish_type'] for r in self.recipes]
+        return zip(names, dish_types)
+    
     def write_to_xml(self):
         """Write the shopping list to an xml file after
            building.

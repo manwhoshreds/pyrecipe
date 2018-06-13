@@ -14,7 +14,8 @@ import pprint
 names = get_data()['recipe_names']
 words = []
 for name in names:
-    name = name.replace(' ', '_')
+    #name = name.replace(' ', '_')
+    name = name.replace(' ', '\ ')
     words.append(name.lower())
 
 words = ' '.join(words)

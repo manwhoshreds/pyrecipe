@@ -32,10 +32,9 @@ except:
 __email__ = 'm.k.miller@gmx.com'
 __scriptname__  = os.path.basename(sys.argv[0])
 
-ureg = UnitRegistry()
 dirr = os.path.dirname(__file__)
 definitions = os.path.join(dirr, 'culinary_units.txt')
-ureg.load_definitions(definitions)
+ureg = UnitRegistry(definitions)
 
 p = inflect.engine()
 

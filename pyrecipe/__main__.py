@@ -438,7 +438,6 @@ def parse_args():
         "--search",
         help="Search the web for a recipe to scrape"
     )
-
     args = parser.parse_args()
     if len(sys.argv) == 1:
         sys.exit(parser.print_help())

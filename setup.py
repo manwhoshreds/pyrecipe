@@ -6,12 +6,11 @@ deps = [
     'pint',
     'urwid',
     'bs4',
-    'argcomplete',
     'ruamel.yaml',
     'lxml',
-    'SpeechRecognition',
-    'gtts',
     'termcolor'
+    #'SpeechRecognition',
+    #'gtts',
 ]
 
 #packages = setuptools.find_packages()
@@ -25,13 +24,16 @@ with open("README.asc", "r") as fh:
 
 setuptools.setup(
     name="pyrecipe",
-    version="1.2.5",
+    version="1.2.7",
     author="Michael K. Miller",
     author_email="m.k.miller@gmx.com",
     description='A python tool for managing recipes',
     long_description=long_description,
     long_description_content_type="text/markdown",
     data_files=data_files,
+    package_data={
+        'pyrecipe': ['culinary_units.txt']
+    },
     url="https://github.com/manwhoshreds/pyrecipe",
     entry_points={
         'console_scripts': [
