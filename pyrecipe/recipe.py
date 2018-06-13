@@ -90,6 +90,11 @@ class Recipe:
             self['yields'] = [1]
             self.source = utils.get_file_name_from_uuid(self['recipe_uuid'])
         
+        # ingredients cache
+        self._ingredients_cache = []
+        self._named_ingredients_cache = OrderedDict()
+        self._cache_ingredients()
+        
         # Verbosity
         self.verbose = verbose
         # Yield of the recipe
@@ -142,6 +147,37 @@ class Recipe:
         """Get the recipe hash."""
         return hash(self.get_yaml_string())
     
+    def _cache_ingredients(self, yield_amount=0, color=False):
+        """Return a list of ingredient strings.
+
+        args:
+        - yield_amount: This will output the desired yield amount
+        """
+        for item in self['ingredients']:
+            ingred = Ingredient(
+                item, 
+                color=color,
+                yield_amount=yield_amount
+            )
+            self._ingredients_cache.append(ingred)
+
+        if self['alt_ingredients']:
+            alt_ingreds = self['alt_ingredients']
+            for item in alt_ingreds:
+                alt_name = list(item.keys())[0]
+                ingred_list = []
+                for ingredient in list(item.values())[0]:
+                    ingred = Ingredient(
+                        ingredient, 
+                        color=color,
+                        yield_amount=yield_amount
+                    )
+                    ingred_list.append(ingred)
+                self._named_ingredients_cache[alt_name] = ingred_list
+    
+    def get_ingredients(self, yield_amount=0, color=False):
+        return self.ingredients, self.alt_ingredients
+
     @property
     def yields(self):
         return ', '.join(self['yields'])
@@ -157,7 +193,7 @@ class Recipe:
     @property
     def ingredients(self):
         """Return ingredient data."""
-        return self['ingredients']
+        return [str(i) for i in self._ingredients_cache]
 
     @ingredients.setter
     def ingredients(self, value):
@@ -216,40 +252,7 @@ class Recipe:
     def method(self, value):
         value = [{"step": v} for v in value]
         self['steps'] = value
-    
-    def get_ingredients(self, yield_amount=0, color=False):
-        """Return a list of ingredient strings.
-
-        args:
-
-        - yield_amount: This will output the desired yield amount
-        """
-        ingredients = []
-        for item in self['ingredients']:
-            ingred = Ingredient(
-                item, 
-                color=color,
-                yield_amount=yield_amount
-            )
-            ingredients.append(str(ingred))
-
-        named_ingredients = OrderedDict()
-        if self['alt_ingredients']:
-            alt_ingreds = self['alt_ingredients']
-            for item in alt_ingreds:
-                alt_name = list(item.keys())[0]
-                ingred_list = []
-                for ingredient in list(item.values())[0]:
-                    ingred = Ingredient(
-                        ingredient, 
-                        color=color,
-                        yield_amount=yield_amount
-                    )
-                    ingred_list.append(str(ingred))
-                named_ingredients[alt_name] = ingred_list
-
-        return ingredients, named_ingredients
-
+        
     def __str__(self):
         recipe_str = colored(self['recipe_name'].title(), 'cyan', attrs=['bold'])
         recipe_str += "\n\nDish Type: {}".format(str(self['dish_type']))
@@ -394,7 +397,10 @@ class Ingredient:
         self.unit = self.amounts[yield_amount]['unit']
         if self.unit == 'each':
             self.unit = ''
-
+    
+    def __repr__(self):
+        return "<Ingredient('{}')>".format(self.name)
+    
     def __str__(self):
         """Turn ingredient object into a string
 
@@ -595,9 +601,9 @@ class IngredientParser:
         return ingred_dict
 
 if __name__ == '__main__':
-    test = IngredientParser()
-    ok = test.parse('2 tablespoon onion')
-    print(ok)
-    ingred = Ingredient(ok)
-    print(ingred)
+    r = Recipe('korean pork tacos')
+    print(r.get_ingredients())
+    #print(r._ingredients_cache)
+    #print(r._named_ingredients_cache)
+    #print(r.ingredients)
 
