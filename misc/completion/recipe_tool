@@ -1,21 +1,30 @@
 # recipe_tool auto completion
 
-_main() {
-    local iter use cur
+_recipes() 
+{
+	sql='SELECT replace(lower(name)," ","\ ") FROM recipes'
+	use=$(sqlite3 /home/michael/.config/pyrecipe/recipes.db "$sql")
+	echo $use
+}
+
+_pyrecipe()
+{
+    local iter words cur prev
     cur=${COMP_WORDS[COMP_CWORD]}
-    use=`python -m pyrecipe.db`
+    prev=${COMP_WORDS[COMP_CWORD-1]}
+	words=$(_recipes)
 	# The next part efectively allows me to use completion 
 	# words with spaces thanks to the post at:
     # https://stackoverflow.com/questions/26509260/bash-tab-completion-with-spaces
-    use="${use//\\ /___}"
+    words="${words//\\ /___}"
     # split on all spaces
-    for iter in $use; do
+    for iter in $words; do
         # only reply with completions
         if [[ $iter =~ ^$cur ]]; then
             # swap back our escaped spaces
-            COMPREPLY+=("${iter//___/\\ }")
+            COMPREPLY+=( "${iter//___/\\ }" )
         fi
     done
 }
 
-complete -F _main recipe_tool
+complete -F _pyrecipe recipe_tool
