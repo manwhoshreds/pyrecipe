@@ -32,7 +32,7 @@ import bs4
 from termcolor import colored
 
 import pyrecipe.utils as utils
-from pyrecipe import (Recipe, IngredientParser)
+from pyrecipe.recipe import (Recipe, IngredientParser)
 
 
 SCRAPERS = {
@@ -42,7 +42,7 @@ SCRAPERS = {
 
 SCRAPEABLE_SITES = list(SCRAPERS.keys())
 
-#TODO: add propert for scraping named ingredients
+#TODO: add property for scraping named ingredients
 class RecipeWebScraper(Recipe):
     """Scrape recipes from a web source.
     

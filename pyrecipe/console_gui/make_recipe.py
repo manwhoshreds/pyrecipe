@@ -18,8 +18,9 @@ import speech_recognition as sr
 from gtts import gTTS
 from playsound import playsound
 
+import pyrecipe.db as DB
 from pyrecipe.utils import wrap
-from pyrecipe import Recipe, db
+from pyrecipe.recipe import Recipe
 
 
 PALETTE = ([

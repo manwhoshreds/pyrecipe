@@ -44,6 +44,7 @@ import pyrecipe.config as config
 from pyrecipe.utils import recipe2xml
 from pyrecipe.db import update_db
 from pyrecipe.recipe_numbers import RecipeNum
+from pyrecipe import Q_
 
 __all__ = ['Recipe', 'IngredientParser']
 
@@ -383,6 +384,7 @@ class Ingredient:
     :param color: return string with color data for color output
     """
     def __init__(self, ingredient, yield_amount=0, color=False):
+        self.ingredient_data = ingredient
         self.color = color
         self.name = ingredient['name']
         self.size = ingredient.get('size', '')
@@ -439,6 +441,9 @@ class Ingredient:
             if self.note:
                 ingred_string += " {}".format(self.note)
             return ingred_string
+
+    def get_quantity(self):
+        return Q_(self.amount, self.unit)
 
 
 class IngredientParser:
@@ -603,9 +608,15 @@ class IngredientParser:
 if __name__ == '__main__':
     r = Recipe('korean pork tacos')
     #print(dir(r))
-    print(r.__dict__)
+    #print(r.__dict__)
     #print(r.get_ingredients())
     #print(r._ingredients_cache)
     #print(r._named_ingredients_cache)
     #print(r.ingredients)
+    ip = IngredientParser()
+    test = ip.parse("1 tablespoon onion, chopped")
+    ok = Ingredient(test)
+    print(ok.ingredient_data)
+    test = [ok.get_quantity()]
+    print(test)
 

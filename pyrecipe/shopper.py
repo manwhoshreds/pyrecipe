@@ -23,8 +23,10 @@ from lxml import etree
 import pint.errors
 
 import pyrecipe.utils as utils
+import pyrecipe.db as db
 from pyrecipe.recipe_numbers import RecipeNum
-from pyrecipe import Recipe, Q_, db, config
+from pyrecipe.recipe import Recipe, Q_, config
+from pyrecipe import Q_, config
 
 class ShoppingList:
     """Creates a shopping list of ingredients from a list of recipes.
@@ -117,13 +119,12 @@ class ShoppingList:
     @property
     def recipe_names(self):
         """Get the recipe names."""
-        names = [r.recipe_name for r in self.recipes]
-        return names
+        return [r.recipe_name for r in self.recipes]
 
     @property
     def dish_types(self):
         """Get the recipe names."""
-        names = [r.recipe_name for r in self.recipes]
+        names = self.recipe_names
         dish_types = [r['dish_type'] for r in self.recipes]
         return zip(names, dish_types)
 

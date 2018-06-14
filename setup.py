@@ -1,6 +1,4 @@
-import setuptools
-#from distutils.core import setup
-#import os
+from distutils.core import setup
 
 deps = [
     'pint',
@@ -13,18 +11,18 @@ deps = [
     #'gtts',
 ]
 
-#packages = setuptools.find_packages()
 data_files = [
-    ('/etc/pyrecipe/', ['config/pyrecipe.cfg'])
+    ('/etc/pyrecipe', ['misc/pyrecipe.cfg']),
+    ('/usr/share/bash-completion/completions/', ['misc/recipe_tool'])
 ]
 
 
 with open("README.asc", "r") as fh:
     long_description = fh.read()
 
-setuptools.setup(
+setup(
     name="pyrecipe",
-    version="1.2.7",
+    version="1.2.8",
     author="Michael K. Miller",
     author_email="m.k.miller@gmx.com",
     description='A python tool for managing recipes',
