@@ -201,7 +201,11 @@ class EntryBlock(urwid.WidgetWrap):
 class IngredBlock(EntryBlock):
     """Ingredient block for displaying editable ingredients."""
     def __init__(self, ingredients=[], name=None):
-        self.ingredients = ingredients
+        if ingredients:
+            self.ingredients = ingredients
+        else:
+            self.ingredients = ["add"]
+
         self.name = name
         self.widgets = deque([BLANK])
         buttons = self._get_buttons()
@@ -209,7 +213,7 @@ class IngredBlock(EntryBlock):
         if name:
             self.alt_name = urwid.AttrMap(urwid.Edit('* ', name), 'title')
             self.widgets.append(self.alt_name)
-
+        
         for item in self.ingredients:
             ingred_entry = urwid.Edit("- ", item)
             self.widgets.append(ingred_entry)
