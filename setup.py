@@ -13,7 +13,7 @@ deps = [
 
 data_files = [
     ('/etc/pyrecipe', ['misc/pyrecipe.cfg']),
-    ('/usr/share/bash-completion/completions/', ['misc/recipe_tool'])
+    ('/usr/share/bash-completion/completions/', ['misc/completion/recipe_tool'])
 ]
 
 
