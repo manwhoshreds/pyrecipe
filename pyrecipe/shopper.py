@@ -14,20 +14,20 @@
                      together.
     
 """
-
-import random
-import datetime
+import os
 import sys
 import json
+import random
+import datetime
 
 import requests
 import pint.errors
 
 import pyrecipe.utils as utils
 import pyrecipe.config as config
-from pyrecipe.recipe_numbers import RecipeNum
-from pyrecipe.recipe import Recipe
 from pyrecipe import Q_
+from pyrecipe.recipe import Recipe
+from pyrecipe.recipe_numbers import RecipeNum
 
 class ShoppingList:
     """Creates a shopping list of ingredients from a list of recipes. 
@@ -169,7 +169,8 @@ class ShoppingList:
 
     def update_remote(self):
         """Update openrecipes.org shoppingList."""
-        path = 'http://localhost/open_recipes/includes/api/shopping_list/create.php'
+        #path = 'http://localhost/open_recipes/includes/api/shopping_list/create.php'
+        path = 'http://192.168.0.31/openRecipes/includes/api/shopping_list/create.php'
         data = self.to_json()
         resp = requests.post(path, json=data)
         print(resp.reason)
@@ -226,7 +227,7 @@ if __name__ == '__main__':
     shoplist.update('french onion soup')
     #shoplist.update('test')
     shoplist.update('pesto')
-    shoplist.print_list()
+    #shoplist.print_list()
+    #shoplist.update_remote()
     shoplist.read_from_remote()
-    #print(json.dumps(shoplist.shopping_list))
 
