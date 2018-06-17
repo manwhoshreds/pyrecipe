@@ -231,10 +231,9 @@ class MultiQuantity:
 
 if __name__ == '__main__':
     shoplist = ShoppingList()
-    shoplist.print_random()
-    #shoplist.update('korean pork tacos')
-    #shoplist.update('french onion soup')
+    shoplist.update('korean pork tacos')
+    shoplist.update('french onion soup')
     #shoplist.update('test')
-    #shoplist.update('pesto')
-    #shoplist.print_list()
+    shoplist.update('pesto')
+    shoplist.print_list()
 
