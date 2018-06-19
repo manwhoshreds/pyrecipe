@@ -24,11 +24,18 @@ import requests
 import pint.errors
 
 import pyrecipe.utils as utils
+<<<<<<< HEAD
+import pyrecipe.db as db
+from pyrecipe.recipe_numbers import RecipeNum
+from pyrecipe.recipe import Recipe, Q_, config
+from pyrecipe import Q_, config
+=======
 import pyrecipe.config as config
 import pyrecipe.db as DB
 from pyrecipe import Q_
 from pyrecipe.recipe import Recipe
 from pyrecipe.recipe_numbers import RecipeNum
+>>>>>>> master
 
 class ShoppingList:
     """Creates a shopping list of ingredients from a list of recipes.
@@ -114,6 +121,12 @@ class ShoppingList:
                 except AttributeError:
                     print("{} {}".format(key.ljust(padding, '.'), value))
 
+<<<<<<< HEAD
+        # write the list to an xml file	if True
+        if write:
+            self.write_to_xml()
+
+=======
     def print_list(self, write=False):
         """Print the shopping list to stdout."""
         print("Recipes:\n")
@@ -131,11 +144,11 @@ class ShoppingList:
             except AttributeError:
                 print("{} {}".format(key.ljust(padding, '.'), value))
     
+>>>>>>> master
     @property
     def recipe_names(self):
         """Get the recipe names."""
-        names = [r.recipe_name for r in self.recipes]
-        return names
+        return [r.recipe_name for r in self.recipes]
 
     @property
     def dish_types(self):
@@ -143,6 +156,7 @@ class ShoppingList:
         names = self.recipe_names
         dish_types = [r['dish_type'] for r in self.recipes]
         return zip(names, dish_types)
+<<<<<<< HEAD
 
     def write_to_xml(self):
         """Write the shopping list to an xml file after
@@ -180,23 +194,29 @@ class ShoppingList:
         with open(config.SHOPPING_LIST_FILE, "w") as f:
             f.write(result)
 
+=======
+    
+>>>>>>> master
     def add_item(self, item, amount):
         """Add a single item to the shopping list."""
         self.shopping_list[item] = amount
 
     def choose_random(self, count=int(config.RAND_RECIPE_COUNT), write=False):
         try:
-            recipe_sample = random.sample(db.get_data()['main_names'], count)
-            rand_salad_dressing = random.choice(db.get_data()['salad_dressing_names'])
+            recipe_sample = random.sample(DB.get_data()['main_names'], count)
+            rand_salad_dressing = random.choice(DB.get_data()['salad_dressing_names'])
         except ValueError:
             sys.exit(utils.msg(
                 "Random count is higher than the amount of recipes"
                 " available ({}). Please enter a lower number."
-                .format(len(db.get_data()['main_names'])), "ERROR"
+                .format(len(DB.get_data()['main_names'])), "ERROR"
             ))
         self.update(rand_salad_dressing)
         for dish in recipe_sample:
             self.update(dish)
+<<<<<<< HEAD
+
+=======
     
     def to_json(self):
         """Convert shoppinglist to json data."""
@@ -211,6 +231,7 @@ class ShoppingList:
         #return json.dumps(data)
         return data
     
+>>>>>>> master
     def update(self, source):
         """Update the shopping list with ingredients from source."""
         try:
@@ -221,6 +242,8 @@ class ShoppingList:
         self.recipes.append(recipe)
         self._process(recipe)
 
+<<<<<<< HEAD
+=======
     def update_remote(self):
         """Update openrecipes.org shoppingList."""
         #path = 'http://localhost/open_recipes/includes/api/shopping_list/create.php'
@@ -236,6 +259,7 @@ class ShoppingList:
         return resp.json()['shopping_list'][0]
 
 
+>>>>>>> master
 
 class MultiQuantity:
     """Class to deal with quantities of different dimentions"""
@@ -276,10 +300,13 @@ class MultiQuantity:
 
 if __name__ == '__main__':
     shoplist = ShoppingList()
-    shoplist.print_random()
     #shoplist.update('korean pork tacos')
     #shoplist.update('french onion soup')
     #shoplist.update('test')
     #shoplist.update('pesto')
-    #shoplist.print_list()
+    #shoplist.update('carrot cake')
+    #shoplist.update_remote()
+    #shoplist.read_from_remote()
+    #shoplist.update_remote()
+    shoplist.print_list()
 

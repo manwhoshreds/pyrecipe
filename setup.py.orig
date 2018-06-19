@@ -11,11 +11,16 @@ DEPS = [
     #'gtts',
 ]
 
+<<<<<<< HEAD
+data_files = [
+    ('/etc/pyrecipe', ['misc/pyrecipe.cfg']),
+    ('/usr/share/bash-completion/completions/', ['misc/completion/recipe_tool'])
+=======
 DATA_FILES = [
     ('share/bash-completion/completions', ['misc/completion/recipe_tool'])
     #('/etc', ['misc/pyrecipe.cfg']) not working, i have no idea why
+>>>>>>> master
 ]
-
 
 with open("README.asc", "r") as fh:
     long_description = fh.read()
