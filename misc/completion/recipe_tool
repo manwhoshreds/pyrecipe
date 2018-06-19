@@ -34,7 +34,10 @@ _pyrecipe()
     esccur="${cur//\\ /___}"
 	subcmds='print edit add remove make search shop dump export ocr show fetch --help -h --version -V -v --verbose'
 	case "$prev" in
-		print|shop|edit|remove)
+		print|edit|remove)
+			_comp_reply_for_recipes $esccur
+			;;
+		shop)
 			_comp_reply_for_recipes $esccur
 			;;
 		ocr)
