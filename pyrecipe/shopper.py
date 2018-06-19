@@ -14,17 +14,21 @@
                      together.
     
 """
-
+import os
+import sys
+import json
 import random
 import datetime
-import sys
-from lxml import etree
 
+import requests
 import pint.errors
 
 import pyrecipe.utils as utils
+import pyrecipe.config as config
+import pyrecipe.db as DB
+from pyrecipe import Q_
+from pyrecipe.recipe import Recipe
 from pyrecipe.recipe_numbers import RecipeNum
-from pyrecipe import Recipe, Q_, db, config
 
 class ShoppingList:
     """Creates a shopping list of ingredients from a list of recipes. 
@@ -90,7 +94,7 @@ class ShoppingList:
             else:
                 self.shopping_list[name] = quant
 
-    def print_list(self, write=False):
+    def BAKprint_list(self, write=False):
         """Print the shopping list to stdout."""
         print("Recipes:\n")
         for name, dishtype in self.dish_types:
@@ -110,9 +114,22 @@ class ShoppingList:
                 except AttributeError:
                     print("{} {}".format(key.ljust(padding, '.'), value))
 
-        # write the list to an xml file	if True
-        if write:	
-            self.write_to_xml()
+    def print_list(self, write=False):
+        """Print the shopping list to stdout."""
+        print("Recipes:\n")
+        for name, dishtype in self.dish_types:
+            print("({}) {}".format(dishtype, name))
+        print("\n" + utils.S_DIV(45))
+
+        # Print list	
+        padding = max(len(x) for x in self.remote().keys()) + 1
+        for key, value in self.remote().items():
+            try:
+                #value = value.round_up().reduce()
+                #value = value.reduce()
+                print("{} {}".format(key.ljust(padding, '.'), str(value)))
+            except AttributeError:
+                print("{} {}".format(key.ljust(padding, '.'), value))
     
     @property
     def recipe_names(self):
@@ -127,59 +144,36 @@ class ShoppingList:
         dish_types = [r['dish_type'] for r in self.recipes]
         return zip(names, dish_types)
     
-    def write_to_xml(self):
-        """Write the shopping list to an xml file after
-           building.
-        """
-        # Add recipe names to the tree
-        for item in self.recipe_names:
-            xml_main_dish = etree.SubElement(self.xml_maindish_names, "name")
-            xml_main_dish.text = str(item)
-        
-        # the salad dressing names
-        for item in self.dressing_names:
-            xml_dressing_name = etree.SubElement(self.xml_salad_dressing, "name")
-            xml_dressing_name.text = str(item)
-
-        # finally, ingreds
-        for key, value in self.shopping_list.items():
-            try: 
-                ingred = "{} {}".format(key, str(value.round_up()))
-            except AttributeError:
-                ingred = "{} {}".format(key, str(value))
-            xml_shopping_list_item = etree.SubElement(self.xml_ingredients, "ingredient")
-            xml_shopping_list_item.text = str(ingred)
-                
-        result = etree.tostring(self.xml_root,
-                                xml_declaration=True,
-                                encoding='utf-8',
-                                with_tail=False,
-                                method='xml',
-                                pretty_print=True).decode("utf-8")
-        
-        print(utils.msg(
-            "Writing shopping list to %s" 
-            % config.SHOPPING_LIST_FILE, 'INFORM'))
-        with open(config.SHOPPING_LIST_FILE, "w") as f:
-            f.write(result)
-    
     def add_item(self, item, amount):
         """Add a single item to the shopping list."""
         self.shopping_list[item] = amount
 
     def choose_random(self, count=int(config.RAND_RECIPE_COUNT), write=False):
         try:
-            recipe_sample = random.sample(db.get_data()['main_names'], count)
-            rand_salad_dressing = random.choice(db.get_data()['salad_dressing_names'])
+            recipe_sample = random.sample(DB.get_data()['main_names'], count)
+            rand_salad_dressing = random.choice(DB.get_data()['salad_dressing_names'])
         except ValueError:
             sys.exit(utils.msg(
                 "Random count is higher than the amount of recipes"
                 " available ({}). Please enter a lower number."
-                .format(len(db.get_data()['main_names'])), "ERROR"
+                .format(len(DB.get_data()['main_names'])), "ERROR"
             ))
         self.update(rand_salad_dressing)
         for dish in recipe_sample:
             self.update(dish)
+    
+    def to_json(self):
+        """Convert shoppinglist to json data."""
+        data = {}
+        data['user_name'] = config.USER_NAME
+        data['recipes'] = self.recipe_names
+        data['list'] = []
+        for name, amount in self.shopping_list.items():
+            item = {}
+            item['item'], item['amount'] = name, str(amount)
+            data['list'].append(item)
+        #return json.dumps(data)
+        return data
     
     def update(self, source):
         """Update the shopping list with ingredients from source."""
@@ -190,7 +184,22 @@ class ShoppingList:
             return
         self.recipes.append(recipe)
         self._process(recipe)
-    
+
+    def update_remote(self):
+        """Update openrecipes.org shoppingList."""
+        #path = 'http://localhost/open_recipes/includes/api/shopping_list/create.php'
+        path = 'http://192.168.0.31/openRecipes/includes/api/shopping_list/create.php'
+        data = self.to_json()
+        resp = requests.post(path, json=data)
+        print(resp.reason)
+        print(resp.text)
+
+    def remote(self):
+        path = 'http://localhost/open_recipes/includes/api/shopping_list/read.php'
+        resp = requests.post(path, data={'user_name': config.USER_NAME})
+        return resp.json()['shopping_list'][0]
+
+
 
 class MultiQuantity:
     """Class to deal with quantities of different dimentions"""
@@ -224,17 +233,20 @@ class MultiQuantity:
             except pint.errors.DimensionalityError:
                 continue
         return self
-    
+
     @property
     def units(self):
         return 'n/a'
 
 if __name__ == '__main__':
     shoplist = ShoppingList()
-    shoplist.print_random()
     #shoplist.update('korean pork tacos')
     #shoplist.update('french onion soup')
     #shoplist.update('test')
     #shoplist.update('pesto')
-    #shoplist.print_list()
+    #shoplist.update('carrot cake')
+    #shoplist.update_remote()
+    #shoplist.read_from_remote()
+    #shoplist.update_remote()
+    shoplist.print_list()
 
