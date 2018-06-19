@@ -1,6 +1,6 @@
 from distutils.core import setup
 
-deps = [
+DEPS = [
     'pint',
     'urwid',
     'bs4',
@@ -11,11 +11,9 @@ deps = [
     #'gtts',
 ]
 
-data_files = [
-    ('/etc/pyrecipe', ['misc/pyrecipe.cfg']),
-    ('/usr/share/bash-completion/completions/', ['misc/completion/recipe_tool'])
+DATA_FILES = [
+    ('share/bash-completion/completions', ['misc/completion/recipe_tool'])
 ]
-
 
 with open("README.asc", "r") as fh:
     long_description = fh.read()
@@ -28,7 +26,7 @@ setup(
     description='A python tool for managing recipes',
     long_description=long_description,
     long_description_content_type="text/markdown",
-    data_files=data_files,
+    data_files=DATA_FILES,
     package_data={
         'pyrecipe': ['culinary_units.txt']
     },
@@ -39,7 +37,7 @@ setup(
         ]
     },
     packages=setuptools.find_packages(),
-    install_require=deps,
+    install_require=DEPS,
     classifiers=(
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",

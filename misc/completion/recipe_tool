@@ -3,28 +3,45 @@
 _recipes() 
 {
 	sql='SELECT replace(lower(name)," ","\ ") FROM recipes'
-	use=$(sqlite3 $HOME/.config/pyrecipe/recipes.db "$sql")
-	echo $use
+	recipes=$(sqlite3 $HOME/.config/pyrecipe/recipes.db "$sql")
+	echo $recipes
 }
 
-_pyrecipe()
+_comp_reply_for_recipes()
 {
-    local iter words cur prev
-    cur=${COMP_WORDS[COMP_CWORD]}
-    prev=${COMP_WORDS[COMP_CWORD-1]}
-	words=$(_recipes)
 	# The next part efectively allows me to use completion 
 	# words with spaces thanks to the post at:
     # https://stackoverflow.com/questions/26509260/bash-tab-completion-with-spaces
+	words=$(_recipes)
     words="${words//\\ /___}"
     # split on all spaces
     for iter in $words; do
+		# without this, completion breaks once a space is encountered
         # only reply with completions
-        if [[ $iter =~ ^$cur ]]; then
+        if [[ $iter =~ ^$1 ]]; then
             # swap back our escaped spaces
             COMPREPLY+=( "${iter//___/\\ }" )
         fi
     done
+}
+
+_pyrecipe()
+{
+
+    local cur prev esccur subcoms
+    cur=${COMP_WORDS[COMP_CWORD]}
+    prev=${COMP_WORDS[COMP_CWORD-1]}
+	# without this, completion breaks once a space is encountered
+    esccur="${cur//\\ /___}"
+	subcmds='print edit add remove make search shop dump export ocr show fetch --help -h --version -V -v --verbose'
+	case "$prev" in
+		print|shop|edit|remove)
+			_comp_reply_for_recipes $esccur
+			;;
+		recipe_tool)
+			COMPREPLY=( $( compgen -W "$subcmds" -- "$cur" ) )
+			;;
+	esac
 }
 
 complete -F _pyrecipe recipe_tool
