@@ -27,7 +27,7 @@ class ApiBase:
     def __init__(self):
         # for accessing out side of lan.
         #self.base_uri = 'https://venus-server.duckdns.org/openRecipes/api'
-        self.base_uri = 'https://192.168.0.31/openRecipes/api'
+        self.base_uri = 'https://192.168.0.31/openRecipes/includes/api'
 
     def _get_path(self, key):
         return self.BASE_PATH + self.URLS[key]
