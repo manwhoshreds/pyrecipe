@@ -1,4 +1,4 @@
-# recipe_tool auto completion
+# completion for recipe_tool
 
 _recipes() 
 {
@@ -27,8 +27,7 @@ _comp_reply_for_recipes()
 
 _pyrecipe()
 {
-
-    local cur prev esccur subcoms
+	local cur prev esccur subcoms
     cur=${COMP_WORDS[COMP_CWORD]}
     prev=${COMP_WORDS[COMP_CWORD-1]}
 	# without this, completion breaks once a space is encountered
@@ -38,6 +37,9 @@ _pyrecipe()
 		print|shop|edit|remove)
 			_comp_reply_for_recipes $esccur
 			;;
+		ocr)
+			_filedir 'txt'
+			;;
 		recipe_tool)
 			COMPREPLY=( $( compgen -W "$subcmds" -- "$cur" ) )
 			;;
@@ -45,3 +47,4 @@ _pyrecipe()
 }
 
 complete -F _pyrecipe recipe_tool
+# vim: set syntax=sh:
