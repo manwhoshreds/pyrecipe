@@ -103,7 +103,7 @@ class ApiBase:
                 if not hasattr(self, key) or not callable(getattr(self, key)):
                     setattr(self, key, response[key])
 
-class ApiBase:
+class BAKApiBase:
     
     def __init__(self, recipe):
         super().__init__(recipe)
