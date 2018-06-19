@@ -196,7 +196,7 @@ class ShoppingList:
 
     def remote(self):
         path = 'http://localhost/open_recipes/includes/api/shopping_list/read.php'
-        resp = requests.post(path, data={'user_name': config.USER_NAME})
+        resp = requests.get(path, data={'user_name': config.USER_NAME})
         return resp.json()['shopping_list'][0]
 
 
