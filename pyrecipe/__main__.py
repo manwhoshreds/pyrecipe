@@ -25,10 +25,9 @@ from pyrecipe.ocr import RecipeOCR
 def cmd_print(args):
     """Print a recipe to stdout."""
     try: 
-        recipe = Recipe(
-                args.source, 
-                verbose=args.verbose,
-                recipe_yield=args.yield_amount)
+        recipe = Recipe(args.source, 
+                        verbose=args.verbose,
+                        recipe_yield=args.yield_amount)
     except utils.RecipeNotFound:
         sys.exit(utils.msg(
             "{} was not found in the database".format(args.source), "ERROR"))
@@ -107,6 +106,7 @@ def cmd_shop(args):
 
         for item in menu_items:
             shoplist.update(item)
+        #shoplist.update_remote()
         shoplist.print_list(write=args.save)
 
 def cmd_dump(args):

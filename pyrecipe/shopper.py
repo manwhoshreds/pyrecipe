@@ -25,6 +25,7 @@ import pint.errors
 
 import pyrecipe.utils as utils
 import pyrecipe.config as config
+import pyrecipe.db as DB
 from pyrecipe import Q_
 from pyrecipe.recipe import Recipe
 from pyrecipe.recipe_numbers import RecipeNum
@@ -93,7 +94,7 @@ class ShoppingList:
             else:
                 self.shopping_list[name] = quant
 
-    def print_list(self, write=False):
+    def BAKprint_list(self, write=False):
         """Print the shopping list to stdout."""
         print("Recipes:\n")
         for name, dishtype in self.dish_types:
@@ -113,6 +114,23 @@ class ShoppingList:
                 except AttributeError:
                     print("{} {}".format(key.ljust(padding, '.'), value))
 
+    def print_list(self, write=False):
+        """Print the shopping list to stdout."""
+        print("Recipes:\n")
+        for name, dishtype in self.dish_types:
+            print("({}) {}".format(dishtype, name))
+        print("\n" + utils.S_DIV(45))
+
+        # Print list	
+        padding = max(len(x) for x in self.remote().keys()) + 1
+        for key, value in self.remote().items():
+            try:
+                #value = value.round_up().reduce()
+                #value = value.reduce()
+                print("{} {}".format(key.ljust(padding, '.'), str(value)))
+            except AttributeError:
+                print("{} {}".format(key.ljust(padding, '.'), value))
+    
     @property
     def recipe_names(self):
         """Get the recipe names."""
@@ -132,13 +150,13 @@ class ShoppingList:
 
     def choose_random(self, count=int(config.RAND_RECIPE_COUNT), write=False):
         try:
-            recipe_sample = random.sample(db.get_data()['main_names'], count)
-            rand_salad_dressing = random.choice(db.get_data()['salad_dressing_names'])
+            recipe_sample = random.sample(DB.get_data()['main_names'], count)
+            rand_salad_dressing = random.choice(DB.get_data()['salad_dressing_names'])
         except ValueError:
             sys.exit(utils.msg(
                 "Random count is higher than the amount of recipes"
                 " available ({}). Please enter a lower number."
-                .format(len(db.get_data()['main_names'])), "ERROR"
+                .format(len(DB.get_data()['main_names'])), "ERROR"
             ))
         self.update(rand_salad_dressing)
         for dish in recipe_sample:
@@ -176,11 +194,10 @@ class ShoppingList:
         print(resp.reason)
         print(resp.text)
 
-    def read_from_remote(self):
+    def remote(self):
         path = 'http://localhost/open_recipes/includes/api/shopping_list/read.php'
-        resp = requests.get(path)
-        for item in resp.json()['shopping_list']:
-            print(item['item'], item['amount'])
+        resp = requests.post(path, data={'user_name': config.USER_NAME})
+        return resp.json()['shopping_list'][0]
 
 
 
@@ -223,11 +240,13 @@ class MultiQuantity:
 
 if __name__ == '__main__':
     shoplist = ShoppingList()
-    shoplist.update('korean pork tacos')
-    shoplist.update('french onion soup')
+    #shoplist.update('korean pork tacos')
+    #shoplist.update('french onion soup')
     #shoplist.update('test')
-    shoplist.update('pesto')
-    #shoplist.print_list()
+    #shoplist.update('pesto')
+    #shoplist.update('carrot cake')
     #shoplist.update_remote()
-    shoplist.read_from_remote()
+    #shoplist.read_from_remote()
+    #shoplist.update_remote()
+    shoplist.print_list()
 

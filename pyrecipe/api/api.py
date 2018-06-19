@@ -17,7 +17,6 @@ from pyrecipe.recipe import Recipe
 from pyrecipe.shopper import ShoppingList
 
 
-
 class ApiBase:
     headers = {'Content-Type': 'application/json',
                'Accept': 'application/json',
