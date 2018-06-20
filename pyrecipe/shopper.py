@@ -93,6 +93,9 @@ class ShoppingList:
                     self.shopping_list[name] = MultiQuantity(orig_ingred, quant)
             else:
                 self.shopping_list[name] = quant
+    
+    def __delete__(self):
+        print('hello im a deleter')
 
     def BAKprint_list(self, write=False):
         """Print the shopping list to stdout."""
@@ -196,7 +199,9 @@ class ShoppingList:
 
     def remote(self):
         path = 'http://localhost/open_recipes/includes/api/shopping_list/read.php'
-        resp = requests.get(path, data={'user_name': config.USER_NAME})
+        payload = {'user_name': config.USER_NAME}
+        resp = requests.get(path, params=payload)
+        print(resp.url)
         return resp.json()['shopping_list'][0]
 
 
