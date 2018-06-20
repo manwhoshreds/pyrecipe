@@ -33,11 +33,13 @@ _pyrecipe()
 	# without this, completion breaks once a space is encountered
     esccur="${cur//\\ /___}"
 	subcmds='print edit add remove make search shop dump export ocr show fetch --help -h --version -V -v --verbose'
+	rectest=_recipes
+	rectest=${rectest//\\ /|}
 	case "$prev" in
 		print|edit|remove)
 			_comp_reply_for_recipes $esccur
 			;;
-		shop)
+		shop|$rectest)
 			_comp_reply_for_recipes $esccur
 			;;
 		ocr)
