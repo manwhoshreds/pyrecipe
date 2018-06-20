@@ -27,15 +27,19 @@ _comp_reply_for_recipes()
 
 _pyrecipe()
 {
-
-    local cur prev esccur subcoms
+	local cur prev esccur subcoms
     cur=${COMP_WORDS[COMP_CWORD]}
     prev=${COMP_WORDS[COMP_CWORD-1]}
 	# without this, completion breaks once a space is encountered
     esccur="${cur//\\ /___}"
 	subcmds='print edit add remove make search shop dump export ocr show fetch --help -h --version -V -v --verbose'
+	rectest=_recipes
+	rectest=${rectest//\\ /|}
 	case "$prev" in
-		print|shop|edit|remove)
+		print|edit|remove)
+			_comp_reply_for_recipes $esccur
+			;;
+		shop|$rectest)
 			_comp_reply_for_recipes $esccur
 			;;
 		ocr)
