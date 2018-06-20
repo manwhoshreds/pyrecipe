@@ -14,10 +14,8 @@ import argparse
 
 import pyrecipe.utils as utils
 import pyrecipe.shopper as shopper
-from pyrecipe import (Recipe, RecipeWebScraper, SCRAPEABLE_SITES,
-                      version_info, config, spell_check, __scriptname__)
 import pyrecipe.db as DB
-from pyrecipe import (version_info, config, __scriptname__)
+import pyrecipe.config as config
 from pyrecipe.recipe import Recipe
 from pyrecipe.spell import spell_check
 from pyrecipe.webscraper import RecipeWebScraper, SCRAPEABLE_SITES
