@@ -33,13 +33,8 @@ _pyrecipe()
 	# without this, completion breaks once a space is encountered
     esccur="${cur//\\ /___}"
 	subcmds='print edit add remove make search shop dump export ocr show fetch --help -h --version -V -v --verbose'
-	rectest=_recipes
-	rectest=${rectest//\\ /|}
 	case "$prev" in
 		print|edit|remove)
-			_comp_reply_for_recipes $esccur
-			;;
-		shop|$rectest)
 			_comp_reply_for_recipes $esccur
 			;;
 		ocr)
@@ -48,8 +43,13 @@ _pyrecipe()
 		recipe_tool)
 			COMPREPLY=( $( compgen -W "$subcmds" -- "$cur" ) )
 			;;
+		*)
+			_comp_reply_for_recipes $esccur
+			;;
 	esac
 }
-
+#rectest=$(_recipes)
+#rectest=${rectest//\\ /|}
+#echo $rectest
 complete -F _pyrecipe recipe_tool
 # vim: set syntax=sh:
