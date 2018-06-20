@@ -48,8 +48,5 @@ _pyrecipe()
 			;;
 	esac
 }
-#rectest=$(_recipes)
-#rectest=${rectest//\\ /|}
-#echo $rectest
 complete -F _pyrecipe recipe_tool
 # vim: set syntax=sh:
