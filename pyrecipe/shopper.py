@@ -41,47 +41,32 @@ class ShoppingList:
 
     def _process(self, recipe):
         """Process the ingredients in a recipe."""
-        ingreds, alt_ingreds = recipe.get_ingredients()
+        ingreds, named_ingreds = recipe.get_ingredients(fmt='data')
         self._process_ingredients(ingreds)
-        if alt_ingreds:
-            for item in alt_ingredients:
-                ingreds = list(item.values())[0]
+        if named_ingreds:
+            for item in named_ingreds:
+                ingreds = named_ingreds[item]
                 self._process_ingredients(ingreds)
 
     def _process_ingredients(self, ingredients):
         """Process ingredients."""
         for item in ingredients:
-            item = item.data
-            name = item['name']
-            try:
-                # links are recipe ingredients that are also
-                # recipes so we add it to the list here.
-                link = item['link']
+            name = item.name
+            # links are recipe ingredients that are also
+            # recipes so we add it to the list here.
+            if item.link:
+                link = item.link
                 self.update(link)
-                if link:
-                    continue
-            except KeyError:
-                pass
-
+                continue
+            
             if name == "s&p":
                 continue
+            
             try:
-                amount = RecipeNum(item['amounts'][0].get('amount', 0))
+                quant = item.get_quantity()
             except ValueError:
-                amount = 0
-            unit = item['amounts'][0].get('unit', '')
-            if unit in ['splash of', 'to taste', 'pinch of']:
-                continue
-
-            # FIXME:
-            # pint cannot handle units such as '16 ounce can' etc....
-            # this is a workaround until a better solution is found
-            if 'can' in unit:
-                unit = 'can'
-            try:
-                quant = Q_(amount, unit)
-            except ValueError:
-                print("errors", amount, unit)
+                print(item)
+                print("errors", item.amount, item.unit)
                 continue
 
             if name in self.shopping_list.keys():
@@ -134,14 +119,14 @@ class ShoppingList:
     @property
     def recipe_names(self):
         """Get the recipe names."""
-        names = [r.recipe_name for r in self.recipes]
+        names = [r.name for r in self.recipes]
         return names
 
     @property
     def dish_types(self):
         """Get the recipe names."""
         names = self.recipe_names
-        dish_types = [r['dish_type'] for r in self.recipes]
+        dish_types = [r.dish_type for r in self.recipes]
         return zip(names, dish_types)
 
     def write_to_xml(self):
@@ -194,7 +179,7 @@ class ShoppingList:
                 " available ({}). Please enter a lower number."
                 .format(len(DB.get_data()['main_names'])), "ERROR"
             ))
-        self.update(rand_salad_dressing)
+        #self.update(rand_salad_dressing)
         for dish in recipe_sample:
             self.update(dish)
     
@@ -213,11 +198,7 @@ class ShoppingList:
     
     def update(self, source):
         """Update the shopping list with ingredients from source."""
-        try:
-            recipe = Recipe(source)
-        except utils.RecipeNotFound:
-            print("{} not found in database. Skipping...".format(source))
-            return
+        recipe = Recipe(source)
         self.recipes.append(recipe)
         self._process(recipe)
 
