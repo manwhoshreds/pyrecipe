@@ -62,9 +62,10 @@ def get_source_path(source):
 
     If all is well, the function returns the source path.
     """
-    if os.path.isdir(source):
+    abspath = os.path.abspath(source)
+    if os.path.isdir(abspath):
         sys.exit(msg("{} is a directory.".format(source), "ERROR"))
-    elif os.path.isfile(source):
+    elif os.path.isfile(abspath):
         if not source.endswith('.recipe'):
             sys.exit(msg("Pyrecipe can only read files with a "
                          ".recipe extention.", "ERROR"))

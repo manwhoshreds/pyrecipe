@@ -173,7 +173,7 @@ def cmd_fetch(args):
     if args.edit:
         RecipeEditor(scraper).start()
     else:
-        print(scraper)
+        scraper.print_recipe()
 
 def version():
     """Print pyrecipe version information."""

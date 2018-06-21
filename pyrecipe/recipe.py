@@ -67,40 +67,33 @@ class Recipe:
         'bake_time',
         'categories',
         'cook_time',
+        'description',
         'dish_type',
+        'name',
         'notes',
         'prep_time',
         'price',
-        'recipe_name',
-        'name',
-        'recipe_uuid',
-        'uuid',
+        'region',
         'source_book',
         'source_url',
         'steps',
         'tags',
-        'region',
+        'uuid',
         'yields'
     ]
 
     # These have there own setters defined
     COMPLEX_KEYS = [
-        'alt_ingredients',
-        'named_ingredients',
         'ingredients',
+        'named_ingredients',
         'oven_temp',
         'steps'
     ]
 
     ORF_KEYS = COMPLEX_KEYS + SIMPLE_KEYS
-    def __new__(cls, source="", *args, **kwargs):
-        cls.source = source
-        obj = super().__new__(cls)
-        return obj
-        
 
-    def __init__(self, source="", recipe_yield=0):
-        if source:
+    def __init__(self, source=None, recipe_yield=0):
+        if source is not None:
             self.source = utils.get_source_path(source)
             try:
                 with ZipFile(self.source, 'r') as zfile:
@@ -128,11 +121,14 @@ class Recipe:
         # getting ready to rename some keys in the spec
         self._recipe_data['name'] = self._recipe_data.pop('recipe_name')
         self._recipe_data['uuid'] = self._recipe_data.pop('recipe_uuid')
-        self._recipe_data['named_ingredients'] = self._recipe_data.pop('alt_ingredients')
+        try:
+            self._recipe_data['named_ingredients'] = self._recipe_data.pop('named_ingredients')
+        except KeyError:
+            pass
         self.save()
     
     def __repr__(self):
-        return "<Recipe(name='{}')>".format(self.recipe_name)
+        return "<Recipe(name='{}')>".format(self.name)
 
     def __dir__(self):
         _dir = ['source']
@@ -146,14 +142,9 @@ class Recipe:
     def __setattr__(self, key, value):
         if key in Recipe.SIMPLE_KEYS:
                 self._recipe_data[key] = value
-        elif key in ('source', 'uuid'):
-            raise AttributeError("{} is an imutable attribute".format(key))
         else:
             super().__setattr__(key, value)
-
-    __setitem__ = __setattr__
-    __getitem__ = __getattr__
-
+            
     def __delattr__(self, key):
         if key in Recipe.ORF_KEYS:
             try:
@@ -162,6 +153,10 @@ class Recipe:
                 pass
         else:
             del self.__dict__[key]
+    
+    __setitem__ = __setattr__
+    __getitem__ = __getattr__
+    __delitem__ = __delattr__
 
     def __hash__(self):
         """Get the recipe hash."""
@@ -174,7 +169,9 @@ class Recipe:
     @property
     def oven_temp(self):
         """Return the oven temperature string."""
-        return self._recipe_data.get('oven_temp', '')
+        temp = self._recipe_data.get('oven_temp', '')
+        #temp = temp['amount'], temp['unit']
+        return temp
 
     @oven_temp.setter
     def oven_temp(self, value):
@@ -193,11 +190,11 @@ class Recipe:
                 ingreds.append(str(item))
             else:
                 ingreds.append(item)
-        if self.alt_ingredients:
-            alt_ingreds = self.alt_ingredients
-            for item in alt_ingreds:
+        if self.named_ingredients:
+            named_ingreds = self.named_ingredients
+            for item in named_ingreds:
                 ingred_list = []
-                for ingred in alt_ingreds[item]:
+                for ingred in named_ingreds[item]:
                     if fmt == "string":
                         ingred_list.append(str(ingred))
                     else:
@@ -226,13 +223,13 @@ class Recipe:
         self._recipe_data['ingredients'] = ingredients
 
     @property
-    def alt_ingredients(self):
+    def named_ingredients(self):
         """Return alt ingredient data."""
         named = OrderedDict()
-        alt_ingreds = self._recipe_data.get('alt_ingredients', '')
-        if alt_ingreds:
-            for item in alt_ingreds:
-                alt_name = list(item.keys())[0]
+        named_ingreds = self._recipe_data.get('named_ingredients', '')
+        if named_ingreds:
+            for item in named_ingreds:
+                named_name = list(item.keys())[0]
                 ingred_list = []
                 for ingredient in list(item.values())[0]:
                     ingred = Ingredient(
@@ -240,26 +237,26 @@ class Recipe:
                             yield_amount=self.yield_amount
                     )
                     ingred_list.append(ingred)
-                named[alt_name] = ingred_list
+                named[named_name] = ingred_list
         return named
 
-    @alt_ingredients.setter
-    def alt_ingredients(self, value):
+    @named_ingredients.setter
+    def named_ingredients(self, value):
         """Set alt ingredients."""
         ingred_parser = IngredientParser()
-        alt_ingredients = []
+        named_ingredients = []
         for item in value:
-            alt_name = list(item.keys())[0]
+            named_name = list(item.keys())[0]
             ingreds = list(item.values())[0]
             parsed_ingreds = []
             entry = {}
             for ingred in ingreds:
                 parsed = ingred_parser.parse(ingred)
                 parsed_ingreds.append(parsed)
-            entry[alt_name] = parsed_ingreds
-            alt_ingredients.append(entry)
+            entry[named_name] = parsed_ingreds
+            named_ingredients.append(entry)
 
-        self._recipe_data['alt_ingredients'] = alt_ingredients
+        self._recipe_data['named_ingredients'] = named_ingredients
 
     @property
     def method(self):
@@ -276,7 +273,7 @@ class Recipe:
 
     def print_recipe(self, verbose=False, color=True):
         """Print the recipe to standard output."""
-        recipe_str = colored(self.recipe_name.title(), 'cyan', attrs=['bold'])
+        recipe_str = colored(self.name.title(), 'cyan', attrs=['bold'])
         recipe_str += "\n\nDish Type: {}".format(str(self.dish_type))
         for item in ('prep_time', 'cook_time', 'bake_time'):
             if self[item]:
@@ -322,15 +319,15 @@ class Recipe:
         recipe_str += colored("\nIngredients:", "cyan", attrs=['underline'])
 
         # Put together all the ingredients
-        ingreds, alt_ingreds = self.get_ingredients()
+        ingreds, named_ingreds = self.get_ingredients()
         for ingred in ingreds:
             recipe_str += "\n{}".format(ingred)
 
-        if alt_ingreds:
-            for item in alt_ingreds:
+        if named_ingreds:
+            for item in named_ingreds:
                 recipe_str += colored("\n\n{}".format(item.title()), "cyan")
 
-                for ingred in alt_ingreds[item]:
+                for ingred in named_ingreds[item]:
                     recipe_str += "\n{}".format(ingred)
 
         recipe_str += "\n\n{}".format(utils.S_DIV(79))
@@ -614,15 +611,12 @@ class IngredientParser:
         return ingred_dict
 
 if __name__ == '__main__':
-    r = Recipe('tekk')
-    print(r.recipe_name)
+    r = Recipe('')
     print(r.name)
-    r.dump_to_screen()
     #r.print_recipe()
     #print(r.ingredients)
     #print(r.named_ingredients)
     #print(r.source)
-    #print(r.recipe_name)
     #r.get_ingredients()
     #print(r._ingredients_cache)
     #print(r._named_ingredients_cache)
