@@ -41,10 +41,9 @@ class ShoppingList:
 
     def _process(self, recipe):
         """Process the ingredients in a recipe."""
-        ingredients = recipe.ingredients
-        alt_ingredients = recipe.alt_ingredients
-        self._process_ingredients(ingredients)
-        if alt_ingredients:
+        ingreds, alt_ingreds = recipe.get_ingredients()
+        self._process_ingredients(ingreds)
+        if alt_ingreds:
             for item in alt_ingredients:
                 ingreds = list(item.values())[0]
                 self._process_ingredients(ingreds)
@@ -52,6 +51,7 @@ class ShoppingList:
     def _process_ingredients(self, ingredients):
         """Process ingredients."""
         for item in ingredients:
+            item = item.data
             name = item['name']
             try:
                 # links are recipe ingredients that are also

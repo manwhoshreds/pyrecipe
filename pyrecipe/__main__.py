@@ -28,14 +28,14 @@ from pyrecipe import __scriptname__, version_info
 def cmd_print(args):
     """Print a recipe to stdout."""
     try:
-        recipe = Recipe(args.source, recipe_yield=args.yield_amount)
+        recipe = Recipe(args.source, recipe_yield=args.recipe_yield)
     except utils.RecipeNotFound:
         sys.exit(utils.msg(
             "{} was not found in the database".format(args.source), "ERROR"))
     recipe.print_recipe(args.verbose)
 
 def cmd_edit(args):
-    """Edit a recipe using the urwid console interface (ncurses)."""
+    """Edit a recipe using the urwid console interface."""
     recipe = Recipe(args.source)
     RecipeEditor(recipe).start()
 
@@ -95,7 +95,6 @@ def cmd_search(args):
 
 def cmd_shop(args):
     """Print a shopping list."""
-    print(args)
     shoplist = shopper.ShoppingList()
     if args.random:
         shoplist.choose_random(count=args.random, write=args.save)
@@ -211,7 +210,6 @@ def parse_args():
     parser.add_argument(
         "-V",
         "--version",
-        dest="version",
         action="store_true",
         help="Print version and exit"
     )
@@ -234,7 +232,7 @@ def parse_args():
         nargs='?',
         metavar='N',
         type=int,
-        dest="yield_amount",
+        dest="recipe_yield",
         help="Specify a yield for the recipe."
     )
     # recipe_tool edit
@@ -318,7 +316,6 @@ def parse_args():
         const=config.RAND_RECIPE_COUNT,
         type=int,
         metavar="NUM",
-        dest="random",
         help="Pick n random recipes for the week"
     )
     parser_shop.add_argument(
@@ -375,7 +372,6 @@ def parse_args():
     parser_export.add_argument(
         "-o",
         "--output-dir",
-        dest="output_dir",
         type=str,
         nargs="?",
         help="Choose a directory to output file"
