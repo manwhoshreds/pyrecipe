@@ -42,12 +42,12 @@ BLANK = urwid.Divider()
 
 class IngredientsContainer(urwid.WidgetWrap):
     """Main container for holding ingredient blocks."""
-    def __init__(self, ingredients=None, alt_ingredients=None):
-        if not ingredients and not alt_ingredients:
+    def __init__(self, ingredients=None, named_ingredients=None):
+        if not ingredients and not named_ingredients:
             self.ingredients = ['Add ingredient']
         else:
             self.ingredients = ingredients
-        self.alt_ingredients = alt_ingredients
+        self.named_ingredients = named_ingredients
         add_ingred_block = urwid.Button('Add Ingredient Block',
                                         on_press=self._add_block)
 
@@ -57,9 +57,9 @@ class IngredientsContainer(urwid.WidgetWrap):
         self.ingred_blocks.append(add_ingred_block)
         if self.ingredients:
             self._add_block(self.ingredients)
-        if self.alt_ingredients:
-            for item in self.alt_ingredients:
-                ingreds = self.alt_ingredients[item]
+        if self.named_ingredients:
+            for item in self.named_ingredients:
+                ingreds = self.named_ingredients[item]
                 self._add_block(ingredients=ingreds, name=item)
 
     def _add_block(self, ingredients=[], name=None):
@@ -212,8 +212,8 @@ class IngredBlock(EntryBlock):
         buttons = self._get_buttons()
         self.widgets.append(buttons)
         if name:
-            self.alt_name = urwid.AttrMap(urwid.Edit('* ', name), 'title')
-            self.widgets.append(self.alt_name)
+            self.named_name = urwid.AttrMap(urwid.Edit('* ', name), 'title')
+            self.widgets.append(self.named_name)
         
         for item in self.ingredients:
             ingred_entry = urwid.Edit("- ", item)
@@ -239,9 +239,9 @@ class IngredBlock(EntryBlock):
     def toggle_name(self, button):
         """Toggle between name for ingredients or no name."""
         if not self.name:
-            self.alt_name = urwid.AttrMap(urwid.Edit('* ', 'Name'), 'title')
-            self.widgets.insert(2, self.alt_name)
-            self.name = self.alt_name.original_widget.get_edit_text()
+            self.named_name = urwid.AttrMap(urwid.Edit('* ', 'Name'), 'title')
+            self.widgets.insert(2, self.named_name)
+            self.name = self.named_name.original_widget.get_edit_text()
             self._refresh(2)
         else:
             for item in self.widgets:
@@ -278,7 +278,7 @@ class IngredBlock(EntryBlock):
 
     def get_ingredients(self):
         ingredients = []
-        alt_ingreds = {}
+        named_ingreds = {}
         for item in self.widgets:
             if isinstance(item, urwid.AttrMap):
                 self.name = item.original_widget.get_edit_text()
@@ -286,8 +286,8 @@ class IngredBlock(EntryBlock):
                 ingredients.append(item.get_edit_text())
 
         if self.name:
-            alt_ingreds[self.name] = ingredients
-            return alt_ingreds
+            named_ingreds[self.name] = ingredients
+            return named_ingreds
         else:
             return ingredients
 
@@ -346,13 +346,13 @@ class RecipeEditor:
         if add:
             # We are adding a new recipe. Init a recipe with no data
             self.recipe = Recipe()
-            self.recipe['recipe_name'] = recipe
-            self.welcome = 'Add a Recipe: {}'.format(self.recipe['recipe_name'])
+            self.recipe.name = recipe
+            self.welcome = 'Add a Recipe: {}'.format(self.recipe.name)
         else:
             self.recipe = recipe
-            self.welcome = 'Edit: {}'.format(self.recipe['recipe_name'])
+            self.welcome = 'Edit: {}'.format(self.recipe.name)
 
-        self.original_name = self.recipe['recipe_name']
+        self.original_name = self.recipe.name
         self.initial_hash = hash(self.recipe)
 
     def setup_view(self):
@@ -375,32 +375,32 @@ class RecipeEditor:
                                 for txt in DB.DISH_TYPES], 15, 0, 2, 'left'
         )
         for item in self.disht_group:
-            if item.get_label() == self.recipe['dish_type']: item.set_state(True)
+            if item.get_label() == self.recipe.dish_type: item.set_state(True)
 
         self.general_info = [
             urwid.AttrMap(
                 urwid.Edit(
                     'Recipe Name: ',
-                    self.recipe['recipe_name'],
+                    self.recipe.name,
                     wrap='clip'
                 ), 'recipe_name'
             ),
             urwid.AttrMap(
                 urwid.IntEdit(
                     'Prep Time: ',
-                    self.recipe['prep_time']
+                    self.recipe.prep_time
                 ), 'prep_time'
             ),
             urwid.AttrMap(
                 urwid.IntEdit(
                     'Cook Time: ',
-                    self.recipe['cook_time']
+                    self.recipe.cook_time
                 ), 'cook_time'
             ),
             urwid.AttrMap(
                 urwid.IntEdit(
                     'Bake Time: ',
-                    self.recipe['bake_time']
+                    self.recipe.bake_time
                 ), 'bake_time'
             ),
             #urwid.AttrMap(
@@ -413,20 +413,20 @@ class RecipeEditor:
             urwid.AttrMap(
                 urwid.Edit(
                     'Price($): ',
-                    self.recipe['price']
+                    self.recipe.price
                 ), 'price'
             ),
             urwid.AttrMap(
                 urwid.Edit(
                     'Source URL: ',
-                    self.recipe['source_url'],
+                    self.recipe.source_url,
                     wrap='clip'
                 ), 'source_url'
             ),
             urwid.AttrMap(
                 urwid.Edit(
                     'Author: ',
-                    self.recipe['author']
+                    self.recipe.author
                 ), 'author'
             )
         ]
@@ -445,16 +445,16 @@ class RecipeEditor:
                      HEADINGS['method'],
                      ], 79, 0, 2, 'left'
         )
-        ingreds, alt_ingreds = self.recipe.get_ingredients()
+        ingreds, named_ingreds = self.recipe.get_ingredients()
 
         self.ingred_block = IngredientsContainer(
-            ingredients=ingreds, alt_ingredients=alt_ingreds
+            ingredients=ingreds, named_ingredients=named_ingreds
         )
         self.method_block = MethodBlock(
             self.recipe.method
         )
         self.notes_block = NoteBlock(
-            self.recipe['notes']
+            self.recipe.notes
         )
         general_and_dish = urwid.GridFlow(
             [self.general_info,
@@ -590,22 +590,22 @@ class RecipeEditor:
             else:
                 # If the name is the same as another recipe
                 # we name it 'recipe_name (2)' 3 4 ... etc
-                if attr == 'recipe_name':
+                if attr == 'name':
                     edit_text = self.get_recipe_name(edit_text)
                 self.recipe[attr] = edit_text
 
         for item in self.disht_group:
             if item.get_state() == True:
-                self.recipe['dish_type'] = item.get_label()
+                self.recipe.dish_type = item.get_label()
 
         # ingredients
         ingredients = []
-        alt_ingreds = []
+        named_ingreds = []
         names = []
         for block in self.ingred_block.blocks:
             ingreds = block.get_ingredients()
             if isinstance(ingreds, dict):
-                alt_ingreds.append(ingreds)
+                named_ingreds.append(ingreds)
                 names += list(ingreds.keys())
             else:
                 ingredients += ingreds
@@ -618,11 +618,11 @@ class RecipeEditor:
             except KeyError:
                 pass
 
-        if len(alt_ingreds) > 0:
-            self.recipe.alt_ingredients = alt_ingreds
+        if len(named_ingreds) > 0:
+            self.recipe.named_ingredients = named_ingreds
         else:
             try:
-                del self.recipe['alt_ingredients']
+                del self.recipe.named_ingredients
             except KeyError:
                 pass
 
@@ -636,7 +636,7 @@ class RecipeEditor:
         # notes if any
         notes = self.notes_block.get_entries()
         if notes:
-            self.recipe['notes'] = notes
+            self.recipe.notes = notes
         return self.recipe
 
     def save_recipe(self):
