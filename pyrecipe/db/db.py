@@ -58,14 +58,14 @@ class RecipeDB:
     def add_recipe(self, recipe):
         '''Add a recipe to the database.'''
         recipe_data = [(
-            recipe['recipe_uuid'],
-            recipe['recipe_name'],
-            recipe['dish_type'],
-            recipe['author'],
-            recipe['tags'],
-            recipe['categories'],
-            recipe['price'],
-            recipe['source_url']
+            recipe.uuid,
+            recipe.name,
+            recipe.dish_type,
+            recipe.author,
+            recipe.tags,
+            recipe.categories,
+            recipe.price,
+            recipe.source_url
         )]
         self.c.executemany(
             '''INSERT OR REPLACE INTO recipes (
@@ -80,10 +80,10 @@ class RecipeDB:
                 ) VALUES(?, ?, ?, ?, ?, ?, ?, ?)''', recipe_data
         )
         recipe_data_search = [(
-            recipe['recipe_name'],
-            recipe['author'],
-            recipe['tags'],
-            recipe['categories'],
+            recipe.name,
+            recipe.author,
+            recipe.tags,
+            recipe.categories,
         )]
         self.c.executemany(
             '''INSERT OR REPLACE INTO recipesearch (
@@ -96,7 +96,7 @@ class RecipeDB:
         self._commit()
         recipe_id = self.query(
             "SELECT id FROM recipes WHERE name = \'{}\'"
-            .format(recipe['recipe_name'])
+            .format(recipe.name)
         )
         for item in recipe.get_ingredients()[0]:
             self.c.execute('''INSERT OR REPLACE INTO ingredients (

@@ -224,7 +224,7 @@ class Recipe:
 
     @property
     def named_ingredients(self):
-        """Return alt ingredient data."""
+        """Return named ingredient data."""
         named = OrderedDict()
         named_ingreds = self._recipe_data.get('named_ingredients', '')
         if named_ingreds:
@@ -242,7 +242,7 @@ class Recipe:
 
     @named_ingredients.setter
     def named_ingredients(self, value):
-        """Set alt ingredients."""
+        """Set named ingredients."""
         ingred_parser = IngredientParser()
         named_ingredients = []
         for item in value:
