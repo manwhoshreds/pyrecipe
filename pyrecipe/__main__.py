@@ -96,7 +96,9 @@ def cmd_search(args):
 def cmd_shop(args):
     """Print a shopping list."""
     shoplist = shopper.ShoppingList()
-    if args.random:
+    if args.print_list:
+        shoplist.print_list()
+    elif args.random:
         shoplist.choose_random(count=args.random, write=args.save)
         shoplist.print_list(write=args.save)
     else:

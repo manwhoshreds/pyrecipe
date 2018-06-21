@@ -72,23 +72,32 @@ class Recipe:
         'prep_time',
         'price',
         'recipe_name',
+        'name',
         'recipe_uuid',
+        'uuid',
         'source_book',
         'source_url',
         'steps',
         'tags',
+        'region',
         'yields'
     ]
 
     # These have there own setters defined
     COMPLEX_KEYS = [
         'alt_ingredients',
+        'named_ingredients',
         'ingredients',
         'oven_temp',
         'steps'
     ]
 
     ORF_KEYS = COMPLEX_KEYS + SIMPLE_KEYS
+    def __new__(cls, source="", *args, **kwargs):
+        cls.source = source
+        obj = super().__new__(cls)
+        return obj
+        
 
     def __init__(self, source="", recipe_yield=0):
         if source:
@@ -110,16 +119,24 @@ class Recipe:
             self.recipe_uuid = str(uuid.uuid4())
             self.yields = [1]
             self.source = utils.get_file_name_from_uuid(self.recipe_uuid)
-        
-
+       
         self.recipe_yield = recipe_yield
         self.yield_amount = 0
-
+        #self.rename_keys()
+    
+    def rename_keys(self):
+        # getting ready to rename some keys in the spec
+        self._recipe_data['name'] = self._recipe_data.pop('recipe_name')
+        self._recipe_data['uuid'] = self._recipe_data.pop('recipe_uuid')
+        self._recipe_data['named_ingredients'] = self._recipe_data.pop('alt_ingredients')
+        self.save()
+    
     def __repr__(self):
         return "<Recipe(name='{}')>".format(self.recipe_name)
 
     def __dir__(self):
-        return list(self._recipe_data.keys())
+        _dir = ['source']
+        return list(self._recipe_data.keys()) + _dir
 
     def __getattr__(self, key):
         if key in Recipe.ORF_KEYS:
@@ -129,13 +146,15 @@ class Recipe:
     def __setattr__(self, key, value):
         if key in Recipe.SIMPLE_KEYS:
                 self._recipe_data[key] = value
+        elif key in ('source', 'uuid'):
+            raise AttributeError("{} is an imutable attribute".format(key))
         else:
             super().__setattr__(key, value)
 
     __setitem__ = __setattr__
     __getitem__ = __getattr__
 
-    def __delitem__(self, key):
+    def __delattr__(self, key):
         if key in Recipe.ORF_KEYS:
             try:
                 del self._recipe_data[key]
@@ -364,14 +383,11 @@ class Recipe:
     @update_db
     def save(self):
         """save state of class."""
-        if not self.source:
-            raise RuntimeError('Recipe has no source to save to')
-        else:
-            stream = io.StringIO()
-            yaml.dump(self._recipe_data, stream)
-            with ZipFile(self.source, 'w') as zfile:
-                zfile.writestr('recipe.yaml', stream.getvalue())
-                zfile.writestr('MIMETYPE', 'application/recipe+zip')
+        stream = io.StringIO()
+        yaml.dump(self._recipe_data, stream)
+        with ZipFile(self.source, 'w') as zfile:
+            zfile.writestr('recipe.yaml', stream.getvalue())
+            zfile.writestr('MIMETYPE', 'application/recipe+zip')
 
 
 class Ingredient:
@@ -598,14 +614,13 @@ class IngredientParser:
         return ingred_dict
 
 if __name__ == '__main__':
-    r = Recipe('korean pork tacos')
+    r = Recipe('tekk')
+    print(r.recipe_name)
+    print(r.name)
+    r.dump_to_screen()
     #r.print_recipe()
     #print(r.ingredients)
     #print(r.named_ingredients)
-    t, u = r.get_ingredients()
-    print(t)
-    print(u)
-
     #print(r.source)
     #print(r.recipe_name)
     #r.get_ingredients()
