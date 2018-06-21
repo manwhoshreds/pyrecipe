@@ -403,13 +403,12 @@ class RecipeEditor:
                     self.recipe.bake_time
                 ), 'bake_time'
             ),
-            #urwid.AttrMap(
-            #    urwid.Edit(
-            #        'Oven Temp: ',
-            #        '{} {}'.format(self.r['oven_temp']['amount'],
-            #                       self.r['oven_temp']['unit'])
-            #    ), 'oven_temp'
-            #),
+            urwid.AttrMap(
+                urwid.Edit(
+                    'Oven Temp: ',
+                    '{}'.format(self.recipe.oven_temp),
+                ), 'oven_temp'
+            ),
             urwid.AttrMap(
                 urwid.Edit(
                     'Price($): ',
@@ -422,6 +421,12 @@ class RecipeEditor:
                     self.recipe.source_url,
                     wrap='clip'
                 ), 'source_url'
+            ),
+            urwid.AttrMap(
+                urwid.IntEdit(
+                    'Recipe Yield: ',
+                    self.recipe.recipe_yield
+                ), 'recipe_yield'
             ),
             urwid.AttrMap(
                 urwid.Edit(

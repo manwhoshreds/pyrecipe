@@ -168,7 +168,8 @@ class Recipe:
     def oven_temp(self):
         """Return the oven temperature string."""
         temp = self._recipe_data.get('oven_temp', '')
-        temp = "{}° {}".format(temp['amount'], temp['unit'])
+        if temp:
+            temp = "{}° {}".format(temp['amount'], temp['unit'])
         return temp
 
     @oven_temp.setter
