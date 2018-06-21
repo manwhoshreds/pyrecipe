@@ -21,16 +21,14 @@ from pyrecipe.spell import spell_check
 from pyrecipe.webscraper import RecipeWebScraper, SCRAPEABLE_SITES
 from pyrecipe.console_gui import RecipeEditor, RecipeMaker
 from pyrecipe.ocr import RecipeOCR
+from pyrecipe import __scriptname__, version_info
 
 ## Start command functions
 
 def cmd_print(args):
     """Print a recipe to stdout."""
     try:
-        recipe = Recipe(
-                args.source, 
-                verbose=args.verbose,
-                recipe_yield=args.yield_amount)
+        recipe = Recipe(args.source, recipe_yield=args.yield_amount)
     except utils.RecipeNotFound:
         sys.exit(utils.msg(
             "{} was not found in the database".format(args.source), "ERROR"))
@@ -97,6 +95,7 @@ def cmd_search(args):
 
 def cmd_shop(args):
     """Print a shopping list."""
+    print(args)
     shoplist = shopper.ShoppingList()
     if args.random:
         shoplist.choose_random(count=args.random, write=args.save)
@@ -301,6 +300,12 @@ def parse_args():
         help="Commit the current shopping list to a remote server."
     )
     parser_shop.add_argument(
+        "-n",
+        "--new",
+        action="store_true",
+        help="Make a new list. The old list will be overwritten."
+    )
+    parser_shop.add_argument(
         "-p",
         "--print-list",
         action="store_true",
@@ -491,5 +496,5 @@ def main():
     else:
         case[args.subparser](args)
 
-if __name__ == '__main__':
-    sys.exit(main())
+#if __name__ == '__main__':
+#    sys.exit(main())

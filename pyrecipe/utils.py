@@ -62,7 +62,6 @@ def get_source_path(source):
 
     If all is well, the function returns the source path.
     """
-    source = source.replace("_", " ")
     if os.path.isdir(source):
         sys.exit(msg("{} is a directory.".format(source), "ERROR"))
     elif os.path.isfile(source):
