@@ -9,6 +9,7 @@ import configparser
 
 
 # start pyrecipe config
+#-- file paths --
 _usr_config_path = os.path.expanduser('~/.config/pyrecipe')
 _recipe_data_path = os.path.join(_usr_config_path, 'recipe_data/')
 if not os.path.exists(_usr_config_path):
@@ -25,17 +26,14 @@ RECIPE_DATA_DIR = os.path.join(_usr_config_path, 'recipe_data/')
 DB_FILE = os.path.join(_usr_config_path, 'recipes.db')
 SCRIPT_DIR = os.path.dirname(__file__)
 
-
-# END pyrecipe config
-
 # start user config
 config = configparser.ConfigParser()
 config.read(CONFIG_FILE)
 
 # --Paths
-userdir = os.path.expanduser
-RECIPE_XML_DIR = userdir(config['paths'].get('recipe_xml_dir', None))
-SHOPPING_LIST_FILE = userdir(config['paths'].get('shopping_list_file', None))
+_userdir = os.path.expanduser
+RECIPE_XML_DIR = _userdir(config['paths'].get('recipe_xml_dir', None))
+SHOPPING_LIST_FILE = _userdir(config['paths'].get('shopping_list_file', None))
 
 # --Pyrecipe
 RAND_RECIPE_COUNT = config['pyrecipe'].get('rand_recipe_count', 4)

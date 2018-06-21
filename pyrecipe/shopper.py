@@ -1,18 +1,18 @@
 """
     pyrecipe.shopper
     ~~~~~~~~~~~~~~~~
-    The shopper module allows you to build a shopping list of ingredients 
+    The shopper module allows you to build a shopping list of ingredients
     from your recipes.
 
     - ShoppingList: The main shopper class 
 
     - RandomShoppingList: A ShoppingList subclass that chooses recipes at 
                           random an builds a shopping list.
-    
+
     - MultiQuantity: A pint Quantity container that holds Quantities of
                      differing dimensionalities because they cannot be added
                      together.
-    
+
 """
 import os
 import sys
@@ -23,22 +23,22 @@ import datetime
 import requests
 import pint.errors
 
+import pyrecipe.db as DB
 import pyrecipe.utils as utils
 import pyrecipe.config as config
-import pyrecipe.db as DB
 from pyrecipe import Q_
 from pyrecipe.recipe import Recipe
 from pyrecipe.recipe_numbers import RecipeNum
 
 class ShoppingList:
-    """Creates a shopping list of ingredients from a list of recipes. 
-    
+    """Creates a shopping list of ingredients from a list of recipes.
+
     If duplicate entries are found, ingredients are added together.
-    """	
+    """
     def __init__(self):
         self.recipes = []
         self.shopping_list = {}
-    
+
     def _process(self, recipe):
         """Process the ingredients in a recipe."""
         ingredients = recipe.ingredients
@@ -52,6 +52,7 @@ class ShoppingList:
     def _process_ingredients(self, ingredients):
         """Process ingredients."""
         for item in ingredients:
+            item = item.data
             name = item['name']
             try:
                 # links are recipe ingredients that are also 
@@ -62,7 +63,7 @@ class ShoppingList:
                     continue
             except KeyError:
                 pass
-                    
+
             if name == "s&p":
                 continue
             try:
@@ -72,18 +73,18 @@ class ShoppingList:
             unit = item['amounts'][0].get('unit', '')
             if unit in ['splash of', 'to taste', 'pinch of']:
                 continue
-            
+
             # FIXME:
             # pint cannot handle units such as '16 ounce can' etc....
             # this is a workaround until a better solution is found
             if 'can' in unit:
                 unit = 'can'
-            try: 
+            try:
                 quant = Q_(amount, unit)
             except ValueError:
                 print("errors", amount, unit)
                 continue
-            
+
             if name in self.shopping_list.keys():
                 orig_ingred = self.shopping_list[name]
                 try:
@@ -93,9 +94,6 @@ class ShoppingList:
                     self.shopping_list[name] = MultiQuantity(orig_ingred, quant)
             else:
                 self.shopping_list[name] = quant
-    
-    def __delete__(self):
-        print('hello im a deleter')
 
     def BAKprint_list(self, write=False):
         """Print the shopping list to stdout."""
@@ -104,12 +102,12 @@ class ShoppingList:
             print("({}) {}".format(dishtype, name))
         print("\n" + utils.S_DIV(45))
 
-        # Print list	
+        # Print list
         padding = max(len(x) for x in self.shopping_list.keys()) + 1
         for key, value in self.shopping_list.items():
             if value.units in ['splash of', 'to taste', 'pinch of']:
                 print("{} {}".format(key.ljust(padding, '.'), 'N/A'))
-            else:    
+            else:
                 try:
                     #value = value.round_up().reduce()
                     #value = value.reduce()
@@ -199,9 +197,8 @@ class ShoppingList:
 
     def remote(self):
         path = 'http://localhost/open_recipes/includes/api/shopping_list/read.php'
-        payload = {'user_name': config.USER_NAME}
+        payload = {'user': config.USER_NAME}
         resp = requests.get(path, params=payload)
-        print(resp.url)
         return resp.json()['shopping_list'][0]
 
 
@@ -220,7 +217,7 @@ class MultiQuantity:
                 self.quants.append(item)
 
     def __str__(self):
-        test = [str(x) for x in self.quants] 
+        test = [str(x) for x in self.quants]
         return ' + '.join(test)
 
     def __repr__(self):

@@ -9,7 +9,7 @@
     :license: BSD, see LICENSE for more details.
 """
 
-from pyrecipe import Recipe
+from pyrecipe.recipe import Recipe
 
 class RecipeOCR(Recipe):
 
