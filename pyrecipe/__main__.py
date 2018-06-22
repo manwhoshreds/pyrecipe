@@ -351,7 +351,6 @@ def subparser_export(subparser):
         "source",
         help="Sorce file to export"
     )
-
     parser_export.add_argument(
         "-o",
         "--output-dir",
