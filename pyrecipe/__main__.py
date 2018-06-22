@@ -12,15 +12,17 @@ import sys
 import shutil
 import argparse
 
-import pyrecipe.utils as utils
-import pyrecipe.shopper as shopper
+import requests
+
 import pyrecipe.db as DB
+import pyrecipe.utils as utils
 import pyrecipe.config as config
+import pyrecipe.shopper as shopper
 from pyrecipe.recipe import Recipe
-from pyrecipe.spell import spell_check
-from pyrecipe.webscraper import RecipeWebScraper, SCRAPEABLE_SITES
-from pyrecipe.console_gui import RecipeEditor, RecipeMaker
 from pyrecipe.ocr import RecipeOCR
+from pyrecipe.spell import spell_check
+from pyrecipe.webscraper import WebScraper
+from pyrecipe.console_gui import RecipeEditor, RecipeMaker
 from pyrecipe import __scriptname__, version_info
 
 ## Start command functions
@@ -28,10 +30,15 @@ from pyrecipe import __scriptname__, version_info
 def cmd_print(args):
     """Print a recipe to stdout."""
     try:
-        recipe = Recipe(args.source, recipe_yield=args.recipe_yield)
-    except utils.RecipeNotFound:
-        sys.exit(utils.msg(
-            "{} was not found in the database".format(args.source), "ERROR"))
+        requests.get(args.source)
+        recipe = WebScraper.scrape(args.source)
+    except requests.exceptions.MissingSchema:
+        
+        try:
+            recipe = Recipe(args.source, recipe_yield=args.recipe_yield)
+        except utils.RecipeNotFound:
+            sys.exit(utils.msg(
+                "{} was not found in the database".format(args.source), "ERROR"))
     recipe.print_recipe(args.verbose)
 
 def cmd_edit(args):
@@ -164,16 +171,15 @@ def cmd_show(args):
 
 def cmd_fetch(args):
     """Fetch a recipe from a web source."""
-    if args.list_sites:
-        sys.exit(print('\n'.join(SCRAPEABLE_SITES)))
+    #if args.list_sites:
+    #    sys.exit(print('\n'.join(SCRAPEABLE_SITES)))
 
-    scraper = RecipeWebScraper(args.url)
+    recipe = WebScraper.scrape(args.url)
     print('Looking up recipe now...')
-    scraper.scrape()
     if args.edit:
-        RecipeEditor(scraper).start()
+        RecipeEditor(recipe).start()
     else:
-        scraper.print_recipe()
+        recipe.print_recipe()
 
 def version():
     """Print pyrecipe version information."""
