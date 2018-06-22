@@ -29,6 +29,7 @@ from pyrecipe.recipe import (Recipe, IngredientParser)
 
 #TODO: add property for scraping named ingredients
 class WebScraper:
+    """Factory for webscrapers."""
 
     @staticmethod
     def scrape(url):

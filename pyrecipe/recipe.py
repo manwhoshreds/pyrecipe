@@ -595,7 +595,12 @@ class IngredientParser:
         return ingred_dict
 
 if __name__ == '__main__':
-    r = Recipe('')
+    #r = Recipe('')
+    a = 300 * ureg.kelvin
+    b = ureg.fahrenheit
+    print(a)
+    print(b)
+    #print(ureg.get_dimensionality(sys.argv[1]))
     #r.print_recipe()
     #print(r.ingredients)
     #print(r.named_ingredients)
