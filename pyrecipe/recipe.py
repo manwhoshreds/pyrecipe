@@ -431,7 +431,10 @@ class Ingredient:
             return ingred_string
 
     def get_quantity(self):
-        return Q_(self.amount, self.unit)
+        unit = self.unit
+        if not self.unit:
+            unit = 'each'
+        return Q_(self.amount, unit)
 
 
 class IngredientParser:
@@ -596,11 +599,7 @@ class IngredientParser:
 
 if __name__ == '__main__':
     #r = Recipe('')
-    a = 300 * ureg.kelvin
-    b = ureg.fahrenheit
-    print(a)
-    print(b)
-    #print(ureg.get_dimensionality(sys.argv[1]))
+    print(ureg.get_dimensionality(sys.argv[1]))
     #r.print_recipe()
     #print(r.ingredients)
     #print(r.named_ingredients)

@@ -58,14 +58,11 @@ class ShoppingList:
                 link = item.link
                 self.update(link)
                 continue
-            
-            if name == "s&p":
-                continue
             try:
                 quant = item.get_quantity()
             except ValueError:
-                print(item)
-                print("errors", item.amount, item.unit)
+                #print(item)
+                #print("errors", item.amount, item.unit)
                 continue
 
             if name in self.shopping_list.keys():
@@ -78,7 +75,7 @@ class ShoppingList:
             else:
                 self.shopping_list[name] = quant
 
-    def BAKprint_list(self, write=False):
+    def print_list(self, write=False):
         """Print the shopping list to stdout."""
         print("Recipes:\n")
         for name, dishtype in self.dish_types:
@@ -92,13 +89,12 @@ class ShoppingList:
                 print("{} {}".format(key.ljust(padding, '.'), 'N/A'))
             else:
                 try:
-                    #value = value.round_up().reduce()
-                    #value = value.reduce()
+                    value = value.round_up()
                     print("{} {}".format(key.ljust(padding, '.'), str(value)))
                 except AttributeError:
                     print("{} {}".format(key.ljust(padding, '.'), value))
 
-    def print_list(self, write=False):
+    def BAKprint_list(self, write=False):
         """Print the shopping list to stdout."""
         print("Recipes:\n")
         for name, dishtype in self.dish_types:

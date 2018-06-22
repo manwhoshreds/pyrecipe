@@ -47,7 +47,7 @@ def cmd_edit(args):
         recipe = WebScraper.scrape(args.source)
     except requests.exceptions.MissingSchema:
         recipe = Recipe(args.source)
-    
+
     RecipeEditor(recipe).start()
 
 def cmd_add(args):
