@@ -12,8 +12,6 @@ import sys
 import shutil
 import argparse
 
-import requests
-
 import pyrecipe.db as DB
 import pyrecipe.utils as utils
 import pyrecipe.config as config
@@ -29,25 +27,18 @@ from pyrecipe import __scriptname__, version_info
 
 def cmd_print(args):
     """Print a recipe to stdout."""
-    try:
-        requests.get(args.source)
+    if args.source.startswith(('https://', 'http://')):
         recipe = WebScraper.scrape(args.source)
-    except requests.exceptions.MissingSchema:
-        try:
-            recipe = Recipe(args.source, recipe_yield=args.recipe_yield)
-        except utils.RecipeNotFound:
-            sys.exit(utils.msg(
-                "{} was not found in the database".format(args.source), "ERROR"))
+    else:
+        recipe = Recipe(args.source, recipe_yield=args.recipe_yield)
     recipe.print_recipe(args.verbose)
 
 def cmd_edit(args):
     """Edit a recipe using the urwid console interface."""
-    try:
-        requests.get(args.source)
+    if args.source.startswith(('https://', 'http://')):
         recipe = WebScraper.scrape(args.source)
-    except requests.exceptions.MissingSchema:
+    else:
         recipe = Recipe(args.source)
-
     RecipeEditor(recipe).start()
 
 def cmd_add(args):
@@ -175,7 +166,7 @@ def cmd_show(args):
 
 def version():
     """Print pyrecipe version information."""
-    sys.exit(version_info())
+    version_info()
 
 ## End command funtions
 

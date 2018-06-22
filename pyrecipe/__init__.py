@@ -56,7 +56,7 @@ VER_STR = VER_STR.format(
 
 def version_info():
     """Print the current version of pyrecipe and exit."""
-    return print(VER_STR)
+    sys.exit(VER_STR)
 
 
 class Q_(ureg.Quantity):
@@ -69,15 +69,21 @@ class Q_(ureg.Quantity):
         return self.__class__(ceil(self._magnitude), self._units)
 
     def reduce(self):
-        """Experimental."""
-        import pint.errors
-        try:
-            print(self.magnitude)
-            print(type(self.magnitude))
-            #return self.to("cup")
-        except pint.errors.DimensionalityError:
-            return self
-
+        """Reduce the quantity."""
+        dim = self.dimensionality
+        if "length" in str(dim):
+            units = ['teaspoon', 'tablespoon', 'cup', 'pint', 'quart', 'gallon']
+        elif "mass" in str(dim):
+            units = ['gram', 'ounce', 'pound']
+        else:
+            return
+        
+        quants = {}
+        for item in units:
+            test = self.to(item)
+            quants[test.magnitude] = str(test.units)
+        reduced = min(quants, key=lambda x:abs(x-1))
+        self.ito(quants[reduced])
 
     def __str__(self):
         if str(self.units) == 'each':

@@ -599,7 +599,7 @@ class IngredientParser:
 
 if __name__ == '__main__':
     #r = Recipe('')
-    print(ureg.get_dimensionality(sys.argv[1]))
+    #print(ureg.get_dimensionality(sys.argv[1]))
     #r.print_recipe()
     #print(r.ingredients)
     #print(r.named_ingredients)
@@ -607,4 +607,29 @@ if __name__ == '__main__':
     #r.get_ingredients()
     #print(r._ingredients_cache)
     #print(r._named_ingredients_cache)
+    from math import ceil
+    class Q_(ureg.Quantity):
+        """Subclass to implement a few custom behaviors
+        
+        Capabilities include always rounding up to the nearest whole
+        and printing plural units dependent upon the objects magnitude
+        """
+        def round_up(self):
+            return self.__class__(ceil(self._magnitude), self._units)
 
+        def reduce(self):
+            """Reduce the quantity."""
+            print(self.dimensionality)
+            stuff = ['teaspoon', 'tablespoon', 'cup', 'pint', 'quart', 'gallon']
+            #stuff.reverse()
+            quants = {}
+            for item in stuff:
+                test = self.to(item)
+                quants[test.magnitude] = str(test.units)
+            reduced = min(quants, key=lambda x:abs(x-1))
+            self.ito(quants[reduced])
+            
+    
+    a = Q_(100, "quart")
+    a.reduce()
+    print(a.round_up())

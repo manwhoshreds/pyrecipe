@@ -57,33 +57,30 @@ class GeniusWebScraper(Recipe):
     def __init__(self, url):
         super().__init__()
         self.source_url = url
-        self.scrape()
-
-    def scrape(self):
         req = requests.get(self.source_url).text
+        self.scrape(req)
+
+    def scrape(self, req):
         self.soup = bs4.BeautifulSoup(req, 'html.parser')
-        self.name = self.recipe_name
-        self.author = self.author_name
-        self.ingredients = self.scraped_ingredients
-        self.steps = self.scraped_method
+        self.name = self.scrape_name()
+        self.author = self.scrape_author()
+        self.ingredients = self.scrape_ingredients()
+        self.steps = self.scrape_method()
     
-    @property
-    def recipe_name(self):
+    def scrape_name(self):
         """Recipe name."""
         name_box = self.soup.find('h2', attrs={'class': 'modal-title'})
         recipe_name = name_box.text.strip()
         return recipe_name
 
-    @property
-    def author_name(self):
+    def scrape_author(self):
         """Author."""
         name_box = self.soup.find('h6', attrs={'class': 'byline'})
         recipe_by = name_box.text.strip()
         author = ' '.join(recipe_by.split(' ')[2:]).strip()
         return author
 
-    @property
-    def scraped_ingredients(self):
+    def scrape_ingredients(self):
         """Ingredients."""
         attrs = {'class': 'ingredient-list'}
         ingred_box = self.soup.find_all('ul', attrs=attrs)
@@ -94,8 +91,7 @@ class GeniusWebScraper(Recipe):
                 ingredients.append(ingred)
         return ingredients
 
-    @property
-    def scraped_method(self):
+    def scrape_method(self):
         """Method."""
         attrs = {'class': 'directions-inner container-xs'}
         method_box = self.soup.find('div', attrs=attrs)
@@ -122,18 +118,18 @@ class TastyWebScraper(Recipe):
     def __init__(self, url):
         super().__init__()
         self.source_url = url
-        self.scrape()
-
-    def scrape(self):
         req = requests.get(self.source_url).text
+        self.scrape(req)
+
+    def scrape(self, req):
+        """Scrape the recipe."""
         self.soup = bs4.BeautifulSoup(req, 'html.parser')
-        self.name = self.recipe_name
-        self.author = self.author_name
-        self.ingredients = self.scraped_ingredients
-        self.steps = self.scraped_method
+        self.name = self.scraped_name()
+        self.author = self.scraped_author()
+        self.ingredients = self.scraped_ingredients()
+        self.steps = self.scraped_method()
     
-    @property
-    def recipe_name(self):
+    def scrape_name(self):
         """Recipe name."""
         recipe_name = ""
         name_box = self.soup.find('h1', attrs={'class': 'recipe-name'})
@@ -141,8 +137,7 @@ class TastyWebScraper(Recipe):
             recipe_name = name_box.text.strip()
         return recipe_name
 
-    @property
-    def author_name(self):
+    def scrape_author(self):
         """Recipe author."""
         author = ''
         name_box = self.soup.find('h3', attrs={'class': 'xs-text-5'})
@@ -151,8 +146,7 @@ class TastyWebScraper(Recipe):
             author = ' '.join(recipe_by.split('by')).strip()
         return author
 
-    @property
-    def scraped_ingredients(self):
+    def scrape_ingredients(self):
         """Recipe ingredients."""
         ingred_box = self.soup.find('ul', attrs={'class': 'list-unstyled'})
         ingredients = []
@@ -161,8 +155,7 @@ class TastyWebScraper(Recipe):
             ingredients.append(ingred)
         return ingredients
 
-    @property
-    def scraped_method(self):
+    def scrape_method(self):
         """Recipe method."""
         method_box = self.soup.find('ol', attrs={'class': 'prep-steps'})
         litags = method_box.find_all('li')

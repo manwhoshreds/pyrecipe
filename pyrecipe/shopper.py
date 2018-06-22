@@ -52,12 +52,6 @@ class ShoppingList:
         """Process ingredients."""
         for item in ingredients:
             name = item.name
-            # links are recipe ingredients that are also
-            # recipes so we add it to the list here.
-            if item.link:
-                link = item.link
-                self.update(link)
-                continue
             try:
                 quant = item.get_quantity()
             except ValueError:
@@ -65,7 +59,7 @@ class ShoppingList:
                 #print("errors", item.amount, item.unit)
                 continue
 
-            if name in self.shopping_list.keys():
+            if (name, name + 's') in self.shopping_list.keys():
                 orig_ingred = self.shopping_list[name]
                 try:
                     addition = orig_ingred + quant
@@ -84,15 +78,16 @@ class ShoppingList:
 
         # Print list
         padding = max(len(x) for x in self.shopping_list.keys()) + 1
-        for key, value in self.shopping_list.items():
+        for key, value in sorted(self.shopping_list.items()):
             if value.units in ['splash of', 'to taste', 'pinch of']:
                 print("{} {}".format(key.ljust(padding, '.'), 'N/A'))
             else:
                 try:
+                    value.reduce()
                     value = value.round_up()
-                    print("{} {}".format(key.ljust(padding, '.'), str(value)))
                 except AttributeError:
-                    print("{} {}".format(key.ljust(padding, '.'), value))
+                    pass
+                print("{} {}".format(key.ljust(padding, '.'), str(value)))
 
     def BAKprint_list(self, write=False):
         """Print the shopping list to stdout."""
