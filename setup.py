@@ -22,7 +22,7 @@ with open("README.asc", "r") as fh:
 
 setup(
     name="pyrecipe",
-    version="1.2.8",
+    version="1.2.9",
     author="Michael K. Miller",
     author_email="m.k.miller@gmx.com",
     description='A python tool for managing recipes',

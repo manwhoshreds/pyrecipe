@@ -197,7 +197,7 @@ class ShoppingList:
     
     def update(self, source):
         """Update the shopping list with ingredients from source."""
-xxxxxxxxxxxxxxxxxxxxxxxx        recipe = Recipe(source)
+        recipe = Recipe(source)
         self.recipes.append(recipe)
         self._process(recipe)
 
