@@ -33,7 +33,6 @@ def cmd_print(args):
         requests.get(args.source)
         recipe = WebScraper.scrape(args.source)
     except requests.exceptions.MissingSchema:
-        
         try:
             recipe = Recipe(args.source, recipe_yield=args.recipe_yield)
         except utils.RecipeNotFound:
@@ -43,7 +42,12 @@ def cmd_print(args):
 
 def cmd_edit(args):
     """Edit a recipe using the urwid console interface."""
-    recipe = Recipe(args.source)
+    try:
+        requests.get(args.source)
+        recipe = WebScraper.scrape(args.source)
+    except requests.exceptions.MissingSchema:
+        recipe = Recipe(args.source)
+    
     RecipeEditor(recipe).start()
 
 def cmd_add(args):
@@ -169,18 +173,6 @@ def cmd_show(args):
     """Show the statistics information of the recipe database."""
     utils.stats(args.verbose)
 
-def cmd_fetch(args):
-    """Fetch a recipe from a web source."""
-    #if args.list_sites:
-    #    sys.exit(print('\n'.join(SCRAPEABLE_SITES)))
-
-    recipe = WebScraper.scrape(args.url)
-    print('Looking up recipe now...')
-    if args.edit:
-        RecipeEditor(recipe).start()
-    else:
-        recipe.print_recipe()
-
 def version():
     """Print pyrecipe version information."""
     sys.exit(version_info())
@@ -203,7 +195,7 @@ def subparser_print(subparser):
     )
     parser_print.add_argument(
         "source",
-        help="Recipe to print"
+        help="Recipe, file path, or url"
     )
     parser_print.add_argument(
         "--yield",
@@ -412,35 +404,6 @@ def subparser_show(subparser):
         help="Show more statistics about the recipe database"
     )
 
-def subparser_fetch(subparser):
-    """Subparser for fetch command."""
-    parser_fetch = subparser.add_parser(
-        "fetch",
-        help="Fetch a recipe from a website. \
-              (currently only supports tasty.co, more to come)"
-    )
-    parser_fetch.add_argument(
-        "url",
-        nargs="?",
-        default=None,
-        help="Url of a recipe to fetch"
-    )
-    parser_fetch.add_argument(
-        "-e",
-        "--edit",
-        action="store_true",
-        help="Open the recipe in the editor. Select this to save the recipe"
-    )
-    parser_fetch.add_argument(
-        "--list-sites",
-        action="store_true",
-        help="List the sites that {} can download from".format(__scriptname__)
-    )
-    parser_fetch.add_argument(
-        "--search",
-        help="Search the web for a recipe to scrape"
-    )
-
 def parse_args():
     """Parse args for recipe_tool."""
     parser = argparse.ArgumentParser(
@@ -481,7 +444,6 @@ def parse_args():
     subparser_export(subparser)
     subparser_ocr(subparser)
     subparser_show(subparser)
-    subparser_fetch(subparser)
 
     # parse the args
     args = parser.parse_args()
@@ -520,7 +482,6 @@ def main():
         'export': cmd_export,
         'ocr': cmd_ocr,
         'show': cmd_show,
-        'fetch': cmd_fetch,
     }
     if args.version:
         version()
