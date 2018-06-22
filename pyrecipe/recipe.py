@@ -109,9 +109,9 @@ class Recipe:
             self._recipe_data = {}
             # dish type should default to main
             self.dish_type = 'main'
-            self.recipe_uuid = str(uuid.uuid4())
+            self.uuid = str(uuid.uuid4())
             self.yields = [1]
-            self.source = utils.get_file_name_from_uuid(self.recipe_uuid)
+            self.source = utils.get_file_name_from_uuid(self.uuid)
        
         self.recipe_yield = recipe_yield
         self.yield_amount = 0
@@ -169,16 +169,16 @@ class Recipe:
         """Return the oven temperature string."""
         temp = self._recipe_data.get('oven_temp', '')
         if temp:
-            temp = "{}° {}".format(temp['amount'], temp['unit'])
+            temp = "{} {}".format(temp['amount'], temp['unit'])
         return temp
 
     @oven_temp.setter
     def oven_temp(self, value):
         """Set the oven temperature."""
         amnt, unit = value.split()
-        if len(value) != 2:
+        if len(value.split()) != 2:
             raise RuntimeError("oven_temp format must be '300 F'")
-        self._recipe_data[key] = {'amount': amnt, 'unit': unit}
+        self._recipe_data['oven_temp'] = {'amount': amnt, 'unit': unit}
     
     def get_ingredients(self, yield_amount=0, fmt='string'):
         """Get the ingredients."""

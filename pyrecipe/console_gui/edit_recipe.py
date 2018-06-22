@@ -383,7 +383,7 @@ class RecipeEditor:
                     'Recipe Name: ',
                     self.recipe.name,
                     wrap='clip'
-                ), 'recipe_name'
+                ), 'name'
             ),
             urwid.AttrMap(
                 urwid.IntEdit(
@@ -565,8 +565,8 @@ class RecipeEditor:
     def get_recipe_name(self, name):
         """Check to see if name is already in database.
 
-        We dont want a database with more than one recipe with the same name.
-        This does a check and names the recipe with a number if it already
+        If a recipe with the same name already exist in the database,
+        this does a check and names the recipe with a number if it already
         exists in the database.
         """
         names = DB.get_data()['recipe_names']

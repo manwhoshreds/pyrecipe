@@ -155,7 +155,7 @@ def recipe2xml(func):
         root_keys = list(recipe._recipe_data.keys())
         
         xml_root = ET.Element('recipe')
-        xml_root.set('name', recipe['recipe_name'])
+        xml_root.set('name', recipe.name)
 
         # Not interested in adding notes to xml, maybe in the future
         for item in root_keys:

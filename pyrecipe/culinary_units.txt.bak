@@ -1,0 +1,169 @@
+# Default Pint units definition file
+# Based on the International System of Units
+# Language: english
+# :copyright: 2013 by Pint Authors, see AUTHORS for more details.
+
+@defaults
+    group = pyrecipe
+    system = culinary
+@end
+
+# decimal prefixes
+yocto- = 1e-24 = y-
+zepto- = 1e-21 = z-
+atto- =  1e-18 = a-
+femto- = 1e-15 = f-
+pico- =  1e-12 = p-
+nano- =  1e-9  = n-
+micro- = 1e-6  = u- = µ-
+milli- = 1e-3  = m-
+centi- = 1e-2  = c-
+deci- =  1e-1  = d-
+deca- =  1e+1  = da- = deka
+hecto- = 1e2   = h-
+kilo- =  1e3   = k-
+mega- =  1e6   = M-
+giga- =  1e9   = G-
+tera- =  1e12  = T-
+peta- =  1e15  = P-
+exa- =   1e18  = E-
+zetta- = 1e21  = Z-
+yotta- = 1e24  = Y-
+
+# binary_prefixes
+kibi- = 2**10 = Ki-
+mebi- = 2**20 = Mi-
+gibi- = 2**30 = Gi-
+tebi- = 2**40 = Ti-
+pebi- = 2**50 = Pi-
+exbi- = 2**60 = Ei-
+zebi- = 2**70 = Zi-
+yobi- = 2**80 = Yi-
+
+# reference
+meter = [length] = m = metre
+second = [time] = s = sec
+gram = [mass] = g
+kelvin = [temperature]; offset: 0 = K = degK
+
+# Area
+[area] = [length] ** 2
+
+# Energy
+[energy] = [force] * [length]
+calorie = 4.184 * joule = cal = thermochemical_calorie
+
+# Temperature
+degC = kelvin; offset: 273.15 = celsius
+degR = 5 / 9 * kelvin; offset: 0 = rankine
+degF = 5 / 9 * kelvin; offset: 255.372222 = fahrenheit
+
+# Time
+minute = 60 * second = min
+hour = 60 * minute = hr
+day = 24 * hour
+week = 7 * day
+year = 31556925.9747 * second
+month = year / 12
+common_year = 365 * day
+leap_year = 366 * day
+julian_year = 365.25 * day
+gregorian_year = 365.2425 * day
+
+
+# Viscosity
+[viscosity] = [pressure] * [time]
+
+# Volume
+[volume] = [length] ** 3
+liter = 1e-3 * m ** 3 = l = L = litre
+cc = centimeter ** 3 = cubic_centimeter
+stere = meter ** 3
+
+
+# Most of the definitions that follows are derived from:
+# See http://www.nist.gov/pml/wmd/pubs/hb44.cfm
+@group USCSLengthInternational
+    inch = yard / 36 = in = international_inch = inches = international_inches
+    foot = yard / 3 = ft = international_foot = feet = international_feet
+    yard = 0.9144 metres = yd = international_yard
+    mile = 1760 yard = mi = international_mile
+
+    square_inch = 1 inch ** 2 = sq_in = square_inches
+    square_foot = 1 foot ** 2 = sq_ft = square_feet
+    square_yard = 1 yard ** 2 = sq_yd
+    square_mile = 1 mile ** 2 = sq_mi
+
+    cubic_inch = 1 in ** 3 = cu_in
+    cubic_foot = 1 ft ** 3 = cu_ft = cubic_feet
+    cubic_yard = 1 yd ** 3 = cu_yd
+
+    acre_foot = acre * foot = acre_feet
+@end
+
+@group USCSDryVolume
+    dry_pint = 33.6003125 cubic_inch  = dpi = US_dry_pint
+    dry_quart = 2 dry_pint = dqt = US_dry_quart
+    dry_gallon = 8 dry_pint = dgal = US_dry_gallon
+    peck = 16 dry_pint = pk
+    bushel = 64 dry_pint = bu
+    dry_barrel = 7065 cubic_inch = US_dry_barrel
+@end
+
+@group USCSLiquidVolume
+    minim = liquid_pint / 7680
+    fluid_dram = liquid_pint / 128 = fldr = fluidram = US_fluid_dram
+    fluid_ounce = liquid_pint / 16 = floz = US_fluid_ounce = US_liquid_ounce
+    gill = liquid_pint / 4 = gi = liquid_gill = US_liquid_gill
+	pint = 28.875 cubic_inch = pt = liquid_pint = US_pint
+	quart = 2 liquid_pint = qt = liquid_quart = US_liquid_quart
+    gallon = 8 liquid_pint = gal = liquid_gallon = US_liquid_gallon
+@end
+
+@group USCSVolumeOther
+    teaspoon = tablespoon / 3 = tsp
+    pound = 453.59237 gram = lb
+    tablespoon = floz / 2 = tbsp = Tbsp = Tblsp = tblsp = tbs = Tbl
+    ounce = pound / 16 = oz
+    shot = 3 * tablespoon = jig = US_shot
+    cup = 8 fluid_ounce = cp = liquid_cup = US_liquid_cup
+    barrel = 31.5 * gallon = bbl
+    oil_barrel = 42 * gallon = oil_bbl
+    beer_barrel = 31 * gallon = beer_bbl
+    hogshead = 63 * gallon
+@end
+
+
+@group ImperialVolume
+    imperial_fluid_ounce = imperial_pint / 20 = imperial_floz = UK_fluid_ounce
+    imperial_fluid_drachm = imperial_fluid_ounce / 8 = imperial_fluid_dram
+    imperial_gill = imperial_pint / 4 = imperial_gi = UK_gill
+    imperial_cup = imperial_pint / 2 = imperial_cp = UK_cup
+    imperial_pint = 568.26125 * milliliter = imperial_pt = UK_pint
+    imperial_quart = 2 * imperial_pint = imperial_qt = UK_quart
+    imperial_gallon = 8 * imperial_pint = imperial_gal = UK_gallon
+    imperial_peck = 16 * imperial_pint = imperial_pk = UK_pk
+    imperial_bushel = 64 * imperial_pint = imperial_bu = UK_bushel
+    imperial_barrel = 288 * imperial_pint = imperial_bbl = UK_bbl
+@end
+
+# pyrecipe single units
+each = [single]
+link = 1 * each
+splash = 1 * each
+stalk = 1 * each
+whole = 1 * each
+bottle = 1 * each
+stick = 1 * each
+taste = 1 * each
+pinch = 1 * each
+sprig = 1 * each
+bag = 1 * each
+box = 1 * each
+cube = 1 * each
+package = 1 * each
+inch = 1 * each
+piece = 1 * each
+can = 1 * each
+clove = 1 * each
+
