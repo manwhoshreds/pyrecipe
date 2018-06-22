@@ -56,12 +56,12 @@ def cmd_remove(args):
     """Delete a recipe from the recipe store."""
     source = args.source
     recipe = Recipe(source)
-    file_name = recipe['source']
+    file_name = recipe.source
     answer = input("Are you sure your want to delete {}? yes/no ".format(source))
     if answer.strip() == 'yes':
         os.remove(file_name)
         print("{} has been deleted".format(source))
-        return recipe['recipe_uuid']
+        return recipe.uuid
 
     print("{} not deleted".format(source))
     return None

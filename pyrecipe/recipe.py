@@ -91,30 +91,33 @@ class Recipe:
     ]
 
     ORF_KEYS = COMPLEX_KEYS + SIMPLE_KEYS
-
-    def __init__(self, source=None, recipe_yield=0):
+    
+    def __new__(cls, source=None, *args, **kwargs):
         if source is not None:
-            self.source = utils.get_source_path(source)
+            cls.source = utils.get_source_path(source)
             try:
-                with ZipFile(self.source, 'r') as zfile:
+                with ZipFile(cls.source, 'r') as zfile:
                     try:
                         with zfile.open('recipe.yaml', 'r') as stream:
-                            self._recipe_data = yaml.load(stream)
+                            cls._recipe_data = yaml.load(stream)
                     except KeyError:
                         sys.exit(utils.msg("Can not find recipe.yaml. Is this "
                                            "really a recipe file?", "ERROR"))
             except BadZipFile as e:
                 sys.exit(utils.msg("{}".format(e), "ERROR"))
         else:
-            self._recipe_data = {}
-            # dish type should default to main
-            self.dish_type = 'main'
-            self.uuid = str(uuid.uuid4())
+            cls._recipe_data = {}
+            cls.dish_type = 'main'
+            cls.uuid = str(uuid.uuid4())
             #self.yields = [1]
-            self.source = utils.get_file_name_from_uuid(self.uuid)
-       
-        self.recipe_yield = recipe_yield
+            cls.source = utils.get_file_name_from_uuid(cls.uuid)
+        
+        self = super().__new__(cls)
+        return self
+    
+    def __init__(self, source=None, recipe_yield=0):
         self.yield_amount = 0
+        self.recipe_yield = recipe_yield
     
     def __repr__(self):
         return "<Recipe(name='{}')>".format(self.name)
@@ -129,8 +132,10 @@ class Recipe:
         raise AttributeError("'{}' is not an ORF key".format(key))
 
     def __setattr__(self, key, value):
-        if key in Recipe.SIMPLE_KEYS:
-                self._recipe_data[key] = value
+        if key in ('source', 'uuid'):
+            raise AttributeError("Setting {} is not allowed".format(key))
+        elif key in Recipe.SIMPLE_KEYS:
+            self._recipe_data[key] = value
         else:
             super().__setattr__(key, value)
             
