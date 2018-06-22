@@ -3,6 +3,7 @@
 
 __pycache__
 dist/
+*.orig
 build/
 MANIFEST
 *egg-info*

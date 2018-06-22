@@ -43,7 +43,7 @@ import pyrecipe.utils as utils
 import pyrecipe.config as config
 from pyrecipe.db import update_db
 from pyrecipe.recipe_numbers import RecipeNum
-from pyrecipe import Q_
+from pyrecipe import Q_, ureg
 
 __all__ = ['Recipe', 'IngredientParser']
 
@@ -109,9 +109,9 @@ class Recipe:
             self._recipe_data = {}
             # dish type should default to main
             self.dish_type = 'main'
-            self.recipe_uuid = str(uuid.uuid4())
+            self.uuid = str(uuid.uuid4())
             self.yields = [1]
-            self.source = utils.get_file_name_from_uuid(self.recipe_uuid)
+            self.source = utils.get_file_name_from_uuid(self.uuid)
        
         self.recipe_yield = recipe_yield
         self.yield_amount = 0
@@ -119,13 +119,11 @@ class Recipe:
     
     def rename_keys(self):
         # getting ready to rename some keys in the spec
-        self._recipe_data['name'] = self._recipe_data.pop('recipe_name')
-        self._recipe_data['uuid'] = self._recipe_data.pop('recipe_uuid')
         try:
             self._recipe_data['named_ingredients'] = self._recipe_data.pop('named_ingredients')
         except KeyError:
             pass
-        self.save()
+        #self.save()
     
     def __repr__(self):
         return "<Recipe(name='{}')>".format(self.name)
@@ -170,16 +168,17 @@ class Recipe:
     def oven_temp(self):
         """Return the oven temperature string."""
         temp = self._recipe_data.get('oven_temp', '')
-        #temp = temp['amount'], temp['unit']
+        if temp:
+            temp = "{} {}".format(temp['amount'], temp['unit'])
         return temp
 
     @oven_temp.setter
     def oven_temp(self, value):
         """Set the oven temperature."""
         amnt, unit = value.split()
-        if len(value) != 2:
+        if len(value.split()) != 2:
             raise RuntimeError("oven_temp format must be '300 F'")
-        self._recipe_data[key] = {'amount': amnt, 'unit': unit}
+        self._recipe_data['oven_temp'] = {'amount': amnt, 'unit': unit}
     
     def get_ingredients(self, yield_amount=0, fmt='string'):
         """Get the ingredients."""
@@ -281,9 +280,7 @@ class Recipe:
                               utils.mins_to_hours(RecipeNum(self[item])))
 
         if self.oven_temp:
-            tmp = str(self.oven_temp)
-            unt = self['oven_temp']['unit']
-            recipe_str += "\nOven temp: {} {}".format(tmp, unt)
+            recipe_str += "\nOven temp: {}".format(self.oven_temp)
 
         if self.author:
             recipe_str += "\nAuthor: {}".format(self.author)
@@ -401,6 +398,7 @@ class Ingredient:
         self.size = ingredient.get('size', '')
         self.prep = ingredient.get('prep', '')
         self.note = ingredient.get('note', '')
+        self.link = ingredient.get('link', '')
         self.amounts = ingredient.get('amounts', '')
         try:
             amount = self.amounts[yield_amount].get('amount', '')
@@ -576,7 +574,8 @@ class IngredientParser:
                 size = item
                 ingred_string = ingred_string.replace(item, '')
 
-        for item in config.INGRED_UNITS:
+        #for item in config.INGRED_UNITS:
+        for item in dir(ureg):
             if item in ingred_string.split():
                 unit = item
                 ingred_string = ingred_string.replace(item, '')

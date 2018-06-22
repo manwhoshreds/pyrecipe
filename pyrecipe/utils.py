@@ -64,7 +64,8 @@ def get_source_path(source):
     """
     abspath = os.path.abspath(source)
     if os.path.isdir(abspath):
-        sys.exit(msg("{} is a directory.".format(source), "ERROR"))
+        pass
+        #sys.exit(msg("{} is a directory.".format(source), "ERROR"))
     elif os.path.isfile(abspath):
         if not source.endswith('.recipe'):
             sys.exit(msg("Pyrecipe can only read files with a "
@@ -154,7 +155,7 @@ def recipe2xml(func):
         root_keys = list(recipe._recipe_data.keys())
         
         xml_root = ET.Element('recipe')
-        xml_root.set('name', recipe['recipe_name'])
+        xml_root.set('name', recipe.name)
 
         # Not interested in adding notes to xml, maybe in the future
         for item in root_keys:

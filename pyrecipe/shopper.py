@@ -4,9 +4,9 @@
     The shopper module allows you to build a shopping list of ingredients
     from your recipes.
 
-    - ShoppingList: The main shopper class 
+    - ShoppingList: The main shopper class
 
-    - RandomShoppingList: A ShoppingList subclass that chooses recipes at 
+    - RandomShoppingList: A ShoppingList subclass that chooses recipes at
                           random an builds a shopping list.
 
     - MultiQuantity: A pint Quantity container that holds Quantities of
@@ -41,48 +41,31 @@ class ShoppingList:
 
     def _process(self, recipe):
         """Process the ingredients in a recipe."""
-        ingredients = recipe.ingredients
-        alt_ingredients = recipe.alt_ingredients
-        self._process_ingredients(ingredients)
-        if alt_ingredients:
-            for item in alt_ingredients:
-                ingreds = list(item.values())[0]
+        ingreds, named_ingreds = recipe.get_ingredients(fmt='data')
+        self._process_ingredients(ingreds)
+        if named_ingreds:
+            for item in named_ingreds:
+                ingreds = named_ingreds[item]
                 self._process_ingredients(ingreds)
 
     def _process_ingredients(self, ingredients):
         """Process ingredients."""
         for item in ingredients:
-            item = item.data
-            name = item['name']
-            try:
-                # links are recipe ingredients that are also 
-                # recipes so we add it to the list here.
-                link = item['link']
+            name = item.name
+            # links are recipe ingredients that are also
+            # recipes so we add it to the list here.
+            if item.link:
+                link = item.link
                 self.update(link)
-                if link:
-                    continue
-            except KeyError:
-                pass
-
+                continue
+            
             if name == "s&p":
                 continue
             try:
-                amount = RecipeNum(item['amounts'][0].get('amount', 0))
+                quant = item.get_quantity()
             except ValueError:
-                amount = 0
-            unit = item['amounts'][0].get('unit', '')
-            if unit in ['splash of', 'to taste', 'pinch of']:
-                continue
-
-            # FIXME:
-            # pint cannot handle units such as '16 ounce can' etc....
-            # this is a workaround until a better solution is found
-            if 'can' in unit:
-                unit = 'can'
-            try:
-                quant = Q_(amount, unit)
-            except ValueError:
-                print("errors", amount, unit)
+                print(item)
+                print("errors", item.amount, item.unit)
                 continue
 
             if name in self.shopping_list.keys():
@@ -135,16 +118,52 @@ class ShoppingList:
     @property
     def recipe_names(self):
         """Get the recipe names."""
-        names = [r.recipe_name for r in self.recipes]
+        names = [r.name for r in self.recipes]
         return names
 
     @property
     def dish_types(self):
         """Get the recipe names."""
-        names = [r.recipe_name for r in self.recipes]
-        dish_types = [r['dish_type'] for r in self.recipes]
+        names = self.recipe_names
+        dish_types = [r.dish_type for r in self.recipes]
         return zip(names, dish_types)
-    
+
+    def write_to_xml(self):
+        """Write the shopping list to an xml file after
+           building.
+        """
+        # Add recipe names to the tree
+        for item in self.recipe_names:
+            xml_main_dish = etree.SubElement(self.xml_maindish_names, "name")
+            xml_main_dish.text = str(item)
+
+        # the salad dressing names
+        for item in self.dressing_names:
+            xml_dressing_name = etree.SubElement(self.xml_salad_dressing, "name")
+            xml_dressing_name.text = str(item)
+
+        # finally, ingreds
+        for key, value in self.shopping_list.items():
+            try:
+                ingred = "{} {}".format(key, str(value.round_up()))
+            except AttributeError:
+                ingred = "{} {}".format(key, str(value))
+            xml_shopping_list_item = etree.SubElement(self.xml_ingredients, "ingredient")
+            xml_shopping_list_item.text = str(ingred)
+
+        result = etree.tostring(self.xml_root,
+                                xml_declaration=True,
+                                encoding='utf-8',
+                                with_tail=False,
+                                method='xml',
+                                pretty_print=True).decode("utf-8")
+
+        print(utils.msg(
+            "Writing shopping list to %s"
+            % config.SHOPPING_LIST_FILE, 'INFORM'))
+        with open(config.SHOPPING_LIST_FILE, "w") as f:
+            f.write(result)
+
     def add_item(self, item, amount):
         """Add a single item to the shopping list."""
         self.shopping_list[item] = amount
@@ -159,7 +178,7 @@ class ShoppingList:
                 " available ({}). Please enter a lower number."
                 .format(len(DB.get_data()['main_names'])), "ERROR"
             ))
-        self.update(rand_salad_dressing)
+        #self.update(rand_salad_dressing)
         for dish in recipe_sample:
             self.update(dish)
     
@@ -178,11 +197,7 @@ class ShoppingList:
     
     def update(self, source):
         """Update the shopping list with ingredients from source."""
-        try:
-            recipe = Recipe(source)
-        except utils.RecipeNotFound:
-            print("{} not found in database. Skipping...".format(source))
-            return
+xxxxxxxxxxxxxxxxxxxxxxxx        recipe = Recipe(source)
         self.recipes.append(recipe)
         self._process(recipe)
 
@@ -196,6 +211,7 @@ class ShoppingList:
         print(resp.text)
 
     def remote(self):
+        """Remote."""
         path = 'http://localhost/open_recipes/includes/api/shopping_list/read.php'
         payload = {'user': config.USER_NAME}
         resp = requests.get(path, params=payload)
@@ -242,13 +258,10 @@ class MultiQuantity:
 
 if __name__ == '__main__':
     shoplist = ShoppingList()
-    #shoplist.update('korean pork tacos')
+    shoplist.choose_random()
+    shoplist.update('korean pork tacos')
     #shoplist.update('french onion soup')
     #shoplist.update('test')
     #shoplist.update('pesto')
-    #shoplist.update('carrot cake')
-    #shoplist.update_remote()
-    #shoplist.read_from_remote()
-    #shoplist.update_remote()
     shoplist.print_list()
 

@@ -77,11 +77,11 @@ class RecipeWebScraper(Recipe):
             utils.msg(e, 'FATAL')
         
         self.soup = bs4.BeautifulSoup(req, 'html.parser')
-        self['source_url'] = self.url
-        self['recipe_name'] = self.recipe_name
-        self['author'] = self.author
+        self.source_url = self.url
+        self.name = self.recipe_name
+        self.author = self.author_name
         self.ingredients = self.scraped_ingredients
-        self['steps'] = self.scraped_method
+        self.steps = self.scraped_method
 
 
 class GeniusWebScraper(RecipeWebScraper):
@@ -101,7 +101,7 @@ class GeniusWebScraper(RecipeWebScraper):
         return recipe_name
  
     @property
-    def author(self):
+    def author_name(self):
         """Author."""
         name_box = self.soup.find('h6', attrs={'class': 'byline'})
         recipe_by = name_box.text.strip()
@@ -160,7 +160,7 @@ class TastyWebScraper(RecipeWebScraper):
         return recipe_name
  
     @property
-    def author(self):
+    def author_name(self):
         """Recipe author."""
         author = ''
         name_box = self.soup.find('h3', attrs={'class': 'xs-text-5'})
