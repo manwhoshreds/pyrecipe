@@ -65,19 +65,19 @@ class RecipeWebScraper(Recipe):
     
     def __init__(self, url):
         super().__init__()
-        self.url = url
-        self.search_mode = bool(self.url in SCRAPEABLE_SITES)
+        self.source_url = url
+        self.search_mode = bool(self.source_url in SCRAPEABLE_SITES)
     
     def scrape(self):
         if self.search_mode:
             raise RuntimeError('Search mode is active, cannot scrape site')
         try:
-            req = urlopen(self.url)
+            req = urlopen(self.source_url)
         except HTTPError as e:
             utils.msg(e, 'FATAL')
         
         self.soup = bs4.BeautifulSoup(req, 'html.parser')
-        self.source_url = self.url
+        #self.source_url = self.url
         self.name = self.recipe_name
         self.author = self.author_name
         self.ingredients = self.scraped_ingredients

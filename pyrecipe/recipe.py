@@ -91,34 +91,30 @@ class Recipe:
     ]
 
     ORF_KEYS = COMPLEX_KEYS + SIMPLE_KEYS
-    
-    def __new__(cls, source=None, *args, **kwargs):
+
+    def __init__(self, source=None, recipe_yield=0):
         if source is not None:
-            cls.source = utils.get_source_path(source)
+            self.source = utils.get_source_path(source)
             try:
-                with ZipFile(cls.source, 'r') as zfile:
+                with ZipFile(self.source, 'r') as zfile:
                     try:
                         with zfile.open('recipe.yaml', 'r') as stream:
-                            cls._recipe_data = yaml.load(stream)
+                            self._recipe_data = yaml.load(stream)
                     except KeyError:
                         sys.exit(utils.msg("Can not find recipe.yaml. Is this "
                                            "really a recipe file?", "ERROR"))
             except BadZipFile as e:
                 sys.exit(utils.msg("{}".format(e), "ERROR"))
         else:
-            cls._recipe_data = {}
-            cls.dish_type = 'main'
-            cls.uuid = str(uuid.uuid4())
+            self._recipe_data = {}
+            self.dish_type = 'main'
+            self.uuid = str(uuid.uuid4())
             #self.yields = [1]
-            cls.source = utils.get_file_name_from_uuid(cls.uuid)
-        
-        self = super().__new__(cls)
-        return self
-    
-    def __init__(self, source=None, recipe_yield=0):
+            self.source = utils.get_file_name_from_uuid(self.uuid)
+
         self.yield_amount = 0
         self.recipe_yield = recipe_yield
-    
+
     def __repr__(self):
         return "<Recipe(name='{}')>".format(self.name)
 
@@ -132,13 +128,11 @@ class Recipe:
         raise AttributeError("'{}' is not an ORF key".format(key))
 
     def __setattr__(self, key, value):
-        if key in ('source', 'uuid'):
-            raise AttributeError("Setting {} is not allowed".format(key))
-        elif key in Recipe.SIMPLE_KEYS:
+        if key in Recipe.SIMPLE_KEYS:
             self._recipe_data[key] = value
         else:
             super().__setattr__(key, value)
-            
+
     def __delattr__(self, key):
         if key in Recipe.ORF_KEYS:
             try:
@@ -147,7 +141,7 @@ class Recipe:
                 pass
         else:
             del self.__dict__[key]
-    
+
     __setitem__ = __setattr__
     __getitem__ = __getattr__
     __delitem__ = __delattr__
@@ -158,6 +152,7 @@ class Recipe:
 
     @property
     def yields(self):
+        """Return a list of recipe yields."""
         return ', '.join(self.yields)
 
     @property
@@ -175,7 +170,7 @@ class Recipe:
         if len(value.split()) != 2:
             raise RuntimeError("oven_temp format must be '300 F'")
         self._recipe_data['oven_temp'] = {'amount': amnt, 'unit': unit}
-    
+
     def get_ingredients(self, yield_amount=0, fmt='string'):
         """Get the ingredients."""
         ingreds = []
@@ -228,8 +223,8 @@ class Recipe:
                 ingred_list = []
                 for ingredient in list(item.values())[0]:
                     ingred = Ingredient(
-                            ingredient, 
-                            yield_amount=self.yield_amount
+                        ingredient,
+                        yield_amount=self.yield_amount
                     )
                     ingred_list.append(ingred)
                 named[named_name] = ingred_list
@@ -272,8 +267,10 @@ class Recipe:
         recipe_str += "\n\nDish Type: {}".format(str(self.dish_type))
         for item in ('prep_time', 'cook_time', 'bake_time'):
             if self[item]:
-                recipe_str += "\n{}: {}".format(item.replace('_', ' ').title(),
-                              utils.mins_to_hours(RecipeNum(self[item])))
+                recipe_str += "\n{}: {}".format(
+                    item.replace('_', ' ').title(),
+                    utils.mins_to_hours(RecipeNum(self[item]))
+                )
 
         if self.oven_temp:
             recipe_str += "\nOven temp: {}".format(self.oven_temp)
@@ -333,14 +330,6 @@ class Recipe:
             recipe_str += step
 
         print(recipe_str)
-
-    def get_method(self):
-        """Return a list of steps."""
-        raise RuntimeError("get_method is depricated, get the method as a property")
-        #steps = []
-        #for step in self['steps']:
-        #    steps.append(step['step'])
-        #return steps
 
     @utils.recipe2xml
     def get_xml_data(self):
@@ -607,7 +596,6 @@ class IngredientParser:
 
 if __name__ == '__main__':
     r = Recipe('')
-    print(r.name)
     #r.print_recipe()
     #print(r.ingredients)
     #print(r.named_ingredients)
@@ -615,11 +603,4 @@ if __name__ == '__main__':
     #r.get_ingredients()
     #print(r._ingredients_cache)
     #print(r._named_ingredients_cache)
-    exit()
-    ip = IngredientParser()
-    test = ip.parse("1 tablespoon onion, chopped")
-    ok = Ingredient(test)
-    print(ok.ingredient_data)
-    test = [ok.get_quantity()]
-    print(test)
 

@@ -192,7 +192,7 @@ def build_recipe_database():
 def subparser_print(subparser):
     """Subparser for print command."""
     parser_print = subparser.add_parser(
-        "print", 
+        "print",
         help="Print the recipe to screen"
     )
     parser_print.add_argument(
@@ -310,7 +310,7 @@ def subparser_dump(subparser):
     """Subparser for dump command."""
     parser_dump = subparser.add_parser(
         "dump",
-        help="Dump yaml or xml representation of recipe stdout"
+        help="Dump yaml or xml representation of recipe to stdout"
     )
     parser_dump.add_argument(
         "source",
@@ -322,7 +322,7 @@ def subparser_dump(subparser):
         dest="data_type",
         action="store_const",
         const="xml",
-        help="Dump sorce xml tree to standard output"
+        help="Dump source xml tree to standard output"
     )
     parser_dump.add_argument(
         "-y",
