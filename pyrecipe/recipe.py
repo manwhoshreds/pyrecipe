@@ -110,20 +110,11 @@ class Recipe:
             # dish type should default to main
             self.dish_type = 'main'
             self.uuid = str(uuid.uuid4())
-            self.yields = [1]
+            #self.yields = [1]
             self.source = utils.get_file_name_from_uuid(self.uuid)
        
         self.recipe_yield = recipe_yield
         self.yield_amount = 0
-        #self.rename_keys()
-    
-    def rename_keys(self):
-        # getting ready to rename some keys in the spec
-        try:
-            self._recipe_data['named_ingredients'] = self._recipe_data.pop('named_ingredients')
-        except KeyError:
-            pass
-        #self.save()
     
     def __repr__(self):
         return "<Recipe(name='{}')>".format(self.name)

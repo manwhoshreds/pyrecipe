@@ -189,39 +189,10 @@ def build_recipe_database():
         recipe = Recipe(item)
         database.add_recipe(recipe)
 
-def parse_args():
-    """Parse args for recipe_tool."""
-    parser = argparse.ArgumentParser(
-        description="Recipe_tool has tab completion functionality. \
-                     After adding a recipe, simply run recipe_tool \
-                     print <TAB><TAB> to view whats available.",
-        add_help=False
-    )
-    parser.add_argument(
-        "-h", "--help",
-        action='help',
-        help='Show this help message and quit'
-    )
-    parser.add_argument(
-        "-v",
-        "--verbose",
-        action="store_true",
-        help="Increase the verbosity of output. \
-              Only works with print and show subcommands."
-    )
-    parser.add_argument(
-        "-V",
-        "--version",
-        action="store_true",
-        help="Print version and exit"
-    )
-
-    # <-- Subparsers start here -->
-    subparser = parser.add_subparsers(dest='subparser')
-
-    # recipe_tool print
+def subparser_print(subparser):
+    """Subparser for print command."""
     parser_print = subparser.add_parser(
-        "print",
+        "print", 
         help="Print the recipe to screen"
     )
     parser_print.add_argument(
@@ -237,7 +208,9 @@ def parse_args():
         dest="recipe_yield",
         help="Specify a yield for the recipe."
     )
-    # recipe_tool edit
+
+def subparser_edit(subparser):
+    """Subparser for edit command."""
     parser_edit = subparser.add_parser(
         "edit",
         help="Edit a recipe data file"
@@ -247,18 +220,22 @@ def parse_args():
         type=str,
         help="Recipe to edit"
     )
-    # recipe_tool add
+
+def subparser_add(subparser):
+    """Subparser for add command."""
     parser_add = subparser.add_parser("add", help='Add a recipe')
     parser_add.add_argument("name", help='Name of the recipe to add')
 
-    # recipe_tool remove
+def subparser_remove(subparser):
+    """Subparser for remove command."""
     parser_remove = subparser.add_parser("remove", help='Delete a recipe')
     parser_remove.add_argument(
         "source",
         help='Recipe to delete'
     )
 
-    # recipe_tool make
+def subparser_make(subparser):
+    """Subparser for make command."""
     parser_make = subparser.add_parser(
         "make",
         help='Make a recipe using the urwid automated script'
@@ -268,7 +245,8 @@ def parse_args():
         help='Recipe to make'
     )
 
-    # recipe_tool search
+def subparser_search(subparser):
+    """Subparser for search command."""
     parser_search = subparser.add_parser(
         "search",
         help='Search the recipe database'
@@ -278,7 +256,8 @@ def parse_args():
         help='Search the recipe database'
     )
 
-    # recipe_tool shop
+def subparser_shop(subparser):
+    """Subparser for shop command."""
     parser_shop = subparser.add_parser("shop", help='Make a shopping list')
     parser_shop.add_argument(
         "recipes",
@@ -327,7 +306,8 @@ def parse_args():
         help="Save the current shopping list."
     )
 
-    # recipe_tool dump
+def subparser_dump(subparser):
+    """Subparser for dump command."""
     parser_dump = subparser.add_parser(
         "dump",
         help="Dump yaml or xml representation of recipe stdout"
@@ -361,7 +341,8 @@ def parse_args():
         help="Dump source data in its raw format"
     )
 
-    # recipe_tool export
+def subparser_export(subparser):
+    """Subparser for export command."""
     parser_export = subparser.add_parser(
         "export",
         help="Export recipes in xml format"
@@ -396,7 +377,8 @@ def parse_args():
         help="Export recipe file"
     )
 
-    # recipe_tool ocr
+def subparser_ocr(subparser):
+    """Subparser for ocr command."""
     parser_ocr = subparser.add_parser(
         "ocr",
         help="Pyrecipe Optical Character Recognition"
@@ -413,7 +395,8 @@ def parse_args():
         help="Import the data into the database"
     )
 
-    # recipe_tool show
+def subparser_show(subparser):
+    """Subparser for show command."""
     parser_show = subparser.add_parser(
         "show",
         help="Show statistic from the recipe database"
@@ -424,7 +407,8 @@ def parse_args():
         help="Show more statistics about the recipe database"
     )
 
-    # recipe_tool fetch
+def subparser_fetch(subparser):
+    """Subparser for fetch command."""
     parser_fetch = subparser.add_parser(
         "fetch",
         help="Fetch a recipe from a website. \
@@ -451,6 +435,50 @@ def parse_args():
         "--search",
         help="Search the web for a recipe to scrape"
     )
+
+def parse_args():
+    """Parse args for recipe_tool."""
+    parser = argparse.ArgumentParser(
+        description="Recipe_tool has tab completion functionality. \
+                     After adding a recipe, simply run recipe_tool \
+                     print <TAB><TAB> to view whats available.",
+        add_help=False
+    )
+    parser.add_argument(
+        "-h", "--help",
+        action='help',
+        help='Show this help message and quit'
+    )
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="Increase the verbosity of output. \
+              Only works with print and show subcommands."
+    )
+    parser.add_argument(
+        "-V",
+        "--version",
+        action="store_true",
+        help="Print version and exit"
+    )
+
+    # Subparsers start here
+    subparser = parser.add_subparsers(dest='subparser')
+    subparser_print(subparser)
+    subparser_edit(subparser)
+    subparser_add(subparser)
+    subparser_remove(subparser)
+    subparser_make(subparser)
+    subparser_search(subparser)
+    subparser_shop(subparser)
+    subparser_dump(subparser)
+    subparser_export(subparser)
+    subparser_ocr(subparser)
+    subparser_show(subparser)
+    subparser_fetch(subparser)
+
+    # parse the args
     args = parser.parse_args()
     if len(sys.argv) == 1:
         sys.exit(parser.print_help())
@@ -493,6 +521,3 @@ def main():
         version()
     else:
         case[args.subparser](args)
-
-#if __name__ == '__main__':
-#    sys.exit(main())
