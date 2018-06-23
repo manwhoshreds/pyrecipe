@@ -1,12 +1,12 @@
 import re
+from pyrecipe.db import DBInfo as DB
 from collections import Counter
-from pyrecipe.db import RecipeDB
 
 class SpellChecker:
     """Check the spelling of a word."""
     
     def __init__(self):
-        words = RecipeDB().words
+        words = DB.words
         self.words = Counter(words)
 
     def _prob(self, word): 

@@ -10,7 +10,8 @@ import textwrap
 import lxml.etree as ET
 from termcolor import colored
 
-from pyrecipe import config, db
+from pyrecipe.db import DBInfo
+from pyrecipe import config
 
 S_DIV = lambda m: colored('~' * m, 'white')
 
@@ -90,7 +91,7 @@ def get_file_name(source):
     with the recipe. This function looks up and returns the uuid from the
     database.
     """
-    recipe_uuid = db.get_data()['uuids'].get(source.lower(), None)
+    recipe_uuid = DBInfo().get_uuid(source)
     if recipe_uuid is None:
         return None
     file_name = get_file_name_from_uuid(recipe_uuid)

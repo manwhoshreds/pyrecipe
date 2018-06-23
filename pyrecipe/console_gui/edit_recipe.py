@@ -12,7 +12,7 @@ from collections import deque
 
 import urwid
 
-import pyrecipe.db as DB
+from pyrecipe.db import DBInfo, DISH_TYPES
 from pyrecipe.recipe import Recipe
 from pyrecipe.utils import wrap
 
@@ -372,7 +372,7 @@ class RecipeEditor:
         radio_dish_types = urwid.GridFlow(
             [urwid.AttrMap(
                 urwid.RadioButton(self.disht_group, txt), 'buttn', 'buttnf')
-                                for txt in DB.DISH_TYPES], 15, 0, 2, 'left'
+                                for txt in DISH_TYPES], 15, 0, 2, 'left'
         )
         for item in self.disht_group:
             if item.get_label() == self.recipe.dish_type: item.set_state(True)
@@ -569,7 +569,7 @@ class RecipeEditor:
         this does a check and names the recipe with a number if it already
         exists in the database.
         """
-        names = DB.get_data()['recipe_names']
+        names = DBInfo().get_recipes()
         # case insensitive
         lower_name = name.lower()
         if lower_name != self.original_name.lower():

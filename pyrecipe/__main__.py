@@ -12,7 +12,6 @@ import sys
 import shutil
 import argparse
 
-import pyrecipe.db as DB
 import pyrecipe.utils as utils
 import pyrecipe.config as config
 import pyrecipe.shopper as shopper
@@ -20,6 +19,7 @@ from pyrecipe.recipe import Recipe
 from pyrecipe.ocr import RecipeOCR
 from pyrecipe.spell import spell_check
 from pyrecipe.webscraper import WebScraper
+from pyrecipe.db import (DBInfo, DBConn, delete_recipe)
 from pyrecipe.console_gui import RecipeEditor, RecipeMaker
 from pyrecipe import __scriptname__, version_info
 
@@ -53,7 +53,7 @@ def cmd_add(args):
         name = args.name.strip()
         RecipeEditor(name, add=True).start()
 
-@DB.delete_recipe
+@delete_recipe
 def cmd_remove(args):
     """Delete a recipe from the recipe store."""
     source = args.source
@@ -86,7 +86,7 @@ def cmd_search(args):
     #    print("Nothing found. Showing results for \"{}\" instead.".format(check))
     #    search = check
 
-    database = DB.RecipeDB()
+    database = DBInfo()
     results = database.search(search)
     numres = len(results)
     if numres == 0:
@@ -174,7 +174,7 @@ def version():
 
 def build_recipe_database():
     """Build the recipe database."""
-    database = DB.RecipeDB()
+    database = DBConn()
     database.create_database()
     for item in config.RECIPE_DATA_FILES:
         recipe = Recipe(item)
