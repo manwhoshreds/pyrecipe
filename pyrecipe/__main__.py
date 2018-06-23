@@ -24,7 +24,6 @@ from pyrecipe.console_gui import RecipeEditor, RecipeMaker
 from pyrecipe import __scriptname__, version_info
 
 ## Start command functions
-
 def cmd_print(args):
     """Print a recipe to stdout."""
     if args.source.startswith(('https://', 'http://')):
@@ -91,7 +90,7 @@ def cmd_search(args):
     numres = len(results)
     if numres == 0:
         sys.exit(utils.msg(
-            "Your search for \"{}\" produced no results".format(args.search), 
+            "Your search for \"{}\" produced no results".format(args.search),
             "INFORM")
         )
     results = "\n".join(s.lower() for s in results)
@@ -398,7 +397,7 @@ def subparser_show(subparser):
         help="Show more statistics about the recipe database"
     )
 
-def parse_args():
+def get_parser():
     """Parse args for recipe_tool."""
     parser = argparse.ArgumentParser(
         description="Recipe_tool has tab completion functionality. \
@@ -439,17 +438,7 @@ def parse_args():
     subparser_ocr(subparser)
     subparser_show(subparser)
 
-    # parse the args
-    args = parser.parse_args()
-    if len(sys.argv) == 1:
-        sys.exit(parser.print_help())
-    elif len(sys.argv) == 2 and args.verbose:
-        # if recipe_tool is invoked with only a
-        # verbose flag it causes an exception so
-        # here we offer help if no other flags are given
-        sys.exit(parser.print_help())
-    else:
-        return args
+    return parser
 
 def main():
     """Main entry point of recipe_tool."""
@@ -462,8 +451,16 @@ def main():
         print('Building recipe database...')
         build_recipe_database()
 
-    # Now parse the args
-    args = parse_args()
+    parser = get_parser()
+    args = parser.parse_args()
+    if len(sys.argv) == 1:
+        sys.exit(parser.print_help())
+    elif len(sys.argv) == 2 and args.verbose:
+        # if recipe_tool is invoked with only a
+        # verbose flag it causes an exception so
+        # here we offer help if no other flags are given
+        sys.exit(parser.print_help())
+    
     case = {
         'print': cmd_print,
         'edit': cmd_edit,
