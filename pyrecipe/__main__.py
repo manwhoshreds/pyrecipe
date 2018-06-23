@@ -9,6 +9,7 @@
 """
 import os
 import sys
+import glob
 import shutil
 import argparse
 
@@ -168,6 +169,9 @@ def cmd_show(args):
 def version():
     """Print pyrecipe version information."""
     version_info()
+
+# mainly for the testsuite
+__all__ = [c for c in dir() if c.startswith('cmd_')] + ['get_parser']
 
 ## End command funtions
 
@@ -460,6 +464,7 @@ def main():
         # verbose flag it causes an exception so
         # here we offer help if no other flags are given
         sys.exit(parser.print_help())
+    
     
     case = {
         'print': cmd_print,

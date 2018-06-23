@@ -10,7 +10,7 @@ import textwrap
 import lxml.etree as ET
 from termcolor import colored
 
-from pyrecipe.db import DBInfo
+from pyrecipe.db import dbinfo
 from pyrecipe import config
 
 S_DIV = lambda m: colored('~' * m, 'white')
@@ -91,7 +91,7 @@ def get_file_name(source):
     with the recipe. This function looks up and returns the uuid from the
     database.
     """
-    recipe_uuid = DBInfo().get_uuid(source)
+    recipe_uuid = dbinfo.get_uuid(source)
     if recipe_uuid is None:
         return None
     file_name = get_file_name_from_uuid(recipe_uuid)
@@ -118,10 +118,9 @@ def get_file_name_from_recipe(recipe_name, file_extention='recipe'):
 def stats(verb=0):
     """Print statistics about your recipe database and exit."""
     print("Recipes: {}".format(len(config.RECIPE_DATA_FILES)))
-    if verb >= 1:
-        print("Recipe data directory: {}".format(config.RECIPE_DATA_DIR))
-        print("Recipe xml directory: {}".format(config.RECIPE_XML_DIR))
-        print("Default random recipe: {}".format(config.RAND_RECIPE_COUNT))
+    print("Recipe data directory: {}".format(config.RECIPE_DATA_DIR))
+    print("Recipe xml directory: {}".format(config.RECIPE_XML_DIR))
+    print("Default random recipe: {}".format(config.RAND_RECIPE_COUNT))
 
 def msg(text, level='INFORM'):
     """Pyrecipe message function with color."""

@@ -23,10 +23,10 @@ import datetime
 import requests
 import pint.errors
 
-import pyrecipe.db as DB
 import pyrecipe.utils as utils
 import pyrecipe.config as config
 from pyrecipe import Q_
+from pyrecipe.db import dbinfo
 from pyrecipe.recipe import Recipe
 from pyrecipe.recipe_numbers import RecipeNum
 
@@ -161,14 +161,19 @@ class ShoppingList:
 
     def choose_random(self, count=int(config.RAND_RECIPE_COUNT), write=False):
         try:
-            recipe_sample = random.sample(DB.get_data()['main_names'], count)
-            rand_salad_dressing = random.choice(DB.get_data()['salad_dressing_names'])
+            recipe_sample = random.sample(
+                dbinfo.get_recipes_by_dishtype('main'),
+                count
+            )
+            rand_salad_dressing = random.choice(
+                dbinfo.get_recipes_by_dishtype('salad dressing')
+            )
         except ValueError:
             sys.exit(utils.msg(
                 "Random count is higher than the amount of recipes"
                 " available ({}). Please enter a lower number."
-                .format(len(DB.get_data()['main_names'])), "ERROR"
-            ))
+                .format(len(DB.get_data()['main_names'])), "ERROR")
+            )
         #self.update(rand_salad_dressing)
         for dish in recipe_sample:
             self.update(dish)
