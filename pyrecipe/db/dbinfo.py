@@ -24,6 +24,14 @@ class DBInfo(RecipeDB):
         names = [x[0] for x in names]
         return names
     
+    def get_recipes_by_author(self, author):
+        """Get recipenames of a cirtain dishtype.""" 
+        names = self.query(
+            "SELECT name FROM recipes WHERE author = \'{}\'".format(author)
+        )
+        names = [x[0] for x in names]
+        return names
+    
     def get_uuid(self, name):
         """Get the uuid of the recipe."""
         uuid = self.query(

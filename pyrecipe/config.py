@@ -38,6 +38,7 @@ SHOPPING_LIST_FILE = _userdir(config['paths'].get('shopping_list_file', None))
 # --Pyrecipe
 RAND_RECIPE_COUNT = config['pyrecipe'].get('rand_recipe_count', 4)
 PYRECIPE_COLOR = config['pyrecipe'].get('color', None)
+USER_EMAIL = config['pyrecipe'].get('user_email', None)
 USER_NAME = config['pyrecipe'].get('user_name', None)
 
 # --End user config

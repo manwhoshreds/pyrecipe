@@ -10,7 +10,7 @@ import textwrap
 import lxml.etree as ET
 from termcolor import colored
 
-from pyrecipe.db import dbinfo
+from pyrecipe.db import dbinfo, DISH_TYPES
 from pyrecipe import config
 
 S_DIV = lambda m: colored('~' * m, 'white')
@@ -118,9 +118,17 @@ def get_file_name_from_recipe(recipe_name, file_extention='recipe'):
 def stats(verb=0):
     """Print statistics about your recipe database and exit."""
     print("Recipes: {}".format(len(config.RECIPE_DATA_FILES)))
+    print("\nRecipes by Dishtype:")
+    for dt in DISH_TYPES: 
+        print("{}: {}".format(dt, len(dbinfo.get_recipes_by_dishtype(dt))))
+    print("\nMy Recipes:")
+    print("{}: {}".format(
+        config.USER_NAME, 
+        len(dbinfo.get_recipes_by_author(config.USER_NAME)))
+    ) 
+    print("\nPaths:")
     print("Recipe data directory: {}".format(config.RECIPE_DATA_DIR))
     print("Recipe xml directory: {}".format(config.RECIPE_XML_DIR))
-    print("Default random recipe: {}".format(config.RAND_RECIPE_COUNT))
 
 def msg(text, level='INFORM'):
     """Pyrecipe message function with color."""
