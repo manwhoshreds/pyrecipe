@@ -1,19 +1,17 @@
 from pyrecipe.db import RecipeDB
 
-class DBInfo():
+class DBInfo(RecipeDB):
     """Get data from the database as a dict."""
-    def __init__(self):
-        self.db = RecipeDB()
     
     def get_recipe_names(self):
         """Return all of the recipe names in the database."""
-        names = self.db.query("SELECT name FROM recipes")
+        names = self.query("SELECT name FROM recipes")
         names = [x[0] for x in names]
         return names
     
     def get_dishtype(self, dishtype):
         """Get recipenames of a cirtain dishtype.""" 
-        names = self.db.query(
+        names = self.query(
             "SELECT name FROM recipes WHERE dish_type = \'{}\'".format(dishtype)
         )
         names = [x[0] for x in names]
@@ -21,7 +19,7 @@ class DBInfo():
     
     def get_uuid(self, name):
         """Get the uuid of the recipe."""
-        uuid = self.db.query(
+        uuid = self.query(
             "SELECT recipe_uuid FROM recipes WHERE name = \'{}\' COLLATE NOCASE".format(name)
         )[0][0]
         return uuid

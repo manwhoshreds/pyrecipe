@@ -81,17 +81,19 @@ def cmd_make(args):
 def cmd_search(args):
     """Search the recipe database."""
     search = args.search
-    check = spell_check(args.search)
-    if check != args.search:
-        print("Nothing found. Showing results for \"{}\" instead.".format(check))
-        search = check
+    #check = spell_check(args.search)
+    #if check != args.search:
+    #    print("Nothing found. Showing results for \"{}\" instead.".format(check))
+    #    search = check
 
     database = DB.RecipeDB()
     results = database.search(search)
     numres = len(results)
     if numres == 0:
-        sys.exit(
-            "Your search for \"{}\" produced no results".format(args.search))
+        sys.exit(utils.msg(
+            "Your search for \"{}\" produced no results".format(args.search), 
+            "INFORM")
+        )
     results = "\n".join(s.lower() for s in results)
     print(results)
 
@@ -238,11 +240,12 @@ def subparser_search(subparser):
     """Subparser for search command."""
     parser_search = subparser.add_parser(
         "search",
-        help='Search the recipe database'
+        help="Search the recipe database"
     )
     parser_search.add_argument(
         "search",
-        help='Search the recipe database'
+        nargs="*",
+        help="Search the recipe database"
     )
 
 def subparser_shop(subparser):

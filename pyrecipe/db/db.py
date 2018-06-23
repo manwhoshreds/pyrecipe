@@ -6,12 +6,17 @@
 """
 import os
 import sqlite3
+from pyrecipe import p
 from pyrecipe.config import DB_FILE
 
 TABLES = {}
 TABLES['recipesearch'] = """
     CREATE VIRTUAL TABLE {0}
     USING FTS5(name, author, tags, categories)
+"""
+TABLES['ingredientsearch'] = """
+    CREATE VIRTUAL TABLE {0}
+    USING FTS5(name, ingredient)
 """
 TABLES['recipes'] = """
     CREATE TABLE IF NOT EXISTS {0}(
@@ -31,7 +36,7 @@ TABLES['ingredients'] = """
     CREATE TABLE IF NOT EXISTS {0}(
         recipe_id INTEGER,
         ingredient_str TEXT,
-        CONSTRAINT fk
+        CONSTRAINT fk_ingredients
             FOREIGN KEY(recipe_id)
             REFERENCES Recipes(id)
             ON DELETE CASCADE)
@@ -93,6 +98,17 @@ class RecipeDB:
                 categories
                 ) VALUES(?, ?, ?, ?)''', recipe_data_search
         )
+        for ingredient in recipe.ingredients:
+            ingredient_data_search = [(
+                recipe.name,
+                ingredient.name
+            )]
+            self.c.executemany(
+                '''INSERT OR REPLACE INTO ingredientsearch (
+                    name, 
+                    ingredient
+                    ) VALUES(?, ?)''', ingredient_data_search
+            )
         self._commit()
         recipe_id = self.query(
             "SELECT id FROM recipes WHERE name = \'{}\'"
@@ -129,9 +145,14 @@ class RecipeDB:
     def words(self):
         """A complete list of searchable words from the database."""
         words = []
-        query = 'SELECT * FROM recipesearch'
-        result = self.query(query)
-        for w in result:
+        results = []
+        queries = [
+            'SELECT * FROM recipesearch',
+            'SELECT * FROM ingredientsearch'
+        ]
+        for query in queries:
+            results += self.query(query)
+        for w in results:
             # Get rid of empty strings
             w = [i for i in w if i]
             # Split words at spaces 
@@ -139,12 +160,23 @@ class RecipeDB:
             words += w
         return set(words)
     
-    def search(self, string):
+    def search(self, args=[]):
         """Search the database."""
-        query = 'SELECT name FROM recipesearch WHERE recipesearch MATCH "{}"'
-        result = self.query(query.format(string))
-        result = [i[0] for i in result]
-        return result
+        arg_list = []
+        for arg in args:
+            arg_list += arg.split()
+        arg_list += [p.plural(w) for w in arg_list] 
+        queries = [
+            'SELECT name FROM recipesearch WHERE recipesearch MATCH "{}"',
+            'SELECT name FROM ingredientsearch WHERE ingredientsearch MATCH "{}"'
+        ]
+        results = []
+        for string in arg_list:
+            for query in queries:
+                result = self.query(query.format(string))
+                result = [i[0] for i in result]
+                results += result
+        return set(results)
         
     def create_database(self):
         """Create the recipe database."""

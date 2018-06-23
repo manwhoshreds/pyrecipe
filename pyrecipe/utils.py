@@ -130,8 +130,9 @@ def msg(text, level='INFORM'):
         return sys.exit(text)
     
     elif level == 'INFORM':
-        text = colored(text, 'cyan', attrs=['bold'])
-        return text
+        text = '{} {}'.format(colored('NOTICE:', on_color='on_cyan'),
+                              colored(text, 'white'))
+        return sys.exit(text)
     
     elif level == 'WARN':
         text = colored(text, 'yellow', attrs=['bold'])
