@@ -9,7 +9,6 @@
 """
 import os
 import sys
-import glob
 import shutil
 import argparse
 
@@ -20,7 +19,7 @@ from pyrecipe.recipe import Recipe
 from pyrecipe.ocr import RecipeOCR
 from pyrecipe.spell import spell_check
 from pyrecipe.webscraper import WebScraper
-from pyrecipe.db import (DBInfo, DBConn, delete_recipe)
+from pyrecipe.db import (dbinfo, DBConn, delete_recipe)
 from pyrecipe.console_gui import RecipeEditor, RecipeMaker
 from pyrecipe import __scriptname__, version_info
 
@@ -86,13 +85,13 @@ def cmd_search(args):
     #    print("Nothing found. Showing results for \"{}\" instead.".format(check))
     #    search = check
 
-    database = DBInfo()
-    results = database.search(search)
+    results = dbinfo.search(search)
     numres = len(results)
     if numres == 0:
         sys.exit(utils.msg(
             "Your search for \"{}\" produced no results".format(args.search),
-            "INFORM")
+            "INFORM"
+            )
         )
     results = "\n".join(s.lower() for s in results)
     print(results)
@@ -464,8 +463,7 @@ def main():
         # verbose flag it causes an exception so
         # here we offer help if no other flags are given
         sys.exit(parser.print_help())
-    
-    
+
     case = {
         'print': cmd_print,
         'edit': cmd_edit,
