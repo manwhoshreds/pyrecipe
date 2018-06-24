@@ -37,6 +37,7 @@ class ShoppingList:
     """
     def __init__(self):
         self.recipes = []
+        self.ingredients = []
         self.shopping_list = {}
 
     def _process(self, recipe):
@@ -48,9 +49,9 @@ class ShoppingList:
                 ingreds = named_ingreds[item]
                 self._process_ingredients(ingreds)
 
-    def _process_ingredients(self, ingredients):
-        """Process ingredients."""
-        for item in ingredients:
+    def _build_list(self):
+        """Build a shopping list from all of the ingredients."""
+        for item in self.ingredients:
             name = item.name
             try:
                 quant = item.get_quantity()
@@ -71,6 +72,7 @@ class ShoppingList:
 
     def print_list(self, write=False):
         """Print the shopping list to stdout."""
+        self._build_list()
         print("Recipes:\n")
         for name, dishtype in self.dish_types:
             print("({}) {}".format(dishtype, name))
@@ -91,6 +93,7 @@ class ShoppingList:
 
     def BAKprint_list(self, write=False):
         """Print the shopping list to stdout."""
+        self._build_list()
         print("Recipes:\n")
         for name, dishtype in self.dish_types:
             print("({}) {}".format(dishtype, name))
@@ -178,7 +181,7 @@ class ShoppingList:
         for dish in recipe_sample:
             self.update(dish)
     
-    def to_json(self):
+    def get_data(self):
         """Convert shoppinglist to json data."""
         data = {}
         data['user_name'] = config.USER_NAME
@@ -188,31 +191,38 @@ class ShoppingList:
             item = {}
             item['item'], item['amount'] = name, str(amount)
             data['list'].append(item)
-        #return json.dumps(data)
         return data
     
     def update(self, source):
         """Update the shopping list with ingredients from source."""
         recipe = Recipe(source)
         self.recipes.append(recipe)
-        self._process(recipe)
+        
+        ingreds, named = recipe.get_ingredients(fmt="data")
+        for ingred in ingreds:
+            self.ingredients.append(ingred)
+        for ingred in named:
+            self.ingredients += named[ingred]
 
-    def update_remote(self):
+    def create_new(self):
         """Update openrecipes.org shoppingList."""
-        #path = 'http://localhost/open_recipes/includes/api/shopping_list/create.php'
-        path = 'http://192.168.0.31/openRecipes/includes/api/shopping_list/create.php'
-        data = self.to_json()
-        resp = requests.post(path, json=data)
-        print(resp.reason)
+        print('updating server...')
+        url = 'http://localhost/open_recipes/includes/api/shopping_list/create.php'
+        data = self.get_data()
+        resp = requests.post(url, json=data)
         print(resp.text)
+        #if resp.json()['message'] == 'failed':
+        #    print('Something went wrong. The server was not updated')
+        #else:
+        #    print('Server was updated successfully!')
 
     def remote(self):
         """Remote."""
         path = 'http://localhost/open_recipes/includes/api/shopping_list/read.php'
         payload = {'user': config.USER_NAME}
         resp = requests.get(path, params=payload)
-        return resp.json()['shopping_list'][0]
-
+        print(resp.text)
+        #return resp.json()['shopping_list'][0]
 
 
 class MultiQuantity:

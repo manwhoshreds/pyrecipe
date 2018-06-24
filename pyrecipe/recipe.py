@@ -176,9 +176,9 @@ class Recipe:
         ingreds = []
         named_ingreds = OrderedDict()
         for item in self.ingredients:
-            if fmt == 'string':
+            if fmt == "string":
                 ingreds.append(str(item))
-            else:
+            elif fmt == "data":
                 ingreds.append(item)
         if self.named_ingredients:
             named_ingreds = self.named_ingredients
@@ -187,7 +187,7 @@ class Recipe:
                 for ingred in named_ingreds[item]:
                     if fmt == "string":
                         ingred_list.append(str(ingred))
-                    else:
+                    elif fmt == "data":
                         ingred_list.append(ingred)
                 named_ingreds[item] = ingred_list
         return ingreds, named_ingreds
@@ -598,6 +598,7 @@ class IngredientParser:
         return ingred_dict
 
 if __name__ == '__main__':
+    pass
     #r = Recipe('')
     #print(ureg.get_dimensionality(sys.argv[1]))
     #r.print_recipe()
@@ -606,4 +607,3 @@ if __name__ == '__main__':
     #print(r.source)
     #r.get_ingredients()
     #print(r._ingredients_cache)
-    #print(r._named_ingredients_cache)

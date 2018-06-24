@@ -28,7 +28,7 @@ from pyrecipe.recipe import (Recipe, IngredientParser)
 
 
 #TODO: add property for scraping named ingredients
-class WebScraper:
+class RecipeWebScraper:
     """Factory for webscrapers."""
 
     @staticmethod
@@ -124,10 +124,10 @@ class TastyWebScraper(Recipe):
     def scrape(self, req):
         """Scrape the recipe."""
         self.soup = bs4.BeautifulSoup(req, 'html.parser')
-        self.name = self.scraped_name()
-        self.author = self.scraped_author()
-        self.ingredients = self.scraped_ingredients()
-        self.steps = self.scraped_method()
+        self.name = self.scrape_name()
+        self.author = self.scrape_author()
+        self.ingredients = self.scrape_ingredients()
+        self.steps = self.scrape_method()
     
     def scrape_name(self):
         """Recipe name."""
@@ -208,5 +208,5 @@ class TastyWebScraper(Recipe):
         return results
 
 if __name__ == '__main__':
-    test = WebScraper.scrape("https://tasty.co/recipe/honey-roasted-bbq-pork-char-siu")
+    test = RecipeWebScraper.scrape("https://tasty.co/recipe/honey-roasted-bbq-pork-char-siu")
     test.print_recipe()

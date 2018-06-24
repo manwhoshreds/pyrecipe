@@ -18,7 +18,7 @@ import pyrecipe.shopper as shopper
 from pyrecipe.recipe import Recipe
 from pyrecipe.ocr import RecipeOCR
 from pyrecipe.spell import spell_check
-from pyrecipe.webscraper import WebScraper
+from pyrecipe.webscraper import RecipeWebScraper
 from pyrecipe.db import (dbinfo, DBConn, delete_recipe)
 from pyrecipe.console_gui import RecipeEditor, RecipeMaker
 from pyrecipe import __scriptname__, version_info
@@ -27,7 +27,7 @@ from pyrecipe import __scriptname__, version_info
 def cmd_print(args):
     """Print a recipe to stdout."""
     if args.source.startswith(('https://', 'http://')):
-        recipe = WebScraper.scrape(args.source)
+        recipe = RecipeWebScraper.scrape(args.source)
     else:
         recipe = Recipe(args.source, recipe_yield=args.recipe_yield)
     recipe.print_recipe(args.verbose)
@@ -35,7 +35,7 @@ def cmd_print(args):
 def cmd_edit(args):
     """Edit a recipe using the urwid console interface."""
     if args.source.startswith(('https://', 'http://')):
-        recipe = WebScraper.scrape(args.source)
+        recipe = RecipeWebScraper.scrape(args.source)
     else:
         recipe = Recipe(args.source)
     RecipeEditor(recipe).start()
@@ -99,9 +99,9 @@ def cmd_search(args):
 def cmd_shop(args):
     """Print a shopping list."""
     shoplist = shopper.ShoppingList()
-    if args.print_list:
-        shoplist.print_list()
-    elif args.random:
+    #if args.print_list:
+    #    shoplist.print_list()
+    if args.random:
         shoplist.choose_random(count=args.random, write=args.save)
         shoplist.print_list(write=args.save)
     else:
@@ -114,6 +114,8 @@ def cmd_shop(args):
             shoplist.update(item)
         #shoplist.update_remote()
         shoplist.print_list(write=args.save)
+        if args.new:
+            shoplist.create_new()
 
 def cmd_dump(args):
     """Dump recipe data in 1 of three formats."""
