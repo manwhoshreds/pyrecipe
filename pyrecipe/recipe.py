@@ -412,10 +412,10 @@ class Ingredient:
             string = "{} to taste".format(self.name.capitalize())
             ingred_string.append(string)
         elif self.unit == 'pinch':
-            string = "Pinch of {}".format(self.name)
+            string = "pinch of {}".format(self.name)
             ingred_string.append(string)
         elif self.unit == 'splash':
-            string = "Splash of {}".format(self.name)
+            string = "splash of {}".format(self.name)
             ingred_string.append(string)
         else:
             # amnt
@@ -445,8 +445,7 @@ class Ingredient:
             note = ' ({})'.format(self.note)
             ingred_string.append(note)
         string = ''.join(ingred_string).capitalize()
-        print(string)
-        return ''.join(ingred_string)
+        return string
 
     def get_quantity(self):
         unit = self.unit

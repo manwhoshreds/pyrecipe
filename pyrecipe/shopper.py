@@ -26,7 +26,7 @@ import pint.errors
 import pyrecipe.utils as utils
 import pyrecipe.config as config
 from pyrecipe import Q_
-from pyrecipe.db import dbinfo
+from pyrecipe.db import DBInfo
 from pyrecipe.recipe import Recipe
 from pyrecipe.recipe_numbers import RecipeNum
 
@@ -47,8 +47,9 @@ class ShoppingList:
             try:
                 quant = item.get_quantity()
             except Exception as e:
-                sys.exit(e)
-                print("errors:{} {}".format(item.amount, item.unit))
+                test = self.recipes[0].name
+                print("errors:{} {}".format(e, test))
+                sys.exit()
                 continue
 
             if (name, name + 's') in self.shopping_list.keys():
@@ -63,6 +64,7 @@ class ShoppingList:
 
     def print_list(self, write=False):
         """Print the shopping list to stdout."""
+        pass
         self._build_list()
         print("Recipes:\n")
         for name, dishtype in self.dish_types:
@@ -156,17 +158,17 @@ class ShoppingList:
     def choose_random(self, count=int(config.RAND_RECIPE_COUNT), write=False):
         try:
             recipe_sample = random.sample(
-                dbinfo.get_recipes_by_dishtype('main'),
+                DBInfo().get_recipes_by_dishtype('main'),
                 count
             )
             rand_salad_dressing = random.choice(
-                dbinfo.get_recipes_by_dishtype('salad dressing')
+                DBInfo().get_recipes_by_dishtype('salad dressing')
             )
         except ValueError:
             sys.exit(utils.msg(
                 "Random count is higher than the amount of recipes"
                 " available ({}). Please enter a lower number."
-                .format(len(DB.get_data()['main_names'])), "ERROR")
+                .format(len(DBInfo().get_recipes_by_dishtype['main_names'])), "ERROR")
             )
         #self.update(rand_salad_dressing)
         for dish in recipe_sample:

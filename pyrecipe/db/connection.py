@@ -31,7 +31,7 @@ TABLES['recipes'] = """
         price TEXT,
         source_url TEXT,
         CONSTRAINT unique_name UNIQUE
-        (recipe_uuid))
+        (recipe_uuid, name))
 """
 TABLES['ingredients'] = """
     CREATE TABLE IF NOT EXISTS {0}(

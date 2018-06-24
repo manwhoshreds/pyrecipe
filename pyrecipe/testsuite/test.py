@@ -30,7 +30,7 @@ class CommandLineTestCase(unittest.TestCase):
 
 
 class RecipeTestCase(unittest.TestCase):
-    def itest_all_recipes(self):
+    def test_all_recipes(self):
         """User passes no args, and should be offered help."""
         for item in RECIPE_DATA_FILES:
             recipe = Recipe(item)

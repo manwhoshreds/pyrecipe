@@ -10,7 +10,7 @@ import textwrap
 import lxml.etree as ET
 from termcolor import colored
 
-from pyrecipe.db import dbinfo, DISH_TYPES
+from pyrecipe.db import DBInfo, DISH_TYPES
 from pyrecipe import config
 
 S_DIV = lambda m: colored('~' * m, 'white')
@@ -91,7 +91,7 @@ def get_file_name(source):
     with the recipe. This function looks up and returns the uuid from the
     database.
     """
-    recipe_uuid = dbinfo.get_uuid(source)
+    recipe_uuid = DBInfo().get_uuid(source)
     if recipe_uuid is None:
         return None
     file_name = get_file_name_from_uuid(recipe_uuid)
@@ -120,11 +120,11 @@ def stats(verb=0):
     print("Recipes: {}".format(len(config.RECIPE_DATA_FILES)))
     print("\nRecipes by Dishtype:")
     for dt in DISH_TYPES: 
-        print("{}: {}".format(dt, len(dbinfo.get_recipes_by_dishtype(dt))))
+        print("{}: {}".format(dt, len(DBInfo().get_recipes_by_dishtype(dt))))
     print("\nMy Recipes:")
     print("{}: {}".format(
         config.USER_NAME, 
-        len(dbinfo.get_recipes_by_author(config.USER_NAME)))
+        len(DBInfo().get_recipes_by_author(config.USER_NAME)))
     ) 
     print("\nPaths:")
     print("Recipe data directory: {}".format(config.RECIPE_DATA_DIR))

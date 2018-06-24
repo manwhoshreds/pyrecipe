@@ -19,9 +19,9 @@ from pyrecipe.recipe import Recipe
 from pyrecipe.ocr import RecipeOCR
 from pyrecipe.spell import spell_check
 from pyrecipe.webscraper import RecipeWebScraper
-from pyrecipe.db import (dbinfo, DBConn, delete_recipe)
-from pyrecipe.console_gui import RecipeEditor, RecipeMaker
 from pyrecipe import __scriptname__, version_info
+from pyrecipe.db import (DBInfo, DBConn, delete_recipe)
+from pyrecipe.console_gui import RecipeEditor, RecipeMaker
 
 ## Start command functions
 def cmd_print(args):
@@ -85,7 +85,7 @@ def cmd_search(args):
     #    print("Nothing found. Showing results for \"{}\" instead.".format(check))
     #    search = check
 
-    results = dbinfo.search(search)
+    results = DBInfo.search(search)
     numres = len(results)
     if numres == 0:
         sys.exit(utils.msg(
