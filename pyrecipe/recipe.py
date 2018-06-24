@@ -380,7 +380,7 @@ class Ingredient:
     def __init__(self, ingredient, yield_amount=0):
         self.data = ingredient
         self.name = ingredient['name']
-        self.size = ingredient.get('size', '')
+        self.size = ingredient.get('size', None)
         self.prep = ingredient.get('prep', '')
         self.note = ingredient.get('note', '')
         self.link = ingredient.get('link', '')
@@ -392,8 +392,6 @@ class Ingredient:
         except ValueError:
             self.amount = 1
         self.unit = self.amounts[yield_amount]['unit']
-        #if self.unit == 'each':
-        #    self.unit = ''
 
     def __repr__(self):
         return "<Ingredient('{}')>".format(self.name)
@@ -403,33 +401,52 @@ class Ingredient:
 
         Calling string on an ingredient object returns the gramatically
         correct representation of the ingredient object.
+        Though not every ingredients will have all parts, a full ingredient
+        string will look like this:
+        
+        <amt> <size> <unit>  <name>       <prep>  <note>
+        1 heaping tablespoon cumin seeds, toasted (you may use cumin powder)
         """
-        if self.note:
-            self.note = '({})'.format(self.note)
-
+        ingred_string = []
         if self.unit == 'taste':
-            return "{} to taste".format(self.name.capitalize())
+            string = "{} to taste".format(self.name.capitalize())
+            ingred_string.append(string)
         elif self.unit == 'pinch':
-            return "Pinch of {}".format(self.name)
+            string = "Pinch of {}".format(self.name)
+            ingred_string.append(string)
         elif self.unit == 'splash':
-            return "Splash of {}".format(self.name)
+            string = "Splash of {}".format(self.name)
+            ingred_string.append(string)
         else:
+            # amnt
+            ingred_string.append('{}'.format(self.amount))
+            # size
+            if self.size:
+                ingred_string.append(self.size)
+            # unit 
             match = PORTIONED_UNIT_RE.search(self.unit)
             if match:
                 unit = match.group().split()
-                self.unit = "({}) {}".format(' '.join(unit[0:2]), unit[-1])
-            ingred_string = '{}'.format(self.amount)
-            ingred_string += " {} {} {}".format(self.size, self.unit, self.name)
-            # the previous line adds unwanted spaces if
-            # values are absent, we simply clean that up here.
-            ingred_string = " ".join(ingred_string.split())
-            if not self.unit and not self.amount:
-                ingred_string = "{}".format(self.name.capitalize())
-            if self.prep:
-                ingred_string += ", " + self.prep
-            if self.note:
-                ingred_string += " {}".format(self.note)
-            return ingred_string
+                unit = " ({}) {}".format(' '.join(unit[0:2]), unit[-1])
+                ingred_string.append(unit)
+            elif self.unit == 'each':
+                pass
+            else:
+                ingred_string.append(' {}'.format(self.unit))
+            
+            # name
+            ingred_string.append(' {}'.format(self.name))
+            #if not self.unit and not self.amount:
+            #    ingred_string.append(" {}".format(self.name.capitalize()))
+
+        if self.prep:
+            ingred_string.append(", " + self.prep)
+        if self.note:
+            note = ' ({})'.format(self.note)
+            ingred_string.append(note)
+        string = ''.join(ingred_string).capitalize()
+        print(string)
+        return ''.join(ingred_string)
 
     def get_quantity(self):
         unit = self.unit

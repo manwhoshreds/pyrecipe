@@ -37,10 +37,10 @@ class RecipeTestCase(unittest.TestCase):
             shoplist = ShoppingList()
             shoplist.update(recipe)
             shoplist.print_list()
-            print(recipe.name)
-            with self.subTest(i=item):
+            with self.subTest(i=recipe.name):
                 _dir = dir(recipe)
-                self.assertIn('source', _dir)
+                shoplist.print_list()
+                self.assertIn('sourc', _dir)
                 self.assertIn('uuid', _dir)
                 self.assertIsInstance(recipe.ingredients, list)
                 self.assertIsInstance(recipe.uuid, str)
