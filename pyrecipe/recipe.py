@@ -42,8 +42,8 @@ from ruamel.yaml import YAML
 import pyrecipe.utils as utils
 import pyrecipe.config as config
 from pyrecipe.db import update_db
+from pyrecipe import Q_, CULINARY_UNITS, ureg
 from pyrecipe.recipe_numbers import RecipeNum
-from pyrecipe import Q_, ureg
 
 __all__ = ['Recipe', 'IngredientParser']
 
@@ -436,9 +436,7 @@ class Ingredient:
             
             # name
             ingred_string.append(' {}'.format(self.name))
-            #if not self.unit and not self.amount:
-            #    ingred_string.append(" {}".format(self.name.capitalize()))
-
+        
         if self.prep:
             ingred_string.append(", " + self.prep)
         if self.note:
@@ -585,7 +583,7 @@ class IngredientParser:
                 ingred_string = ingred_string.replace(item, '')
 
         #for item in config.INGRED_UNITS:
-        for item in dir(ureg):
+        for item in CULINARY_UNITS:
             if item in ingred_string.split():
                 unit = item
                 ingred_string = ingred_string.replace(item, '')
@@ -622,7 +620,6 @@ class IngredientParser:
 if __name__ == '__main__':
     pass
     #r = Recipe('')
-    #print(ureg.get_dimensionality(sys.argv[1]))
     #r.print_recipe()
     #print(r.ingredients)
     #print(r.named_ingredients)

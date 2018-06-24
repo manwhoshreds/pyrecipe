@@ -1,12 +1,11 @@
 import os
 import sys
 import unittest
-from io import StringIO
 
-from pyrecipe import ureg
 from pyrecipe.__main__ import *
 from pyrecipe.recipe import Recipe
 from pyrecipe.shopper import ShoppingList
+from pyrecipe import CULINARY_UNITS
 from pyrecipe.config import RECIPE_DATA_FILES
 
 class CommandLineTestCase(unittest.TestCase):
@@ -15,19 +14,10 @@ class CommandLineTestCase(unittest.TestCase):
     """
     @classmethod
     def setUpClass(cls):
-        # supress output
-    #    cls.fi = open(os.devnull, 'w')
-    #    sys.stdout = cls.fi
-    #    sys.stderr = cls.fi
-        
         parser = get_parser()
         cls.parser = parser
-
-    #@classmethod
-    #def tearDownClass(cls):
-    #    cls.fi.close()
-        
-
+        cls.units = CULINARY_UNITS
+        print(cls.units)
 
 class RecipeTestCase(CommandLineTestCase):
     def test_all_recipes(self):
@@ -43,20 +33,21 @@ class RecipeTestCase(CommandLineTestCase):
                 
     def test_all_recipe_ingredients(self):
         """Validate every ingredient."""
+        notin = ('to taste', 'inch', 'in')
         for item in RECIPE_DATA_FILES:
             recipe = Recipe(item)
             ingreds, named = recipe.get_ingredients(fmt='data')
             for item in ingreds:
                 with self.subTest(i=recipe.name):
-                    self.assertNotIn(item.unit, ('to taste',))
+                    self.assertIn(item.unit, self.units)
             for item in named:
                 for ingred in named[item]:
                     with self.subTest(i=recipe.name):
-                        self.assertNotIn(ingred.unit, ('to taste',))
+                        self.assertIn(ingred.unit, self.units)
 
                 
 
-class PrintCmdTestCase:#(CommandLineTestCase):
+class PrintCmdTestCase(CommandLineTestCase):
     def setUp(self):
         self.subcmd = 'print'
         self.cmd = cmd_print
@@ -92,7 +83,7 @@ class PrintCmdTestCase:#(CommandLineTestCase):
         parsed_args = self.parser.parse_args(arg)
         self.cmd(parsed_args)
 
-class ShopCmdTestCase:#(CommandLineTestCase):
+class ShopCmdTestCase(CommandLineTestCase):
     def setUp(self):
         self.subcmd = 'shop'
         self.cmd = cmd_shop
@@ -133,7 +124,7 @@ class ShopCmdTestCase:#(CommandLineTestCase):
         parsed_args = self.parser.parse_args(arg)
         self.cmd(parsed_args)
 
-class ShowCmdTestCase:#:(CommandLineTestCase):
+class ShowCmdTestCase(CommandLineTestCase):
     def setUp(self):
         self.subcmd = 'show'
         self.cmd = cmd_show

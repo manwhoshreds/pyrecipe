@@ -27,6 +27,9 @@ newton = kilogram * meter / second ** 2 = N
 # Pressure
 [pressure] = [force] / [area]
 
+# Volume
+[volume] = [length] ** 3
+
 # Temperature
 celsius = kelvin; offset: 273.15 = C
 fahrenheit = 5 / 9 * kelvin; offset: 255.372222 = F
@@ -40,44 +43,45 @@ fortnight = 2 * week
 year = 31556925.9747 * second
 month = year / 12
 
-# Volume
-[volume] = [length] ** 3
-teaspoon = tablespoon / 3 = tsp
-tablespoon = floz / 2 = tbsp = Tbsp = Tblsp = tblsp = tbs = Tbl
-shot = 3 * tablespoon
-liter = 1e-3 * m ** 3 = l = L
-quart = 2 pint = qt
-gallon = 8 pint = gal
-cup = 8 fluid_ounce
-pint = 28.875 cubic_inch = pt
-fluid_ounce = pint / 16 = floz
-shot = 3 * tablespoon
-barrel = 31 * gallon
-
-# weight
-gram = [mass] = g
-ounce = pound / 16 = oz
-pound = 453.59237 gram = lb
-
-# culinary units
-each = [single] = ea
-link = 1 * each
-splash = 1 * each
-stalk = 1 * each
-whole = 1 * each
-bottle = 1 * each
-stick = 1 * each
-taste = 1 * each
-pinch = 1 * each
-sprig = 1 * each
-bag = 1 * each
-box = 1 * each
-cube = 1 * each
-package = 1 * each
-inch = 1 * each
-piece = 1 * each
-can = 1 * each
-clove = 1 * each
+@group CulinaryUnits
+	# Volume
+	# this is odd, pint wont register the first alias. Bug maybe?
+	teaspoon = tablespoon / 3 = tsp = tsp
+	tablespoon = floz / 2 = Tbsp = Tbsp = Tblsp = tblsp = tbs = Tbl = tbsp
+	shot = 3 * tablespoon
+	liter = 1e-3 * m ** 3 = l = L = l
+	quart = 2 pint = qt = qt
+	gallon = 8 pint = gal = gal
+	cup = 8 fluid_ounce
+	pint = 28.875 cubic_inch = pt = pt
+	fluid_ounce = pint / 16 = floz = floz
+	shot = 3 * tablespoon
+	barrel = 31 * gallon
+	
+	# weight
+	gram = [mass] = g = g
+	ounce = pound / 16 = oz = oz
+	pound = 453.59237 gram = lb = lb
+	
+	# culinary units	
+	each = [single] = ea
+	link = 1 * each
+	splash = 1 * each
+	stalk = 1 * each
+	whole = 1 * each
+	bottle = 1 * each
+	stick = 1 * each
+	taste = 1 * each
+	pinch = 1 * each
+	sprig = 1 * each
+	bag = 1 * each
+	box = 1 * each
+	cube = 1 * each
+	package = 1 * each
+	piece = 1 * each
+	can = 1 * each
+	clove = 1 * each
+@end
 
 @group USCSLengthInternational
     inch = yard / 36 = in = international_inch = inches = international_inches
@@ -95,4 +99,8 @@ clove = 1 * each
     cubic_yard = 1 yd ** 3 = cu_yd
 
     acre_foot = acre * foot = acre_feet
+@end
+
+@system pru using CulinaryUnits
+	each
 @end

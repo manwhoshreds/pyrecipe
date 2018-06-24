@@ -27,12 +27,23 @@ except:
 
 __email__ = 'm.k.miller@gmx.com'
 __scriptname__  = os.path.basename(sys.argv[0])
-
-dirr = os.path.dirname(__file__)
-definitions = os.path.join(dirr, 'culinary_units.txt')
-ureg = UnitRegistry(definitions)
-
 p = inflect.engine()
+
+class Ureg(UnitRegistry):
+
+    def get_culinary_units(self):
+        """Returns a list of units used by pyrecipe."""
+        units = dir(self.sys.pru)
+        aliases = []
+        for item in units:
+            aliases += list(self._units[item].aliases)
+        units += [p.plural(u) for u in units] + aliases
+        return sorted(units)
+
+_dir = os.path.dirname(__file__)
+_definitions = os.path.join(_dir, 'culinary_units.txt')
+ureg = Ureg(_definitions)
+CULINARY_UNITS = ureg.get_culinary_units()
 
 VER_STR = """  
                  _              _              _   {0} v{1}
@@ -57,7 +68,6 @@ VER_STR = VER_STR.format(
 def version_info():
     """Print the current version of pyrecipe and exit."""
     sys.exit(VER_STR)
-
 
 class Q_(ureg.Quantity):
     """Subclass to implement a few custom behaviors
