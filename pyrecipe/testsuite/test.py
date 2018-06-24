@@ -15,16 +15,17 @@ class CommandLineTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # supress output
-        cls.fi = open(os.devnull, 'w')
-        sys.stdout = cls.fi
-        sys.stderr = cls.fi
+        #cls.fi = open(os.devnull, 'w')
+        #sys.stdout = cls.fi
+        #sys.stderr = cls.fi
         
         parser = get_parser()
         cls.parser = parser
 
     @classmethod
     def tearDownClass(cls):
-        cls.fi.close()
+        pass
+        #cls.fi.close()
         
 
 
@@ -33,7 +34,11 @@ class RecipeTestCase(unittest.TestCase):
         """User passes no args, and should be offered help."""
         for item in RECIPE_DATA_FILES:
             recipe = Recipe(item)
-            with self.subTest():
+            shoplist = ShoppingList()
+            shoplist.update(recipe)
+            shoplist.print_list()
+            print(recipe.name)
+            with self.subTest(i=item):
                 _dir = dir(recipe)
                 self.assertIn('source', _dir)
                 self.assertIn('uuid', _dir)
@@ -113,7 +118,7 @@ class ShopCmdTestCase(CommandLineTestCase):
                 self.cmd(parsed_args)
     
     def test_shop_with_recipe(self):
-        """recipe_tool shop <recipe>."""
+        """recipe_tool shop <recipe>.{}"""
         arg = [self.subcmd, 'test']
         parsed_args = self.parser.parse_args(arg)
         self.cmd(parsed_args)

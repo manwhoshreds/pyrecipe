@@ -385,14 +385,15 @@ class Ingredient:
         self.note = ingredient.get('note', '')
         self.link = ingredient.get('link', '')
         self.amounts = ingredient.get('amounts', '')
+        self.ounce_can = ''
         try:
-            amount = self.amounts[yield_amount].get('amount', '')
+            amount = self.amounts[yield_amount].get('amount', 1)
             self.amount = RecipeNum(amount)
         except ValueError:
-            self.amount = ''
+            self.amount = 1
         self.unit = self.amounts[yield_amount]['unit']
-        if self.unit == 'each':
-            self.unit = ''
+        #if self.unit == 'each':
+        #    self.unit = ''
 
     def __repr__(self):
         return "<Ingredient('{}')>".format(self.name)
@@ -406,11 +407,11 @@ class Ingredient:
         if self.note:
             self.note = '({})'.format(self.note)
 
-        if self.unit == 'to taste':
+        if self.unit == 'taste':
             return "{} to taste".format(self.name.capitalize())
-        elif self.unit == 'pinch of':
+        elif self.unit == 'pinch':
             return "Pinch of {}".format(self.name)
-        elif self.unit == 'splash of':
+        elif self.unit == 'splash':
             return "Splash of {}".format(self.name)
         else:
             match = PORTIONED_UNIT_RE.search(self.unit)
@@ -434,6 +435,12 @@ class Ingredient:
         unit = self.unit
         if not self.unit:
             unit = 'each'
+        match = PORTIONED_UNIT_RE.search(unit)
+        if match:
+            unit = match.group().split()
+            self.ounce_can = unit[0:2]
+            self.amount = 1
+            unit = unit[-1]
         return Q_(self.amount, unit)
 
 
@@ -523,14 +530,14 @@ class IngredientParser:
                     ingred_string = ingred_string.replace(item, '')
 
         if "to taste" in ingred_string:
-            unit = "to taste"
-            ingred_string = ingred_string.replace(unit, '')
+            unit = "taste"
+            ingred_string = ingred_string.replace("to taste", '')
         elif "splash of" in ingred_string:
-            unit = "splash of"
-            ingred_string = ingred_string.replace(unit, '')
+            unit = "splash"
+            ingred_string = ingred_string.replace("splash of", '')
         elif "pinch of" in ingred_string:
-            unit = "pinch of"
-            ingred_string = ingred_string.replace(unit, '')
+            unit = "pinch"
+            ingred_string = ingred_string.replace("pinch of", '')
 
         # get note if any
         parens = PAREN_RE.search(ingred_string)
@@ -555,7 +562,6 @@ class IngredientParser:
 
         ingred_list = [x for x in ingred_list if x not in amnt_list]
         ingred_string = ' '.join(ingred_list)
-
 
         for item in config.SIZE_STRINGS:
             if item in ingred_string:

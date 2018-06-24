@@ -40,24 +40,15 @@ class ShoppingList:
         self.ingredients = []
         self.shopping_list = {}
 
-    def _process(self, recipe):
-        """Process the ingredients in a recipe."""
-        ingreds, named_ingreds = recipe.get_ingredients(fmt='data')
-        self._process_ingredients(ingreds)
-        if named_ingreds:
-            for item in named_ingreds:
-                ingreds = named_ingreds[item]
-                self._process_ingredients(ingreds)
-
     def _build_list(self):
         """Build a shopping list from all of the ingredients."""
         for item in self.ingredients:
             name = item.name
             try:
                 quant = item.get_quantity()
-            except ValueError:
-                #print(item)
-                #print("errors", item.amount, item.unit)
+            except Exception as e:
+                sys.exit(e)
+                print("errors:{} {}".format(item.amount, item.unit))
                 continue
 
             if (name, name + 's') in self.shopping_list.keys():
