@@ -48,24 +48,7 @@ for item in os.listdir(RECIPE_DATA_DIR):
     RECIPE_DATA_FILES.append(RECIPE_DATA_DIR + item)
 
 PP = pprint.PrettyPrinter(compact=True, indent=4)
-
-CULINARY_UNITS = [
-    'teaspoon', 'tablespoon', 'ounce', 'fulid ounce', 
-    'cup', 'quart', 'gallon', 'pound', 'pint', 'gram', 'mililiter'
-]
-PINT_UNDEFINED_UNITS = [
-    'box', 'to taste', 'inch piece', 'stick', 'bottle', 'each', 'bag',
-    'whole', 'link', 'sprig', 'stalk', 'pinch of', 'cube', 'splash of'
-]
-
-_ingr_units = CULINARY_UNITS + PINT_UNDEFINED_UNITS
-_nonplurals = ('each', 'splash')
-_plur_units = [x + 's' for x in _ingr_units if x not in _nonplurals]
-_size_strs = ['large', 'medium', 'small', 'heaping']
-
-INGRED_UNITS = sorted(_ingr_units + _plur_units)
-SIZE_STRINGS = sorted(_size_strs)
+SIZE_STRINGS = ['large', 'medium', 'small', 'heaping']
 
 if __name__ == '__main__':
     pass
-    #print(INGRED_UNITS)

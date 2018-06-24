@@ -26,7 +26,7 @@ except:
     __version__ = 'unknown'
 
 __email__ = 'm.k.miller@gmx.com'
-__scriptname__  = os.path.basename(sys.argv[0])
+__scriptname__ = os.path.basename(sys.argv[0])
 p = inflect.engine()
 
 class Ureg(UnitRegistry):
@@ -45,7 +45,7 @@ _definitions = os.path.join(_dir, 'culinary_units.txt')
 ureg = Ureg(_definitions)
 CULINARY_UNITS = ureg.get_culinary_units()
 
-VER_STR = """  
+VER_STR = """
                  _              _              _   {0} v{1}
                 (_)            | |            | |  {2}
    _ __ ___  ___ _ _ __   ___  | |_ ___   ___ | |
@@ -54,7 +54,7 @@ VER_STR = """
   |_|  \___|\___|_| .__/ \___|  \__\___/ \___/|_|
                   | |                              {7}
                   |_|                              {8}
-"""
+"""# pylint: ignore
 
 VER_STR = VER_STR.format(
     __scriptname__, __version__,

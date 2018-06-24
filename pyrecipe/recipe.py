@@ -538,7 +538,7 @@ class IngredientParser:
             ingred_string = ingred_string.replace(match.group(), '')
             unit = self._strip_parens(match.group())
         else:
-            for item in config.INGRED_UNITS:
+            for item in CULINARY_UNITS:
                 if item in ingred_string.split():
                     unit = item
                     ingred_string = ingred_string.replace(item, '')
@@ -582,7 +582,6 @@ class IngredientParser:
                 size = item
                 ingred_string = ingred_string.replace(item, '')
 
-        #for item in config.INGRED_UNITS:
         for item in CULINARY_UNITS:
             if item in ingred_string.split():
                 unit = item

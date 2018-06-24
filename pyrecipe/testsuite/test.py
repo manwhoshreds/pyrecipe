@@ -4,8 +4,8 @@ import unittest
 
 from pyrecipe.__main__ import *
 from pyrecipe.recipe import Recipe
-from pyrecipe.shopper import ShoppingList
 from pyrecipe import CULINARY_UNITS
+from pyrecipe.shopper import ShoppingList
 from pyrecipe.config import RECIPE_DATA_FILES
 
 class CommandLineTestCase(unittest.TestCase):
@@ -17,7 +17,7 @@ class CommandLineTestCase(unittest.TestCase):
         parser = get_parser()
         cls.parser = parser
         cls.units = CULINARY_UNITS
-        print(cls.units)
+
 
 class RecipeTestCase(CommandLineTestCase):
     def test_all_recipes(self):
@@ -30,7 +30,7 @@ class RecipeTestCase(CommandLineTestCase):
                 self.assertIn('uuid', _dir)
                 self.assertIsInstance(recipe.ingredients, list)
                 self.assertIsInstance(recipe.uuid, str)
-                
+
     def test_all_recipe_ingredients(self):
         """Validate every ingredient."""
         notin = ('to taste', 'inch', 'in')
@@ -45,13 +45,13 @@ class RecipeTestCase(CommandLineTestCase):
                     with self.subTest(i=recipe.name):
                         self.assertIn(ingred.unit, self.units)
 
-                
+
 
 class PrintCmdTestCase(CommandLineTestCase):
     def setUp(self):
         self.subcmd = 'print'
         self.cmd = cmd_print
-    
+
     def test_print_without_args(self):
         """recipe_tool print"""
         arg = [self.subcmd]
@@ -60,7 +60,7 @@ class PrintCmdTestCase(CommandLineTestCase):
             self.cmd(parsed_args)
         error = cm.exception.code
         self.assertEqual(error, 2)
-            
+
     def test_print_help(self):
         """recipe_tool print -h"""
         arg = [self.subcmd, '-h']
@@ -69,13 +69,13 @@ class PrintCmdTestCase(CommandLineTestCase):
             self.cmd(parsed_args)
         error = cm.exception.code
         self.assertEqual(error, 0)
-            
+
     def test_print_recipe_from_file(self):
         """recipe_tool print test"""
         arg = [self.subcmd, 'test']
         parsed_args = self.parser.parse_args(arg)
         self.cmd(parsed_args)
-            
+
     def test_print_recipe_from_web(self):
         """recipe_tool print <recipe from website>"""
         url = 'https://tasty.co/recipe/honey-roasted-bbq-pork-char-siu'
@@ -83,11 +83,40 @@ class PrintCmdTestCase(CommandLineTestCase):
         parsed_args = self.parser.parse_args(arg)
         self.cmd(parsed_args)
 
+
+class EditCmdTestCase(CommandLineTestCase):
+    def setUp(self):
+        self.subcmd = 'edit'
+        self.cmd = cmd_edit
+
+
+class EditCmdTestCase(CommandLineTestCase):
+    def setUp(self):
+        self.subcmd = 'add'
+        self.cmd = cmd_add
+
+
+class RemoveCmdTestCase(CommandLineTestCase):
+    def setUp(self):
+        self.subcmd = 'remove'
+        self.cmd = cmd_remove
+
+
+class MakeCmdTestCase(CommandLineTestCase):
+    def setUp(self):
+        self.subcmd = 'make'
+        self.cmd = cmd_make
+
+class SearchCmdTestCase(CommandLineTestCase):
+    def setUp(self):
+        self.subcmd = 'search'
+        self.cmd = cmd_search
+
 class ShopCmdTestCase(CommandLineTestCase):
     def setUp(self):
         self.subcmd = 'shop'
         self.cmd = cmd_shop
-        
+
     def test_shop_without_args(self):
         """recipe_tool shop"""
         arg = [self.subcmd]
@@ -97,7 +126,7 @@ class ShopCmdTestCase(CommandLineTestCase):
         # This one returns the exception str instead of a number
         error = cm.exception.code
         self.assertIsInstance(error, str)
-            
+
     def test_shop_help(self):
         """recipe_tool shop -h"""
         arg = [self.subcmd, '-h']
@@ -106,7 +135,7 @@ class ShopCmdTestCase(CommandLineTestCase):
             self.cmd(parsed_args)
         error = cm.exception.code
         self.assertEqual(error, 0)
-    
+
     def test_shop_with_random(self):
         """recipe_tool shop -r [NUM]."""
         args = [
@@ -117,23 +146,43 @@ class ShopCmdTestCase(CommandLineTestCase):
             with self.subTest():
                 parsed_args = self.parser.parse_args(arg)
                 self.cmd(parsed_args)
-    
+
     def test_shop_with_recipe(self):
         """recipe_tool shop <recipe>.{}"""
         arg = [self.subcmd, 'test']
         parsed_args = self.parser.parse_args(arg)
         self.cmd(parsed_args)
 
+
+class DumpCmdTestCase(CommandLineTestCase):
+    def setUp(self):
+        self.subcmd = 'dump'
+        self.cmd = cmd_dump
+
+
+class ExportCmdTestCase(CommandLineTestCase):
+    def setUp(self):
+        self.subcmd = 'export'
+        self.cmd = cmd_export
+
+
+class OcrCmdTestCase(CommandLineTestCase):
+    def setUp(self):
+        self.subcmd = 'ocr'
+        self.cmd = cmd_ocr
+
+
 class ShowCmdTestCase(CommandLineTestCase):
     def setUp(self):
         self.subcmd = 'show'
         self.cmd = cmd_show
-    
+
     def test_show_cmd(self):
         """recipe_tool show"""
         arg = [self.subcmd]
         parsed_args = self.parser.parse_args(arg)
         self.cmd(parsed_args)
+
 
 if __name__ == "__main__":
     unittest.main()

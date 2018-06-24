@@ -17,7 +17,7 @@ import pyrecipe.config as config
 import pyrecipe.shopper as shopper
 from pyrecipe.recipe import Recipe
 from pyrecipe.ocr import RecipeOCR
-from pyrecipe.spell import spell_check
+#from pyrecipe.spell import spell_check
 from pyrecipe.webscraper import RecipeWebScraper
 from pyrecipe import __scriptname__, version_info
 from pyrecipe.db import (DBInfo, DBConn, delete_recipe)
@@ -90,9 +90,7 @@ def cmd_search(args):
     if numres == 0:
         sys.exit(utils.msg(
             "Your search for \"{}\" produced no results".format(args.search),
-            "INFORM"
-            )
-        )
+            "INFORM"))
     results = "\n".join(s.lower() for s in results)
     print(results)
 
