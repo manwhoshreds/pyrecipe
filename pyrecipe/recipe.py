@@ -422,7 +422,7 @@ class Ingredient:
             ingred_string.append('{}'.format(self.amount))
             # size
             if self.size:
-                ingred_string.append(self.size)
+                ingred_string.append(' {}'.format(self.size))
             # unit 
             match = PORTIONED_UNIT_RE.search(self.unit)
             if match:

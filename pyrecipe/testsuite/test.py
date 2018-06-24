@@ -3,6 +3,7 @@ import sys
 import unittest
 from io import StringIO
 
+from pyrecipe import ureg
 from pyrecipe.__main__ import *
 from pyrecipe.recipe import Recipe
 from pyrecipe.shopper import ShoppingList
@@ -15,38 +16,47 @@ class CommandLineTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # supress output
-        #cls.fi = open(os.devnull, 'w')
-        #sys.stdout = cls.fi
-        #sys.stderr = cls.fi
+    #    cls.fi = open(os.devnull, 'w')
+    #    sys.stdout = cls.fi
+    #    sys.stderr = cls.fi
         
         parser = get_parser()
         cls.parser = parser
 
-    @classmethod
-    def tearDownClass(cls):
-        pass
-        #cls.fi.close()
+    #@classmethod
+    #def tearDownClass(cls):
+    #    cls.fi.close()
         
 
 
-class RecipeTestCase(unittest.TestCase):
+class RecipeTestCase(CommandLineTestCase):
     def test_all_recipes(self):
-        """User passes no args, and should be offered help."""
+        """Validate every recipe file."""
         for item in RECIPE_DATA_FILES:
             recipe = Recipe(item)
-            shoplist = ShoppingList()
-            shoplist.update(recipe)
-            shoplist.print_list()
             with self.subTest(i=recipe.name):
                 _dir = dir(recipe)
-                shoplist.print_list()
-                self.assertIn('sourc', _dir)
+                self.assertIn('source', _dir)
                 self.assertIn('uuid', _dir)
                 self.assertIsInstance(recipe.ingredients, list)
                 self.assertIsInstance(recipe.uuid, str)
-                #self.assertIn('named_ingredients', dir(recipe))
+                
+    def test_all_recipe_ingredients(self):
+        """Validate every ingredient."""
+        for item in RECIPE_DATA_FILES:
+            recipe = Recipe(item)
+            ingreds, named = recipe.get_ingredients(fmt='data')
+            for item in ingreds:
+                with self.subTest(i=recipe.name):
+                    self.assertNotIn(item.unit, ('to taste',))
+            for item in named:
+                for ingred in named[item]:
+                    with self.subTest(i=recipe.name):
+                        self.assertNotIn(ingred.unit, ('to taste',))
 
-class PrintCmdTestCase(CommandLineTestCase):
+                
+
+class PrintCmdTestCase:#(CommandLineTestCase):
     def setUp(self):
         self.subcmd = 'print'
         self.cmd = cmd_print
@@ -82,7 +92,7 @@ class PrintCmdTestCase(CommandLineTestCase):
         parsed_args = self.parser.parse_args(arg)
         self.cmd(parsed_args)
 
-class ShopCmdTestCase(CommandLineTestCase):
+class ShopCmdTestCase:#(CommandLineTestCase):
     def setUp(self):
         self.subcmd = 'shop'
         self.cmd = cmd_shop
@@ -123,7 +133,7 @@ class ShopCmdTestCase(CommandLineTestCase):
         parsed_args = self.parser.parse_args(arg)
         self.cmd(parsed_args)
 
-class ShowCmdTestCase(CommandLineTestCase):
+class ShowCmdTestCase:#:(CommandLineTestCase):
     def setUp(self):
         self.subcmd = 'show'
         self.cmd = cmd_show
