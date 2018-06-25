@@ -14,19 +14,19 @@ class CommandLineTestCase(unittest.TestCase):
     """
     @classmethod
     def setUpClass(cls):
-        cls.f = open(os.devnull, 'w')
-        sys.stderr = cls.f
-    #    sys.stdout = cls.f
+        #cls.f = open(os.devnull, 'w')
+        #sys.stderr = cls.f
+        #sys.stdout = cls.f
         
         parser = get_parser()
         cls.parser = parser
         cls.units = CULINARY_UNITS
 
-    @classmethod
-    def tearDownClass(cls):
-        cls.f.close()
+    #@classmethod
+    #def tearDownClass(cls):
+    #    cls.f.close()
 
-class RecipeTestCase:#(CommandLineTestCase):
+class RecipeTestCase(CommandLineTestCase):
     def test_all_recipes(self):
         """Validate every recipe file."""
         for item in RECIPE_DATA_FILES:
@@ -42,7 +42,7 @@ class RecipeTestCase:#(CommandLineTestCase):
         """Validate every ingredient."""
         for item in RECIPE_DATA_FILES:
             recipe = Recipe(item)
-            ingreds, named = recipe.get_ingredients(fmt='data')
+            ingreds, named = recipe.get_ingredients(fmt='object')
             for item in ingreds:
                 with self.subTest(i=recipe.name):
                     self.assertIn(item.unit, self.units)

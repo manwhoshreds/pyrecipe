@@ -211,16 +211,9 @@ class Recipe:
         return [Ingredient(i) for i in ingredients]
 
     @ingredients.setter
-    def ingredients(self, value):
-        """Set the ingredients of a recipe.
-
-        Ingredients should be passed in as a list of ingredient strings.
-        """
-        ingredients = []
-        for ingred in value:
-            ingred = Ingredient(ingred)
-            ingredients.append(ingred.data)
-
+    def ingredients(self, ilist):
+        """Set the ingredients of a recipe."""
+        ingredients = [Ingredient(i).data for i in ilist]
         self._recipe_data['ingredients'] = ingredients
 
     @property
@@ -379,11 +372,8 @@ class Recipe:
 
 class Ingredient:
     """Build an Ingredient object.
-
-    Given a dict of ingredient data, Ingredient class can return a string
-    :param ingredient: dict of ingredient data
-    :param yield_amount: choose the yield of the recipe
-    :param color: return string with color data for color output
+    
+    :param ingredient: dict of ingredient data.
     """
     def __init__(self, ingredient):
         self.name, self.size, self.prep = ('',) * 3

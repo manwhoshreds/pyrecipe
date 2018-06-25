@@ -450,10 +450,10 @@ class RecipeEditor:
                      HEADINGS['method'],
                      ], 79, 0, 2, 'left'
         )
-        ingreds, named_ingreds = self.recipe.get_ingredients()
+        ingreds, named = self.recipe.get_ingredients(fmt='string')
 
         self.ingred_block = IngredientsContainer(
-            ingredients=ingreds, named_ingredients=named_ingreds
+            ingredients=ingreds, named_ingredients=named
         )
         self.method_block = MethodBlock(
             self.recipe.method
