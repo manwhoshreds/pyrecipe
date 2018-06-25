@@ -345,11 +345,12 @@ class Recipe:
         yaml, and xml.
         """
         if data_type in ('raw', None):
-            config.PP.pprint(self._recipe_data)
+            sys.exit(config.PP.pprint(self._recipe_data))
         elif data_type == 'yaml':
-            yaml.dump(self._recipe_data, sys.stdout)
+            sys.exit(yaml.dump(self._recipe_data, sys.stdout))
         elif data_type == 'xml':
-            print(self.get_xml_data())
+            data = self.get_xml_data()
+            sys.exit(data)
         else:
             raise ValueError('data_type argument must be one of '
                              'raw, yaml, or xml')
@@ -520,15 +521,10 @@ class IngredientParser:
 
     def parse(self, string='', return_list=False):
         """parse the ingredient string"""
-        amount = ''
-        size = ''
-        unit = ''
-        name = ''
-        prep = ''
-        note = ''
+        amount, size, unit, name, prep, note = ('',) * 6
         ingred_list = []
         ingred_dict = {}
-
+        
         # string preprocessing
         ingred_string = self._preprocess_string(string)
 
@@ -538,21 +534,21 @@ class IngredientParser:
             ingred_string = ingred_string.replace(match.group(), '')
             unit = self._strip_parens(match.group())
         else:
-            for item in CULINARY_UNITS:
-                if item in ingred_string.split():
-                    unit = item
-                    ingred_string = ingred_string.replace(item, '')
-
-        if "to taste" in ingred_string:
-            unit = "taste"
-            ingred_string = ingred_string.replace("to taste", '')
-        elif "splash of" in ingred_string:
-            unit = "splash"
-            ingred_string = ingred_string.replace("splash of", '')
-        elif "pinch of" in ingred_string:
-            unit = "pinch"
-            ingred_string = ingred_string.replace("pinch of", '')
-
+            if "to taste" in ingred_string:
+                unit = "taste"
+                ingred_string = ingred_string.replace("to taste", '')
+            elif "splash of" in ingred_string:
+                unit = "splash"
+                ingred_string = ingred_string.replace("splash of", '')
+            elif "pinch of" in ingred_string:
+                unit = "pinch"
+                ingred_string = ingred_string.replace("pinch of", '')
+            else:
+                for item in CULINARY_UNITS:
+                    if item in ingred_string.split():
+                        unit = item
+                        ingred_string = ingred_string.replace(item, '')
+        
         # get note if any
         parens = PAREN_RE.search(ingred_string)
         if parens:
@@ -617,7 +613,10 @@ class IngredientParser:
         return ingred_dict
 
 if __name__ == '__main__':
-    pass
+    parser = IngredientParser()
+    test = parser.parse('Pinch of caynne')
+    print(test)
+
     #r = Recipe('')
     #r.print_recipe()
     #print(r.ingredients)

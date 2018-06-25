@@ -26,6 +26,13 @@ RECIPE_DATA_DIR = os.path.join(_usr_config_path, 'recipe_data/')
 DB_FILE = os.path.join(_usr_config_path, 'recipes.db')
 SCRIPT_DIR = os.path.dirname(__file__)
 
+RECIPE_DATA_FILES = []
+for item in os.listdir(RECIPE_DATA_DIR):
+    RECIPE_DATA_FILES.append(RECIPE_DATA_DIR + item)
+
+PP = pprint.PrettyPrinter(compact=True, indent=4)
+SIZE_STRINGS = ['large', 'medium', 'small', 'heaping']
+
 # start user config
 config = configparser.ConfigParser()
 config.read(CONFIG_FILE)
@@ -40,15 +47,20 @@ RAND_RECIPE_COUNT = config['pyrecipe'].get('rand_recipe_count', 4)
 PYRECIPE_COLOR = config['pyrecipe'].get('color', None)
 USER_EMAIL = config['pyrecipe'].get('user_email', None)
 USER_NAME = config['pyrecipe'].get('user_name', None)
+def get_random_picks():
+    picks = config['pyrecipe'].get('random_picks', None)
+    random_picks = {}
+    if picks:
+        picks = picks.split()
+        #for item in picks:
+        #    dt, num = item.split()
+        #    random_picks[dt] = num
+        return random_picks
+
+RANDOM_PICKS = get_random_picks()
+#print(RANDOM_PICKS)
 
 # --End user config
-
-RECIPE_DATA_FILES = []
-for item in os.listdir(RECIPE_DATA_DIR):
-    RECIPE_DATA_FILES.append(RECIPE_DATA_DIR + item)
-
-PP = pprint.PrettyPrinter(compact=True, indent=4)
-SIZE_STRINGS = ['large', 'medium', 'small', 'heaping']
 
 if __name__ == '__main__':
     pass

@@ -85,14 +85,14 @@ def cmd_search(args):
     #    print("Nothing found. Showing results for \"{}\" instead.".format(check))
     #    search = check
 
-    results = DBInfo.search(search)
+    results = DBInfo().search(search)
     numres = len(results)
     if numres == 0:
         sys.exit(utils.msg(
             "Your search for \"{}\" produced no results".format(args.search),
             "INFORM"))
     results = "\n".join(s.lower() for s in results)
-    print(results)
+    sys.exit(results)
 
 def cmd_shop(args):
     """Print a shopping list."""

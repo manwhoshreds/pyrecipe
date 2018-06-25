@@ -3,7 +3,7 @@ import sys
 import unittest
 
 from pyrecipe.__main__ import *
-from pyrecipe.recipe import Recipe
+from pyrecipe.recipe import Recipe, IngredientParser, Ingredient
 from pyrecipe import CULINARY_UNITS
 from pyrecipe.shopper import ShoppingList
 from pyrecipe.config import RECIPE_DATA_FILES
@@ -14,12 +14,19 @@ class CommandLineTestCase(unittest.TestCase):
     """
     @classmethod
     def setUpClass(cls):
+        cls.f = open(os.devnull, 'w')
+        sys.stderr = cls.f
+        sys.stdout = cls.f
+        
         parser = get_parser()
         cls.parser = parser
         cls.units = CULINARY_UNITS
 
+    @classmethod
+    def tearDownClass(cls):
+        cls.f.close()
 
-class RecipeTestCase(CommandLineTestCase):
+class RecipeTestCase:#(CommandLineTestCase):
     def test_all_recipes(self):
         """Validate every recipe file."""
         for item in RECIPE_DATA_FILES:
@@ -33,7 +40,6 @@ class RecipeTestCase(CommandLineTestCase):
 
     def test_all_recipe_ingredients(self):
         """Validate every ingredient."""
-        notin = ('to taste', 'inch', 'in')
         for item in RECIPE_DATA_FILES:
             recipe = Recipe(item)
             ingreds, named = recipe.get_ingredients(fmt='data')
@@ -112,6 +118,24 @@ class SearchCmdTestCase(CommandLineTestCase):
         self.subcmd = 'search'
         self.cmd = cmd_search
 
+    def test_search_term_not_found(self):
+        """recipe_tool search <not found>"""
+        arg = [self.subcmd, "iknowthiswillneverreturnasearch"]
+        with self.assertRaises(SystemExit) as cm:
+            parsed_args = self.parser.parse_args(arg)
+            self.cmd(parsed_args)
+        error = cm.exception.code
+        self.assertEqual(error, 1)
+
+    def test_search_term_not_found(self):
+        """recipe_tool search <found>"""
+        arg = [self.subcmd, "test"]
+        with self.assertRaises(SystemExit) as cm:
+            parsed_args = self.parser.parse_args(arg)
+            self.cmd(parsed_args)
+        error = cm.exception.code
+        self.assertIsInstance(error, str)
+
 class ShopCmdTestCase(CommandLineTestCase):
     def setUp(self):
         self.subcmd = 'shop'
@@ -159,6 +183,33 @@ class DumpCmdTestCase(CommandLineTestCase):
         self.subcmd = 'dump'
         self.cmd = cmd_dump
 
+    def test_dump_data(self):
+        """recipe_tool dump -r <recipe>"""
+        arg = [self.subcmd, '-r', 'test']
+        with self.assertRaises(SystemExit) as cm:
+            parsed_args = self.parser.parse_args(arg)
+            self.cmd(parsed_args)
+        error = cm.exception.code
+        self.assertEqual(error, 0)
+
+    def test_dump_yaml(self):
+        """recipe_tool dump -y <recipe>"""
+        arg = [self.subcmd, '-y', 'test']
+        with self.assertRaises(SystemExit) as cm:
+            parsed_args = self.parser.parse_args(arg)
+            self.cmd(parsed_args)
+        #print(cm.exception)
+        error = cm.exception.code
+        self.assertEqual(error, 0)
+    
+    def test_dump_xml(self):
+        """recipe_tool dump -x <recipe>"""
+        arg = [self.subcmd, '-x', 'test']
+        with self.assertRaises(SystemExit) as cm:
+            parsed_args = self.parser.parse_args(arg)
+            self.cmd(parsed_args)
+        error = cm.exception.code
+        self.assertEqual(error, 0)
 
 class ExportCmdTestCase(CommandLineTestCase):
     def setUp(self):
