@@ -28,6 +28,7 @@
 import re
 import io
 import sys
+import json
 import uuid
 import string
 from collections import OrderedDict
@@ -107,10 +108,8 @@ class Recipe:
             self._recipe_data = {}
             self.dish_type = 'main'
             self.uuid = str(uuid.uuid4())
-            #self.yields = [1]
             self.source = utils.get_file_name_from_uuid(self.uuid)
 
-        self.yield_amount = 0
         self.recipe_yield = recipe_yield
 
     def __repr__(self):
@@ -216,7 +215,6 @@ class Recipe:
         named_ingreds = self._recipe_data.get('named_ingredients', '')
         if named_ingreds:
             for item in named_ingreds:
-                print(item)
                 named_name = list(item.keys())[0]
                 ingred_list = []
                 for ingredient in list(item.values())[0]:
@@ -228,7 +226,6 @@ class Recipe:
     @named_ingredients.setter
     def named_ingredients(self, value):
         """Set named ingredients."""
-        ingred_parser = IngredientParser()
         named_ingredients = []
         for item in value:
             named_name = list(item.keys())[0]
@@ -236,11 +233,10 @@ class Recipe:
             parsed_ingreds = []
             entry = {}
             for ingred in ingreds:
-                parsed = ingred_parser.parse(ingred)
-                parsed_ingreds.append(parsed)
+                parsed = Ingredient(ingred)
+                parsed_ingreds.append(parsed.data)
             entry[named_name] = parsed_ingreds
             named_ingredients.append(entry)
-
         self._recipe_data['named_ingredients'] = named_ingredients
 
     @property
@@ -339,8 +335,9 @@ class Recipe:
         raw (just a plain python dictionary with pretty print)
         yaml, and xml.
         """
-        if data_type in ('raw', None):
-            sys.exit(config.PP.pprint(self._recipe_data))
+        if data_type in ('json', None):
+            sys.exit(json.dumps(self._recipe_data, sort_keys=True,
+                                indent=4))
         elif data_type == 'yaml':
             sys.exit(yaml.dump(self._recipe_data, sys.stdout))
         elif data_type == 'xml':
@@ -355,7 +352,7 @@ class Recipe:
         yaml.dump(self._recipe_data, string)
         return string.getvalue()
 
-    #@update_db
+    @update_db
     def save(self):
         """save state of class."""
         stream = io.StringIO()
@@ -380,7 +377,6 @@ class Ingredient:
             self.string = ingredient
             self.data = {}
             self._parse_ingredient(ingredient)
-            self.string = ingredient
             self.data = self.get_data_dict()
         else:
             self.data = ingredient
@@ -388,13 +384,10 @@ class Ingredient:
             self.size = ingredient.get('size', None)
             self.prep = ingredient.get('prep', '')
             self.note = ingredient.get('note', '')
-            amounts = ingredient.get('amounts', '')
-            print(amounts[0])
-            try:
-                self.amount = RecipeNum(amounts[0]['amount'])
-            except ValueError:
-                self.amount = ''
-            self.unit = amounts[0]['unit']
+            self.amount = ingredient.get('amount', '')
+            if self.amount:
+                self.amount = RecipeNum(self.amount)
+            self.unit = ingredient.get('unit')
             self.string = str(self)
     
     def get_data_dict(self):
@@ -461,8 +454,9 @@ class Ingredient:
             ingred_string.append(note)
         string = ''.join(ingred_string).capitalize()
         return string
-
-    def get_quantity(self):
+    
+    @property
+    def quantity(self):
         unit = self.unit
         if not self.unit:
             unit = 'each'
@@ -538,9 +532,8 @@ class Ingredient:
                 amnt_list.append(item)
             except ValueError:
                 continue
-
         try:
-            self.amount = str(RecipeNum(' '.join(amnt_list)))
+            self.amount = RecipeNum(' '.join(amnt_list))
         except ValueError:
             self.amount = ''
 
@@ -574,25 +567,10 @@ class Ingredient:
 
 if __name__ == '__main__':
     #print(CULINARY_UNITS)
-    #i_str = '1 Tbl onion, chopped (you can use ten pounds if you want)'
-    #ingred = Ingredient(i_str)
-    #print('Ingredient string = {}'.format(ingred.string))
-    #print('Ingredient data   = {}'.format(ingred.data))
-    #print('Ingredient name   = {}'.format(ingred.name))
-    #print('Ingredient size   = {}'.format(ingred.size))
-    #print('Ingredient amount = {}'.format(ingred.amount))
-    #print('Ingredient unit   = {}'.format(ingred.unit))
-    #print('Ingredient prep   = {}'.format(ingred.prep))
-    #print('Ingredient note   = {}'.format(ingred.note))
-    #print('Ingredient data   = {}'.format(ingred.data))
-    r = Recipe('test')
-    ingreds, named = r.get_ingredients(fmt='data')
-    ingreds = [i.string for i in ingreds]
-    print(ingreds)
-    r.ingredients = ingreds
-    r.dump_to_screen()
-    r.print_recipe()
-
+    test = Recipe('korean pork tacos')
+    i = Ingredient('1 tablespoon onion, chopped')
+    print([i.quantity])
+    
     #for i in range(1, 5000):
     #    a = RecipeNum(i)
     #    b = RecipeNum('3')

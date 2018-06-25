@@ -45,11 +45,9 @@ class ShoppingList:
         for item in self.ingredients:
             name = item.name
             try:
-                quant = item.get_quantity()
+                quant = item.quantity
             except Exception as e:
-                test = self.recipes[0].name
-                print("errors:{} {}".format(e, test))
-                sys.exit()
+                self.shopping_list[name] = 'n/a'
                 continue
 
             if (name, name + 's') in self.shopping_list.keys():
@@ -74,15 +72,18 @@ class ShoppingList:
         # Print list
         padding = max(len(x) for x in self.shopping_list.keys()) + 1
         for key, value in sorted(self.shopping_list.items()):
-            if value.units in ['splash of', 'to taste', 'pinch of']:
-                print("{} {}".format(key.ljust(padding, '.'), 'N/A'))
+            if value == 'n/a':
+                list_item = "{} {}".format(key.ljust(padding, '.'), str(value))
+            elif value.units in ['splash', 'taste', 'pinch']:
+                list_item = "{} {}".format(key.ljust(padding, '.'), 'N/A')
             else:
                 try:
                     value.reduce()
                     value = value.round_up()
                 except AttributeError:
                     pass
-                print("{} {}".format(key.ljust(padding, '.'), str(value)))
+                list_item = "{} {}".format(key.ljust(padding, '.'), str(value))
+            print(list_item)
 
     def BAKprint_list(self, write=False):
         """Print the shopping list to stdout."""
