@@ -115,7 +115,7 @@ class RecipeDB:
             "SELECT id FROM recipes WHERE name = \'{}\'"
             .format(recipe.name)
         )
-        for item in recipe.get_ingredients()[0]:
+        for item in recipe.get_ingredients(fmt='string')[0]:
             self.c.execute('''INSERT OR REPLACE INTO ingredients (
                                 recipe_id, 
                                 ingredient_str
