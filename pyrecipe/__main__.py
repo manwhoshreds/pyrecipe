@@ -327,11 +327,11 @@ def subparser_dump(subparser):
         help="Dump source yaml to standard output"
     )
     parser_dump.add_argument(
-        "-r",
-        "--raw",
+        "-j",
+        "--json",
         dest="data_type",
         action="store_const",
-        const="raw",
+        const="json",
         help="Dump source data in its raw format"
     )
 
