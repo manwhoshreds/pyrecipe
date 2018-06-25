@@ -192,7 +192,7 @@ class ShoppingList:
         recipe = Recipe(source)
         self.recipes.append(recipe)
         
-        ingreds, named = recipe.get_ingredients(fmt="data")
+        ingreds, named = recipe.get_ingredients()
         for ingred in ingreds:
             self.ingredients.append(ingred)
         for ingred in named:

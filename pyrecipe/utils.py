@@ -195,21 +195,21 @@ def recipe2xml(func):
         #    xml_oven_temp = ET.SubElement(self.xml_root, "oven_temp")
         #    xml_oven_temp.text = str(self.ot_amount) + " " + str(self.ot_unit)
 
-        ingredients, alt_ingredients = recipe.get_ingredients()
+        ingreds, named = recipe.get_ingredients(fmt='string')
         
         # ingredients
-        if ingredients:
+        if ingreds:
             xml_ingredients = ET.SubElement(xml_root, "ingredients")
-            for ingred in ingredients:
+            for ingred in ingreds:
                 xml_ingred = ET.SubElement(xml_ingredients, "ingred")
                 xml_ingred.text = ingred
 
         # alt_ingredients 
-        if alt_ingredients:
-            for item in alt_ingredients:
+        if named:
+            for item in named:
                 xml_alt_ingredients = ET.SubElement(xml_root, "alt_ingredients")
                 xml_alt_ingredients.set('alt_name', item)
-                for ingred in alt_ingredients[item]:
+                for ingred in named[item]:
                     xml_alt_ingred = ET.SubElement(xml_alt_ingredients, "ingred")
                     xml_alt_ingred.text = ingred
 

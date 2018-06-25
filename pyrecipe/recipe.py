@@ -168,26 +168,41 @@ class Recipe:
             raise RuntimeError("oven_temp format must be '300 F'")
         self._recipe_data['oven_temp'] = {'amount': amnt, 'unit': unit}
 
-    def get_ingredients(self, fmt='string'):
-        """Get the ingredients."""
+    def get_ingredients(self, fmt='object'):
+        """
+        Get the ingredients and named ingredients at the same time.
+
+        :param fmt: specifies the format of the ingredient to be returned.
+                    'object', 'string', 'data', 'quantity'
+        :type fmt: str
+        :return: the recipe ingredients and named ingredients int the format
+                 specified
+        """
+        fmts = ('object', 'string', 'data', 'quantity')
+        if fmt not in fmts:
+            raise ValueError("fmt should be one of '{}', not '{}'"
+                             .format(', '.join(fmts), fmt))
+
         ingreds = []
-        named_ingreds = OrderedDict()
         for item in self.ingredients:
-            if fmt == "string":
-                ingreds.append(str(item))
-            elif fmt == "data":
-                ingreds.append(item)
+            if fmt == "string": item = str(item)
+            elif fmt == "data": item = item.data
+            elif fmt == "quntity": item = item.quantity
+            ingreds.append(item)
+
+        named = OrderedDict()
         if self.named_ingredients:
             named_ingreds = self.named_ingredients
             for item in named_ingreds:
                 ingred_list = []
                 for ingred in named_ingreds[item]:
-                    if fmt == "string":
-                        ingred_list.append(str(ingred))
-                    elif fmt == "data":
-                        ingred_list.append(ingred)
-                named_ingreds[item] = ingred_list
-        return ingreds, named_ingreds
+                    if fmt == "string": ingred = str(ingred)
+                    elif fmt == "data": ingred = ingred.data
+                    elif fmt == "quntity": ingred = ingred.quantity
+                    ingred_list.append(ingred)
+                named[item] = ingred_list
+        
+        return ingreds, named
 
     @property
     def ingredients(self):
@@ -205,7 +220,7 @@ class Recipe:
         for ingred in value:
             ingred = Ingredient(ingred)
             ingredients.append(ingred.data)
-    
+
         self._recipe_data['ingredients'] = ingredients
 
     @property
@@ -389,7 +404,7 @@ class Ingredient:
                 self.amount = RecipeNum(self.amount)
             self.unit = ingredient.get('unit')
             self.string = str(self)
-    
+
     def get_data_dict(self):
         data = {}
         data['name'] = self.name
@@ -413,7 +428,7 @@ class Ingredient:
         correct representation of the ingredient object.
         Though not every ingredients will have all parts, a full ingredient
         string will look like this:
-        
+
         <amt> <size> <unit>  <name>       <prep>  <note>
         1 heaping tablespoon cumin seeds, toasted (you may use cumin powder)
         """
@@ -433,7 +448,7 @@ class Ingredient:
             # size
             if self.size:
                 ingred_string.append(' {}'.format(self.size))
-            # unit 
+            # unit
             match = PORTIONED_UNIT_RE.search(self.unit)
             if match:
                 unit = match.group().split()
@@ -443,10 +458,10 @@ class Ingredient:
                 pass
             else:
                 ingred_string.append(' {}'.format(self.unit))
-            
+
             # name
             ingred_string.append(' {}'.format(self.name))
-        
+
         if self.prep:
             ingred_string.append(", " + self.prep)
         if self.note:
@@ -454,7 +469,7 @@ class Ingredient:
             ingred_string.append(note)
         string = ''.join(ingred_string).capitalize()
         return string
-    
+
     @property
     def quantity(self):
         unit = self.unit
@@ -466,7 +481,7 @@ class Ingredient:
             self.ounce_can = unit[0:2]
             self.amount = 1
             unit = unit[-1]
-        return Q_(self.amount, unit)
+        return Q_(RecipeNum(self.amount), unit)
 
     def _preprocess_string(self, string):
         """preprocess the string"""
@@ -499,7 +514,7 @@ class Ingredient:
         if parens:
             string = string.replace(parens.group(), '').strip()
             self.note = self._strip_parens(parens.group())
-        
+
         # string preprocessing
         ingred_string = self._preprocess_string(string)
 
@@ -523,7 +538,7 @@ class Ingredient:
                     if item in ingred_string.split():
                         self.unit = item
                         ingred_string = ingred_string.replace(item, '')
-        
+
         ingred_list = ingred_string.split()
         amnt_list = []
         for item in ingred_list:
@@ -533,7 +548,7 @@ class Ingredient:
             except ValueError:
                 continue
         try:
-            self.amount = RecipeNum(' '.join(amnt_list))
+            self.amount = str(RecipeNum(' '.join(amnt_list)))
         except ValueError:
             self.amount = ''
 
@@ -568,13 +583,6 @@ class Ingredient:
 if __name__ == '__main__':
     #print(CULINARY_UNITS)
     test = Recipe('korean pork tacos')
-    i = Ingredient('1 tablespoon onion, chopped')
-    print([i.quantity])
-    
-    #for i in range(1, 5000):
-    #    a = RecipeNum(i)
-    #    b = RecipeNum('3')
-    #    factor = a/b
-    #    if i != b*factor:
-    #        exit()
-    #    print('{} is {}'.format(i, b * factor))
+    ingreds, named = test.get_ingredients(fmt='string')
+    print(ingreds)
+    print(named)

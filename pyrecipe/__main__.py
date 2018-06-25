@@ -23,6 +23,10 @@ from pyrecipe import __scriptname__, version_info
 from pyrecipe.db import (DBInfo, DBConn, delete_recipe)
 from pyrecipe.console_gui import RecipeEditor, RecipeMaker
 
+# Debug
+#import pdb
+#pdb.set_trace()
+
 ## Start command functions
 def cmd_print(args):
     """Print a recipe to stdout."""
