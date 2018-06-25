@@ -37,8 +37,10 @@ class Ureg(UnitRegistry):
         aliases = []
         for item in units:
             aliases += list(self._units[item].aliases)
+            # the first alias is stored in symbol
+            aliases.append(self._units[item].symbol)
         units += [p.plural(u) for u in units] + aliases
-        return sorted(units)
+        return sorted(list(set(units)))
 
 _dir = os.path.dirname(__file__)
 _definitions = os.path.join(_dir, 'culinary_units.txt')

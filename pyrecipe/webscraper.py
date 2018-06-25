@@ -24,7 +24,7 @@ import bs4
 from termcolor import colored
 
 import pyrecipe.utils as utils
-from pyrecipe.recipe import (Recipe, IngredientParser)
+from pyrecipe.recipe import (Recipe, Ingredient)
 
 
 #TODO: add property for scraping named ingredients
