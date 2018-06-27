@@ -352,7 +352,7 @@ class RecipeEditor:
         else:
             self.recipe = recipe
             self.welcome = 'Edit: {}'.format(self.recipe.name)
-        self.initial_state = copy.copy(self.recipe)
+        self.initial_state = Recipe(self.recipe.name)
         self.original_name = self.recipe.name
 
     def setup_view(self):
@@ -520,11 +520,9 @@ class RecipeEditor:
         if key in ('f8', 'esc'):
             if self.recipe_changed:
                 self.quit_prompt()
-                #self.test_prompt()
                 return
             else:
-                pass
-                #raise ur.ExitMainLoop()
+                raise ur.ExitMainLoop()
         elif key in ('f2',):
             self.save_recipe()
         else:
@@ -534,10 +532,14 @@ class RecipeEditor:
     def recipe_changed(self):
         """Check if the state of the recipe has changed."""
         changed = False
-        recipe = self.get_recipe_data()
-        print(self.initial_state)
-        print(recipe._recipe_data)
-        if self.initial_state != recipe:
+        self.update_recipe_data()
+        #print(self.initial_state._recipe_data) 
+        #print(self.recipe._recipe_data)
+        #print(self.initial_state._recipe_data) 
+        #print(self.initial_state._recipe_data) 
+        #print(self.recipe.get_yaml_string())
+        #print(self.initial_state.get_yaml_string())
+        if self.initial_state != self.recipe:
             changed = True
         return changed
 
@@ -562,7 +564,7 @@ class RecipeEditor:
 
         return name
 
-    def get_recipe_data(self):
+    def update_recipe_data(self):
         """Grab the data from the editors."""
         # gen info
         gen_info = self.general_info.original_widget.widget_list
@@ -615,18 +617,17 @@ class RecipeEditor:
         method_entries = self.method_block.get_entries()
         for item in method_entries:
             steps.append({'step': item})
-        self.recipe['steps'] = steps
+        self.recipe.steps = steps
 
         # notes if any
         notes = self.notes_block.get_entries()
         if notes:
             self.recipe.notes = notes
-        return self.recipe
 
     def save_recipe(self):
         """Save the current state of the recipe and exit."""
-        recipe = self.get_recipe_data()
-        recipe.save()
+        self.update_recipe_data()
+        self.recipe.save()
         raise ur.ExitMainLoop()
 
     def start(self):

@@ -31,10 +31,10 @@ import sys
 import json
 import uuid
 import string
-import copy
 import requests
 from collections import OrderedDict
 from zipfile import ZipFile, BadZipFile
+from copy import copy, deepcopy
 
 from termcolor import colored
 from ruamel.yaml import YAML
@@ -100,11 +100,11 @@ class Recipe:
     
     def __init__(self, source='', recipe_yield=0):
         self._recipe_data = {}
-        if HTTP_RE.search(source):
+        if isinstance(source, dict):
+            self._set_data(source)
+        elif HTTP_RE.search(source):
             data = RecipeWebScraper.scrape(source)
             self._set_data(data)
-        elif isinstance(source, dict):
-            self._set_data(source)
         elif source is not None:
             self.source = utils.get_source_path(source)
             try:
@@ -172,12 +172,28 @@ class Recipe:
         return hash(self.get_yaml_string())
     
     def __copy__(self):
-        newobj = type(self)(self.source)
+        cls = self.__class__
+        newobj = cls.__new__(cls)
         newobj.__dict__.update(self.__dict__)
         return newobj
     
+    def __deepcopy__(self, memo):
+        cls = self.__class__
+        result = cls.__new__(cls)
+        memo[id(self)] = result
+        for k, v in self.__dict__.items():
+            setattr(result, k, deepcopy(v, memo))
+        return result
+    
     def __eq__(self, other):
-        return self.__dict__ == other.__dict__
+        #return self.get_yaml_string() == other.get_yaml_string()
+        return self.print_recipe() == other.print_recipe()
+    
+    def test(self):
+        keys = list(self._recipe_data.keys())
+        values = list(self._recipe_data.values())
+        res = values
+        return res
     
     @property
     def yields(self):
@@ -623,13 +639,5 @@ class Ingredient:
         self.name = name.strip(', ')
 
 if __name__ == '__main__':
-    #print(CULINARY_UNITS)
-    read_one = "http://localhost/open_recipes/includes/api/recipe/read_one.php"
-    create = "http://localhost/open_recipes/includes/api/recipe/create.php"
-    r = Recipe('fiesta beef')
-    t = Recipe('salsa ranch')
-    print(r == t)
-
-
-
-    #print(test.named_ingredients)
+    r = Recipe('salsa ranch')
+    print(r.test())

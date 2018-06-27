@@ -12,6 +12,7 @@ import sys
 import shutil
 import argparse
 
+import requests
 import pyrecipe.utils as utils
 import pyrecipe.config as config
 import pyrecipe.shopper as shopper
@@ -30,7 +31,15 @@ from pyrecipe.console_gui import RecipeEditor, RecipeMaker
 ## Start command functions
 def cmd_print(args):
     """Print a recipe to stdout."""
-    recipe = Recipe(args.source, recipe_yield=args.recipe_yield)
+    if args.remote:
+        payload = {'recipe_name': args.source}
+        url = "http://localhost/open_recipes/includes/api/recipe/read_one.php"
+        resp = requests.get(url, params=payload).json()
+        if 'message' in resp:
+            sys.exit(resp['message'])
+        recipe = Recipe(resp, recipe_yield=args.recipe_yield) 
+    else:
+        recipe = Recipe(args.source, recipe_yield=args.recipe_yield)
     recipe.print_recipe(args.verbose)
 
 def cmd_edit(args):
@@ -57,7 +66,8 @@ def cmd_add(args):
 def cmd_remove(args):
     """Delete a recipe from the recipe store."""
     recipe = Recipe(args.source)
-    answer = input("Are you sure your want to delete {}? yes/no ".format(source))
+    answer = input("Are you sure your want to delete {}? yes/no "
+                   .format(recipe.name))
     if answer.strip() == 'yes':
         os.remove(recipe.source)
         print("{} has been deleted".format(recipe.name))
@@ -190,6 +200,12 @@ def subparser_print(subparser):
     parser_print.add_argument(
         "source",
         help="Recipe, file path, or url"
+    )
+    parser_print.add_argument(
+        "-r",
+        "--remote",
+        action="store_true",
+        help="Print recipe from remote server (openrecipes.org)."
     )
     parser_print.add_argument(
         "--yield",

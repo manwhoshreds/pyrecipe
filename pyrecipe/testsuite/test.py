@@ -16,9 +16,9 @@ class CommandLineTestCase(unittest.TestCase):
     """
     @classmethod
     def setUpClass(cls):
-        cls.f = open(os.devnull, 'w')
-        sys.stderr = cls.f
-        sys.stdout = cls.f
+        #cls.f = open(os.devnull, 'w')
+        #sys.stderr = cls.f
+        #sys.stdout = cls.f
         
         parser = get_parser()
         cls.parser = parser
@@ -26,7 +26,8 @@ class CommandLineTestCase(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.f.close()
+        #cls.f.close()
+        pass
 
 #@skip('because')
 class RecipeTestCase(CommandLineTestCase):
@@ -53,6 +54,7 @@ class RecipeTestCase(CommandLineTestCase):
                 for ingred in named[item]:
                     with self.subTest(i=recipe.name):
                         self.assertIn(ingred.unit, self.units)
+            
 
 
 #@skip('because')
@@ -93,35 +95,35 @@ class PrintCmdTestCase(CommandLineTestCase):
         self.cmd(parsed_args)
 
 
-@skip('because')
+#@skip('because')
 class EditCmdTestCase(CommandLineTestCase):
     def setUp(self):
         self.subcmd = 'edit'
         self.cmd = cmd_edit
 
 
-@skip('because')
+#@skip('because')
 class EditCmdTestCase(CommandLineTestCase):
     def setUp(self):
         self.subcmd = 'add'
         self.cmd = cmd_add
 
 
-@skip('because')
+#@skip('because')
 class RemoveCmdTestCase(CommandLineTestCase):
     def setUp(self):
         self.subcmd = 'remove'
         self.cmd = cmd_remove
 
 
-@skip('because')
+#@skip('because')
 class MakeCmdTestCase(CommandLineTestCase):
     def setUp(self):
         self.subcmd = 'make'
         self.cmd = cmd_make
 
 
-@skip('because')
+#@skip('because')
 class SearchCmdTestCase(CommandLineTestCase):
     def setUp(self):
         self.subcmd = 'search'
@@ -146,7 +148,7 @@ class SearchCmdTestCase(CommandLineTestCase):
         self.assertIsInstance(error, str)
 
 
-@skip('because')
+#@skip('because')
 class ShopCmdTestCase(CommandLineTestCase):
     def setUp(self):
         self.subcmd = 'shop'
@@ -224,21 +226,21 @@ class DumpCmdTestCase(CommandLineTestCase):
         error = cm.exception.code
         self.assertIsNone(error)
 
-@skip('because')
+#@skip('because')
 class ExportCmdTestCase(CommandLineTestCase):
     def setUp(self):
         self.subcmd = 'export'
         self.cmd = cmd_export
 
 
-@skip('because')
+#@skip('because')
 class OcrCmdTestCase(CommandLineTestCase):
     def setUp(self):
         self.subcmd = 'ocr'
         self.cmd = cmd_ocr
 
 
-@skip('because')
+#@skip('because')
 class ShowCmdTestCase(CommandLineTestCase):
     def setUp(self):
         self.subcmd = 'show'
@@ -248,8 +250,11 @@ class ShowCmdTestCase(CommandLineTestCase):
         """recipe_tool show"""
         arg = [self.subcmd]
         parsed_args = self.parser.parse_args(arg)
-        self.cmd(parsed_args)
+        with self.assertRaises(SystemExit) as cm:
+            self.cmd(parsed_args)
+        error = cm.exception.code
+        self.assertIsNone(error)
 
 
 if __name__ == "__main__":
-    unittest.main(verbosity=2)
+    unittest.main()
