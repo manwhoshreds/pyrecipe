@@ -3,14 +3,15 @@
     pyrecipe.console_gui.add_recipe
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    A console gui built with urwid used to add recipes to pyrecipe
+    A console gui built with ur used to add recipes to pyrecipe
 
     :copyright: 2017 by Michael Miller
     :license: GPL, see LICENSE for more details.
 """
 from collections import deque
+import copy
 
-import urwid
+import urwid as ur
 
 from pyrecipe.db import DBInfo, DISH_TYPES
 from pyrecipe.recipe import Recipe
@@ -30,17 +31,17 @@ PALETTE = ([
 ])
 
 HEADINGS = {
-    'general_info': urwid.AttrMap(urwid.Text('General Information:'), 'heading'),
-    'dish_types': urwid.AttrMap(urwid.Text('Dish Types:'), 'heading'),
-    'notes': urwid.AttrMap(urwid.Text('Notes:'), 'heading'),
-    'ingredients': urwid.AttrMap(urwid.Text('Ingredients:'), 'heading'),
-    'method': urwid.AttrMap(urwid.Text('Method:'), 'heading'),
+    'general_info': ur.AttrMap(ur.Text('General Information:'), 'heading'),
+    'dish_types': ur.AttrMap(ur.Text('Dish Types:'), 'heading'),
+    'notes': ur.AttrMap(ur.Text('Notes:'), 'heading'),
+    'ingredients': ur.AttrMap(ur.Text('Ingredients:'), 'heading'),
+    'method': ur.AttrMap(ur.Text('Method:'), 'heading'),
 }
 
-BLANK = urwid.Divider()
+BLANK = ur.Divider()
 
 
-class IngredientsContainer(urwid.WidgetWrap):
+class IngredientsContainer(ur.WidgetWrap):
     """Main container for holding ingredient blocks."""
     def __init__(self, ingredients=None, named_ingredients=None):
         if not ingredients and not named_ingredients:
@@ -48,10 +49,10 @@ class IngredientsContainer(urwid.WidgetWrap):
         else:
             self.ingredients = ingredients
         self.named_ingredients = named_ingredients
-        add_ingred_block = urwid.Button('Add Ingredient Block',
+        add_ingred_block = ur.Button('Add Ingredient Block',
                                         on_press=self._add_block)
 
-        add_ingred_block = urwid.GridFlow([add_ingred_block], 24, 0, 0, 'left')
+        add_ingred_block = ur.GridFlow([add_ingred_block], 24, 0, 0, 'left')
 
         self.ingred_blocks = []
         self.ingred_blocks.append(add_ingred_block)
@@ -63,7 +64,7 @@ class IngredientsContainer(urwid.WidgetWrap):
                 self._add_block(ingredients=ingreds, name=item)
 
     def _add_block(self, ingredients=[], name=None):
-        if isinstance(ingredients, urwid.Button):
+        if isinstance(ingredients, ur.Button):
             ingred_block = IngredBlock()
             self.ingred_blocks.append(ingred_block)
         else:
@@ -76,7 +77,7 @@ class IngredientsContainer(urwid.WidgetWrap):
         self._refresh(new_focus)
 
     def _refresh(self, focus_item=0):
-        self.main_container = urwid.Pile(self.ingred_blocks, focus_item=focus_item)
+        self.main_container = ur.Pile(self.ingred_blocks, focus_item=focus_item)
         super().__init__(self.main_container)
 
     @property
@@ -84,20 +85,20 @@ class IngredientsContainer(urwid.WidgetWrap):
         return self.ingred_blocks[1:]
 
 
-class EntryBlock(urwid.WidgetWrap):
+class EntryBlock(ur.WidgetWrap):
     """Base class for stacked entry widgets."""
     def __init__(self, entries=[], wrap_amount=70):
         self.widgets = deque()
         wrapped = wrap(entries, wrap_amount)
 
         for index, item in wrapped:
-            entry_widget = urwid.Edit(str(index), item)
+            entry_widget = ur.Edit(str(index), item)
             self.widgets.append(entry_widget)
         self._refresh()
 
     def _refresh(self, focus_item=0):
         """Refresh the class to reflect changes to the entry stack."""
-        self.entry_block = urwid.Pile(self.widgets, focus_item=focus_item)
+        self.entry_block = ur.Pile(self.widgets, focus_item=focus_item)
         super().__init__(self.entry_block)
 
     def keypress(self, size, key):
@@ -108,7 +109,7 @@ class EntryBlock(urwid.WidgetWrap):
             self.col = len(self.widgets[self.row].edit_text) + 2
         except AttributeError:
             # Object has no edit_text attribute. In other words its a
-            # urwid.attr_map() and not a urwid.Edit()
+            # ur.attr_map() and not a ur.Edit()
             return key
         pressed = {
             'enter': self.on_enter,
@@ -125,14 +126,14 @@ class EntryBlock(urwid.WidgetWrap):
 
     def add_entry(self, button=None):
         """Add an entry to the end of the list."""
-        ingred_entry = urwid.Edit("- ", '')
+        ingred_entry = ur.Edit("- ", '')
         self.widgets.append(ingred_entry)
         new_focus = len(self.widgets) - 1
         self._refresh(new_focus)
 
     def insert_entry(self, size, key):
         """Insert entry on next line and move cursor."""
-        ingred_entry = urwid.Edit("- ", '')
+        ingred_entry = ur.Edit("- ", '')
         row_plus = self.row + 1
         self.widgets.insert(row_plus, ingred_entry)
         self.entry_block.move_cursor_to_coords(size, 2, self.row)
@@ -158,7 +159,7 @@ class EntryBlock(urwid.WidgetWrap):
         self.entry_block.move_cursor_to_coords(size, self.col, self.row)
         if key == 'ctrl up':
             widget = self.widgets[self.row-1]
-            if isinstance(widget, (urwid.AttrMap, urwid.Padding, urwid.Columns)):
+            if isinstance(widget, (ur.AttrMap, ur.Padding, ur.Columns)):
                 return
             # up
             newfocus = self.row - 1
@@ -192,7 +193,7 @@ class EntryBlock(urwid.WidgetWrap):
         """Retrieve the text from the entries."""
         entries = []
         for item in self.widget_list:
-            if isinstance(item, urwid.GridFlow):
+            if isinstance(item, ur.GridFlow):
                 continue
             text = item.get_edit_text()
             text = ' '.join(text.split())
@@ -212,21 +213,21 @@ class IngredBlock(EntryBlock):
         buttons = self._get_buttons()
         self.widgets.append(buttons)
         if name:
-            self.named_name = urwid.AttrMap(urwid.Edit('* ', name), 'title')
+            self.named_name = ur.AttrMap(ur.Edit('* ', name), 'title')
             self.widgets.append(self.named_name)
         
         for item in self.ingredients:
-            ingred_entry = urwid.Edit("- ", item)
+            ingred_entry = ur.Edit("- ", item)
             self.widgets.append(ingred_entry)
         self._refresh()
 
     def _get_buttons(self):
         """Get block buttons."""
-        add_name = urwid.Button('Toggle Name', on_press=self.toggle_name)
-        add_name = urwid.Padding(add_name, 'left', right=10)
-        del_block = urwid.Button('Delete Block', on_press=self.delete_block)
-        del_block = urwid.Padding(del_block, 'left', right=8)
-        buttons = urwid.Columns([add_name, del_block])
+        add_name = ur.Button('Toggle Name', on_press=self.toggle_name)
+        add_name = ur.Padding(add_name, 'left', right=10)
+        del_block = ur.Button('Delete Block', on_press=self.delete_block)
+        del_block = ur.Padding(del_block, 'left', right=8)
+        buttons = ur.Columns([add_name, del_block])
         return buttons
 
     def delete_block(self, button):
@@ -239,7 +240,7 @@ class IngredBlock(EntryBlock):
     def toggle_name(self, button):
         """Toggle between name for ingredients or no name."""
         if not self.name:
-            self.named_name = urwid.AttrMap(urwid.Edit('* ', 'Name'), 'title')
+            self.named_name = ur.AttrMap(ur.Edit('* ', 'Name'), 'title')
             self.widgets.insert(2, self.named_name)
             self.name = self.named_name.original_widget.get_edit_text()
             self._refresh(2)
@@ -259,7 +260,7 @@ class IngredBlock(EntryBlock):
         widget = self.widgets[self.row]
         try:
             # We have an alt_name to account for
-            assert isinstance(self.widgets[2], urwid.AttrMap)
+            assert isinstance(self.widgets[2], ur.AttrMap)
             one_ingred_left = 3
         except AssertionError:
             one_ingred_left = 2
@@ -280,9 +281,9 @@ class IngredBlock(EntryBlock):
         ingredients = []
         named_ingreds = {}
         for item in self.widgets:
-            if isinstance(item, urwid.AttrMap):
+            if isinstance(item, ur.AttrMap):
                 self.name = item.original_widget.get_edit_text()
-            if isinstance(item, urwid.Edit):
+            if isinstance(item, ur.Edit):
                 ingredients.append(item.get_edit_text())
 
         if self.name:
@@ -304,7 +305,7 @@ class MethodBlock(EntryBlock):
         """Insert entry on next line and move cursor."""
 
         row_plus = self.row + 1
-        ingred_entry = urwid.Edit('- ', '')
+        ingred_entry = ur.Edit('- ', '')
         
         self.widgets.insert(row_plus, ingred_entry)
         self.entry_block.move_cursor_to_coords(size, 2, self.row)
@@ -322,7 +323,7 @@ class NoteBlock(EntryBlock):
         """Get text from the entries."""
         entries = []
         for item in self.widget_list:
-            if isinstance(item, urwid.GridFlow):
+            if isinstance(item, ur.GridFlow):
                 continue
             text = item.get_edit_text()
             text = ' '.join(text.split())
@@ -351,101 +352,76 @@ class RecipeEditor:
         else:
             self.recipe = recipe
             self.welcome = 'Edit: {}'.format(self.recipe.name)
-
+        self.initial_state = copy.copy(self.recipe)
         self.original_name = self.recipe.name
-        self.initial_hash = hash(self.recipe)
 
     def setup_view(self):
-        header = urwid.AttrMap(urwid.Text(self.welcome), 'header')
+        header = ur.AttrMap(ur.Text(self.welcome), 'header')
         listbox = self.setup_listbox()
-        self.frame = urwid.Frame(urwid.AttrMap(listbox, 'body'), header=header)
-        self.frame.footer = urwid.AttrMap(urwid.Text(
-            self.footer_text), 'footer')
-        loop = urwid.MainLoop(self.frame, palette=PALETTE)
+        self.frame = ur.Frame(ur.AttrMap(listbox, 'body'), header=header)
+        self.frame.footer = ur.AttrMap(ur.Text(self.footer_text), 'footer')
+        loop = ur.MainLoop(self.frame, palette=PALETTE)
         loop.unhandled_input = self.handle_input
         loop.pop_ups = True
         return loop
-
+   
+    def _get_general_info(self):
+        """General info editors."""
+        general_info = [
+            ur.AttrMap(ur.Edit('Recipe Name: ', self.recipe.name, 
+                                wrap='clip'), 'name'
+                                ),
+            ur.AttrMap(ur.IntEdit('Prep Time: ', 
+                                  self.recipe.prep_time), 
+                                  'prep_time'
+                                  ),
+            ur.AttrMap(ur.IntEdit('Cook Time: ',
+                                  self.recipe.cook_time), 'cook_time'
+                                  ),
+            ur.AttrMap(ur.IntEdit('Bake Time: ', self.recipe.bake_time), 
+                                  'bake_time'
+                                  ),
+            ur.AttrMap(ur.Edit('Oven Temp: ', 
+                               self.recipe.oven_temp),'oven_temp'),
+            ur.AttrMap(ur.Edit('Price($): ', self.recipe.price), 'price'),
+            ur.AttrMap(ur.Edit('Source URL: ',
+                                     self.recipe.source_url,
+                                     wrap='clip'), 'source_url'
+                                     ),
+            ur.AttrMap(ur.IntEdit('Recipe Yield: ',
+                                  self.recipe.recipe_yield), 
+                                  'recipe_yield'
+                                  ),
+            ur.AttrMap(ur.Edit('Author: ',
+                                self.recipe.author), 'author'
+                                )
+        ]
+        return general_info
+    
     def setup_listbox(self):
         """The main listbox"""
         self.disht_group = []
-        radio_dish_types = urwid.GridFlow(
-            [urwid.AttrMap(
-                urwid.RadioButton(self.disht_group, txt), 'buttn', 'buttnf')
+        radio_dish_types = ur.GridFlow(
+            [ur.AttrMap(
+                ur.RadioButton(self.disht_group, txt), 'buttn', 'buttnf')
                                 for txt in DISH_TYPES], 15, 0, 2, 'left'
         )
         for item in self.disht_group:
-            if item.get_label() == self.recipe.dish_type: item.set_state(True)
+            if item.get_label() == self.recipe.dish_type:
+                item.set_state(True)
 
-        self.general_info = [
-            urwid.AttrMap(
-                urwid.Edit(
-                    'Recipe Name: ',
-                    self.recipe.name,
-                    wrap='clip'
-                ), 'name'
-            ),
-            urwid.AttrMap(
-                urwid.IntEdit(
-                    'Prep Time: ',
-                    self.recipe.prep_time
-                ), 'prep_time'
-            ),
-            urwid.AttrMap(
-                urwid.IntEdit(
-                    'Cook Time: ',
-                    self.recipe.cook_time
-                ), 'cook_time'
-            ),
-            urwid.AttrMap(
-                urwid.IntEdit(
-                    'Bake Time: ',
-                    self.recipe.bake_time
-                ), 'bake_time'
-            ),
-            urwid.AttrMap(
-                urwid.Edit(
-                    'Oven Temp: ',
-                    '{}'.format(self.recipe.oven_temp),
-                ), 'oven_temp'
-            ),
-            urwid.AttrMap(
-                urwid.Edit(
-                    'Price($): ',
-                    self.recipe.price
-                ), 'price'
-            ),
-            urwid.AttrMap(
-                urwid.Edit(
-                    'Source URL: ',
-                    self.recipe.source_url,
-                    wrap='clip'
-                ), 'source_url'
-            ),
-            urwid.AttrMap(
-                urwid.IntEdit(
-                    'Recipe Yield: ',
-                    self.recipe.recipe_yield
-                ), 'recipe_yield'
-            ),
-            urwid.AttrMap(
-                urwid.Edit(
-                    'Author: ',
-                    self.recipe.author
-                ), 'author'
-            )
-        ]
+        self.general_info = self._get_general_info()
 
-        self.general_info = urwid.Padding(
-            urwid.Pile(self.general_info), align='left', left=2
+        self.general_info = ur.Padding(
+            ur.Pile(self.general_info), align='left', left=2
         )
-        headings_general_and_dish_types = urwid.GridFlow(
+        headings_general_and_dish_types = ur.GridFlow(
                     [HEADINGS['general_info'],
                      HEADINGS['dish_types'],
                      HEADINGS['notes'],
                      ], 53, 0, 2, 'left'
         )
-        headings_ingred_and_method = urwid.GridFlow(
+        headings_ingred_and_method = ur.GridFlow(
                     [HEADINGS['ingredients'],
                      HEADINGS['method'],
                      ], 79, 0, 2, 'left'
@@ -461,12 +437,12 @@ class RecipeEditor:
         self.notes_block = NoteBlock(
             self.recipe.notes
         )
-        general_and_dish = urwid.GridFlow(
+        general_and_dish = ur.GridFlow(
             [self.general_info,
             radio_dish_types,
             self.notes_block], 53, 0, 2, 'left'
         )
-        ingred_and_method = urwid.GridFlow(
+        ingred_and_method = ur.GridFlow(
             [self.ingred_block,
             self.method_block], 79, 0, 2, 'left'
         )
@@ -476,25 +452,25 @@ class RecipeEditor:
             BLANK, headings_ingred_and_method,
             BLANK, ingred_and_method
         ]
-        list_box = urwid.ListBox(urwid.SimpleListWalker(self.listbox_content))
+        list_box = ur.ListBox(ur.SimpleListWalker(self.listbox_content))
         return list_box
 
     def quit_prompt(self):
         """Pop-up window that appears when you try to quit."""
         text = "Changes have been made. Quit?"
-        question = urwid.Text(("bold", text), "center")
+        question = ur.Text(("bold", text), "center")
 
-        cancel_btn = urwid.AttrMap(urwid.Button(
+        cancel_btn = ur.AttrMap(ur.Button(
             "Cancel", self.prompt_answer, "cancel"), "title", None)
-        save_btn = urwid.AttrMap(urwid.Button(
+        save_btn = ur.AttrMap(ur.Button(
             "Save", self.prompt_answer, "save"), "title", None)
-        quit_btn = urwid.AttrMap(urwid.Button(
+        quit_btn = ur.AttrMap(ur.Button(
             "Quit", self.prompt_answer, "quit"), "red", None)
 
-        prompt = urwid.LineBox(urwid.ListBox(urwid.SimpleFocusListWalker(
+        prompt = ur.LineBox(ur.ListBox(ur.SimpleFocusListWalker(
             [question, BLANK, BLANK, cancel_btn, save_btn, quit_btn])))
 
-        overlay = urwid.Overlay(
+        overlay = ur.Overlay(
             prompt, self.loop.widget,
             "center", 19, "middle", 9,
             16, 8)
@@ -504,19 +480,19 @@ class RecipeEditor:
     def test_prompt(self, args):
         """Pop-up window that appears when you try to quit."""
         text = "Changes have been made. Quit?"
-        question = urwid.Text(("bold", text), "center")
+        question = ur.Text(("bold", text), "center")
 
-        cancel_btn = urwid.AttrMap(urwid.Button(
+        cancel_btn = ur.AttrMap(ur.Button(
             "Cancel", self.test_answer, "cancel"), "title", None)
-        save_btn = urwid.AttrMap(urwid.Button(
+        save_btn = ur.AttrMap(ur.Button(
             "Save", self.test_answer, "save"), "title", None)
-        quit_btn = urwid.AttrMap(urwid.Button(
+        quit_btn = ur.AttrMap(ur.Button(
             "Quit", self.test_answer, "quit"), "red", None)
 
-        prompt = urwid.LineBox(urwid.ListBox(urwid.SimpleFocusListWalker(
+        prompt = ur.LineBox(ur.ListBox(ur.SimpleFocusListWalker(
             [question, BLANK, BLANK, cancel_btn, save_btn, quit_btn])))
 
-        overlay = urwid.Overlay(
+        overlay = ur.Overlay(
             prompt, self.loop.widget,
             "center", 19, "middle", 9,
             16, 8)
@@ -533,7 +509,7 @@ class RecipeEditor:
     def prompt_answer(self, button, label):
         """Prompt answer"""
         if label == 'quit':
-            raise urwid.ExitMainLoop()
+            raise ur.ExitMainLoop()
         elif label == 'save':
             self.save_recipe()
         else:
@@ -547,7 +523,8 @@ class RecipeEditor:
                 #self.test_prompt()
                 return
             else:
-                raise urwid.ExitMainLoop()
+                pass
+                #raise ur.ExitMainLoop()
         elif key in ('f2',):
             self.save_recipe()
         else:
@@ -558,7 +535,9 @@ class RecipeEditor:
         """Check if the state of the recipe has changed."""
         changed = False
         recipe = self.get_recipe_data()
-        if self.initial_hash != hash(recipe):
+        print(self.initial_state)
+        print(recipe._recipe_data)
+        if self.initial_state != recipe:
             changed = True
         return changed
 
@@ -648,7 +627,7 @@ class RecipeEditor:
         """Save the current state of the recipe and exit."""
         recipe = self.get_recipe_data()
         recipe.save()
-        raise urwid.ExitMainLoop()
+        raise ur.ExitMainLoop()
 
     def start(self):
         """Main entry point of the recipe editor."""

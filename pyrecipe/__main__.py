@@ -30,10 +30,7 @@ from pyrecipe.console_gui import RecipeEditor, RecipeMaker
 ## Start command functions
 def cmd_print(args):
     """Print a recipe to stdout."""
-    if args.source.startswith(('https://', 'http://')):
-        recipe = RecipeWebScraper.scrape(args.source)
-    else:
-        recipe = Recipe(args.source, recipe_yield=args.recipe_yield)
+    recipe = Recipe(args.source, recipe_yield=args.recipe_yield)
     recipe.print_recipe(args.verbose)
 
 def cmd_edit(args):
@@ -42,7 +39,7 @@ def cmd_edit(args):
         recipe = RecipeWebScraper.scrape(args.source)
     else:
         recipe = Recipe(args.source)
-    RecipeEditor(recipe).start()
+    sys.exit(RecipeEditor(recipe).start())
 
 def cmd_add(args):
     """Add a recipe to the recipe store."""
@@ -59,13 +56,11 @@ def cmd_add(args):
 @delete_recipe
 def cmd_remove(args):
     """Delete a recipe from the recipe store."""
-    source = args.source
-    recipe = Recipe(source)
-    file_name = recipe.source
+    recipe = Recipe(args.source)
     answer = input("Are you sure your want to delete {}? yes/no ".format(source))
     if answer.strip() == 'yes':
-        os.remove(file_name)
-        print("{} has been deleted".format(source))
+        os.remove(recipe.source)
+        print("{} has been deleted".format(recipe.name))
         return recipe.uuid
 
     print("{} not deleted".format(source))
@@ -122,7 +117,7 @@ def cmd_shop(args):
 def cmd_dump(args):
     """Dump recipe data in 1 of three formats."""
     recipe = Recipe(args.source)
-    recipe.dump_to_screen(args.data_type)
+    sys.exit(recipe.dump_data(args.data_type))
 
 def cmd_export(args):
     """Export recipes in xml format."""
@@ -167,7 +162,7 @@ def cmd_ocr(args):
 
 def cmd_show(args):
     """Show the statistics information of the recipe database."""
-    utils.stats(args.verbose)
+    sys.exit(utils.stats(args.verbose))
 
 def version():
     """Print pyrecipe version information."""
@@ -336,7 +331,7 @@ def subparser_dump(subparser):
         dest="data_type",
         action="store_const",
         const="json",
-        help="Dump source data in its raw format"
+        help="Dump source json"
     )
 
 def subparser_export(subparser):

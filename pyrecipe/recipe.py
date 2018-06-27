@@ -1,7 +1,7 @@
 # -*- encoding: UTF-8 -*-
 """
     pyrecipe.recipe
-    ~~~~~~~~~~~~~~~
+   ~~~~~~~~~~~~~~~
     The recipe module contains the main recipe
     class used to interact with ORF (open recipe format) files.
     You can simply print the recipe or print the xml dump.
@@ -31,6 +31,8 @@ import sys
 import json
 import uuid
 import string
+import copy
+import requests
 from collections import OrderedDict
 from zipfile import ZipFile, BadZipFile
 
@@ -42,12 +44,15 @@ import pyrecipe.config as config
 from pyrecipe.db import update_db
 from pyrecipe import Q_, CULINARY_UNITS, ureg
 from pyrecipe.recipe_numbers import RecipeNum
+from pyrecipe.webscraper import RecipeWebScraper
 
 __all__ = ['Recipe', 'IngredientParser']
 
 # GLOBAL REs
 PORTIONED_UNIT_RE = re.compile(r'\(?\d+\.?\d*? (ounce|pound)\)? (cans?|bags?)')
 PAREN_RE = re.compile(r'\((.*?)\)')
+HTTP_RE = re.compile(r'^https?\://')
+
 PUNCTUATION = ''.join(c for c in string.punctuation if c not in '-/(),.')
 
 yaml = YAML(typ='safe')
@@ -72,6 +77,7 @@ class Recipe:
         'notes',
         'prep_time',
         'price',
+        'recipe_yield',
         'region',
         'source_book',
         'source_url',
@@ -81,7 +87,7 @@ class Recipe:
         'yields'
     ]
 
-    # These have there own setters defined
+    # These require their own setters
     COMPLEX_KEYS = [
         'ingredients',
         'named_ingredients',
@@ -90,9 +96,16 @@ class Recipe:
     ]
 
     ORF_KEYS = COMPLEX_KEYS + SIMPLE_KEYS
-
-    def __init__(self, source=None, recipe_yield=0):
-        if source is not None:
+    ALL_KEYS = ORF_KEYS + ['source', '_recipe_data']
+    
+    def __init__(self, source='', recipe_yield=0):
+        self._recipe_data = {}
+        if HTTP_RE.search(source):
+            data = RecipeWebScraper.scrape(source)
+            self._set_data(data)
+        elif isinstance(source, dict):
+            self._set_data(source)
+        elif source is not None:
             self.source = utils.get_source_path(source)
             try:
                 with ZipFile(self.source, 'r') as zfile:
@@ -105,13 +118,20 @@ class Recipe:
             except BadZipFile as e:
                 sys.exit(utils.msg("{}".format(e), "ERROR"))
         else:
-            self._recipe_data = {}
             self.dish_type = 'main'
             self.uuid = str(uuid.uuid4())
             self.source = utils.get_file_name_from_uuid(self.uuid)
 
         self.recipe_yield = recipe_yield
-
+    
+    def _set_data(self, data):
+        """
+        Used to set recipe data from incoming dicts such as from webscraper and
+        from openrecipes.org
+        """
+        for key, value in data.items():
+            setattr(self, key, value)
+    
     def __repr__(self):
         return "<Recipe(name='{}')>".format(self.name)
 
@@ -122,9 +142,13 @@ class Recipe:
     def __getattr__(self, key):
         if key in Recipe.ORF_KEYS:
             return self._recipe_data.get(key, '')
-        raise AttributeError("'{}' is not an ORF key".format(key))
+        raise AttributeError("'{}' is not an ORF key or Recipe function"
+                             .format(key))
 
     def __setattr__(self, key, value):
+        if key not in self.ALL_KEYS:
+            raise AttributeError("Cannot set attribute '{}', its not apart "
+                                 "of the ORF spec.".format(key))
         if key in Recipe.SIMPLE_KEYS:
             self._recipe_data[key] = value
         else:
@@ -146,7 +170,15 @@ class Recipe:
     def __hash__(self):
         """Get the recipe hash."""
         return hash(self.get_yaml_string())
-
+    
+    def __copy__(self):
+        newobj = type(self)(self.source)
+        newobj.__dict__.update(self.__dict__)
+        return newobj
+    
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
+    
     @property
     def yields(self):
         """Return a list of recipe yields."""
@@ -171,7 +203,10 @@ class Recipe:
     def get_ingredients(self, fmt='object'):
         """
         Get the ingredients and named ingredients at the same time.
-
+        
+        This is the recomended way of getting the ingredients for a recipe.
+        Example: ingreds, named = recipe.get_ingredients(fmt='string')
+        
         :param fmt: specifies the format of the ingredient to be returned.
                     'object', 'string', 'data', 'quantity'
         :type fmt: str
@@ -184,23 +219,29 @@ class Recipe:
                              .format(', '.join(fmts), fmt))
 
         ingreds = []
-        for item in self.ingredients:
-            if fmt == "string": item = str(item)
-            elif fmt == "data": item = item.data
-            elif fmt == "quntity": item = item.quantity
-            ingreds.append(item)
+        if fmt == "object":
+            ingreds = self.ingredients
+        elif fmt == "string":
+            ingreds = [str(i) for i in self.ingredients]
+        elif fmt == "data": 
+            ingreds = [i.data for i in self.ingredients]
+        elif fmt == "quantity": 
+            ingreds = [i.quantity for i in self.ingredients]
 
         named = OrderedDict()
-        if self.named_ingredients:
-            named_ingreds = self.named_ingredients
-            for item in named_ingreds:
-                ingred_list = []
-                for ingred in named_ingreds[item]:
-                    if fmt == "string": ingred = str(ingred)
-                    elif fmt == "data": ingred = ingred.data
-                    elif fmt == "quntity": ingred = ingred.quantity
-                    ingred_list.append(ingred)
-                named[item] = ingred_list
+        named_ingreds = self.named_ingredients
+        for item in self.named_ingredients:
+            ingred_list = []
+            named_ingred_list = named_ingreds[item]
+            if fmt == "object": 
+                ingred_list = named_ingred_list
+            elif fmt == "string":
+                ingred_list = [str(i) for i in named_ingred_list]
+            elif fmt == "data":
+                ingred_list = [i.data for i in named_ingred_list]
+            elif fmt == "quantity": 
+                ingred_list = [i.quantity for i in named_ingred_list]
+            named[item] = ingred_list
         
         return ingreds, named
 
@@ -221,14 +262,13 @@ class Recipe:
         """Return named ingredient data."""
         named = OrderedDict()
         named_ingreds = self._recipe_data.get('named_ingredients', '')
-        if named_ingreds:
-            for item in named_ingreds:
-                named_name = list(item.keys())[0]
-                ingred_list = []
-                for ingredient in list(item.values())[0]:
-                    ingred = Ingredient(ingredient)
-                    ingred_list.append(ingred)
-                named[named_name] = ingred_list
+        for item in named_ingreds:
+            name = list(item.keys())[0]
+            ingred_list = []
+            for ingred in list(item.values())[0]:
+                ingred = Ingredient(ingred)
+                ingred_list.append(ingred)
+            named[name] = ingred_list
         return named
 
     @named_ingredients.setter
@@ -334,26 +374,38 @@ class Recipe:
     def get_xml_data(self):
         """Return the xml data."""
         pass
-
-    def dump_to_screen(self, data_type=None):
+    
+    def get_json(self):
+        data = self._recipe_data
+        ingreds, named = self.get_ingredients(fmt="string")
+        # just converting ingred data to string so open recipes can
+        # process it easily.
+        if self.ingredients:
+            data['ingredients'] = ingreds
+        if self.named_ingredients:
+            data['named_ingredients'] = named
+        return json.dumps(data, indent=4)
+    
+    def dump_data(self, fmt=None):
         """Dump a data format to screen.
 
         This method is mostly useful for troubleshooting
         and development. It prints data in three formats.
-        raw (just a plain python dictionary with pretty print)
-        yaml, and xml.
+        json, yaml, and xml.
+
+        :param data_type: specify the data type that you wish to dump.
+                          'json', 'yaml', 'xml'
         """
-        if data_type in ('json', None):
-            sys.exit(json.dumps(self._recipe_data, sort_keys=True,
-                                indent=4))
-        elif data_type == 'yaml':
-            sys.exit(yaml.dump(self._recipe_data, sys.stdout))
-        elif data_type == 'xml':
+        if fmt in ('json', None):
+            print(json.dumps(self._recipe_data, indent=4))
+        elif fmt == 'yaml':
+            yaml.dump(self._recipe_data, sys.stdout)
+        elif fmt == 'xml':
             data = self.get_xml_data()
-            sys.exit(data)
+            print(data)
         else:
             raise ValueError('data_type argument must be one of '
-                             'raw, yaml, or xml')
+                             'json, yaml, or xml')
 
     def get_yaml_string(self):
         string = io.StringIO()
@@ -373,7 +425,7 @@ class Recipe:
 class Ingredient:
     """Build an Ingredient object.
     
-    :param ingredient: dict of ingredient data.
+    :param ingredient: dict or string of ingredient.
     """
     def __init__(self, ingredient):
         self.name, self.size, self.prep = ('',) * 3
@@ -457,7 +509,7 @@ class Ingredient:
         if self.note:
             note = ' ({})'.format(self.note)
             ingred_string.append(note)
-        string = ''.join(ingred_string).capitalize()
+        string = ''.join(ingred_string).strip().capitalize()
         return string
 
     @property
@@ -499,12 +551,6 @@ class Ingredient:
 
     def _parse_ingredient(self, string):
         """parse the ingredient string"""
-        # get note if any
-        parens = PAREN_RE.search(string)
-        if parens:
-            string = string.replace(parens.group(), '').strip()
-            self.note = self._strip_parens(parens.group())
-
         # string preprocessing
         ingred_string = self._preprocess_string(string)
 
@@ -529,6 +575,12 @@ class Ingredient:
                         self.unit = item
                         ingred_string = ingred_string.replace(item, '')
 
+        # get note if any
+        parens = PAREN_RE.search(ingred_string)
+        if parens:
+            ingred_string = ingred_string.replace(parens.group(), '').strip()
+            self.note = self._strip_parens(parens.group())
+        
         ingred_list = ingred_string.split()
         amnt_list = []
         for item in ingred_list:
@@ -568,11 +620,16 @@ class Ingredient:
         # at this point we are assuming that all elements have been removed
         # from list except for the name. Whatever is left gets joined together
         name = ' '.join(ingred_string.split())
-        self.name = name.strip(',')
+        self.name = name.strip(', ')
 
 if __name__ == '__main__':
     #print(CULINARY_UNITS)
-    test = Recipe('korean pork tacos')
-    ingreds, named = test.get_ingredients(fmt='string')
-    print(ingreds)
-    print(named)
+    read_one = "http://localhost/open_recipes/includes/api/recipe/read_one.php"
+    create = "http://localhost/open_recipes/includes/api/recipe/create.php"
+    r = Recipe('fiesta beef')
+    t = Recipe('salsa ranch')
+    print(r == t)
+
+
+
+    #print(test.named_ingredients)

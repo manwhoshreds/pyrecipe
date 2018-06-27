@@ -24,8 +24,6 @@ import bs4
 from termcolor import colored
 
 import pyrecipe.utils as utils
-from pyrecipe.recipe import (Recipe, Ingredient)
-
 
 #TODO: add property for scraping named ingredients
 class RecipeWebScraper:
@@ -48,24 +46,26 @@ class RecipeWebScraper:
                 "following sites:\n\n\t".format(url), "WARN") +
                 utils.msg(sites))
 
-        return scrapers[scrapeable](url)
+        return scrapers[scrapeable](url).data
 
 
-class GeniusWebScraper(Recipe):
+class GeniusWebScraper:
     """Web Scraper for http://www.geniuskitchen.com."""
     
     def __init__(self, url):
-        super().__init__()
         self.source_url = url
         req = requests.get(self.source_url).text
+        self.data = {}
         self.scrape(req)
 
     def scrape(self, req):
         self.soup = bs4.BeautifulSoup(req, 'html.parser')
-        self.name = self.scrape_name()
-        self.author = self.scrape_author()
-        self.ingredients = self.scrape_ingredients()
-        self.steps = self.scrape_method()
+        self.data['name'] = self.scrape_name()
+        self.data['author'] = self.scrape_author()
+        self.data['ingredients'] = self.scrape_ingredients()
+        self.data['steps'] = self.scrape_method()
+        # site has no dish_type data so default to main and change if needed
+        self.data['dish_type'] = 'main'
     
     def scrape_name(self):
         """Recipe name."""
@@ -112,22 +112,22 @@ class GeniusWebScraper(Recipe):
         # Not implemented yet
         return
 
-class TastyWebScraper(Recipe):
+class TastyWebScraper:
     """Web Scraper for http://www.tasty.co."""
 
     def __init__(self, url):
-        super().__init__()
         self.source_url = url
         req = requests.get(self.source_url).text
+        self.data = {}
         self.scrape(req)
 
     def scrape(self, req):
         """Scrape the recipe."""
         self.soup = bs4.BeautifulSoup(req, 'html.parser')
-        self.name = self.scrape_name()
-        self.author = self.scrape_author()
-        self.ingredients = self.scrape_ingredients()
-        self.steps = self.scrape_method()
+        self.data['name'] = self.scrape_name()
+        self.data['author'] = self.scrape_author()
+        self.data['ingredients'] = self.scrape_ingredients()
+        self.data['steps'] = self.scrape_method()
     
     def scrape_name(self):
         """Recipe name."""
