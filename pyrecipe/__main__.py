@@ -53,16 +53,23 @@ def cmd_add(args):
 
 def cmd_remote(args):
     """Add a recipe to the recipe store."""
-    payload = {'recipe_name': args.source}
-    url = "http://localhost/open_recipes/includes/api/recipe/read_one.php"
-    resp = requests.get(url, params=payload).json()
-    if 'message' in resp:
-        sys.exit(resp['message'])
     if args.print_r:
+        payload = {'recipe_name': args.source}
+        url = "http://localhost/open_recipes/includes/api/recipe/read_one.php"
+        resp = requests.get(url, params=payload).json()
+        if 'message' in resp:
+            sys.exit(resp['message'])
         args.source = resp
         cmd_print(args)
     if args.search:
-        cmd_search(args)
+        payload = {'s': args.source}
+        url = "http://localhost/open_recipes/includes/api/recipe/search.php"
+        resp = requests.get(url, params=payload).json()
+        if 'message' in resp:
+            sys.exit(resp['message'])
+        for item in resp['recipes']:
+            print(item['name'].title())
+        
 
 @delete_recipe
 def cmd_remove(args):

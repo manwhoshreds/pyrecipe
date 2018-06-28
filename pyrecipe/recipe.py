@@ -89,7 +89,7 @@ class Recipe:
         'yields'
     ]
 
-    # These require their own setters
+    # These require their own setters and getters
     COMPLEX_KEYS = [
         'ingredients',
         'named_ingredients',
@@ -99,7 +99,7 @@ class Recipe:
 
     ORF_KEYS = COMPLEX_KEYS + SIMPLE_KEYS
     ALL_KEYS = ORF_KEYS + ['source', '_recipe_data']
-    
+
     def __init__(self, source='', recipe_yield=0):
         self._recipe_data = {}
         if isinstance(source, dict):
@@ -190,12 +190,6 @@ class Recipe:
     def __eq__(self, other):
         #return self.get_yaml_string() == other.get_yaml_string()
         return self.print_recipe() == other.print_recipe()
-    
-    def test(self):
-        keys = list(self._recipe_data.keys())
-        values = list(self._recipe_data.values())
-        res = values
-        return res
     
     @property
     def yields(self):
