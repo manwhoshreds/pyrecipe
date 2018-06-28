@@ -639,5 +639,8 @@ class Ingredient:
         self.name = name.strip(', ')
 
 if __name__ == '__main__':
-    r = Recipe('salsa ranch')
-    print(r.test())
+    url = "http://localhost/open_recipes/includes/api/recipe/search.php"
+    resp = requests.get(url, params={'s': sys.argv[1]})
+    res = resp.json()['recipes']
+    for item in res:
+        print(item['name'])

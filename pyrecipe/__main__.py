@@ -24,9 +24,6 @@ from pyrecipe import __scriptname__, version_info
 from pyrecipe.db import (DBInfo, DBConn, delete_recipe)
 from pyrecipe.console_gui import RecipeEditor, RecipeMaker
 
-# Debug
-#import pdb
-#pdb.set_trace()
 
 ## Start command functions
 def cmd_print(args):
@@ -89,6 +86,13 @@ def cmd_make(args):
 def cmd_search(args):
     """Search the recipe database."""
     search = args.search
+    if args.remote:
+        payload = {'s': search}
+        url = "http://localhost/open_recipes/includes/api/recipe/search.php"
+        resp = requests.get(url, params=payload)
+        for item in resp.json()['recipes']:
+            print(item['name'])
+        sys.exit(0)
     #check = spell_check(args.search)
     #if check != args.search:
     #    print("Nothing found. Showing results for \"{}\" instead.".format(check))
@@ -258,6 +262,12 @@ def subparser_search(subparser):
     parser_search = subparser.add_parser(
         "search",
         help="Search the recipe database"
+    )
+    parser_search.add_argument(
+        "-r",
+        "--remote",
+        action="store_true",
+        help="Search openrecipes.org for recipes"
     )
     parser_search.add_argument(
         "search",
