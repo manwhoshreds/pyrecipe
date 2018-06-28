@@ -28,15 +28,7 @@ from pyrecipe.console_gui import RecipeEditor, RecipeMaker
 ## Start command functions
 def cmd_print(args):
     """Print a recipe to stdout."""
-    if args.remote:
-        payload = {'recipe_name': args.source}
-        url = "http://localhost/open_recipes/includes/api/recipe/read_one.php"
-        resp = requests.get(url, params=payload).json()
-        if 'message' in resp:
-            sys.exit(resp['message'])
-        recipe = Recipe(resp, recipe_yield=args.recipe_yield) 
-    else:
-        recipe = Recipe(args.source, recipe_yield=args.recipe_yield)
+    recipe = Recipe(args.source, recipe_yield=args.recipe_yield)
     recipe.print_recipe(args.verbose)
 
 def cmd_edit(args):
@@ -58,6 +50,20 @@ def cmd_add(args):
     else:
         name = args.name.strip()
         RecipeEditor(name, add=True).start()
+
+def cmd_remote(args):
+    """Add a recipe to the recipe store."""
+    print(args)
+    payload = {'recipe_name': args.source}
+    url = "http://localhost/open_recipes/includes/api/recipe/read_one.php"
+    resp = requests.get(url, params=payload).json()
+    if 'message' in resp:
+        sys.exit(resp['message'])
+    if args.print_r:
+        args.source = resp
+        cmd_print(args)
+    if args.search:
+        cmd_search(args)
 
 @delete_recipe
 def cmd_remove(args):
@@ -86,13 +92,10 @@ def cmd_make(args):
 def cmd_search(args):
     """Search the recipe database."""
     search = args.search
-    if args.remote:
-        payload = {'s': search}
-        url = "http://localhost/open_recipes/includes/api/recipe/search.php"
-        resp = requests.get(url, params=payload)
-        for item in resp.json()['recipes']:
-            print(item['name'])
-        sys.exit(0)
+        else:
+            for item in resp['recipes']:
+                print(item['name'].title())
+            sys.exit(0)
     #check = spell_check(args.search)
     #if check != args.search:
     #    print("Nothing found. Showing results for \"{}\" instead.".format(check))
@@ -144,27 +147,20 @@ def cmd_export(args):
     except TypeError:
         # no output dir indicated on the cmdline throws a type error we
         # can use to default to the current working directory.
-        output_dir = os.getcwd()
-
-    recipe = Recipe(args.source)
-    xml = recipe.get_xml_data()
-    file_name = utils.get_file_name_from_recipe(args.source, 'xml')
-    file_name = os.path.join(output_dir, file_name)
-
-    if args.xml:
-        file_name = utils.get_file_name_from_recipe(args.source, 'xml')
-        print(utils.msg("Writing to file: {}".format(file_name), "INFORM"))
-        with open(file_name, "w") as file:
-            file.write(str(xml))
-
-    if args.recipe:
-        file_name = utils.get_file_name_from_recipe(args.source)
-        src = recipe.source
-        dst = os.path.join(output_dir, file_name)
-        if os.path.isfile(dst):
-            sys.exit(utils.msg("File already exists.", "ERROR"))
+        if args.all:
+            output_dir = os.path.realpath('recipes')
+            os.makedirs(output_dir)
         else:
-            shutil.copyfile(src, dst)
+            output_dir = os.getcwd()
+
+    if args.all:
+        for item in config.RECIPE_DATA_FILES:
+            recipe = Recipe(item)
+            recipe.export(args.data_type, output_dir)
+        sys.exit(0)
+    
+    recipe = Recipe(args.source)
+    recipe.export(args.data_type, output_dir)
 
 def cmd_ocr(args):
     """Optical character recognition"""
@@ -197,21 +193,15 @@ def build_recipe_database():
 
 def subparser_print(subparser):
     """Subparser for print command."""
-    parser_print = subparser.add_parser(
+    parser = subparser.add_parser(
         "print",
         help="Print the recipe to screen"
     )
-    parser_print.add_argument(
+    parser.add_argument(
         "source",
         help="Recipe, file path, or url"
     )
-    parser_print.add_argument(
-        "-r",
-        "--remote",
-        action="store_true",
-        help="Print recipe from remote server (openrecipes.org)."
-    )
-    parser_print.add_argument(
+    parser.add_argument(
         "--yield",
         default=0,
         nargs='?',
@@ -223,11 +213,11 @@ def subparser_print(subparser):
 
 def subparser_edit(subparser):
     """Subparser for edit command."""
-    parser_edit = subparser.add_parser(
+    parser = subparser.add_parser(
         "edit",
         help="Edit a recipe data file"
     )
-    parser_edit.add_argument(
+    parser.add_argument(
         "source",
         type=str,
         help="Recipe to edit"
@@ -237,6 +227,39 @@ def subparser_add(subparser):
     """Subparser for add command."""
     parser_add = subparser.add_parser("add", help='Add a recipe')
     parser_add.add_argument("name", help='Name of the recipe to add')
+
+def subparser_remote(subparser):
+    """Subparser for add command."""
+    parser = subparser.add_parser(
+        "remote", 
+        help='Access recipes on openrecipes.org'
+    )
+    parser.add_argument(
+        "source", 
+        help='Print recipe'
+    )
+    parser.add_argument(
+        "-p", 
+        "--print",
+        action="store_true",
+        dest="print_r",
+        help='Print recipe'
+    )
+    parser.add_argument(
+        "-s", 
+        "--search",
+        action="store_true",
+        help='Search recipes'
+    )
+    parser.add_argument(
+        "--yield",
+        default=0,
+        nargs='?',
+        metavar='N',
+        type=int,
+        dest="recipe_yield",
+        help="Specify a yield for the recipe."
+    )
 
 def subparser_remove(subparser):
     """Subparser for remove command."""
@@ -262,12 +285,6 @@ def subparser_search(subparser):
     parser_search = subparser.add_parser(
         "search",
         help="Search the recipe database"
-    )
-    parser_search.add_argument(
-        "-r",
-        "--remote",
-        action="store_true",
-        help="Search openrecipes.org for recipes"
     )
     parser_search.add_argument(
         "search",
@@ -368,11 +385,13 @@ def subparser_export(subparser):
     )
     parser_export.add_argument(
         "source",
+        nargs="?",
         help="Sorce file to export"
     )
     parser_export.add_argument(
         "-o",
         "--output-dir",
+        metavar="dir",
         type=str,
         nargs="?",
         help="Choose a directory to output file"
@@ -380,18 +399,23 @@ def subparser_export(subparser):
     parser_export.add_argument(
         "-a",
         "--all",
+        action="store_true",
         help="Export all files in the database"
     )
     parser_export.add_argument(
         "-x",
         "--xml",
-        action='store_true',
+        dest="data_type",
+        action='store_const',
+        const='xml',
         help="Export file in xml format"
     )
     parser_export.add_argument(
         "-r",
         "--recipe",
-        action='store_true',
+        dest="data_type",
+        action='store_const',
+        const='recipe',
         help="Export recipe file"
     )
 
@@ -457,6 +481,7 @@ def get_parser():
     subparser_print(subparser)
     subparser_edit(subparser)
     subparser_add(subparser)
+    subparser_remote(subparser)
     subparser_remove(subparser)
     subparser_make(subparser)
     subparser_search(subparser)
@@ -493,6 +518,7 @@ def main():
         'print': cmd_print,
         'edit': cmd_edit,
         'add': cmd_add,
+        'remote': cmd_remote,
         'remove': cmd_remove,
         'make': cmd_make,
         'search': cmd_search,

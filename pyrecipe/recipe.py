@@ -27,9 +27,11 @@
 """
 import re
 import io
+import os
 import sys
 import json
 import uuid
+import shutil
 import string
 import requests
 from collections import OrderedDict
@@ -105,7 +107,7 @@ class Recipe:
         elif HTTP_RE.search(source):
             data = RecipeWebScraper.scrape(source)
             self._set_data(data)
-        elif source is not None:
+        elif source is not '':
             self.source = utils.get_source_path(source)
             try:
                 with ZipFile(self.source, 'r') as zfile:
@@ -385,7 +387,29 @@ class Recipe:
             recipe_str += step
 
         print(recipe_str)
+    
+    def export(self, fmt, path):
+        """Export the recipe in a chosen file format."""
+        fmts = ('xml', 'recipe')
+        if fmt not in fmts:
+            raise ValueError('Format must be one of {}'.format(' '.join(fmts)))
+         
+        file_name = utils.get_file_name_from_recipe(self.name, fmt)
+        file_name = os.path.join(path, file_name)
 
+        if fmt == 'xml':
+            print(utils.msg("Writing to file: {}".format(file_name), "INFORM"))
+            with open(file_name, "w") as file:
+                file.write(str(xml))
+
+        elif fmt == 'recipe':
+            src = self.source
+            dst = os.path.join(path, file_name)
+            if os.path.isfile(dst):
+                sys.exit(utils.msg("File already exists.", "ERROR"))
+            else:
+                shutil.copyfile(src, dst)
+    
     @utils.recipe2xml
     def get_xml_data(self):
         """Return the xml data."""
