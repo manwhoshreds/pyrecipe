@@ -53,7 +53,6 @@ def cmd_add(args):
 
 def cmd_remote(args):
     """Add a recipe to the recipe store."""
-    print(args)
     payload = {'recipe_name': args.source}
     url = "http://localhost/open_recipes/includes/api/recipe/read_one.php"
     resp = requests.get(url, params=payload).json()
@@ -92,14 +91,9 @@ def cmd_make(args):
 def cmd_search(args):
     """Search the recipe database."""
     search = args.search
-        else:
-            for item in resp['recipes']:
-                print(item['name'].title())
-            sys.exit(0)
-    #check = spell_check(args.search)
-    #if check != args.search:
-    #    print("Nothing found. Showing results for \"{}\" instead.".format(check))
-    #    search = check
+    #for item in resp['recipes']:
+    #    print(item['name'].title())
+    #sys.exit(0)
 
     results = DBInfo().search(search)
     numres = len(results)
