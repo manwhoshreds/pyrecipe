@@ -169,10 +169,6 @@ class Recipe:
     __getitem__ = __getattr__
     __delitem__ = __delattr__
 
-    def __hash__(self):
-        """Get the recipe hash."""
-        return hash(self.get_yaml_string())
-    
     def __copy__(self):
         cls = self.__class__
         newobj = cls.__new__(cls)
@@ -188,8 +184,7 @@ class Recipe:
         return result
     
     def __eq__(self, other):
-        #return self.get_yaml_string() == other.get_yaml_string()
-        return self.print_recipe() == other.print_recipe()
+        return self.get_yaml_string() == other.get_yaml_string()
     
     @property
     def yields(self):
