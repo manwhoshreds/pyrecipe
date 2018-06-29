@@ -53,18 +53,17 @@ class GeniusWebScraper:
     """Web Scraper for http://www.geniuskitchen.com."""
     
     def __init__(self, url):
+        self.data = {}
         self.source_url = url
         req = requests.get(self.source_url).text
-        self.data = {}
-        self.scrape(req)
-
-    def scrape(self, req):
         self.soup = bs4.BeautifulSoup(req, 'html.parser')
+        self.scrape()
+
+    def scrape(self):
         self.data['name'] = self.scrape_name()
         self.data['author'] = self.scrape_author()
         self.data['ingredients'] = self.scrape_ingredients()
         self.data['steps'] = self.scrape_method()
-        # site has no dish_type data so default to main and change if needed
         self.data['dish_type'] = 'main'
     
     def scrape_name(self):
@@ -114,20 +113,21 @@ class GeniusWebScraper:
 
 class TastyWebScraper:
     """Web Scraper for http://www.tasty.co."""
-
+    
     def __init__(self, url):
+        self.data = {}
         self.source_url = url
         req = requests.get(self.source_url).text
-        self.data = {}
-        self.scrape(req)
-
-    def scrape(self, req):
-        """Scrape the recipe."""
         self.soup = bs4.BeautifulSoup(req, 'html.parser')
+        self.scrape()
+
+    def scrape(self):
+        """Scrape the recipe."""
         self.data['name'] = self.scrape_name()
         self.data['author'] = self.scrape_author()
         self.data['ingredients'] = self.scrape_ingredients()
         self.data['steps'] = self.scrape_method()
+        self.data['dish_type'] = 'main'
     
     def scrape_name(self):
         """Recipe name."""
@@ -208,5 +208,7 @@ class TastyWebScraper:
         return results
 
 if __name__ == '__main__':
+    from pyrecipe.recipe import Recipe
     test = RecipeWebScraper.scrape("https://tasty.co/recipe/honey-roasted-bbq-pork-char-siu")
-    test.print_recipe()
+    r = Recipe(test)
+    r.print_recipe()
