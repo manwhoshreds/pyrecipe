@@ -59,23 +59,23 @@ def get_speech():
     print('Prepare your mise en place!!!')
     for item in ingredients[0]:
         print(item)
-        tts = gTTS(text=item)
+        tts = gTTS(text=str(item))
         tts.save('temp.mp3')
         playsound('temp.mp3')
         spoken = ''
-        while spoken not in ("next ingredient", "next", "continue",
-                             "next one", "move on", "go on"):
+        next_words = ("next ingredient", "next", "continue",
+                      "next one", "move on", "go on")
+        while spoken not in next_words:
             print('say \"Next ingredient\" to proceed..')
             try:
                 with m as source: audio = r.listen(source)
                 spoken = r.recognize_google(audio)
-                if spoken == "next ingredient":
-                    print('Processing next ingredient')
             except sr.UnknownValueError:
                 print('I could not understand you sir')
                 continue
             except KeyboardInterrupt:
                 exit('\nAborting...')
+        print('Processing next ingredient')
 
 
 class IngredBlock(urwid.WidgetWrap):
@@ -203,22 +203,10 @@ class RecipeMaker:
         ('pyrecipe', ' PYRECIPE    '),
         ('key', "Esc"), ('footer', ' Quit  '),
     ])
-    def __init__(self, recipe='', add=False):
-        self.add = add
-        if self.add:
-            if isinstance(recipe, Recipe):
-                self.r = recipe
-            else:
-                self.r = Recipe()
-                self.r['recipe_name'] = recipe
-            self.welcome = 'Add a Recipe: {}'.format(self.r['recipe_name'])
-        else:
-            self.r = Recipe(recipe)
-            self.welcome = 'Make: {}'.format(self.r['recipe_name'])
-        
+    def __init__(self, recipe=''):
+        self.recipe = Recipe(recipe)
+        self.welcome = 'Make a Recipe: {}'.format(self.recipe.name)
         self.disht_group = []
-        self.initial_hash = hash(self.r)
-        self.data = self.r['_recipe_data']
 
     def setup_view(self):
         header = urwid.AttrMap(urwid.Text(self.welcome), 'header')
@@ -235,14 +223,14 @@ class RecipeMaker:
         """The main listbox"""
 
         self.general_info = [
-                    urwid.Text('Recipe Name: {}'.format(self.r['recipe_name'])),
-                    urwid.Text('Dish Type: {}'.format(self.r['dish_type'])),
-                    urwid.Text('Prep Time: {}'.format(self.r['prep_time'])),
-                    urwid.Text('Cook Time: {}'.format(self.r['cook_time'])),
-                    urwid.Text('Bake Time: {}'.format(self.r['bake_time'])),
-                    urwid.Text('Price($): {}'.format(self.r['price'])),
-                    urwid.Text('Source URL: {}'.format(self.r['source_url'])),
-                    urwid.Text('Author: {}'.format(self.r['author'])),
+                    urwid.Text('Recipe Name: {}'.format(self.recipe.name)),
+                    urwid.Text('Dish Type: {}'.format(self.recipe.dish_type)),
+                    urwid.Text('Prep Time: {}'.format(self.recipe.prep_time)),
+                    urwid.Text('Cook Time: {}'.format(self.recipe.cook_time)),
+                    urwid.Text('Bake Time: {}'.format(self.recipe.bake_time)),
+                    urwid.Text('Price($): {}'.format(self.recipe.price)),
+                    urwid.Text('Source URL: {}'.format(self.recipe.source_url)),
+                    urwid.Text('Author: {}'.format(self.recipe.author)),
                     #urwid.Text('Categories {}', self.r['categories']), 'categories')]
                 ]
                 
@@ -261,10 +249,10 @@ class RecipeMaker:
                      HEADINGS['method'],
                      ], 79, 0, 2, 'left'
         )
-        ingreds, alt_ingreds = self.r.get_ingredients()
+        ingreds, alt_ingreds = self.recipe.get_ingredients()
         self.ingred_block = IngredBlock(ingredients=ingreds) 
-        self.method_block = MethodBlock(self.r.get_method())
-        self.notes_block = NoteBlock(self.r['notes'])
+        self.method_block = MethodBlock(self.recipe.method)
+        self.notes_block = NoteBlock(self.recipe.notes)
         
         general_and_dish = urwid.GridFlow([self.general_info, self.notes_block], 53, 0, 2, 'left')
         ingred_and_method = urwid.GridFlow([self.ingred_block, self.method_block], 79, 0, 2, 'left')
@@ -323,5 +311,5 @@ class RecipeMaker:
         
 
 if __name__ == '__main__':
-    #get_speech()
-    RecipeMaker('test').start()
+    get_speech()
+    #RecipeMaker('test').start()

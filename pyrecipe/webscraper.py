@@ -13,7 +13,7 @@
                   by pyrecipe. This class is a factory that returns
                   webscrapers based on the url given. For a list of
                   currently supported sites, look at the scrapers dict.
-    
+
     :copyright: 2017 by Michael Miller
     :license: GPL, see LICENSE for more details.
 """
@@ -43,15 +43,15 @@ class RecipeWebScraper:
             sites = '\n\t'.join(scrapeable_sites)
             sys.exit(utils.msg(
                 "{} is not scrapeable by pyrecipe. Please select from the "
-                "following sites:\n\n\t".format(url), "WARN") +
-                utils.msg(sites))
+                "following sites:\n\n\t".format(url), "WARN") + 
+                     utils.msg(sites))
 
         return scrapers[scrapeable](url).data
 
 
 class GeniusWebScraper:
     """Web Scraper for http://www.geniuskitchen.com."""
-    
+
     def __init__(self, url):
         self.data = {}
         self.source_url = url
@@ -65,7 +65,7 @@ class GeniusWebScraper:
         self.data['ingredients'] = self.scrape_ingredients()
         self.data['steps'] = self.scrape_method()
         self.data['dish_type'] = 'main'
-    
+
     def scrape_name(self):
         """Recipe name."""
         name_box = self.soup.find('h2', attrs={'class': 'modal-title'})
@@ -113,7 +113,7 @@ class GeniusWebScraper:
 
 class TastyWebScraper:
     """Web Scraper for http://www.tasty.co."""
-    
+
     def __init__(self, url):
         self.data = {}
         self.source_url = url
@@ -128,7 +128,7 @@ class TastyWebScraper:
         self.data['ingredients'] = self.scrape_ingredients()
         self.data['steps'] = self.scrape_method()
         self.data['dish_type'] = 'main'
-    
+
     def scrape_name(self):
         """Recipe name."""
         recipe_name = ""
