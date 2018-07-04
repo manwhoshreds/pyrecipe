@@ -54,9 +54,13 @@ def cmd_remote(args):
     if args.print_r:
         data = recipe_api.read_one(args.source)
         args.source = data
+        if args.debug:
+            sys.exit(print(data))
         cmd_print(args)
     if args.search:
         search = recipe_api.search(args.source)
+        if args.debug:
+            sys.exit(print(search))
         if 'message' in search:
             sys.exit(search['message'])
         for item in search['recipes']:
