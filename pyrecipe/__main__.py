@@ -12,12 +12,12 @@ import sys
 import shutil
 import argparse
 
-import requests
 import pyrecipe.utils as utils
 import pyrecipe.config as config
 import pyrecipe.shopper as shopper
 from pyrecipe.recipe import Recipe
 from pyrecipe.ocr import RecipeOCR
+from pyrecipe.api import RecipeAPI
 #from pyrecipe.spell import spell_check
 from pyrecipe.webscraper import RecipeWebScraper
 from pyrecipe import __scriptname__, version_info
@@ -33,10 +33,7 @@ def cmd_print(args):
 
 def cmd_edit(args):
     """Edit a recipe using the urwid console interface."""
-    if args.source.startswith(('https://', 'http://')):
-        recipe = RecipeWebScraper.scrape(args.source)
-    else:
-        recipe = Recipe(args.source)
+    recipe = Recipe(args.source)
     sys.exit(RecipeEditor(recipe).start())
 
 def cmd_add(args):
@@ -53,21 +50,16 @@ def cmd_add(args):
 
 def cmd_remote(args):
     """Add a recipe to the recipe store."""
+    recipe_api = RecipeAPI(args.debug)
     if args.print_r:
-        payload = {'recipe_name': args.source}
-        url = "http://localhost/open_recipes/includes/api/recipe/read_one.php"
-        resp = requests.get(url, params=payload).json()
-        if 'message' in resp:
-            sys.exit(resp['message'])
-        args.source = resp
+        data = recipe_api.read_one(args.source)
+        args.source = data
         cmd_print(args)
     if args.search:
-        payload = {'s': args.source}
-        url = "http://localhost/open_recipes/includes/api/recipe/search.php"
-        resp = requests.get(url, params=payload).json()
-        if 'message' in resp:
-            sys.exit(resp['message'])
-        for item in resp['recipes']:
+        search = recipe_api.search(args.source)
+        if 'message' in search:
+            sys.exit(search['message'])
+        for item in search['recipes']:
             print(item['name'].title())
         
 
@@ -251,6 +243,11 @@ def subparser_remote(subparser):
         "--search",
         action="store_true",
         help='Search recipes'
+    )
+    parser.add_argument(
+        "--debug",
+        action="store_true",
+        help='Get data back in raw json'
     )
     parser.add_argument(
         "--yield",
