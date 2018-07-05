@@ -25,7 +25,6 @@ from pyrecipe.db import (DBInfo, DBConn, delete_recipe)
 from pyrecipe.console_gui import RecipeEditor, RecipeMaker
 
 
-## Start command functions
 def cmd_print(args):
     """Print a recipe to stdout."""
     recipe = Recipe(args.source, recipe_yield=args.recipe_yield)
@@ -71,8 +70,6 @@ def cmd_remote(args):
         data = Recipe(args.source).get_json()
         added = recipe_api.create(data)
         sys.exit(added['message'])
-
-        
 
 @delete_recipe
 def cmd_remove(args):
