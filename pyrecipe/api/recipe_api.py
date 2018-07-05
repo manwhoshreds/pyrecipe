@@ -21,10 +21,10 @@ class RecipeAPI:
 
     def __init__(self, debug=False):
         # for accessing out side of lan.
-        #self.base_uri = 'https://venus-server.duckdns.org/openRecipes/api'
-        #self.base_url = 'http://192.168.0.31/openRecipes/includes/api'
+        #self.base_uri = 'http://venus-server.duckdns.org/openRecipes/api/recipe/{}.php'
+        self.base_url = 'http://192.168.0.31/openRecipes/includes/api/recipe/{}.php'
         self.debug = debug
-        self.base_url = 'http://localhost/open_recipes/includes/api/recipe/{}.php'
+        #self.base_url = 'http://localhost/open_recipes/includes/api/recipe/{}.php'
 
     def _get_url(self, action):
         return self.base_url.format(action)
@@ -49,7 +49,7 @@ class RecipeAPI:
     def create(self, recipe):
         """Post recipe data to Open Recipes."""
         url = self._get_url('create')
-        resp =  requests.post(url, json=js)
+        resp =  requests.post(url, data=recipe)
         if self.debug:
             return resp.text
         return resp.json()
@@ -66,7 +66,7 @@ class RecipeAPI:
 
 if __name__ == '__main__':
     api = RecipeAPI()
-    test = api.search("pork")
-    print(test)
+    r = Recipe('pesto')
+    test = api.create(r)
     #r = Recipe(test)
     #r.print_recipe()

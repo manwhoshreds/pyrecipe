@@ -56,8 +56,10 @@ def cmd_remote(args):
         args.source = data
         if args.debug:
             sys.exit(print(data))
+        if 'message' in data:
+            sys.exit(data['message'])
         cmd_print(args)
-    if args.search:
+    elif args.search:
         search = recipe_api.search(args.source)
         if args.debug:
             sys.exit(print(search))
@@ -65,6 +67,11 @@ def cmd_remote(args):
             sys.exit(search['message'])
         for item in search['recipes']:
             print(item['name'].title())
+    elif args.add_recipe:
+        data = Recipe(args.source).get_json()
+        added = recipe_api.create(data)
+        sys.exit(added['message'])
+
         
 
 @delete_recipe
@@ -234,6 +241,12 @@ def subparser_remote(subparser):
     parser.add_argument(
         "source", 
         help='Print recipe'
+    )
+    parser.add_argument(
+        "-a", 
+        "--add-recipe",
+        action="store_true",
+        help='Add a recipe to openrecipes.org'
     )
     parser.add_argument(
         "-p", 
