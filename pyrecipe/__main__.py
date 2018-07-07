@@ -33,7 +33,7 @@ def cmd_print(args):
 def cmd_edit(args):
     """Edit a recipe using the urwid console interface."""
     recipe = Recipe(args.source)
-    sys.exit(RecipeEditor(recipe).start())
+    RecipeEditor(recipe).start()
 
 def cmd_add(args):
     """Add a recipe to the recipe store."""

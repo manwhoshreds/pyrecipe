@@ -8,8 +8,8 @@
     :copyright: 2017 by Michael Miller
     :license: GPL, see LICENSE for more details.
 """
-from collections import deque
 import copy
+from collections import deque
 
 import urwid as ur
 
@@ -352,7 +352,8 @@ class RecipeEditor:
         else:
             self.recipe = recipe
             self.welcome = 'Edit: {}'.format(self.recipe.name)
-        self.initial_state = Recipe(self.recipe.name)
+        #self.initial_state = Recipe(self.recipe.name)
+        self.initial_state = copy.deepcopy(self.recipe)
         self.original_name = self.recipe.name
 
     def setup_view(self):
