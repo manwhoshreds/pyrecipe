@@ -123,7 +123,9 @@ class Recipe:
             self.dish_type = 'main'
             self.uuid = str(uuid.uuid4())
             self.source = utils.get_file_name_from_uuid(self.uuid)
-
+        
+        if not self.uuid:
+            self.uuid = str(uuid.uuid4())
         self.recipe_yield = recipe_yield
     
     def _set_data(self, data):
