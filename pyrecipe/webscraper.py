@@ -19,9 +19,8 @@
 """
 import sys
 
-import requests
 import bs4
-from termcolor import colored
+import requests
 
 import pyrecipe.utils as utils
 
@@ -90,6 +89,11 @@ class GeniusWebScraper:
                 ingredients.append(ingred)
         return ingredients
 
+    def scrape_named_ingredients(self):
+        """Recipe named ingredients."""
+        # Not implemented yet
+        return None
+    
     def scrape_method(self):
         """Method."""
         attrs = {'class': 'directions-inner container-xs'}
@@ -106,10 +110,6 @@ class GeniusWebScraper:
         steps = recipe_steps
         return steps
 
-    def search(self):
-        """Search the site for recipe."""
-        # Not implemented yet
-        return
 
 class TastyWebScraper:
     """Web Scraper for http://www.tasty.co."""
@@ -155,6 +155,11 @@ class TastyWebScraper:
             ingredients.append(ingred)
         return ingredients
 
+    def scrape_named_ingredients(self):
+        """Recipe named ingredients."""
+        # Not implemented yet
+        return None
+    
     def scrape_method(self):
         """Recipe method."""
         method_box = self.soup.find('ol', attrs={'class': 'prep-steps'})
@@ -169,43 +174,6 @@ class TastyWebScraper:
             step_dict['step'] = item.text.strip()
             recipe_steps.append(step_dict)
         return recipe_steps
-
-    def search(self, search_str, site='tasty'):
-        """ This search function works with tasty.
-
-        I havent figured out how to implement this inside the individual
-        web scraper subclasses yet so im leting it hang out until i figuered
-        it out
-        """
-        search_str = utils.format_text(search_str)
-        site = site.lower()
-        base_urls = {
-            'tasty': 'https://tasty.co/search?'
-        }
-        try:
-            base_url = base_urls[site]
-        except KeyError:
-            sys.exit(utils.msg(
-                "Site is not searchable from pyrecipe", level="ERROR")
-            )
-
-        encoded_search = urlencode({"q": search_str})
-        search = "{}{}".format(base_url, encoded_search)
-        req = urlopen(search)
-        soup = bs4.BeautifulSoup(req, 'html.parser')
-
-        # feed-item corresponds to link items from the search
-        search_results = soup.find_all('a', attrs={'class': 'feed-item'})
-
-        results = {}
-        for item in search_results:
-            url = item.get('href')
-            name = url.split('/')[-1].replace("-", " ").title()
-            if name == '{{ Slug }}':
-                break
-            results[name] = url
-
-        return results
 
 if __name__ == '__main__':
     from pyrecipe.recipe import Recipe

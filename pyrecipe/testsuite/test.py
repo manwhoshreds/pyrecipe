@@ -87,6 +87,12 @@ class PrintCmdTestCase(CommandLineTestCase):
         parsed_args = self.parser.parse_args(arg)
         self.cmd(parsed_args)
 
+    def test_print_recipe_from_file_with_verbose_flag(self):
+        """recipe_tool -v print test"""
+        arg = ['-v', self.subcmd, 'test']
+        parsed_args = self.parser.parse_args(arg)
+        self.cmd(parsed_args)
+    
     def test_print_recipe_from_web(self):
         """recipe_tool print <recipe from website>"""
         url = 'https://tasty.co/recipe/honey-roasted-bbq-pork-char-siu'

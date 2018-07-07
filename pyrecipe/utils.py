@@ -15,8 +15,6 @@ from pyrecipe import config
 
 S_DIV = lambda m: colored('~' * m, 'white')
 
-class RecipeNotFound(Exception):
-    pass
 
 def format_text(string):
     """Format text for use in pyrecipe function.
@@ -78,9 +76,7 @@ def get_source_path(source):
         # after all, this is the intended way to lookup the recipe.
         file_name = get_file_name(source)
         if file_name is None:
-            raise RecipeNotFound(
-                "{} does not exist in the database.".format(source)
-            )
+            print('recipe not found')
         else:
             return file_name
 

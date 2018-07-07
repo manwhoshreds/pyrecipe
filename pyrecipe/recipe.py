@@ -98,19 +98,21 @@ class Recipe:
     ]
 
     ORF_KEYS = COMPLEX_KEYS + SIMPLE_KEYS
-    ALL_KEYS = ORF_KEYS + ['source', '_recipe_data']
+    ALL_KEYS = ORF_KEYS + ['source', '_recipe_data', 'file_name']
 
     def __init__(self, source='', recipe_yield=0):
         self._recipe_data = {}
+        self.source = source
         if isinstance(source, dict):
             self._set_data(source)
+            self.file_name = utils.get_file_name_from_uuid(self.uuid)
         elif HTTP_RE.search(source):
             data = RecipeWebScraper.scrape(source)
             self._set_data(data)
         elif source is not '':
-            self.source = utils.get_source_path(source)
+            self.file_name = utils.get_source_path(source)
             try:
-                with ZipFile(self.source, 'r') as zfile:
+                with ZipFile(self.file_name, 'r') as zfile:
                     try:
                         with zfile.open('recipe.yaml', 'r') as stream:
                             self._recipe_data = yaml.load(stream)
@@ -121,9 +123,12 @@ class Recipe:
                 sys.exit(utils.msg("{}".format(e), "ERROR"))
         else:
             self.dish_type = 'main'
+            self.file_name = utils.get_file_name_from_uuid(self.uuid)
+        
+        if not self.uuid:
             self.uuid = str(uuid.uuid4())
-            self.source = utils.get_file_name_from_uuid(self.uuid)
-
+        if not self.file_name:
+            self.file_name = utils.get_file_name_from_uuid(self.uuid)
         self.recipe_yield = recipe_yield
     
     def _set_data(self, data):
@@ -142,7 +147,7 @@ class Recipe:
         return list(self._recipe_data.keys()) + _dir
 
     def __getattr__(self, key):
-        if key in Recipe.ORF_KEYS:
+        if key in Recipe.ALL_KEYS:
             return self._recipe_data.get(key, '')
         raise AttributeError("'{}' is not an ORF key or Recipe function"
                              .format(key))
@@ -446,7 +451,7 @@ class Recipe:
         """save state of class."""
         stream = io.StringIO()
         yaml.dump(self._recipe_data, stream)
-        with ZipFile(self.source, 'w') as zfile:
+        with ZipFile(self.file_name, 'w') as zfile:
             zfile.writestr('recipe.yaml', stream.getvalue())
             zfile.writestr('MIMETYPE', 'application/recipe+zip')
 
