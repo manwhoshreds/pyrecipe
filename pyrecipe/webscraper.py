@@ -6,18 +6,19 @@
     You can either keep the recipe the way it is and just use it with pyrecipe
     or you can use the recipe as a template for your own recpipe development.
 
-    - WebScraper: The pyrecipe web_scraper class is a web
-                  scraping utility used to download and analyze
-                  recipes found on websites in an attempt to
-                  save the recipe data in the format understood
-                  by pyrecipe. This class is a factory that returns
-                  webscrapers based on the url given. For a list of
-                  currently supported sites, look at the scrapers dict.
+    - RecipeWebScraper: The pyrecipe web_scraper class is a web
+                        scraping utility used to download and analyze
+                        recipes found on websites in an attempt to
+                        save the recipe data in the format understood
+                        by pyrecipe. This class is a factory that returns
+                        webscrapers based on the url given. For a list of
+                        currently supported sites, look at the scrapers dict.
     
     :copyright: 2017 by Michael Miller
     :license: GPL, see LICENSE for more details.
 """
 import sys
+from abc import ABC, abstractmethod
 
 import bs4
 import requests
@@ -48,24 +49,52 @@ class RecipeWebScraper:
 
         return scrapers[scrapeable](url).data
 
-
-class GeniusWebScraper:
-    """Web Scraper for http://www.geniuskitchen.com."""
+class TemplateWebScraper(ABC):
     
     def __init__(self, url):
+        super().__init__()
         self.source_url = url
         req = requests.get(self.source_url).text
-        self.data = {}
-        self.scrape(req)
-
-    def scrape(self, req):
         self.soup = bs4.BeautifulSoup(req, 'html.parser')
+        self.data = {}
+        self.__scrape()
+
+    def __scrape(self):
         self.data['name'] = self.scrape_name()
         self.data['author'] = self.scrape_author()
         self.data['ingredients'] = self.scrape_ingredients()
         self.data['steps'] = self.scrape_method()
-        # site has no dish_type data so default to main and change if needed
+        # If site has no dish_type data, default to main
         self.data['dish_type'] = 'main'
+    
+    @abstractmethod
+    def scrape_name(self):
+        """Scrape the recipe name"""
+        pass
+        
+    @abstractmethod
+    def scrape_author(self):
+        """Scrape the recipe author"""
+        pass
+
+    @abstractmethod
+    def scrape_ingredients(self):
+        """Scrape the recipe ingredients"""
+        pass
+    
+    @abstractmethod
+    def scrape_named_ingredients(self):
+        """Scrape the recipe named ingredients"""
+        pass
+    
+    @abstractmethod
+    def scrape_method(self):
+        """Scrapte the recipe method"""
+        pass
+
+
+class GeniusWebScraper(TemplateWebScraper):
+    """Web Scraper for http://www.geniuskitchen.com."""
     
     def scrape_name(self):
         """Recipe name."""
@@ -113,23 +142,9 @@ class GeniusWebScraper:
         return steps
 
 
-class TastyWebScraper:
+class TastyWebScraper(TemplateWebScraper):
     """Web Scraper for http://www.tasty.co."""
 
-    def __init__(self, url):
-        self.source_url = url
-        req = requests.get(self.source_url).text
-        self.data = {}
-        self.scrape(req)
-
-    def scrape(self, req):
-        """Scrape the recipe."""
-        self.soup = bs4.BeautifulSoup(req, 'html.parser')
-        self.data['name'] = self.scrape_name()
-        self.data['author'] = self.scrape_author()
-        self.data['ingredients'] = self.scrape_ingredients()
-        self.data['steps'] = self.scrape_method()
-    
     def scrape_name(self):
         """Recipe name."""
         recipe_name = ""
@@ -177,24 +192,8 @@ class TastyWebScraper:
         return recipe_steps
 
 
-class FoodNetworkWebScraper:
+class FoodNetworkWebScraper(TemplateWebScraper):
     """Web Scraper for https://www.foodnetwork.com."""
-    
-    def __init__(self, url):
-        self.source_url = url
-        req = requests.get(self.source_url).text
-        self.data = {}
-        self.scrape(req)
-
-    def scrape(self, req):
-        self.soup = bs4.BeautifulSoup(req, 'html.parser')
-        self.data['name'] = self.scrape_name()
-        self.data['author'] = self.scrape_author()
-        self.data['ingredients'] = self.scrape_ingredients()
-        self.data['named_ingredients'] = self.scrape_named_ingredients()
-        self.data['steps'] = self.scrape_method()
-        # site has no dish_type data so default to main and change if needed
-        self.data['dish_type'] = 'main'
     
     def scrape_name(self):
         """Recipe name."""
@@ -256,5 +255,8 @@ class FoodNetworkWebScraper:
 
 
 if __name__ == '__main__':
-    test = RecipeWebScraper.scrape("https://www.foodnetwork.com/recipes/ree-drummond/salisbury-steak-recipe-2126533")
-    print(test.data)
+    from pyrecipe.recipe import Recipe
+    #r = Recipe("http://www.geniuskitchen.com/recipe/ina-gartens-baked-sweet-potato-fries-333618")
+    #r = Recipe("https://tasty.co/recipe/easy-butter-chicken")
+    #r = Recipe("https://www.foodnetwork.com/recipes/ree-drummond/salisbury-steak-recipe-2126533")
+    #r.print_recipe()
