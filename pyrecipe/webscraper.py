@@ -32,7 +32,8 @@ class RecipeWebScraper:
     def scrape(url):
         scrapers = {
             'https://tasty.co/': TastyWebScraper,
-            'http://www.geniuskitchen.com/': GeniusWebScraper
+            'http://www.geniuskitchen.com/': GeniusWebScraper,
+            'https://www.foodnetwork.com/': FoodNetworkWebScraper
         }
         scrapeable_sites = list(scrapers.keys())
         try:
@@ -175,6 +176,85 @@ class TastyWebScraper:
             recipe_steps.append(step_dict)
         return recipe_steps
 
+
+class FoodNetworkWebScraper:
+    """Web Scraper for https://www.foodnetwork.com."""
+    
+    def __init__(self, url):
+        self.source_url = url
+        req = requests.get(self.source_url).text
+        self.data = {}
+        self.scrape(req)
+
+    def scrape(self, req):
+        self.soup = bs4.BeautifulSoup(req, 'html.parser')
+        self.data['name'] = self.scrape_name()
+        self.data['author'] = self.scrape_author()
+        self.data['ingredients'] = self.scrape_ingredients()
+        self.data['named_ingredients'] = self.scrape_named_ingredients()
+        self.data['steps'] = self.scrape_method()
+        # site has no dish_type data so default to main and change if needed
+        self.data['dish_type'] = 'main'
+    
+    def scrape_name(self):
+        """Recipe name."""
+        attrs = {'class': 'o-AssetTitle__a-HeadlineText'}
+        name_box = self.soup.find('span', attrs=attrs)
+        recipe_name = name_box.text.strip()
+        return recipe_name
+
+    def scrape_author(self):
+        """Author."""
+        attrs = {'class': 'o-Attribution__a-Author'}
+        name_box = self.soup.find('div', attrs=attrs)
+        author = name_box.find('a').text.strip()
+        return author
+
+    def scrape_ingredients(self):
+        """Ingredients."""
+        attrs = {'class': 'ingredient-list'}
+        ingred_box = self.soup.find_all('ul', attrs=attrs)
+        ingredients = []
+        for item in ingred_box:
+            for litag in item.find_all('li'):
+                ingred = ' '.join(litag.text.strip().split())
+                ingredients.append(ingred)
+        return ingredients
+
+    def scrape_named_ingredients(self):
+        """Recipe named ingredients."""
+        #attrs = {'class': 'o-Ingredients__a-SubHeadline'}
+        attrs = {'class': 'o-Ingredients__m-Body'}
+        ingred_box = self.soup.find('div', attrs=attrs)
+        #TODO: need to make this work if I want to scrape food network
+        print(len(list(ingred_box.children)))
+
+            
+        exit()
+        ingredients = []
+        for item in ingred_box:
+            for litag in item.find_all('li'):
+                ingred = ' '.join(litag.text.strip().split())
+                ingredients.append(ingred)
+        return ingredients
+    
+    def scrape_method(self):
+        """Method."""
+        attrs = {'class': 'directions-inner container-xs'}
+        method_box = self.soup.find('div', attrs=attrs)
+        litags = method_box.find_all('li')
+        # last litag is "submit a correction", we dont need that
+        del litags[-1]
+        recipe_steps = []
+        for item in litags:
+            step_dict = {}
+            step_dict['step'] = item.text.strip()
+            recipe_steps.append(step_dict)
+
+        steps = recipe_steps
+        return steps
+
+
 if __name__ == '__main__':
-    test = RecipeWebScraper.scrape("https://tasty.co/recipe/honey-roasted-bbq-pork-char-siu")
-    test.print_recipe()
+    test = RecipeWebScraper.scrape("https://www.foodnetwork.com/recipes/ree-drummond/salisbury-steak-recipe-2126533")
+    print(test.data)
