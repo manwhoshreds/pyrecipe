@@ -196,11 +196,6 @@ class Recipe:
         return self.get_yaml_string() == other.get_yaml_string()
     
     @property
-    def yields(self):
-        """Return a list of recipe yields."""
-        return ', '.join(self.yields)
-
-    @property
     def oven_temp(self):
         """Return the oven temperature string."""
         temp = self._recipe_data.get('oven_temp', '')
@@ -341,12 +336,9 @@ class Recipe:
             if self.source_url:
                 recipe_str += "\nURL: {}".format(self.source_url)
                 extra_info = True
-            if self.category:
+            if self.categories:
                 recipe_str += ("\nCategory(s): {}"
-                               .format(", ".join(self.category)))
-                extra_info = True
-            if self.yields:
-                recipe_str += ("\nYields: " + str(self.yeilds))
+                               .format(", ".join(self.categoies)))
                 extra_info = True
             if self.notes:
                 recipe_str += colored("\n\nNotes:", "cyan")
