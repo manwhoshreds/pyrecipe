@@ -18,6 +18,7 @@
     :license: GPL, see LICENSE for more details.
 """
 import sys
+import uuid
 from abc import ABC, abstractmethod
 
 import bs4
@@ -57,12 +58,14 @@ class TemplateWebScraper(ABC):
         req = requests.get(self.source_url).text
         self.soup = bs4.BeautifulSoup(req, 'html.parser')
         self.data = {}
+        self.data['uuid'] = str(uuid.uuid4())
         self.__scrape()
 
     def __scrape(self):
         self.data['name'] = self.scrape_name()
         self.data['author'] = self.scrape_author()
         self.data['ingredients'] = self.scrape_ingredients()
+        self.data['named_ingredients'] = self.scrape_named_ingredients()
         self.data['steps'] = self.scrape_method()
         # If site has no dish_type data, default to main
         self.data['dish_type'] = 'main'
@@ -74,22 +77,22 @@ class TemplateWebScraper(ABC):
         
     @abstractmethod
     def scrape_author(self):
-        """Scrape the recipe author"""
+        """Scrape the recipe author."""
         pass
 
     @abstractmethod
     def scrape_ingredients(self):
-        """Scrape the recipe ingredients"""
+        """Scrape the recipe ingredients."""
         pass
     
     @abstractmethod
     def scrape_named_ingredients(self):
-        """Scrape the recipe named ingredients"""
+        """Scrape the recipe named ingredients."""
         pass
     
     @abstractmethod
     def scrape_method(self):
-        """Scrapte the recipe method"""
+        """Scrapte the recipe method."""
         pass
 
 
@@ -97,20 +100,20 @@ class GeniusWebScraper(TemplateWebScraper):
     """Web Scraper for http://www.geniuskitchen.com."""
     
     def scrape_name(self):
-        """Recipe name."""
+        """Scrape the recipe name."""
         name_box = self.soup.find('h2', attrs={'class': 'modal-title'})
         recipe_name = name_box.text.strip()
         return recipe_name
 
     def scrape_author(self):
-        """Author."""
+        """Scrape the recipe author."""
         name_box = self.soup.find('h6', attrs={'class': 'byline'})
         recipe_by = name_box.text.strip()
         author = ' '.join(recipe_by.split(' ')[2:]).strip()
         return author
 
     def scrape_ingredients(self):
-        """Ingredients."""
+        """Scrape the recipe ingredients."""
         attrs = {'class': 'ingredient-list'}
         ingred_box = self.soup.find_all('ul', attrs=attrs)
         ingredients = []
@@ -121,12 +124,13 @@ class GeniusWebScraper(TemplateWebScraper):
         return ingredients
 
     def scrape_named_ingredients(self):
-        """Recipe named ingredients."""
+        """Scrape the recipe named ingredients."""
         # Not implemented yet
-        return None
+        named_ingreds = []
+        return named_ingreds
     
     def scrape_method(self):
-        """Method."""
+        """Scrape the recipe method."""
         attrs = {'class': 'directions-inner container-xs'}
         method_box = self.soup.find('div', attrs=attrs)
         litags = method_box.find_all('li')
@@ -173,8 +177,8 @@ class TastyWebScraper(TemplateWebScraper):
 
     def scrape_named_ingredients(self):
         """Recipe named ingredients."""
-        # Not implemented yet
-        return None
+        named_ingredients = []
+        return named_ingredients
     
     def scrape_method(self):
         """Recipe method."""
@@ -257,6 +261,7 @@ class FoodNetworkWebScraper(TemplateWebScraper):
 if __name__ == '__main__':
     from pyrecipe.recipe import Recipe
     #r = Recipe("http://www.geniuskitchen.com/recipe/ina-gartens-baked-sweet-potato-fries-333618")
-    #r = Recipe("https://tasty.co/recipe/easy-butter-chicken")
+    r = Recipe("https://tasty.co/recipe/easy-butter-chicken")
     #r = Recipe("https://www.foodnetwork.com/recipes/ree-drummond/salisbury-steak-recipe-2126533")
-    #r.print_recipe()
+    r.print_recipe()
+    print(r.get_json())

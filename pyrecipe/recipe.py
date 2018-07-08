@@ -125,8 +125,6 @@ class Recipe:
             self.dish_type = 'main'
             self.file_name = utils.get_file_name_from_uuid(self.uuid)
         
-        if not self.uuid:
-            self.uuid = str(uuid.uuid4())
         if not self.file_name:
             self.file_name = utils.get_file_name_from_uuid(self.uuid)
         self.recipe_yield = recipe_yield
@@ -263,9 +261,11 @@ class Recipe:
         return [Ingredient(i) for i in ingredients]
 
     @ingredients.setter
-    def ingredients(self, ilist):
+    def ingredients(self, value):
         """Set the ingredients of a recipe."""
-        ingredients = [Ingredient(i).data for i in ilist]
+        if not value:
+            return
+        ingredients = [Ingredient(i).data for i in value]
         self._recipe_data['ingredients'] = ingredients
 
     @property
@@ -285,6 +285,8 @@ class Recipe:
     @named_ingredients.setter
     def named_ingredients(self, value):
         """Set named ingredients."""
+        if not value:
+            return
         named_ingredients = []
         for item in value:
             named_name = list(item.keys())[0]
