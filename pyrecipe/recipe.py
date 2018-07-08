@@ -34,9 +34,9 @@ import uuid
 import shutil
 import string
 import requests
+from copy import copy, deepcopy
 from collections import OrderedDict
 from zipfile import ZipFile, BadZipFile
-from copy import copy, deepcopy
 
 from termcolor import colored
 from ruamel.yaml import YAML
@@ -655,8 +655,19 @@ class Ingredient:
         self.name = name.strip(', ')
 
 if __name__ == '__main__':
-    url = "http://localhost/open_recipes/includes/api/recipe/search.php"
-    resp = requests.get(url, params={'s': sys.argv[1]})
-    res = resp.json()['recipes']
-    for item in res:
-        print(item['name'])
+    ingredients = []
+    for item in config.RECIPE_DATA_FILES:
+        r = Recipe(item)
+        ingreds, named = r.get_ingredients(fmt='string')
+        ingredients += ingreds
+        if named:
+            for item in named:
+                ingredients += named[item]
+    
+    #print('\n'.join(ingredients))
+    for item in ingredients:
+        i = Ingredient(item)
+        print(i.data)
+    #test = Ingredient("1 tablespoon onion")
+    #print(test.data)
+    

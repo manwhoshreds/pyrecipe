@@ -26,7 +26,7 @@ import requests
 
 import pyrecipe.utils as utils
 
-#TODO: add property for scraping named ingredients
+
 class RecipeWebScraper:
     """Factory for webscrapers."""
 
@@ -49,6 +49,7 @@ class RecipeWebScraper:
                 utils.msg(sites))
 
         return scrapers[scrapeable](url).data
+
 
 class TemplateWebScraper(ABC):
     
