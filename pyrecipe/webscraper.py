@@ -93,7 +93,7 @@ class TemplateWebScraper(ABC):
     
     @abstractmethod
     def scrape_method(self):
-        """Scrapte the recipe method."""
+        """Scrape the recipe method."""
         pass
 
 
