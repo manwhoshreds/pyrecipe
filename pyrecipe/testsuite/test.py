@@ -16,9 +16,8 @@ class CommandLineTestCase(unittest.TestCase):
     """
     @classmethod
     def setUpClass(cls):
-        #cls.f = open(os.devnull, 'w')
-        #sys.stderr = cls.f
-        #sys.stdout = cls.f
+        cls.dev_null = open(os.devnull, 'w')
+        sys.stdout = cls.dev_null
         
         parser = get_parser()
         cls.parser = parser
@@ -26,8 +25,7 @@ class CommandLineTestCase(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        #cls.f.close()
-        pass
+        cls.dev_null.close()
 
 #@skip('because')
 class RecipeTestCase(CommandLineTestCase):
@@ -65,6 +63,7 @@ class PrintCmdTestCase(CommandLineTestCase):
 
     def test_print_without_args(self):
         """recipe_tool print"""
+        sys.stderr = self.dev_null
         arg = [self.subcmd]
         with self.assertRaises(SystemExit) as cm:
             parsed_args = self.parser.parse_args(arg)
@@ -83,15 +82,21 @@ class PrintCmdTestCase(CommandLineTestCase):
 
     def test_print_recipe_from_file(self):
         """recipe_tool print test"""
-        arg = [self.subcmd, 'test']
-        parsed_args = self.parser.parse_args(arg)
-        self.cmd(parsed_args)
+        for item in RECIPE_DATA_FILES:
+            recipe = Recipe(item)
+            with self.subTest(i=recipe.name):
+                arg = [self.subcmd, recipe.name]
+                parsed_args = self.parser.parse_args(arg)
+                self.cmd(parsed_args)
 
     def test_print_recipe_from_file_with_verbose_flag(self):
         """recipe_tool -v print test"""
-        arg = ['-v', self.subcmd, 'test']
-        parsed_args = self.parser.parse_args(arg)
-        self.cmd(parsed_args)
+        for item in RECIPE_DATA_FILES:
+            recipe = Recipe(item)
+            with self.subTest(i=recipe.name):
+                arg = ['-v', self.subcmd, recipe.name]
+                parsed_args = self.parser.parse_args(arg)
+                self.cmd(parsed_args)
     
     def test_print_recipe_from_web(self):
         """recipe_tool print <recipe from website>"""
@@ -109,7 +114,7 @@ class EditCmdTestCase(CommandLineTestCase):
 
 
 #@skip('because')
-class EditCmdTestCase(CommandLineTestCase):
+class AddCmdTestCase(CommandLineTestCase):
     def setUp(self):
         self.subcmd = 'add'
         self.cmd = cmd_add
@@ -144,7 +149,7 @@ class SearchCmdTestCase(CommandLineTestCase):
         error = cm.exception.code
         self.assertEqual(error, 1)
 
-    def test_search_term_not_found(self):
+    def test_search_term_found(self):
         """recipe_tool search <found>"""
         arg = [self.subcmd, "test"]
         with self.assertRaises(SystemExit) as cm:
@@ -204,13 +209,16 @@ class DumpCmdTestCase(CommandLineTestCase):
 
     def test_dump_json(self):
         """recipe_tool dump -j test"""
-        arg = [self.subcmd, '-j', 'test']
-        with self.assertRaises(SystemExit) as cm:
-            parsed_args = self.parser.parse_args(arg)
-            self.cmd(parsed_args)
-        # exit with 0
-        error = cm.exception.code
-        self.assertIsNone(error)
+        for item in RECIPE_DATA_FILES:
+            recipe = Recipe(item)
+            with self.subTest(i=recipe.name):
+                arg = [self.subcmd, '-j', recipe.name]
+                with self.assertRaises(SystemExit) as cm:
+                    parsed_args = self.parser.parse_args(arg)
+                    self.cmd(parsed_args)
+            # exit with 0
+            error = cm.exception.code
+            self.assertIsNone(error)
 
     def test_dump_yaml(self):
         """recipe_tool dump -y test"""

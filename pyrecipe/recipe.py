@@ -34,9 +34,9 @@ import uuid
 import shutil
 import string
 import requests
+from copy import copy, deepcopy
 from collections import OrderedDict
 from zipfile import ZipFile, BadZipFile
-from copy import copy, deepcopy
 
 from termcolor import colored
 from ruamel.yaml import YAML
@@ -125,8 +125,6 @@ class Recipe:
             self.dish_type = 'main'
             self.file_name = utils.get_file_name_from_uuid(self.uuid)
         
-        if not self.uuid:
-            self.uuid = str(uuid.uuid4())
         if not self.file_name:
             self.file_name = utils.get_file_name_from_uuid(self.uuid)
         self.recipe_yield = recipe_yield
@@ -191,11 +189,6 @@ class Recipe:
     def __eq__(self, other):
         return self.get_yaml_string() == other.get_yaml_string()
     
-    @property
-    def yields(self):
-        """Return a list of recipe yields."""
-        return ', '.join(self.yields)
-
     @property
     def oven_temp(self):
         """Return the oven temperature string."""
@@ -264,9 +257,11 @@ class Recipe:
         return [Ingredient(i) for i in ingredients]
 
     @ingredients.setter
-    def ingredients(self, ilist):
+    def ingredients(self, value):
         """Set the ingredients of a recipe."""
-        ingredients = [Ingredient(i).data for i in ilist]
+        if not value:
+            return
+        ingredients = [Ingredient(i).data for i in value]
         self._recipe_data['ingredients'] = ingredients
 
     @property
@@ -286,6 +281,8 @@ class Recipe:
     @named_ingredients.setter
     def named_ingredients(self, value):
         """Set named ingredients."""
+        if not value:
+            return
         named_ingredients = []
         for item in value:
             named_name = list(item.keys())[0]
@@ -337,12 +334,9 @@ class Recipe:
             if self.source_url:
                 recipe_str += "\nURL: {}".format(self.source_url)
                 extra_info = True
-            if self.category:
+            if self.categories:
                 recipe_str += ("\nCategory(s): {}"
-                               .format(", ".join(self.category)))
-                extra_info = True
-            if self.yields:
-                recipe_str += ("\nYields: " + str(self.yeilds))
+                               .format(", ".join(self.categoies)))
                 extra_info = True
             if self.notes:
                 recipe_str += colored("\n\nNotes:", "cyan")
@@ -657,8 +651,18 @@ class Ingredient:
         self.name = name.strip(', ')
 
 if __name__ == '__main__':
-    url = "http://localhost/open_recipes/includes/api/recipe/search.php"
-    resp = requests.get(url, params={'s': sys.argv[1]})
-    res = resp.json()['recipes']
-    for item in res:
-        print(item['name'])
+    ingredients = []
+    for item in config.RECIPE_DATA_FILES:
+        r = Recipe(item)
+        ingreds, named = r.get_ingredients(fmt='string')
+        ingredients += ingreds
+        if named:
+            for item in named:
+                ingredients += named[item]
+    
+    #print('\n'.join(ingredients))
+    for item in ingredients:
+        i = Ingredient(item)
+        print(i.data)
+    #test = Ingredient("1 tablespoon onion")
+    #print(test.data)
