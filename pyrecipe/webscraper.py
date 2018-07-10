@@ -35,6 +35,7 @@ class RecipeWebScraper:
         scrapers = {
             'https://tasty.co/': TastyWebScraper,
             'http://www.geniuskitchen.com/': GeniusWebScraper,
+            'https://www.allrecipes.com/': AllRecipesWebScraper,
             'https://www.foodnetwork.com/': FoodNetworkWebScraper
         }
         scrapeable_sites = list(scrapers.keys())
@@ -63,6 +64,8 @@ class TemplateWebScraper(ABC):
         self.__scrape()
 
     def __scrape(self):
+        self.data['prep_time'] = self.scrape_prep_time()
+        self.data['cook_time'] = self.scrape_cook_time()
         self.data['name'] = self.scrape_name()
         self.data['author'] = self.scrape_author()
         self.data['ingredients'] = self.scrape_ingredients()
@@ -70,6 +73,16 @@ class TemplateWebScraper(ABC):
         self.data['steps'] = self.scrape_method()
         # If site has no dish_type data, default to main
         self.data['dish_type'] = 'main'
+    
+    @abstractmethod
+    def scrape_prep_time(self):
+        """Scrape the recipe name"""
+        pass
+    
+    @abstractmethod
+    def scrape_cook_time(self):
+        """Scrape the recipe name"""
+        pass
     
     @abstractmethod
     def scrape_name(self):
@@ -99,6 +112,16 @@ class TemplateWebScraper(ABC):
 
 class GeniusWebScraper(TemplateWebScraper):
     """Web Scraper for http://www.geniuskitchen.com."""
+    
+    def scrape_prep_time(self):
+        """Scrape the recipe name"""
+        prep_time = ''
+        return prep_time
+    
+    def scrape_cook_time(self):
+        """Scrape the recipe name"""
+        cook_time = ''
+        return cook_time
     
     def scrape_name(self):
         """Scrape the recipe name."""
@@ -150,6 +173,16 @@ class GeniusWebScraper(TemplateWebScraper):
 class TastyWebScraper(TemplateWebScraper):
     """Web Scraper for http://www.tasty.co."""
 
+    def scrape_prep_time(self):
+        """Scrape the recipe name"""
+        prep_time = ''
+        return prep_time
+    
+    def scrape_cook_time(self):
+        """Scrape the recipe name"""
+        cook_time = ''
+        return cook_time
+    
     def scrape_name(self):
         """Recipe name."""
         recipe_name = ""
@@ -197,8 +230,82 @@ class TastyWebScraper(TemplateWebScraper):
         return recipe_steps
 
 
+class AllRecipesWebScraper(TemplateWebScraper):
+    """Web Scraper for https://www.allrecipes.com."""
+    
+    def scrape_prep_time(self):
+        """Scrape the recipe name"""
+        attrs = {'itemprop': 'prepTime'}
+        prep_time = self.soup.find('time', attrs=attrs).get_text()
+        prep_time = prep_time.strip(' m')
+        return prep_time
+    
+    def scrape_cook_time(self):
+        """Scrape the recipe name"""
+        attrs = {'itemprop': 'cookTime'}
+        cook_time = self.soup.find('time', attrs=attrs).get_text()
+        cook_time = cook_time.strip(' m')
+        return cook_time
+    
+    def scrape_name(self):
+        """Scrape the recipe name."""
+        attrs = {'class': 'recipe-summary__h1'}
+        name_box = self.soup.find('h1', attrs=attrs)
+        recipe_name = name_box.text.strip()
+        return recipe_name
+
+    def scrape_author(self):
+        """Scrape the recipe author."""
+        attrs = {'class': 'submitter__name'}
+        name_box = self.soup.find('span', attrs=attrs)
+        author = name_box.text.strip()
+        return author
+
+    def scrape_ingredients(self):
+        """Scrape the recipe ingredients."""
+        attrs = {'itemprop': 'ingredients'}
+        ingred_box = self.soup.find_all('span', attrs=attrs)
+        ingredients = []
+        for item in ingred_box:
+            ingred = ' '.join(item.text.strip().split())
+            ingredients.append(ingred)
+        return ingredients
+
+    def scrape_named_ingredients(self):
+        """Scrape the recipe named ingredients."""
+        # Not implemented yet
+        named_ingreds = []
+        return named_ingreds
+    
+    def scrape_method(self):
+        """Scrape the recipe method."""
+        attrs = {'itemprop': 'recipeInstructions'}
+        method_box = self.soup.find('ol', attrs=attrs)
+        litags = method_box.find_all('li')
+        
+        recipe_steps = []
+        for item in litags:
+            step_dict = {}
+            step_dict['step'] = item.text.strip()
+            recipe_steps.append(step_dict)
+
+        steps = recipe_steps
+        return steps
+
+
+#TODO: FoodNetworkWebScraper IS NOT CURRENTLY WORKING
 class FoodNetworkWebScraper(TemplateWebScraper):
     """Web Scraper for https://www.foodnetwork.com."""
+    
+    def scrape_prep_time(self):
+        """Scrape the recipe name"""
+        prep_time = ''
+        return prep_time
+    
+    def scrape_cook_time(self):
+        """Scrape the recipe name"""
+        cook_time = ''
+        return cook_time
     
     def scrape_name(self):
         """Recipe name."""
@@ -262,7 +369,8 @@ class FoodNetworkWebScraper(TemplateWebScraper):
 if __name__ == '__main__':
     from pyrecipe.recipe import Recipe
     #r = Recipe("http://www.geniuskitchen.com/recipe/ina-gartens-baked-sweet-potato-fries-333618")
-    r = Recipe("https://tasty.co/recipe/easy-butter-chicken")
+    #r = Recipe("https://tasty.co/recipe/easy-butter-chicken")
+    r = Recipe("https://www.allrecipes.com/recipe/232062/chef-johns-creme-caramel/")
     #r = Recipe("https://www.foodnetwork.com/recipes/ree-drummond/salisbury-steak-recipe-2126533")
     r.print_recipe()
-    print(r.get_json())
+    #print(r.get_json())
