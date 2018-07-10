@@ -670,4 +670,3 @@ if __name__ == '__main__':
         print(i.data)
     #test = Ingredient("1 tablespoon onion")
     #print(test.data)
-    
