@@ -9,7 +9,6 @@
 """
 import os
 import sys
-import shutil
 import argparse
 
 import pyrecipe.utils as utils
@@ -19,7 +18,7 @@ from pyrecipe.recipe import Recipe
 from pyrecipe.ocr import RecipeOCR
 from pyrecipe.api import RecipeAPI
 #from pyrecipe.spell import spell_check
-from pyrecipe.webscraper import RecipeWebScraper, SCRAPEABLE_SITES
+from pyrecipe.webscraper import SCRAPEABLE_SITES
 from pyrecipe import __scriptname__, version_info
 from pyrecipe.db import (DBInfo, DBConn, delete_recipe)
 from pyrecipe.console_gui import RecipeEditor, RecipeMaker
@@ -78,11 +77,11 @@ def cmd_remove(args):
     answer = input("Are you sure your want to delete {}? yes/no "
                    .format(recipe.name))
     if answer.strip() == 'yes':
-        os.remove(recipe.source)
+        os.remove(recipe.file_name)
         print("{} has been deleted".format(recipe.name))
         return recipe.uuid
 
-    print("{} not deleted".format(source))
+    print("{} not deleted".format(recipe.name))
     return None
 
 def cmd_make(args):
@@ -159,7 +158,7 @@ def cmd_export(args):
             recipe = Recipe(item)
             recipe.export(args.data_type, output_dir)
         sys.exit(0)
-    
+
     recipe = Recipe(args.source)
     recipe.export(args.data_type, output_dir)
 
@@ -235,28 +234,28 @@ def subparser_add(subparser):
 def subparser_remote(subparser):
     """Subparser for add command."""
     parser = subparser.add_parser(
-        "remote", 
+        "remote",
         help='Access recipes on openrecipes.org'
     )
     parser.add_argument(
-        "source", 
+        "source",
         help='Print recipe'
     )
     parser.add_argument(
-        "-a", 
+        "-a",
         "--add-recipe",
         action="store_true",
         help='Add a recipe to openrecipes.org'
     )
     parser.add_argument(
-        "-p", 
+        "-p",
         "--print",
         action="store_true",
         dest="print_r",
         help='Print recipe'
     )
     parser.add_argument(
-        "-s", 
+        "-s",
         "--search",
         action="store_true",
         help='Search recipes'
