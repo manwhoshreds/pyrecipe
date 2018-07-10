@@ -19,7 +19,7 @@ from pyrecipe.recipe import Recipe
 from pyrecipe.ocr import RecipeOCR
 from pyrecipe.api import RecipeAPI
 #from pyrecipe.spell import spell_check
-from pyrecipe.webscraper import RecipeWebScraper
+from pyrecipe.webscraper import RecipeWebScraper, SCRAPEABLE_SITES
 from pyrecipe import __scriptname__, version_info
 from pyrecipe.db import (DBInfo, DBConn, delete_recipe)
 from pyrecipe.console_gui import RecipeEditor, RecipeMaker
@@ -173,7 +173,10 @@ def cmd_ocr(args):
 
 def cmd_show(args):
     """Show the statistics information of the recipe database."""
-    sys.exit(utils.stats(args.verbose))
+    if args.sites:
+        print('\n'.join(SCRAPEABLE_SITES))
+    else:
+        sys.exit(utils.stats(args.verbose))
 
 def version():
     """Print pyrecipe version information."""
@@ -456,9 +459,10 @@ def subparser_show(subparser):
         help="Show statistic from the recipe database"
     )
     parser_show.add_argument(
-        "-v",
-        "--verbose",
-        help="Show more statistics about the recipe database"
+        "--scrapeable-sites",
+        action="store_true",
+        dest="sites",
+        help="List sites that can be scraped"
     )
 
 def get_parser():

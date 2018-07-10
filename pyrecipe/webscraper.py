@@ -27,29 +27,31 @@ import requests
 import pyrecipe.utils as utils
 
 
+SCRAPERS = {
+    'https://tasty.co': 'TastyWebScraper',
+    'http://www.geniuskitchen.com': 'GeniusWebScraper',
+    'https://www.allrecipes.com': 'AllRecipesWebScraper',
+    #'https://www.foodnetwork.com': 'FoodNetworkWebScraper'
+}
+SCRAPEABLE_SITES = list(SCRAPERS.keys())
+
+
 class RecipeWebScraper:
     """Factory for webscrapers."""
-
+    
     @staticmethod
     def scrape(url):
-        scrapers = {
-            'https://tasty.co/': TastyWebScraper,
-            'http://www.geniuskitchen.com/': GeniusWebScraper,
-            'https://www.allrecipes.com/': AllRecipesWebScraper,
-            'https://www.foodnetwork.com/': FoodNetworkWebScraper
-        }
-        scrapeable_sites = list(scrapers.keys())
         try:
-            scrapeable = [s for s in scrapeable_sites if url.startswith(s)][0]
+            scrapeable = [s for s in SCRAPEABLE_SITES if url.startswith(s)][0]
         except IndexError:
             # url is not among those listed as scrapeable
-            sites = '\n\t'.join(scrapeable_sites)
+            sites = '\n\t'.join(SCRAPEABLE_SITES)
             sys.exit(utils.msg(
                 "{} is not scrapeable by pyrecipe. Please select from the "
                 "following sites:\n\n\t".format(url), "WARN") +
                 utils.msg(sites))
 
-        return scrapers[scrapeable](url).data
+        return eval(SCRAPERS[scrapeable])(url).data
 
 
 class TemplateWebScraper(ABC):
@@ -368,9 +370,10 @@ class FoodNetworkWebScraper(TemplateWebScraper):
 
 if __name__ == '__main__':
     from pyrecipe.recipe import Recipe
+    r = Recipe("https://tasty.co/recipe/easy-butter-chicken")
     #r = Recipe("http://www.geniuskitchen.com/recipe/ina-gartens-baked-sweet-potato-fries-333618")
-    #r = Recipe("https://tasty.co/recipe/easy-butter-chicken")
-    r = Recipe("https://www.allrecipes.com/recipe/232062/chef-johns-creme-caramel/")
+    #r = Recipe("https://www.allrecipes.com/recipe/232062/chef-johns-creme-caramel/")
     #r = Recipe("https://www.foodnetwork.com/recipes/ree-drummond/salisbury-steak-recipe-2126533")
     r.print_recipe()
     #print(r.get_json())
+    #test = RecipeWebScraper.get_sites()
