@@ -22,16 +22,14 @@ TABLES['ingredientsearch'] = """
 TABLES['recipes'] = """
     CREATE TABLE IF NOT EXISTS {0}(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        recipe_uuid TEXT NOT NULL,
+        recipe_uuid TEXT NOT NULL UNIQUE,
         dish_type TEXT,
-        name TEXT NOT NULL,
+        name TEXT NOT NULL UNIQUE,
         author TEXT,
         tags TEXT,
         categories TEXT,
         price TEXT,
-        source_url TEXT,
-        CONSTRAINT unique_name UNIQUE
-        (recipe_uuid, name))
+        source_url TEXT)
 """
 TABLES['ingredients'] = """
     CREATE TABLE IF NOT EXISTS {0}(
