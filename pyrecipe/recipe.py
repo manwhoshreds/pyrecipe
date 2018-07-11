@@ -100,7 +100,7 @@ class Recipe:
     ORF_KEYS = COMPLEX_KEYS + SIMPLE_KEYS
     ALL_KEYS = ORF_KEYS + ['source', '_recipe_data', 'file_name']
 
-    def __init__(self, source='', recipe_yield=0):
+    def __init__(self, source=''):
         self._recipe_data = {}
         self.source = source
         if isinstance(source, dict):
@@ -127,7 +127,6 @@ class Recipe:
         
         if not self.file_name:
             self.file_name = utils.get_file_name_from_uuid(self.uuid)
-        self.recipe_yield = recipe_yield
     
     def _set_data(self, data):
         """

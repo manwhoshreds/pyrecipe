@@ -9,7 +9,6 @@
 """
 import os
 import sys
-import shutil
 import argparse
 
 import pyrecipe.utils as utils
@@ -17,9 +16,9 @@ import pyrecipe.config as config
 import pyrecipe.shopper as shopper
 from pyrecipe.recipe import Recipe
 from pyrecipe.ocr import RecipeOCR
-from pyrecipe.api import RecipeAPI
+from pyrecipe.api import RecipeAPI, ShoppingListAPI
 #from pyrecipe.spell import spell_check
-from pyrecipe.webscraper import RecipeWebScraper
+from pyrecipe.webscraper import SCRAPEABLE_SITES
 from pyrecipe import __scriptname__, version_info
 from pyrecipe.db import (DBInfo, DBConn, delete_recipe)
 from pyrecipe.console_gui import RecipeEditor, RecipeMaker
@@ -27,7 +26,7 @@ from pyrecipe.console_gui import RecipeEditor, RecipeMaker
 
 def cmd_print(args):
     """Print a recipe to stdout."""
-    recipe = Recipe(args.source, recipe_yield=args.recipe_yield)
+    recipe = Recipe(args.source)
     recipe.print_recipe(args.verbose)
 
 def cmd_edit(args):
@@ -78,11 +77,11 @@ def cmd_remove(args):
     answer = input("Are you sure your want to delete {}? yes/no "
                    .format(recipe.name))
     if answer.strip() == 'yes':
-        os.remove(recipe.source)
+        os.remove(recipe.file_name)
         print("{} has been deleted".format(recipe.name))
         return recipe.uuid
 
-    print("{} not deleted".format(source))
+    print("{} not deleted".format(recipe.name))
     return None
 
 def cmd_make(args):
@@ -131,6 +130,10 @@ def cmd_shop(args):
         shoplist.print_list(write=args.save)
         if args.new:
             shoplist.create_new()
+    #if args.add_remote:
+    #    data = shoplist.get_json()
+    #    shopper_api = ShoppingListAPI()
+    #    shopper_api.create(data)
 
 def cmd_dump(args):
     """Dump recipe data in 1 of three formats."""
@@ -159,7 +162,7 @@ def cmd_export(args):
             recipe = Recipe(item)
             recipe.export(args.data_type, output_dir)
         sys.exit(0)
-    
+
     recipe = Recipe(args.source)
     recipe.export(args.data_type, output_dir)
 
@@ -173,7 +176,10 @@ def cmd_ocr(args):
 
 def cmd_show(args):
     """Show the statistics information of the recipe database."""
-    sys.exit(utils.stats(args.verbose))
+    if args.sites:
+        print('\n'.join(SCRAPEABLE_SITES))
+    else:
+        sys.exit(utils.stats(args.verbose))
 
 def version():
     """Print pyrecipe version information."""
@@ -232,28 +238,28 @@ def subparser_add(subparser):
 def subparser_remote(subparser):
     """Subparser for add command."""
     parser = subparser.add_parser(
-        "remote", 
+        "remote",
         help='Access recipes on openrecipes.org'
     )
     parser.add_argument(
-        "source", 
+        "source",
         help='Print recipe'
     )
     parser.add_argument(
-        "-a", 
+        "-a",
         "--add-recipe",
         action="store_true",
         help='Add a recipe to openrecipes.org'
     )
     parser.add_argument(
-        "-p", 
+        "-p",
         "--print",
         action="store_true",
         dest="print_r",
         help='Print recipe'
     )
     parser.add_argument(
-        "-s", 
+        "-s",
         "--search",
         action="store_true",
         help='Search recipes'
@@ -456,9 +462,10 @@ def subparser_show(subparser):
         help="Show statistic from the recipe database"
     )
     parser_show.add_argument(
-        "-v",
-        "--verbose",
-        help="Show more statistics about the recipe database"
+        "--scrapeable-sites",
+        action="store_true",
+        dest="sites",
+        help="List sites that can be scraped"
     )
 
 def get_parser():
@@ -544,3 +551,10 @@ def main():
         version()
     else:
         case[args.subparser](args)
+
+if __name__ == '__main__':
+    #import cProfile
+    #cProfile.run('main()')
+    #import timeit
+    #print(timeit.timeit("main()"))
+    main()
