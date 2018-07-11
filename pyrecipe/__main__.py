@@ -130,10 +130,10 @@ def cmd_shop(args):
         shoplist.print_list(write=args.save)
         if args.new:
             shoplist.create_new()
-    if args.add_remote:
-        data = shoplist.get_json()
-        shopper_api = ShoppingListAPI()
-        shopper_api.create(data)
+    #if args.add_remote:
+    #    data = shoplist.get_json()
+    #    shopper_api = ShoppingListAPI()
+    #    shopper_api.create(data)
 
 def cmd_dump(args):
     """Dump recipe data in 1 of three formats."""
