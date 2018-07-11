@@ -16,7 +16,7 @@ import pyrecipe.config as config
 import pyrecipe.shopper as shopper
 from pyrecipe.recipe import Recipe
 from pyrecipe.ocr import RecipeOCR
-from pyrecipe.api import RecipeAPI
+from pyrecipe.api import RecipeAPI, ShoppingListAPI
 #from pyrecipe.spell import spell_check
 from pyrecipe.webscraper import SCRAPEABLE_SITES
 from pyrecipe import __scriptname__, version_info
@@ -26,7 +26,7 @@ from pyrecipe.console_gui import RecipeEditor, RecipeMaker
 
 def cmd_print(args):
     """Print a recipe to stdout."""
-    recipe = Recipe(args.source, recipe_yield=args.recipe_yield)
+    recipe = Recipe(args.source)
     recipe.print_recipe(args.verbose)
 
 def cmd_edit(args):
@@ -130,6 +130,10 @@ def cmd_shop(args):
         shoplist.print_list(write=args.save)
         if args.new:
             shoplist.create_new()
+    if args.add_remote:
+        data = shoplist.get_json()
+        shopper_api = ShoppingListAPI()
+        shopper_api.create(data)
 
 def cmd_dump(args):
     """Dump recipe data in 1 of three formats."""
@@ -547,3 +551,10 @@ def main():
         version()
     else:
         case[args.subparser](args)
+
+if __name__ == '__main__':
+    #import cProfile
+    #cProfile.run('main()')
+    #import timeit
+    #print(timeit.timeit("main()"))
+    main()

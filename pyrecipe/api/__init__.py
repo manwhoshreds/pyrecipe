@@ -6,4 +6,4 @@
     :copyright: 2017 by Michael Miller
     :license: GPL, see LICENSE for more details.
 """
-from .recipe_api import RecipeAPI
+from .api import RecipeAPI, ShoppingListAPI
