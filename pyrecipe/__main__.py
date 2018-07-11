@@ -176,8 +176,11 @@ def cmd_ocr(args):
 
 def cmd_show(args):
     """Show the statistics information of the recipe database."""
+    dbinfo = DBInfo()
     if args.sites:
         print('\n'.join(SCRAPEABLE_SITES))
+    elif args.dish_type:
+        print('\n'.join(dbinfo.get_recipes_by_dishtype(args.dish_type)))
     else:
         sys.exit(utils.stats(args.verbose))
 
@@ -460,6 +463,12 @@ def subparser_show(subparser):
     parser_show = subparser.add_parser(
         "show",
         help="Show statistic from the recipe database"
+    )
+    parser_show.add_argument(
+        "-d",
+        "--dish-type",
+        metavar="DISHTYPE",
+        help="List sites that can be scraped"
     )
     parser_show.add_argument(
         "--scrapeable-sites",
