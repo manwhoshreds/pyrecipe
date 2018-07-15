@@ -524,11 +524,12 @@ class Ingredient:
             # size
             if self.size:
                 ingred_string.append(' {}'.format(self.size))
+            # portion
+            if self.portion:
+                ingred_string.append(' ({})'.format(self.portion))
             # unit
-            match = PORTIONED_UNIT_RE.search(self.unit)
-            if match:
-                unit = match.group().split()
-                unit = " ({}) {}".format(' '.join(unit[0:2]), unit[-1])
+            if self.unit:
+                unit = " {}".format(self.unit)
                 ingred_string.append(unit)
             elif self.unit == 'each':
                 pass
@@ -592,7 +593,9 @@ class Ingredient:
         match = PORTIONED_UNIT_RE.search(ingred_string)
         if match:
             ingred_string = ingred_string.replace(match.group(), '')
-            self.unit = self._strip_parens(match.group())
+            unit = self._strip_parens(match.group()).split()
+            self.portion = ' '.join(unit[:2])
+            self.unit = unit[-1]
         else:
             if "to taste" in ingred_string:
                 self.unit = "taste"
@@ -657,15 +660,23 @@ class Ingredient:
         self.name = name.strip(', ')
 
 if __name__ == '__main__':
-    #ingredients = []
-    #for item in config.RECIPE_DATA_FILES:
-    #    r = Recipe(item)
-    #    ingreds, named = r.get_ingredients(fmt='string')
-    #    ingredients += ingreds
-    #    if named:
-    #        for item in named:
-    #            ingredients += named[item]
-    #
+    ingredients = []
+    for item in config.RECIPE_DATA_FILES:
+        r = Recipe(item)
+        ingreds, named = r.get_ingredients()
+        for item in ingreds:
+            ingredients += ingreds
+            if item.unit == 'can':
+                print(r.name)
+        if named:
+            for item in named:
+                ingredients += named[item]
+                for ingred in named[item]:
+                    if ingred.note:
+                        if 'can' in ingred.note:
+                            pass
+                            #print(r.name)
+    
     ##print('\n'.join(ingredients))
     #for item in ingredients:
     #    i = Ingredient(item)
@@ -673,6 +684,5 @@ if __name__ == '__main__':
     ##test = Ingredient("1 tablespoon onion")
     ##print(test.data)
     i = Ingredient('1 (16 ounce) can onion sauce (extra oniony)')
-    print(i.get_data_dict())
     print(i.data)
     print(i)
