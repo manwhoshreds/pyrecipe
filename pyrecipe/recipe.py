@@ -459,16 +459,17 @@ class Ingredient:
     :param ingredient: dict or string of ingredient.
     """
     def __init__(self, ingredient):
-        self.name, self.size, self.prep = ('',) * 3
+        self.name, self.size, self.prep, self.portion = ('',) * 4
         self.note, self.amount, self.unit = ('',) * 3
         if isinstance(ingredient, str):
             self.string = ingredient
             self.data = {}
             self._parse_ingredient(ingredient)
-            self.data = self.get_data_dict()
+            self.data = self._get_data_dict()
         else:
             self.data = ingredient
             self.name = ingredient['name']
+            self.portion = ingredient.get('portion', '')
             self.size = ingredient.get('size', None)
             self.prep = ingredient.get('prep', '')
             self.note = ingredient.get('note', '')
@@ -478,9 +479,11 @@ class Ingredient:
             self.unit = ingredient.get('unit')
             self.string = str(self)
 
-    def get_data_dict(self):
+    def _get_data_dict(self):
         data = {}
         data['name'] = self.name
+        if self.portion:
+            data['portion'] = self.portion
         if self.size:
             data['size'] = self.size
         if self.prep:
@@ -654,18 +657,22 @@ class Ingredient:
         self.name = name.strip(', ')
 
 if __name__ == '__main__':
-    ingredients = []
-    for item in config.RECIPE_DATA_FILES:
-        r = Recipe(item)
-        ingreds, named = r.get_ingredients(fmt='string')
-        ingredients += ingreds
-        if named:
-            for item in named:
-                ingredients += named[item]
-    
-    #print('\n'.join(ingredients))
-    for item in ingredients:
-        i = Ingredient(item)
-        print(i.data)
-    #test = Ingredient("1 tablespoon onion")
-    #print(test.data)
+    #ingredients = []
+    #for item in config.RECIPE_DATA_FILES:
+    #    r = Recipe(item)
+    #    ingreds, named = r.get_ingredients(fmt='string')
+    #    ingredients += ingreds
+    #    if named:
+    #        for item in named:
+    #            ingredients += named[item]
+    #
+    ##print('\n'.join(ingredients))
+    #for item in ingredients:
+    #    i = Ingredient(item)
+    #    print(i.data)
+    ##test = Ingredient("1 tablespoon onion")
+    ##print(test.data)
+    i = Ingredient('1 (16 ounce) can onion sauce (extra oniony)')
+    print(i.get_data_dict())
+    print(i.data)
+    print(i)

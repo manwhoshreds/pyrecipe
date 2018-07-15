@@ -24,6 +24,9 @@ from pyrecipe.db import (DBInfo, DBConn, delete_recipe)
 from pyrecipe.console_gui import RecipeEditor, RecipeMaker
 
 
+# mainly for the testsuite
+#__all__ = [c for c in dir() if c.startswith('cmd_')] + ['get_parser']
+
 def cmd_print(args):
     """Print a recipe to stdout."""
     recipe = Recipe(args.source)
@@ -187,9 +190,6 @@ def cmd_show(args):
 def version():
     """Print pyrecipe version information."""
     version_info()
-
-# mainly for the testsuite
-__all__ = [c for c in dir() if c.startswith('cmd_')] + ['get_parser']
 
 ## End command funtions
 
