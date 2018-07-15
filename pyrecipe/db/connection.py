@@ -1,8 +1,8 @@
 """
     pyreicpe.db
     ~~~~~~~~~~~
-    
-    The main database connection file for pyrecipe. This module handles 
+
+    The main database connection file for pyrecipe. This module handles
     the connection, query, and building of the database.
 """
 import os
@@ -45,7 +45,7 @@ TABLES['named_ingredients'] = """
         recipe_id INTEGER,
         alt_name TEXT,
         ingredient_str TEXT,
-        FOREIGN KEY(recipe_id) 
+        FOREIGN KEY(recipe_id)
         REFERENCES Recipes(id))
 """
 TABLES['steps'] = """
@@ -59,7 +59,7 @@ TABLES['steps'] = """
 class RecipeDB:
     """A database subclass for pyrecipe."""
     def __init__(self):
-        try: 
+        try:
             self.conn = sqlite3.connect(DB_FILE)
         except sqlite3.OperationalError:
             sys.exit('Something unexpected happened....')
@@ -80,13 +80,13 @@ class RecipeDB:
         )]
         self.c.executemany(
             '''INSERT OR REPLACE INTO recipes (
-                recipe_uuid, 
-                name, 
-                dish_type, 
-                author, 
-                tags, 
-                categories, 
-                price, 
+                recipe_uuid,
+                name,
+                dish_type,
+                author,
+                tags,
+                categories,
+                price,
                 source_url
                 ) VALUES(?, ?, ?, ?, ?, ?, ?, ?)''', recipe_data
         )
@@ -98,9 +98,9 @@ class RecipeDB:
         )]
         self.c.executemany(
             '''INSERT OR REPLACE INTO recipesearch (
-                name, 
-                author, 
-                tags, 
+                name,
+                author,
+                tags,
                 categories
                 ) VALUES(?, ?, ?, ?)''', recipe_data_search
         )
@@ -111,7 +111,7 @@ class RecipeDB:
             )]
             self.c.executemany(
                 '''INSERT OR REPLACE INTO ingredientsearch (
-                    name, 
+                    name,
                     ingredient
                     ) VALUES(?, ?)''', ingredient_data_search
             )
@@ -122,11 +122,11 @@ class RecipeDB:
         )
         for item in recipe.get_ingredients(fmt='string')[0]:
             self.c.execute('''INSERT OR REPLACE INTO ingredients (
-                                recipe_id, 
+                                recipe_id,
                                 ingredient_str
-                                ) VALUES(?, ?)''', (recipe_id[0][0], item)) 
+                                ) VALUES(?, ?)''', (recipe_id[0][0], item))
         self._commit()
-        
+
     def __del__(self):
         self.conn.close()
 
@@ -146,7 +146,7 @@ class RecipeDB:
         except sqlite3.OperationalError:
             result = []
         return result
-    
+
     def create_database(self):
         """Create the recipe database."""
         for name, statement in TABLES.items():
@@ -179,5 +179,3 @@ if __name__ == '__main__':
     db = RecipeDB()
     for item in db.words:
         print(item)
-
-

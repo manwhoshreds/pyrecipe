@@ -140,7 +140,7 @@ class SearchCmdTestCase(CommandLineTestCase):
         self.subcmd = 'search'
         self.cmd = cmd_search
 
-    def test_search_term_not_found(self):
+    def itest_search_term_not_found(self):
         """recipe_tool search <not found>"""
         arg = [self.subcmd, "iknowthiswillneverreturnasearch"]
         with self.assertRaises(SystemExit) as cm:

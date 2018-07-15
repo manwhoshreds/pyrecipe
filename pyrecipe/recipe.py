@@ -455,16 +455,17 @@ class Ingredient:
     :param ingredient: dict or string of ingredient.
     """
     def __init__(self, ingredient):
-        self.name, self.size, self.prep = ('',) * 3
+        self.name, self.size, self.prep, self.portion = ('',) * 4
         self.note, self.amount, self.unit = ('',) * 3
         if isinstance(ingredient, str):
             self.string = ingredient
             self.data = {}
             self._parse_ingredient(ingredient)
-            self.data = self.get_data_dict()
+            self.data = self._get_data_dict()
         else:
             self.data = ingredient
             self.name = ingredient['name']
+            self.portion = ingredient.get('portion', '')
             self.size = ingredient.get('size', None)
             self.prep = ingredient.get('prep', '')
             self.note = ingredient.get('note', '')
@@ -474,9 +475,11 @@ class Ingredient:
             self.unit = ingredient.get('unit')
             self.string = str(self)
 
-    def get_data_dict(self):
+    def _get_data_dict(self):
         data = {}
         data['name'] = self.name
+        if self.portion:
+            data['portion'] = self.portion
         if self.size:
             data['size'] = self.size
         if self.prep:
@@ -517,11 +520,12 @@ class Ingredient:
             # size
             if self.size:
                 ingred_string.append(' {}'.format(self.size))
+            # portion
+            if self.portion:
+                ingred_string.append(' ({})'.format(self.portion))
             # unit
-            match = PORTIONED_UNIT_RE.search(self.unit)
-            if match:
-                unit = match.group().split()
-                unit = " ({}) {}".format(' '.join(unit[0:2]), unit[-1])
+            if self.unit:
+                unit = " {}".format(self.unit)
                 ingred_string.append(unit)
             elif self.unit == 'each':
                 pass
@@ -585,7 +589,9 @@ class Ingredient:
         match = PORTIONED_UNIT_RE.search(ingred_string)
         if match:
             ingred_string = ingred_string.replace(match.group(), '')
-            self.unit = self._strip_parens(match.group())
+            unit = self._strip_parens(match.group()).split()
+            self.portion = ' '.join(unit[:2])
+            self.unit = unit[-1]
         else:
             if "to taste" in ingred_string:
                 self.unit = "taste"
@@ -653,15 +659,26 @@ if __name__ == '__main__':
     ingredients = []
     for item in config.RECIPE_DATA_FILES:
         r = Recipe(item)
-        ingreds, named = r.get_ingredients(fmt='string')
-        ingredients += ingreds
+        ingreds, named = r.get_ingredients()
+        for item in ingreds:
+            ingredients += ingreds
+            if item.unit == 'can':
+                print(r.name)
         if named:
             for item in named:
                 ingredients += named[item]
+                for ingred in named[item]:
+                    if ingred.note:
+                        if 'can' in ingred.note:
+                            pass
+                            #print(r.name)
     
-    #print('\n'.join(ingredients))
-    for item in ingredients:
-        i = Ingredient(item)
-        print(i.data)
-    #test = Ingredient("1 tablespoon onion")
-    #print(test.data)
+    ##print('\n'.join(ingredients))
+    #for item in ingredients:
+    #    i = Ingredient(item)
+    #    print(i.data)
+    ##test = Ingredient("1 tablespoon onion")
+    ##print(test.data)
+    i = Ingredient('1 (16 ounce) can onion sauce (extra oniony)')
+    print(i.data)
+    print(i)
