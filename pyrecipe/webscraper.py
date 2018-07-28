@@ -78,12 +78,12 @@ class TemplateWebScraper(ABC):
     
     @abstractmethod
     def scrape_prep_time(self):
-        """Scrape the recipe name"""
+        """Scrape the prep time"""
         pass
     
     @abstractmethod
     def scrape_cook_time(self):
-        """Scrape the recipe name"""
+        """Scrape the cook time"""
         pass
     
     @abstractmethod

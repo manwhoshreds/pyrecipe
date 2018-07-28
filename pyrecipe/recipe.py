@@ -525,12 +525,10 @@ class Ingredient:
                 ingred_string.append(' ({})'.format(self.portion))
             # unit
             if self.unit:
-                unit = " {}".format(self.unit)
-                ingred_string.append(unit)
-            elif self.unit == 'each':
-                pass
-            else:
-                ingred_string.append(' {}'.format(self.unit))
+                if self.unit == 'each':
+                    pass
+                else:
+                    ingred_string.append(' {}'.format(self.unit))
 
             # name
             ingred_string.append(' {}'.format(self.name))
