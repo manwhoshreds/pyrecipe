@@ -71,7 +71,7 @@ def cmd_remote(args):
     elif args.add_recipe:
         data = Recipe(args.source).get_json()
         added = recipe_api.create(data)
-        sys.exit(added['message'])
+        print(added['message'])
 
 @delete_recipe
 def cmd_remove(args):
@@ -562,8 +562,4 @@ def main():
         case[args.subparser](args)
 
 if __name__ == '__main__':
-    #import cProfile
-    #cProfile.run('main()')
-    #import timeit
-    #print(timeit.timeit("main()"))
     main()

@@ -76,7 +76,7 @@ def get_source_path(source):
         # after all, this is the intended way to lookup the recipe.
         file_name = get_file_name(source)
         if file_name is None:
-            print('recipe not found')
+            sys.exit('recipe not found')
         else:
             return file_name
 

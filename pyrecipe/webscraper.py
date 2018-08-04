@@ -58,11 +58,11 @@ class TemplateWebScraper(ABC):
     
     def __init__(self, url):
         super().__init__()
-        self.source_url = url
-        req = requests.get(self.source_url).text
+        req = requests.get(url).text
         self.soup = bs4.BeautifulSoup(req, 'html.parser')
         self.data = {}
         self.data['uuid'] = str(uuid.uuid4())
+        self.data['source_url'] = url
         self.__scrape()
 
     def __scrape(self):
@@ -265,7 +265,7 @@ class AllRecipesWebScraper(TemplateWebScraper):
 
     def scrape_ingredients(self):
         """Scrape the recipe ingredients."""
-        attrs = {'itemprop': 'ingredients'}
+        attrs = {'itemprop': 'recipeIngredient'}
         ingred_box = self.soup.find_all('span', attrs=attrs)
         ingredients = []
         for item in ingred_box:
@@ -370,10 +370,11 @@ class FoodNetworkWebScraper(TemplateWebScraper):
 
 if __name__ == '__main__':
     from pyrecipe.recipe import Recipe
-    r = Recipe("https://tasty.co/recipe/easy-butter-chicken")
-    #r = Recipe("http://www.geniuskitchen.com/recipe/ina-gartens-baked-sweet-potato-fries-333618")
-    #r = Recipe("https://www.allrecipes.com/recipe/232062/chef-johns-creme-caramel/")
-    #r = Recipe("https://www.foodnetwork.com/recipes/ree-drummond/salisbury-steak-recipe-2126533")
+    #webrecipe = "https://tasty.co/recipe/easy-butter-chicken"
+    #webrecipe = "http://www.geniuskitchen.com/recipe/ina-gartens-baked-sweet-potato-fries-333618"
+    webrecipe = "https://www.allrecipes.com/recipe/232062/chef-johns-creme-caramel/"
+    #webrecipe = "https://www.foodnetwork.com/recipes/ree-drummond/salisbury-steak-recipe-2126533"
+    r = Recipe(webrecipe)
     r.print_recipe()
     #print(r.get_json())
     #test = RecipeWebScraper.get_sites()
