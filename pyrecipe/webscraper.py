@@ -4,7 +4,7 @@
     ~~~~~~~~~~~~~~~~~~~
     The recipe webscraper class lets you download recipes from some sites.
     You can either keep the recipe the way it is and just use it with pyrecipe
-    or you can use the recipe as a template for your own recpipe development.
+    or you can use the recipe as a template for your own recipe development.
 
     - RecipeWebScraper: The pyrecipe web_scraper class is a web
                         scraping utility used to download and analyze
