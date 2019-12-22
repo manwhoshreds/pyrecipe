@@ -104,7 +104,7 @@ def cmd_search(args):
     #    print(item['name'].title())
     #sys.exit(0)
 
-    results = DBInfo().search(search)
+    results = sorted(DBInfo().search(search))
     numres = len(results)
     if numres == 0:
         sys.exit(utils.msg(
