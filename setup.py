@@ -7,8 +7,6 @@ DEPS = [
     'ruamel.yaml',
     'lxml',
     'termcolor'
-    #'SpeechRecognition',
-    #'gtts',
 ]
 
 DATA_FILES = [

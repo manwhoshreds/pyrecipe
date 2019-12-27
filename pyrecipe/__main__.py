@@ -21,7 +21,7 @@ from pyrecipe.api import RecipeAPI, ShoppingListAPI
 from pyrecipe.webscraper import SCRAPEABLE_SITES
 from pyrecipe import __scriptname__, version_info
 from pyrecipe.db import (DBInfo, DBConn, delete_recipe)
-from pyrecipe.console_gui import RecipeEditor, RecipeMaker
+from pyrecipe.console_gui import RecipeEditor
 
 
 # mainly for the testsuite
