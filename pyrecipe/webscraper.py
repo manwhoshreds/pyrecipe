@@ -29,7 +29,7 @@ import pyrecipe.utils as utils
 
 SCRAPERS = {
     'https://tasty.co': 'TastyWebScraper',
-    'http://www.geniuskitchen.com': 'GeniusWebScraper',
+    'https://www.food.com': 'FoodWebScraper',
     'https://www.allrecipes.com': 'AllRecipesWebScraper',
     #'https://www.foodnetwork.com': 'FoodNetworkWebScraper'
 }
@@ -112,8 +112,8 @@ class TemplateWebScraper(ABC):
         pass
 
 
-class GeniusWebScraper(TemplateWebScraper):
-    """Web Scraper for http://www.geniuskitchen.com."""
+class FoodWebScraper(TemplateWebScraper):
+    """Web Scraper for https://www.food.com."""
     
     def scrape_prep_time(self):
         """Scrape the recipe name"""
@@ -127,8 +127,12 @@ class GeniusWebScraper(TemplateWebScraper):
     
     def scrape_name(self):
         """Scrape the recipe name."""
-        name_box = self.soup.find('h2', attrs={'class': 'modal-title'})
+        print("hello")
+        name_box = self.soup.find('h1', attrs={'class': 'recipe-title'})
+        print("what the crap")
+        print(name_box)
         recipe_name = name_box.text.strip()
+        print(recipe_name)
         return recipe_name
 
     def scrape_author(self):
@@ -251,7 +255,7 @@ class AllRecipesWebScraper(TemplateWebScraper):
     
     def scrape_name(self):
         """Scrape the recipe name."""
-        attrs = {'class': 'recipe-summary__h1'}
+        attrs = {'class': 'recipe-title'}
         name_box = self.soup.find('h1', attrs=attrs)
         recipe_name = name_box.text.strip()
         return recipe_name
@@ -372,8 +376,9 @@ if __name__ == '__main__':
     from pyrecipe.recipe import Recipe
     #webrecipe = "https://tasty.co/recipe/easy-butter-chicken"
     #webrecipe = "http://www.geniuskitchen.com/recipe/ina-gartens-baked-sweet-potato-fries-333618"
-    webrecipe = "https://www.allrecipes.com/recipe/232062/chef-johns-creme-caramel/"
+    #webrecipe = "https://www.allrecipes.com/recipe/232062/chef-johns-creme-caramel/"
     #webrecipe = "https://www.foodnetwork.com/recipes/ree-drummond/salisbury-steak-recipe-2126533"
+    webrecipe = "https://www.food.com/recipe/easiest-greek-salad-dressing-428819"
     r = Recipe(webrecipe)
     r.print_recipe()
     #print(r.get_json())

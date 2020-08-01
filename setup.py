@@ -6,7 +6,8 @@ DEPS = [
     'bs4',
     'ruamel.yaml',
     'lxml',
-    'termcolor'
+    'termcolor',
+    'inflect'
 ]
 
 DATA_FILES = [
@@ -37,7 +38,7 @@ setup(
         ]
     },
     packages=setuptools.find_packages(),
-    install_require=DEPS,
+    install_requires=DEPS,
     classifiers=(
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
