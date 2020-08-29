@@ -28,9 +28,10 @@ import pyrecipe.utils as utils
 
 
 SCRAPERS = {
+    #'https://www.food.com': 'FoodWebScraper',
     'https://tasty.co': 'TastyWebScraper',
-    'https://www.food.com': 'FoodWebScraper',
-    'https://www.allrecipes.com': 'AllRecipesWebScraper',
+    'https://www.bigoven.com': 'BigOvenWebScraper',
+    #'https://www.allrecipes.com': 'AllRecipesWebScraper',
     #'https://www.foodnetwork.com': 'FoodNetworkWebScraper'
 }
 SCRAPEABLE_SITES = list(SCRAPERS.keys())
@@ -48,8 +49,7 @@ class RecipeWebScraper:
             sites = '\n\t'.join(SCRAPEABLE_SITES)
             sys.exit(utils.msg(
                 "{} is not scrapeable by pyrecipe. Please select from the "
-                "following sites:\n\n\t".format(url), "WARN") +
-                utils.msg(sites))
+                "following sites:\n\n{}".format(url, sites), "WARN"))
 
         return eval(SCRAPERS[scrapeable])(url).data
 
@@ -116,41 +116,38 @@ class FoodWebScraper(TemplateWebScraper):
     """Web Scraper for https://www.food.com."""
     
     def scrape_prep_time(self):
-        """Scrape the recipe name"""
+        """Scrape the prep time"""
         prep_time = ''
         return prep_time
     
     def scrape_cook_time(self):
-        """Scrape the recipe name"""
+        """Scrape the cook time"""
         cook_time = ''
         return cook_time
     
     def scrape_name(self):
         """Scrape the recipe name."""
-        print("hello")
-        name_box = self.soup.find('h1', attrs={'class': 'recipe-title'})
-        print("what the crap")
-        print(name_box)
+        name_box = self.soup.find('div', attrs={'class': 'recipe-title'})
         recipe_name = name_box.text.strip()
-        print(recipe_name)
         return recipe_name
 
     def scrape_author(self):
         """Scrape the recipe author."""
-        name_box = self.soup.find('h6', attrs={'class': 'byline'})
-        recipe_by = name_box.text.strip()
-        author = ' '.join(recipe_by.split(' ')[2:]).strip()
+        name_box = self.soup.find('a', attrs={'class': 'recipe-details__author-link theme-color'})
+        author = name_box.text.strip()
         return author
 
     def scrape_ingredients(self):
         """Scrape the recipe ingredients."""
-        attrs = {'class': 'ingredient-list'}
-        ingred_box = self.soup.find_all('ul', attrs=attrs)
+        attrs = {'class': 'recipe-ingredients__ingredient-part'}
+        ingred_box = self.soup.find_all('span', attrs=attrs)
+        print(ingred_box)
         ingredients = []
         for item in ingred_box:
             for litag in item.find_all('li'):
                 ingred = ' '.join(litag.text.strip().split())
                 ingredients.append(ingred)
+        print(ingredients)
         return ingredients
 
     def scrape_named_ingredients(self):
@@ -234,6 +231,67 @@ class TastyWebScraper(TemplateWebScraper):
             step_dict['step'] = item.text.strip()
             recipe_steps.append(step_dict)
         return recipe_steps
+
+
+class BigOvenWebScraper(TemplateWebScraper):
+    """Web Scraper for https://www.bigoven.com."""
+
+    def scrape_prep_time(self):
+        """Scrape the prep time"""
+        prep_time = ''
+        return prep_time
+    
+    def scrape_cook_time(self):
+        """Scrape the cook time"""
+        cook_time = ''
+        return cook_time
+    
+    def scrape_name(self):
+        """Scrape the recipe name."""
+        attributes = {'class', 'recipe-container modern'}
+        name_box = self.soup.find('div', attrs=attributes)
+        name_box = name_box.find('h1')
+        recipe_name = name_box.text.strip()
+        return recipe_name
+
+    def scrape_author(self):
+        """Scrape the recipe author."""
+        return "No author"
+
+    def scrape_ingredients(self):
+        """Scrape the recipe ingredients."""
+        attrs = {'class': 'recipe-ingredients__ingredient-part'}
+        ingred_box = self.soup.find_all('span', attrs=attrs)
+        print(ingred_box)
+        ingredients = []
+        for item in ingred_box:
+            for litag in item.find_all('li'):
+                ingred = ' '.join(litag.text.strip().split())
+                ingredients.append(ingred)
+        print(ingredients)
+        return ingredients
+
+    def scrape_named_ingredients(self):
+        """Scrape the recipe named ingredients."""
+        # Not implemented yet
+        named_ingreds = []
+        return named_ingreds
+    
+    def scrape_method(self):
+        """Scrape the recipe method."""
+        attrs = {'class': 'directions-inner container-xs'}
+        method_box = self.soup.find('div', attrs=attrs)
+        litags = method_box.find_all('li')
+        # last litag is "submit a correction", we dont need that
+        del litags[-1]
+        recipe_steps = []
+        for item in litags:
+            step_dict = {}
+            step_dict['step'] = item.text.strip()
+            recipe_steps.append(step_dict)
+
+        steps = recipe_steps
+        return steps
 
 
 class AllRecipesWebScraper(TemplateWebScraper):

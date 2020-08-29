@@ -1,4 +1,5 @@
 from distutils.core import setup
+from setuptools import find_packages
 
 DEPS = [
     'pint',
@@ -7,7 +8,8 @@ DEPS = [
     'ruamel.yaml',
     'lxml',
     'termcolor',
-    'inflect'
+    'inflect',
+    'requests'
 ]
 
 DATA_FILES = [
@@ -21,7 +23,7 @@ with open("README.asc", "r") as fh:
 
 setup(
     name="pyrecipe",
-    version="0.6.0",
+    version="0.6.1",
     author="Michael K. Miller",
     author_email="m.k.miller@gmx.com",
     description='A python tool for managing recipes',
@@ -37,7 +39,7 @@ setup(
             'recipe_tool = pyrecipe.__main__:main'
         ]
     },
-    packages=setuptools.find_packages(),
+    packages=find_packages(),
     install_requires=DEPS,
     classifiers=(
         "Programming Language :: Python :: 3",
