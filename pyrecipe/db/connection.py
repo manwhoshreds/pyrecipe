@@ -48,6 +48,13 @@ TABLES['named_ingredients'] = """
         FOREIGN KEY(recipe_id)
         REFERENCES Recipes(id))
 """
+TABLES['steps'] = """
+    CREATE TABLE IF NOT EXISTS {0}(
+        recipe_id INTEGER,
+        step TEXT,
+        FOREIGN KEY(recipe_id) 
+        REFERENCES Recipes(id))
+"""
 
 class RecipeDB:
     """A database subclass for pyrecipe."""

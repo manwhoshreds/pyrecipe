@@ -389,10 +389,6 @@ class RecipeEditor:
                                      self.recipe.source_url,
                                      wrap='clip'), 'source_url'
                                      ),
-            ur.AttrMap(ur.IntEdit('Recipe Yield: ',
-                                  self.recipe.recipe_yield), 
-                                  'recipe_yield'
-                                  ),
             ur.AttrMap(ur.Edit('Author: ',
                                 self.recipe.author), 'author'
                                 )
@@ -478,35 +474,6 @@ class RecipeEditor:
 
         self.loop.widget = overlay
 
-    def test_prompt(self, args):
-        """Pop-up window that appears when you try to quit."""
-        text = "Changes have been made. Quit?"
-        question = ur.Text(("bold", text), "center")
-
-        cancel_btn = ur.AttrMap(ur.Button(
-            "Cancel", self.test_answer, "cancel"), "title", None)
-        save_btn = ur.AttrMap(ur.Button(
-            "Save", self.test_answer, "save"), "title", None)
-        quit_btn = ur.AttrMap(ur.Button(
-            "Quit", self.test_answer, "quit"), "red", None)
-
-        prompt = ur.LineBox(ur.ListBox(ur.SimpleFocusListWalker(
-            [question, BLANK, BLANK, cancel_btn, save_btn, quit_btn])))
-
-        overlay = ur.Overlay(
-            prompt, self.loop.widget,
-            "center", 19, "middle", 9,
-            16, 8)
-        self.test.append(IngredBlock(ingredients=['hello']))
-        self.loop.widget = self.frame
-
-    def test_answer(self, button, label):
-        """Prompt answer"""
-        self.listbox_content = [BLANK]
-        self.setup_view()
-
-        self.loop.widget = self.frame
-
     def prompt_answer(self, button, label):
         """Prompt answer"""
         if label == 'quit':
@@ -534,12 +501,6 @@ class RecipeEditor:
         """Check if the state of the recipe has changed."""
         changed = False
         self.update_recipe_data()
-        #print(self.initial_state._recipe_data) 
-        #print(self.recipe._recipe_data)
-        #print(self.initial_state._recipe_data) 
-        #print(self.initial_state._recipe_data) 
-        #print(self.recipe.get_yaml_string())
-        #print(self.initial_state.get_yaml_string())
         if self.initial_state != self.recipe:
             changed = True
         return changed
@@ -639,4 +600,5 @@ class RecipeEditor:
 
 if __name__ == '__main__':
     r = Recipe('test')
-    RecipeEditor(r).start()
+    #RecipeEditor(r).start()
+    test = RecipeEditor(r)

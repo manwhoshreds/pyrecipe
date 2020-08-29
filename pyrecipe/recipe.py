@@ -171,10 +171,6 @@ class Recipe:
     __getitem__ = __getattr__
     __delitem__ = __delattr__
 
-    def __hash__(self):
-        """Get the recipe hash."""
-        return hash(self.get_yaml_string())
-    
     def __copy__(self):
         cls = self.__class__
         newobj = cls.__new__(cls)
