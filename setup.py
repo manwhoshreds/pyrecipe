@@ -13,9 +13,9 @@ DEPS = [
 ]
 
 DATA_FILES = [
-    ('share/bash-completion/completions', ['misc/completion/recipe_tool'])
-]
-#('/etc', ['misc/pyrecipe.cfg']) not working, i have no idea why
+    ('share/bash-completion/completions', ['misc/completion/recipe_tool']),
+    ('/etc', ['misc/pyrecipe.cfg'])
+}
 
 
 with open("README.asc", "r") as fh:
