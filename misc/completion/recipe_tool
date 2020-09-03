@@ -48,5 +48,6 @@ _pyrecipe()
 			;;
 	esac
 }
+
 complete -F _pyrecipe recipe_tool
 # vim: set syntax=sh:

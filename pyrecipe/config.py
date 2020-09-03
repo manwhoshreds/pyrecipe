@@ -17,7 +17,7 @@ if not os.path.exists(_usr_config_path):
     os.makedirs(_recipe_data_path)
 
 _conf = os.path.join(_usr_config_path, 'pyrecipe.cfg')
-if os.path.exists(_conf):
+if os.path.isfile(_conf):
     CONFIG_FILE = _conf
 else:
     CONFIG_FILE = '/etc/pyrecipe/pyrecipe.cfg'

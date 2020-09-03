@@ -73,7 +73,7 @@ def version_info():
 
 class Q_(ureg.Quantity):
     """Subclass to implement a few custom behaviors
-    
+
     Capabilities include always rounding up to the nearest whole
     and printing plural units dependent upon the objects magnitude
     """
@@ -89,7 +89,7 @@ class Q_(ureg.Quantity):
             units = ['gram', 'ounce', 'pound']
         else:
             return
-        
+
         quants = {}
         for item in units:
             test = self.to(item)

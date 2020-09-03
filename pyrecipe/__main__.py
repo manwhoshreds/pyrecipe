@@ -16,7 +16,7 @@ import pyrecipe.config as config
 import pyrecipe.shopper as shopper
 from pyrecipe.recipe import Recipe
 from pyrecipe.ocr import RecipeOCR
-from pyrecipe.api import RecipeAPI, ShoppingListAPI
+from pyrecipe.api import RecipeAPI
 #from pyrecipe.spell import spell_check
 from pyrecipe.webscraper import SCRAPEABLE_SITES
 from pyrecipe import __scriptname__, version_info
@@ -86,16 +86,6 @@ def cmd_remove(args):
 
     print("{} not deleted".format(recipe.name))
     return None
-
-def cmd_make(args):
-    """Make a recipe using the urwid automated script.
-
-    This script helps you make your recipe by cycling through
-    ingredients and steps. It also hands a hands free voice
-    recognition feature in case your hands are stuck in flour
-    or other ingredients. Who knows, your cooking!!
-    """
-    RecipeMaker(args.source).start()
 
 def cmd_search(args):
     """Search the recipe database."""
@@ -288,17 +278,6 @@ def subparser_remove(subparser):
     parser_remove.add_argument(
         "source",
         help='Recipe to delete'
-    )
-
-def subparser_make(subparser):
-    """Subparser for make command."""
-    parser_make = subparser.add_parser(
-        "make",
-        help='Make a recipe using the urwid automated script'
-    )
-    parser_make.add_argument(
-        "source",
-        help='Recipe to make'
     )
 
 def subparser_search(subparser):
@@ -511,7 +490,6 @@ def get_parser():
     subparser_add(subparser)
     subparser_remote(subparser)
     subparser_remove(subparser)
-    subparser_make(subparser)
     subparser_search(subparser)
     subparser_shop(subparser)
     subparser_dump(subparser)
@@ -548,7 +526,6 @@ def main():
         'add': cmd_add,
         'remote': cmd_remote,
         'remove': cmd_remove,
-        'make': cmd_make,
         'search': cmd_search,
         'shop': cmd_shop,
         'dump': cmd_dump,

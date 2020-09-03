@@ -3,13 +3,14 @@
     pyrecipe.console_gui.add_recipe
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    A console gui built with ur used to add recipes to pyrecipe
+    A console gui built with urwid used to add recipes to pyrecipe
 
     :copyright: 2017 by Michael Miller
     :license: GPL, see LICENSE for more details.
 """
 import copy
 from collections import deque
+import uuid
 
 import urwid as ur
 
@@ -348,6 +349,7 @@ class RecipeEditor:
             # We are adding a new recipe. Init a recipe with no data
             self.recipe = Recipe()
             self.recipe.name = recipe
+            self.recipe.uuid = str(uuid.uuid4())
             self.welcome = 'Add a Recipe: {}'.format(self.recipe.name)
         else:
             self.recipe = recipe

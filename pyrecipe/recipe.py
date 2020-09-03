@@ -30,11 +30,9 @@ import io
 import os
 import sys
 import json
-import uuid
 import shutil
 import string
-import requests
-from copy import copy, deepcopy
+from copy import deepcopy
 from collections import OrderedDict
 from zipfile import ZipFile, BadZipFile
 
@@ -44,7 +42,7 @@ from ruamel.yaml import YAML
 import pyrecipe.utils as utils
 import pyrecipe.config as config
 from pyrecipe.db import update_db
-from pyrecipe import Q_, CULINARY_UNITS, ureg
+from pyrecipe import Q_, CULINARY_UNITS
 from pyrecipe.recipe_numbers import RecipeNum
 from pyrecipe.webscraper import RecipeWebScraper
 
@@ -105,7 +103,6 @@ class Recipe:
         self.source = source
         if isinstance(source, dict):
             self._set_data(source)
-            self.file_name = utils.get_file_name_from_uuid(self.uuid)
         elif HTTP_RE.search(source):
             data = RecipeWebScraper.scrape(source)
             self._set_data(data)
@@ -123,11 +120,8 @@ class Recipe:
                 sys.exit(utils.msg("{}".format(e), "ERROR"))
         else:
             self.dish_type = 'main'
-            self.file_name = utils.get_file_name_from_uuid(self.uuid)
-        
-        if not self.file_name:
-            self.file_name = utils.get_file_name_from_uuid(self.uuid)
-    
+            self.file_name = self.uuid + '.recipe'
+
     def _set_data(self, data):
         """
         Used to set recipe data from incoming dicts such as from webscraper and
@@ -135,7 +129,7 @@ class Recipe:
         """
         for key, value in data.items():
             setattr(self, key, value)
-    
+
     def __repr__(self):
         return "<Recipe(name='{}')>".format(self.name)
 
@@ -176,7 +170,7 @@ class Recipe:
         newobj = cls.__new__(cls)
         newobj.__dict__.update(self.__dict__)
         return newobj
-    
+
     def __deepcopy__(self, memo):
         cls = self.__class__
         result = cls.__new__(cls)
@@ -184,10 +178,10 @@ class Recipe:
         for k, v in self.__dict__.items():
             setattr(result, k, deepcopy(v, memo))
         return result
-    
+
     def __eq__(self, other):
         return self.get_yaml_string() == other.get_yaml_string()
-    
+
     @property
     def oven_temp(self):
         """Return the oven temperature string."""
@@ -207,10 +201,10 @@ class Recipe:
     def get_ingredients(self, fmt='object'):
         """
         Get the ingredients and named ingredients at the same time.
-        
+
         This is the recomended way of getting the ingredients for a recipe.
         Example: ingreds, named = recipe.get_ingredients(fmt='string')
-        
+
         :param fmt: specifies the format of the ingredient to be returned.
                     'object', 'string', 'data', 'quantity'
         :type fmt: str
@@ -227,9 +221,9 @@ class Recipe:
             ingreds = self.ingredients
         elif fmt == "string":
             ingreds = [str(i) for i in self.ingredients]
-        elif fmt == "data": 
+        elif fmt == "data":
             ingreds = [i.data for i in self.ingredients]
-        elif fmt == "quantity": 
+        elif fmt == "quantity":
             ingreds = [i.quantity for i in self.ingredients]
 
         named = OrderedDict()
@@ -237,16 +231,16 @@ class Recipe:
         for item in self.named_ingredients:
             ingred_list = []
             named_ingred_list = named_ingreds[item]
-            if fmt == "object": 
+            if fmt == "object":
                 ingred_list = named_ingred_list
             elif fmt == "string":
                 ingred_list = [str(i) for i in named_ingred_list]
             elif fmt == "data":
                 ingred_list = [i.data for i in named_ingred_list]
-            elif fmt == "quantity": 
+            elif fmt == "quantity":
                 ingred_list = [i.quantity for i in named_ingred_list]
             named[item] = ingred_list
-        
+
         return ingreds, named
 
     @property
@@ -374,13 +368,13 @@ class Recipe:
             recipe_str += step
 
         print(recipe_str)
-    
+
     def export(self, fmt, path):
         """Export the recipe in a chosen file format."""
         fmts = ('xml', 'recipe')
         if fmt not in fmts:
             raise ValueError('Format must be one of {}'.format(' '.join(fmts)))
-         
+
         file_name = utils.get_file_name_from_recipe(self.name, fmt)
         file_name = os.path.join(path, file_name)
 
@@ -396,12 +390,12 @@ class Recipe:
                 sys.exit(utils.msg("File already exists.", "ERROR"))
             else:
                 shutil.copyfile(src, dst)
-    
+
     @utils.recipe2xml
     def get_xml_data(self):
         """Return the xml data."""
         pass
-    
+
     def get_json(self):
         data = self._recipe_data
         ingreds, named = self.get_ingredients(fmt="string")
@@ -412,7 +406,7 @@ class Recipe:
         if self.named_ingredients:
             data['named_ingredients'] = named
         return json.dumps(data, indent=4)
-    
+
     def dump_data(self, fmt=None):
         """Dump a data format to screen.
 
@@ -451,7 +445,7 @@ class Recipe:
 
 class Ingredient:
     """Build an Ingredient object.
-    
+
     :param ingredient: dict or string of ingredient.
     """
     def __init__(self, ingredient):
@@ -611,7 +605,7 @@ class Ingredient:
         if parens:
             ingred_string = ingred_string.replace(parens.group(), '').strip()
             self.note = self._strip_parens(parens.group())
-        
+
         ingred_list = ingred_string.split()
         amnt_list = []
         for item in ingred_list:
@@ -654,29 +648,5 @@ class Ingredient:
         self.name = name.strip(', ')
 
 if __name__ == '__main__':
-    ingredients = []
-    for item in config.RECIPE_DATA_FILES:
-        r = Recipe(item)
-        ingreds, named = r.get_ingredients()
-        for item in ingreds:
-            ingredients += ingreds
-            if item.unit == 'can':
-                print(r.name)
-        if named:
-            for item in named:
-                ingredients += named[item]
-                for ingred in named[item]:
-                    if ingred.note:
-                        if 'can' in ingred.note:
-                            pass
-                            #print(r.name)
-    
-    ##print('\n'.join(ingredients))
-    #for item in ingredients:
-    #    i = Ingredient(item)
-    #    print(i.data)
-    ##test = Ingredient("1 tablespoon onion")
-    ##print(test.data)
-    i = Ingredient('1 (16 ounce) can onion sauce (extra oniony)')
-    print(i.data)
-    print(i)
+    r = Recipe()
+    print(r.print_recipe())
