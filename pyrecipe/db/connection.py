@@ -125,6 +125,16 @@ class RecipeDB:
                                 recipe_id,
                                 ingredient_str
                                 ) VALUES(?, ?)''', (recipe_id[0][0], item))
+    
+        if recipe.get_ingredients(fmt='string')[1]:
+            for item, ingreds in recipe.get_ingredients(fmt='string')[1].items():
+                for ingred in ingreds:
+                    self.c.execute('''INSERT OR REPLACE INTO named_ingredients (
+                                        recipe_id,
+                                        alt_name,
+                                        ingredient_str
+                                        ) VALUES(?, ?, ?)''', (recipe_id[0][0], item, ingred))
+        
         self._commit()
 
     def __del__(self):
@@ -174,8 +184,15 @@ def delete_recipe(delete_func):
     return wrapper
 
 if __name__ == '__main__':
-    from pyrecipe.db import get_data
-    import pprint
-    db = RecipeDB()
-    for item in db.words:
-        print(item)
+    from pyrecipe.recipe import Recipe
+    r = Recipe('zesty meatloaf')
+    print(r.get_ingredients())
+    if r.get_ingredients(fmt='string')[1]:
+        print("yea baw thats it ")
+    
+    for item, ingreds in r.get_ingredients(fmt='string')[1].items():
+        for test in ingreds:
+            print(item, test)
+        
+
+

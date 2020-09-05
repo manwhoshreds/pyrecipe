@@ -648,5 +648,7 @@ class Ingredient:
         self.name = name.strip(', ')
 
 if __name__ == '__main__':
-    r = Recipe()
-    print(r.print_recipe())
+    r = Recipe('zesty meatloaf')
+    r.dump_data()
+    test = r.get_ingredients("string")
+    print(test)

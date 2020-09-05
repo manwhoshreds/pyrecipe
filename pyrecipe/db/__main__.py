@@ -3,17 +3,11 @@
     ~~~~~~~~~~~
     Dump the database
 """
-from pyrecipe.db import get_data
-import pprint
+from pyrecipe.db import dbinfo
 
-
-#PP = pprint.PrettyPrinter()
-#test = get_data()
-#PP.pprint(test)
-
-names = get_data()['recipe_names']
+recipes = dbinfo.DBInfo().get_recipes()
 words = []
-for name in names:
+for name in recipes:
     #name = name.replace(' ', '_')
     name = name.replace(' ', '\ ')
     words.append(name.lower())
