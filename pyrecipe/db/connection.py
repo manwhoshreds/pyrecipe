@@ -137,6 +137,10 @@ class RecipeDB:
         
         self._commit()
 
+    def get_recipe(self, recipe):
+        test = self.query("SELECT * FROM recipes WHERE name=\'{}\'".format(recipe))
+        return test
+
     def __del__(self):
         self.conn.close()
 
@@ -184,15 +188,8 @@ def delete_recipe(delete_func):
     return wrapper
 
 if __name__ == '__main__':
-    from pyrecipe.recipe import Recipe
-    r = Recipe('zesty meatloaf')
-    print(r.get_ingredients())
-    if r.get_ingredients(fmt='string')[1]:
-        print("yea baw thats it ")
-    
-    for item, ingreds in r.get_ingredients(fmt='string')[1].items():
-        for test in ingreds:
-            print(item, test)
-        
+    this = RecipeDB()
+    what = this.get_recipe("Pesto")
+    print(what)
 
 
