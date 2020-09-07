@@ -11,36 +11,45 @@ import sqlite3
 from pyrecipe.config import DB_FILE
 
 TABLES = {}
-TABLES['recipesearch'] = """
+TABLES['RecipeSearch'] = """
     CREATE VIRTUAL TABLE {0}
     USING FTS5(name, author, tags, categories)
 """
-TABLES['ingredientsearch'] = """
+TABLES['IngredientSearch'] = """
     CREATE VIRTUAL TABLE {0}
     USING FTS5(name, ingredient)
 """
-TABLES['recipes'] = """
+TABLES['Recipes'] = """
     CREATE TABLE IF NOT EXISTS {0}(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         recipe_uuid TEXT NOT NULL UNIQUE,
         dish_type TEXT,
+        description TEXT,
         name TEXT NOT NULL UNIQUE,
         author TEXT,
+        source TEXT,
         tags TEXT,
         categories TEXT,
         price TEXT,
         source_url TEXT)
 """
-TABLES['ingredients'] = """
+TABLES['RecipeIngredients'] = """
     CREATE TABLE IF NOT EXISTS {0}(
-        recipe_id INTEGER,
-        ingredient_str TEXT,
+        id INT, 
         CONSTRAINT fk_ingredients
             FOREIGN KEY(recipe_id)
             REFERENCES Recipes(id)
             ON DELETE CASCADE)
 """
-TABLES['named_ingredients'] = """
+TABLES['RecipeIngredients'] = """
+    CREATE TABLE IF NOT EXISTS {0}(
+        id INT, 
+        CONSTRAINT fk_ingredients
+            FOREIGN KEY(recipe_id)
+            REFERENCES Recipes(id)
+            ON DELETE CASCADE)
+"""
+TABLES['NamedIngredients'] = """
     CREATE TABLE IF NOT EXISTS {0}(
         recipe_id INTEGER,
         alt_name TEXT,
@@ -48,13 +57,48 @@ TABLES['named_ingredients'] = """
         FOREIGN KEY(recipe_id)
         REFERENCES Recipes(id))
 """
-TABLES['steps'] = """
+TABLES['Ingredients'] = """
     CREATE TABLE IF NOT EXISTS {0}(
         recipe_id INTEGER,
         step TEXT,
         FOREIGN KEY(recipe_id) 
         REFERENCES Recipes(id))
 """
+TABLES['Units'] = """
+    CREATE TABLE IF NOT EXISTS {0}(
+        recipe_id INTEGER,
+        step TEXT,
+        FOREIGN KEY(recipe_id) 
+        REFERENCES Recipes(id))
+"""
+TABLES['DishType'] = """
+    CREATE TABLE IF NOT EXISTS {0}(
+        recipe_id INTEGER,
+        step TEXT,
+        FOREIGN KEY(recipe_id) 
+        REFERENCES Recipes(id))
+"""
+TABLES['Category'] = """
+    CREATE TABLE IF NOT EXISTS {0}(
+        recipe_id INTEGER,
+        step TEXT,
+        FOREIGN KEY(recipe_id) 
+        REFERENCES Recipes(id))
+"""
+TABLES['RecipeSteps'] = """
+    CREATE TABLE IF NOT EXISTS {0}(
+        recipe_id INTEGER,
+        step TEXT,
+        FOREIGN KEY(recipe_id) 
+        REFERENCES Recipes(id))
+"""
+
+def read_sql():
+    with open("tables.sql") as fi:
+        commands = fi.read().split(';')
+
+    return commands
+        
 
 class RecipeDB:
     """A database subclass for pyrecipe."""
@@ -163,8 +207,10 @@ class RecipeDB:
 
     def create_database(self):
         """Create the recipe database."""
-        for name, statement in TABLES.items():
-            self.c.execute(statement.format(name))
+        #for name, statement in TABLES.items():
+        #    self.c.execute(statement.format(name))
+        for command in read_sql():
+            self.c.execute(command)
 
 def update_db(save_func):
     """Decorater for updating pyrecipe db."""
@@ -188,8 +234,5 @@ def delete_recipe(delete_func):
     return wrapper
 
 if __name__ == '__main__':
-    this = RecipeDB()
-    what = this.get_recipe("Pesto")
-    print(what)
-
-
+    test = RecipeDB()
+    test.create_database()
