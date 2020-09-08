@@ -8,7 +8,7 @@ CREATE VIRTUAL TABLE IF NOT EXISTS IngredientSearch
 ;
 
 CREATE TABLE IF NOT EXISTS Recipes (
-	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	recipe_id INTEGER PRIMARY KEY AUTOINCREMENT,
 	recipe_uuid TEXT NOT NULL UNIQUE,
 	dish_type TEXT,
 	description TEXT,
@@ -22,11 +22,12 @@ CREATE TABLE IF NOT EXISTS Recipes (
 );
 
 CREATE TABLE IF NOT EXISTS RecipeIngredients (
-	id INT, 
-	CONSTRAINT fk_ingredients
-		FOREIGN KEY(recipe_id)
-		REFERENCES Recipes(id)
-		ON DELETE CASCADE
+	recipe_ingredient_id INTEGER PRIMARY KEY AUTOINCREMENT, 
+	recipe_id INTEGER,
+	amount INTEGER,
+	unit_id INTEGER,
+	ingredient_id,
+	ingredient_size_id
 );
 
 CREATE TABLE IF NOT EXISTS NamedIngredients (
@@ -35,31 +36,21 @@ CREATE TABLE IF NOT EXISTS NamedIngredients (
 	ingredient_str TEXT,
 	FOREIGN KEY(recipe_id)
 	REFERENCES Recipes(id)
+		ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS Ingredients (
-	recipe_id INTEGER,
-	step TEXT,
-	FOREIGN KEY(recipe_id) 
-	REFERENCES Recipes(id)
+	ingredient_id INTEGER PRIMARY KEY AUTOINCREMENT,
+	name TEXT
 );
 
 CREATE TABLE IF NOT EXISTS IngredientSizes (
-	recipe_id INTEGER,
-	step TEXT,
-	FOREIGN KEY(recipe_id) 
-	REFERENCES Recipes(id)
-);
-
-CREATE TABLE IF NOT EXISTS IngredientAmounts (
-	recipe_id INTEGER,
-	step TEXT,
-	FOREIGN KEY(recipe_id) 
-	REFERENCES Recipes(id)
+	ingredient_size_id INTEGER PRIMARY KEY,
+	step TEXT
 );
 
 CREATE TABLE IF NOT EXISTS Units (
-	recipe_id INTEGER,
+	unit_id INTEGER PRIMARY KEY AUTOINCREMENT,
 	step TEXT,
 	FOREIGN KEY(recipe_id) 
 	REFERENCES Recipes(id)

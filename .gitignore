@@ -1,7 +1,7 @@
 # testing, reverse enginering, templates etc...
 .project
-
 __pycache__
+*.pyc
 dist/
 *.orig
 build/
