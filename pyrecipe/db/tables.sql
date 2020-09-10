@@ -1,11 +1,11 @@
 
-CREATE VIRTUAL TABLE IF NOT EXISTS RecipeSearch
-    USING FTS5(name, author, tags, categories)
-;
+--CREATE VIRTUAL TABLE IF NOT EXISTS RecipeSearch
+--    USING FTS5(name, author, tags, categories)
+--;
 
-CREATE VIRTUAL TABLE IF NOT EXISTS IngredientSearch
-    USING FTS5(name, ingredient)
-;
+--CREATE VIRTUAL TABLE IF NOT EXISTS IngredientSearch
+--    USING FTS5(name, ingredient)
+--;
 
 CREATE TABLE IF NOT EXISTS Recipes (
 	recipe_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -26,16 +26,21 @@ CREATE TABLE IF NOT EXISTS RecipeIngredients (
 	recipe_id INTEGER,
 	amount INTEGER,
 	unit_id INTEGER,
-	ingredient_id,
-	ingredient_size_id
+	ingredient_id INTEGER, 
+	ingredient_size_id INTEGER,
+	FOREIGN KEY (recipe_id)
+	REFERENCES Recipes (recipe_id)
+		ON DELETE CASCADE
+	FOREIGN KEY (unit_id)
+	REFERENCES Units (unit_id)
 );
 
 CREATE TABLE IF NOT EXISTS NamedIngredients (
 	recipe_id INTEGER,
 	alt_name TEXT,
 	ingredient_str TEXT,
-	FOREIGN KEY(recipe_id)
-	REFERENCES Recipes(id)
+	FOREIGN KEY (recipe_id)
+	REFERENCES Recipes (recipe_id)
 		ON DELETE CASCADE
 );
 
@@ -51,35 +56,31 @@ CREATE TABLE IF NOT EXISTS IngredientSizes (
 
 CREATE TABLE IF NOT EXISTS Units (
 	unit_id INTEGER PRIMARY KEY AUTOINCREMENT,
-	step TEXT,
-	FOREIGN KEY(recipe_id) 
-	REFERENCES Recipes(id)
+	step TEXT
 );
 
 CREATE TABLE IF NOT EXISTS IngredientNotes (
 	recipe_id INTEGER,
 	step TEXT,
-	FOREIGN KEY(recipe_id) 
-	REFERENCES Recipes(id)
+	FOREIGN KEY (recipe_id) 
+	REFERENCES Recipes (recipe_id)
+		ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS DishTypes (
-	recipe_id INTEGER,
-	step TEXT,
-	FOREIGN KEY(recipe_id) 
-	REFERENCES Recipes(id)
+	dishtype_id INTEGER PRIMARY KEY AUTOINCREMENT,
+	dishtype TEXT
 );
 
 CREATE TABLE IF NOT EXISTS Category (
-	recipe_id INTEGER,
-	step TEXT,
-	FOREIGN KEY(recipe_id) 
-	REFERENCES Recipes(id)
+	category_id INTEGER PRIMARY KEY AUTOINCREMENT,
+	category TEXT
 );
 
 CREATE TABLE IF NOT EXISTS RecipeSteps (
 	recipe_id INTEGER,
 	step TEXT,
-	FOREIGN KEY(recipe_id) 
-	REFERENCES Recipes(id)
+	FOREIGN KEY (recipe_id) 
+	REFERENCES Recipes (recipe_id)
+		ON DELETE CASCADE
 );

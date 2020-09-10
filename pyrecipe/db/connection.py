@@ -10,88 +10,7 @@ import sqlite3
 
 from pyrecipe.config import DB_FILE
 
-TABLES = {}
-TABLES['RecipeSearch'] = """
-    CREATE VIRTUAL TABLE {0}
-    USING FTS5(name, author, tags, categories)
-"""
-TABLES['IngredientSearch'] = """
-    CREATE VIRTUAL TABLE {0}
-    USING FTS5(name, ingredient)
-"""
-TABLES['Recipes'] = """
-    CREATE TABLE IF NOT EXISTS {0}(
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        recipe_uuid TEXT NOT NULL UNIQUE,
-        dish_type TEXT,
-        description TEXT,
-        name TEXT NOT NULL UNIQUE,
-        author TEXT,
-        source TEXT,
-        tags TEXT,
-        categories TEXT,
-        price TEXT,
-        source_url TEXT)
-"""
-TABLES['RecipeIngredients'] = """
-    CREATE TABLE IF NOT EXISTS {0}(
-        id INT, 
-        CONSTRAINT fk_ingredients
-            FOREIGN KEY(recipe_id)
-            REFERENCES Recipes(id)
-            ON DELETE CASCADE)
-"""
-TABLES['RecipeIngredients'] = """
-    CREATE TABLE IF NOT EXISTS {0}(
-        id INT, 
-        CONSTRAINT fk_ingredients
-            FOREIGN KEY(recipe_id)
-            REFERENCES Recipes(id)
-            ON DELETE CASCADE)
-"""
-TABLES['NamedIngredients'] = """
-    CREATE TABLE IF NOT EXISTS {0}(
-        recipe_id INTEGER,
-        alt_name TEXT,
-        ingredient_str TEXT,
-        FOREIGN KEY(recipe_id)
-        REFERENCES Recipes(id))
-"""
-TABLES['Ingredients'] = """
-    CREATE TABLE IF NOT EXISTS {0}(
-        recipe_id INTEGER,
-        step TEXT,
-        FOREIGN KEY(recipe_id) 
-        REFERENCES Recipes(id))
-"""
-TABLES['Units'] = """
-    CREATE TABLE IF NOT EXISTS {0}(
-        recipe_id INTEGER,
-        step TEXT,
-        FOREIGN KEY(recipe_id) 
-        REFERENCES Recipes(id))
-"""
-TABLES['DishType'] = """
-    CREATE TABLE IF NOT EXISTS {0}(
-        recipe_id INTEGER,
-        step TEXT,
-        FOREIGN KEY(recipe_id) 
-        REFERENCES Recipes(id))
-"""
-TABLES['Category'] = """
-    CREATE TABLE IF NOT EXISTS {0}(
-        recipe_id INTEGER,
-        step TEXT,
-        FOREIGN KEY(recipe_id) 
-        REFERENCES Recipes(id))
-"""
-TABLES['RecipeSteps'] = """
-    CREATE TABLE IF NOT EXISTS {0}(
-        recipe_id INTEGER,
-        step TEXT,
-        FOREIGN KEY(recipe_id) 
-        REFERENCES Recipes(id))
-"""
+
 
 def read_sql():
     with open("tables.sql") as fi:
@@ -101,7 +20,7 @@ def read_sql():
         
 
 class RecipeDB:
-    """A database subclass for pyrecipe."""
+    """A database class for pyrecipe."""
     def __init__(self):
         try:
             self.conn = sqlite3.connect(DB_FILE)
@@ -110,7 +29,7 @@ class RecipeDB:
         self.c = self.conn.cursor()
         self.c.execute("PRAGMA foreign_keys = ON")
 
-    def add_recipe(self, recipe):
+    def add(self, recipe):
         '''Add a recipe to the database.'''
         recipe_data = [(
             recipe.uuid,
@@ -140,32 +59,33 @@ class RecipeDB:
             recipe.tags,
             recipe.categories,
         )]
-        self.c.executemany(
-            '''INSERT OR REPLACE INTO recipesearch (
-                name,
-                author,
-                tags,
-                categories
-                ) VALUES(?, ?, ?, ?)''', recipe_data_search
-        )
+        #self.c.executemany(
+        #    '''INSERT OR REPLACE INTO recipesearch (
+        #        name,
+        #        author,
+        #        tags,
+        #        categories
+        #        ) VALUES(?, ?, ?, ?)''', recipe_data_search
+        #)
         for ingredient in recipe.ingredients:
             ingredient_data_search = [(
                 recipe.name,
                 ingredient.name
             )]
-            self.c.executemany(
-                '''INSERT OR REPLACE INTO ingredientsearch (
-                    name,
-                    ingredient
-                    ) VALUES(?, ?)''', ingredient_data_search
-            )
+            #self.c.executemany(
+            #    '''INSERT OR REPLACE INTO ingredientsearch (
+            #        name,
+            #        ingredient
+            #        ) VALUES(?, ?)''', ingredient_data_search
+            #)
         self._commit()
         recipe_id = self.query(
-            "SELECT id FROM recipes WHERE name = \'{}\'"
+            "SELECT recipe_id FROM recipes WHERE name = \'{}\'"
             .format(recipe.name)
         )
-        for item in recipe.get_ingredients(fmt='string')[0]:
-            self.c.execute('''INSERT OR REPLACE INTO ingredients (
+        print(recipe.get_ingredients())
+        for item in recipe.get_ingredients()[0]:
+            self.c.execute('''INSERT OR REPLACE INTO Ingredients (
                                 recipe_id,
                                 ingredient_str
                                 ) VALUES(?, ?)''', (recipe_id[0][0], item))
@@ -207,9 +127,10 @@ class RecipeDB:
 
     def create_database(self):
         """Create the recipe database."""
-        #for name, statement in TABLES.items():
-        #    self.c.execute(statement.format(name))
-        for command in read_sql():
+        with open("tables.sql") as fi:
+            commands = fi.read().split(';')
+
+        for command in commands:
             self.c.execute(command)
 
 def update_db(save_func):
@@ -234,5 +155,9 @@ def delete_recipe(delete_func):
     return wrapper
 
 if __name__ == '__main__':
+    from pyrecipe.recipe import Recipe
+    r = Recipe('/home/michael/.config/pyrecipe/recipe_data/aafa8b5e16f64053a74ea344dfb16252.recipe')
+    r.print_recipe()
     test = RecipeDB()
     test.create_database()
+    test.add(r)
