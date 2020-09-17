@@ -20,7 +20,7 @@ from pyrecipe.api import RecipeAPI
 #from pyrecipe.spell import spell_check
 from pyrecipe.webscraper import SCRAPEABLE_SITES
 from pyrecipe import __scriptname__, version_info
-from pyrecipe.db import (DBInfo, DBConn, delete_recipe)
+from pyrecipe.db import (DBInfo, DB_FILE, DBConn, delete_recipe)
 from pyrecipe.console_gui import RecipeEditor
 
 
@@ -504,7 +504,7 @@ def main():
     # Build the databse first if it does not exist.
     # A good way to rebuild the db is to delete the
     # db file.
-    db_exists = os.path.exists(config.DB_FILE)
+    db_exists = os.path.exists(DB_FILE)
     recipe_exists = len(config.RECIPE_DATA_FILES) > 0
     if not db_exists and recipe_exists:
         print('Building recipe database...')

@@ -23,7 +23,6 @@ else:
     CONFIG_FILE = '/etc/pyrecipe/pyrecipe.cfg'
 
 RECIPE_DATA_DIR = os.path.join(_usr_config_path, 'recipe_data/')
-DB_FILE = './recipes.db' #os.path.join(_usr_config_path, 'recipes.db')
 SCRIPT_DIR = os.path.dirname(__file__)
 
 RECIPE_DATA_FILES = []

@@ -67,24 +67,9 @@ class Recipe:
     """
     # All keys applicable to the Open Recipe Format
     SIMPLE_KEYS = [
-        'author',
-        'bake_time',
-        'categories',
-        'cook_time',
-        'description',
-        'dish_type',
-        'name',
-        'notes',
-        'prep_time',
-        'price',
-        'recipe_yield',
-        'region',
-        'source_book',
-        'source_url',
-        'steps',
-        'tags',
-        'uuid',
-        'yields'
+        'author', 'bake_time', 'categories', 'cook_time', 'description',
+        'dish_type', 'name', 'notes', 'prep_time', 'price', 'recipe_yield',
+        'region', 'source_book', 'source_url', 'steps','tags', 'uuid', 'yields'
     ]
 
     # These require their own setters and getters
@@ -107,7 +92,7 @@ class Recipe:
             data = RecipeWebScraper.scrape(source)
             self._set_data(data)
         elif source != '':
-            self.file_name = utils.get_source_path(source)
+            self.file_name = source#utils.get_source_path(source)
             try:
                 with ZipFile(self.file_name, 'r') as zfile:
                     try:
@@ -144,9 +129,9 @@ class Recipe:
                              .format(key))
 
     def __setattr__(self, key, value):
-        if key not in self.ALL_KEYS:
-            raise AttributeError("Cannot set attribute '{}', its not apart "
-                                 "of the ORF spec.".format(key))
+        #if key not in self.ALL_KEYS:
+        #    raise AttributeError("Cannot set attribute '{}', its not apart "
+        #                         "of the ORF spec.".format(key))
         if key in Recipe.SIMPLE_KEYS:
             self._recipe_data[key] = value
         else:
