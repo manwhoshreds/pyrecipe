@@ -273,25 +273,25 @@ class RecipeDB:
         self.c.execute("SELECT * FROM Recipes WHERE name=\'{}\'".format(recipe))
         row = self.c.fetchone()     
         if row:
-            recipe_dict = get_dict_from_row(row)
+            recipe_data = get_dict_from_row(row)
         else:
             exit("No recipe found by the name of {}".format(recipe))
         
-        ingredients = self._get_recipe_ingredients(recipe_dict['id'])
-        recipe_dict['ingredients'] = ingredients
+        ingredients = self._get_recipe_ingredients(recipe_data['id'])
+        recipe_data['ingredients'] = ingredients
 
         test = []
-        named_ingredients = self._get_recipe_named_ingredients(recipe_dict['id'])
+        named_ingredients = self._get_recipe_named_ingredients(recipe_data['id'])
         for k, v in named_ingredients.items():
             test.append({k: v})
         
         if named_ingredients:
-            recipe_dict['named_ingredients'] = test
+            recipe_data['named_ingredients'] = test
 
         self.c.execute(
             '''SELECT step 
                FROM RecipeSteps
-               WHERE recipe_id=?''', (recipe_dict['id'],)
+               WHERE recipe_id=?''', (recipe_data['id'],)
         )
         
         step_rows = self.c.fetchall()
@@ -300,10 +300,10 @@ class RecipeDB:
             step = get_dict_from_row(item)
             step_list.append(step)
 
-        recipe_dict['steps'] = step_list
+        recipe_data['steps'] = step_list
 
 
-        return recipe_dict
+        return recipe_data
 
     
     def __del__(self):
@@ -359,6 +359,7 @@ if __name__ == '__main__':
         r = Recipe(fil)
         test.add(r)
     what = test.get_recipe(sys.argv[1])
+    print(what)
     r = Recipe(what)
     r.print_recipe()
 

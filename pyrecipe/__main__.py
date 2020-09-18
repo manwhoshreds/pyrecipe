@@ -20,12 +20,12 @@ from pyrecipe.api import RecipeAPI
 #from pyrecipe.spell import spell_check
 from pyrecipe.webscraper import SCRAPEABLE_SITES
 from pyrecipe import __scriptname__, version_info
-from pyrecipe.db import (DBInfo, DB_FILE, DBConn, delete_recipe)
+from pyrecipe.db import (DBInfo, DB_FILE, delete_recipe)
 from pyrecipe.console_gui import RecipeEditor
 
 
-# mainly for the testsuite
-#__all__ = [c for c in dir() if c.startswith('cmd_')] + ['get_parser']
+# For the testsuite
+__all__ = [c for c in dir() if c.startswith('cmd_')] + ['get_parser']
 
 def cmd_print(args):
     """Print a recipe to stdout."""
