@@ -40,19 +40,27 @@ CREATE TABLE IF NOT EXISTS Ingredients (
 );
 
 CREATE TABLE IF NOT EXISTS NamedIngredients (
-	named_ingredient_id INTEGER PRIMARY KEY AUTOINCREMENT, 
+	id INTEGER PRIMARY KEY AUTOINCREMENT, 
+	named_ingredient_id INTEGER, 
 	recipe_id INTEGER,
-	alt_name TEXT,
 	amount TEXT,
 	unit_id INTEGER,
 	ingredient_id INTEGER, 
 	size_id INTEGER,
+	FOREIGN KEY(named_ingredient_id) REFERENCES NamedIngredientsNames(id)
 	FOREIGN KEY(recipe_id) REFERENCES Recipes(id)
 	FOREIGN KEY(unit_id) REFERENCES Units(id)
 	FOREIGN KEY(ingredient_id) REFERENCES Ingredients(id)
 	FOREIGN KEY(size_id) REFERENCES IngredientSizes(id)
 );
 
+CREATE TABLE IF NOT EXISTS NamedIngredientsNames (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	recipe_id INTEGER,
+	alt_name TEXT
+);
+
+		
 CREATE TABLE IF NOT EXISTS IngredientSizes (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	size TEXT UNIQUE
