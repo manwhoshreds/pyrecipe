@@ -23,7 +23,7 @@ with open("README.asc", "r") as fh:
 
 setup(
     name="pyrecipe",
-    version="0.7.0",
+    version="0.7.2",
     author="Michael K. Miller",
     author_email="m.k.miller@gmx.com",
     description='A python tool for managing recipes',
@@ -31,10 +31,8 @@ setup(
     long_description_content_type="text/markdown",
     data_files=DATA_FILES,
     package_data={
-        'pyrecipe': [
-            'culinary_units.txt',
-            'tables.sql'
-        ]
+        'pyrecipe': ['culinary_units.txt'],
+        'db': ['tables.sql']
     },
     url="https://github.com/manwhoshreds/pyrecipe",
     entry_points={
