@@ -28,7 +28,7 @@ import pyrecipe.config as config
 from pyrecipe import Q_
 from pyrecipe.db import DBInfo
 from pyrecipe.recipe import Recipe
-from pyrecipe.recipe_numbers import RecipeNum
+from pyrecipe.recipe import RecipeNum
 
 class ShoppingList:
     """Creates a shopping list of ingredients from a list of recipes.

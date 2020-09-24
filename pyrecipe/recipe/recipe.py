@@ -41,12 +41,11 @@ from ruamel.yaml import YAML
 
 import pyrecipe.utils as utils
 import pyrecipe.config as config
-from pyrecipe.db import update_db
+from pyrecipe.recipe.recipe_numbers import RecipeNum
 from pyrecipe import Q_, CULINARY_UNITS
-from pyrecipe.recipe_numbers import RecipeNum
 from pyrecipe.webscraper import RecipeWebScraper
 
-__all__ = ['Recipe', 'IngredientParser']
+__all__ = ['Recipe']
 
 # GLOBAL REs
 PORTIONED_UNIT_RE = re.compile(r'\(?\d+\.?\d*? (ounce|pound)\)? (cans?|bags?)')
@@ -74,10 +73,8 @@ class Recipe:
 
     # These require their own setters and getters
     COMPLEX_KEYS = [
-        'ingredients',
-        'named_ingredients',
-        'oven_temp',
-        'steps'
+        'ingredients', 'named_ingredients',
+        'oven_temp', 'steps'
     ]
 
     ORF_KEYS = COMPLEX_KEYS + SIMPLE_KEYS
@@ -418,7 +415,6 @@ class Recipe:
         yaml.dump(self._recipe_data, string)
         return string.getvalue()
 
-    @update_db
     def save(self):
         """save state of class."""
         stream = io.StringIO()
@@ -633,7 +629,6 @@ class Ingredient:
         self.name = name.strip(', ')
 
 if __name__ == '__main__':
-    r = Recipe('zesty meatloaf')
-    r.dump_data()
-    test = r.get_ingredients("string")
+    test = Ingredient("1 goofy goober snack, chopped")
+    print(test._get_data_dict())
     print(test)

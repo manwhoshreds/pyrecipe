@@ -8,10 +8,16 @@
 import os
 import sqlite3
 
-DB_FILE = "./recipes.db"
+from pyrecipe.recipe import Recipe
+
+
+if not os.path.isdir(os.path.expanduser("~/.local/share/pyrecipe")):
+    os.makedirs(os.path.expanduser("~/.local/share/pyrecipe"))
+DB_FILE = os.path.expanduser("~/.local/share/pyrecipe/recipes.db")
+TABLES = os.path.abspath("tables.sql")
 
 def read_sql():
-    with open("tables.sql") as fi:
+    with open(TABLES) as fi:
         commands = fi.read().split(';')
 
     return commands
@@ -43,7 +49,7 @@ class RecipeDB:
                (str(ingred.unit),)
         )
         self.c.execute(
-            "INSERT OR IGNORE INTO IngredientSizes (size) VALUES(?)",
+            "INSERT OR IGNORE INTO IngredientSizes (sizee) VALUES(?)",
                (str(ingred.size),)
         )
         self.c.execute(
@@ -53,29 +59,28 @@ class RecipeDB:
         )
         
         ingredient_size_id = None
-        #if ingred.size:
-        #    ingredient_size_id = self.c.execute(
-        #        '''SELECT ingredient_size_id 
-        #           FROM IngredientSizes
-        #           WHERE ingredient_size_id=?''',
-        #           (ingred.size,)
-        #    )
+        if ingred.size:
+            ingredient_size_id = self.c.execute(
+                '''SELECT id 
+                   FROM IngredientSizes
+                   WHERE sizee=?''',
+                   (ingred.size,)
+            )
 
     def add(self, recipe):
         '''Add a recipe to the database.'''
         
         self.c.execute(
             '''SELECT name FROM Recipes
-               WHERE name=?''', (recipe.name,)
+               WHERE name=?''', (recipe.name.lower(),)
         )
         if self.c.fetchone():
             #pass
             return
 
-
         recipe_data = [(
             recipe.uuid,
-            recipe.name,
+            recipe.name.lower(),
             recipe.dish_type,
             recipe.author,
             recipe.tags,
@@ -99,7 +104,7 @@ class RecipeDB:
         
         self.c.execute(
             "SELECT id FROM recipes WHERE name=?",
-            (recipe.name,)
+            (recipe.name.lower(),)
         )
         
         recipe_id = self.c.fetchone()['id']
@@ -123,18 +128,18 @@ class RecipeDB:
 
             unit_id = self.c.fetchone()['id']
             
-            ingredient_size_id = None
-            #if item.size:
-            #    ingredient_size_id = self.c.execute(
-            #        '''SELECT ingredient_size_id 
-            #           FROM IngredientSizes
-            #           WHERE ingredient_size_id=?''',
-            #           (item.size,)
-            #    )
-            #    test = self.c.fetchone()
-            #
+            ingredient_size_id = 2
+            if item.size:
+                ingredient_size_id = self.c.execute(
+                    '''SELECT id 
+                       FROM IngredientSizes
+                       WHERE sizee=?''',
+                       (item.size,)
+                )
+                test = self.c.fetchone()
+            print(ingredient_size_id) 
             self.c.execute(
-                '''INSERT OR REPLACE 
+                '''INSERT OR IGNORE
                    INTO RecipeIngredients 
                    (recipe_id,
                     amount,
@@ -144,7 +149,7 @@ class RecipeDB:
                     ) VALUES(?, ?, ?, ?, ?)''', 
                     (recipe_id, 
                     str(item.amount),
-                    ingredient_size_id,
+                    int(ingredient_size_id),
                     int(unit_id),
                     int(ingredient_id))
             )
@@ -226,7 +231,7 @@ class RecipeDB:
         self.c.execute(
             '''SELECT amount, unit, name
                FROM RecipeIngredients AS ri
-               --INNER JOIN IngredientSizes AS isi ON ri.size_id=isi.id
+               INNER JOIN IngredientSizes AS isi ON ri.size_id=isi.id
                INNER JOIN Units AS u ON ri.unit_id=u.id
                INNER JOIN Ingredients AS i ON ri.ingredient_id=i.id
                WHERE recipe_id=?''', (recipe_id,)
@@ -255,7 +260,7 @@ class RecipeDB:
                    INNER JOIN NamedIngredientsNames 
                        AS nin ON ni.named_ingredient_id=nin.id
                        --AS nin ON ni.recipe_id=nin.recipe_id
-                   --INNER JOIN IngredientSizes AS isi ON ni.size_id=isi.id
+                   INNER JOIN IngredientSizes AS isi ON ni.size_id=isi.id
                    INNER JOIN Units AS u ON ni.unit_id=u.id
                    INNER JOIN Ingredients AS i ON ni.ingredient_id=i.id
                    WHERE ni.recipe_id=? AND alt_name=?''', (recipe_id, alt_name)
@@ -316,10 +321,7 @@ class RecipeDB:
     
     def create_database(self):
         """Create the recipe database."""
-        with open("tables.sql") as fi:
-            commands = fi.read().split(';')
-
-        for command in commands:
+        for command in read_sql():
             self.c.execute(command)
 
 
@@ -347,9 +349,9 @@ def delete_recipe(delete_func):
 
 
 if __name__ == '__main__':
-    from pyrecipe.recipe import Recipe
     import sys
     import os
+    print(__global__)
     test = RecipeDB()
     test.create_database()
     base_path = '/home/michael/.config/pyrecipe/recipe_data/'

@@ -15,12 +15,11 @@ import pyrecipe.utils as utils
 import pyrecipe.config as config
 import pyrecipe.shopper as shopper
 from pyrecipe.recipe import Recipe
-from pyrecipe.ocr import RecipeOCR
 from pyrecipe.api import RecipeAPI
 #from pyrecipe.spell import spell_check
 from pyrecipe.webscraper import SCRAPEABLE_SITES
 from pyrecipe import __scriptname__, version_info
-from pyrecipe.db import (DBInfo, DB_FILE, delete_recipe)
+from pyrecipe.db import (RecipeDB, DBInfo, DB_FILE, delete_recipe)
 from pyrecipe.console_gui import RecipeEditor
 
 
@@ -29,7 +28,8 @@ __all__ = [c for c in dir() if c.startswith('cmd_')] + ['get_parser']
 
 def cmd_print(args):
     """Print a recipe to stdout."""
-    recipe = Recipe(args.source)
+    data = RecipeDB().get_recipe(args.source)
+    recipe = Recipe(data)
     recipe.print_recipe(args.verbose)
 
 def cmd_edit(args):
@@ -159,13 +159,6 @@ def cmd_export(args):
     recipe = Recipe(args.source)
     recipe.export(args.data_type, output_dir)
 
-def cmd_ocr(args):
-    """Optical character recognition"""
-    recipe = RecipeOCR(args.source)
-    if args.imprt:
-        recipe.save()
-    else:
-        print(recipe)
 
 def cmd_show(args):
     """Show the statistics information of the recipe database."""
@@ -185,7 +178,7 @@ def version():
 
 def build_recipe_database():
     """Build the recipe database."""
-    database = DBConn()
+    database = RecipeDB()
     database.create_database()
     for item in config.RECIPE_DATA_FILES:
         recipe = Recipe(item)
@@ -419,23 +412,6 @@ def subparser_export(subparser):
         help="Export recipe file"
     )
 
-def subparser_ocr(subparser):
-    """Subparser for ocr command."""
-    parser_ocr = subparser.add_parser(
-        "ocr",
-        help="Pyrecipe Optical Character Recognition"
-    )
-    parser_ocr.add_argument(
-        "source",
-        help="File to read"
-    )
-    parser_ocr.add_argument(
-        "-i",
-        "--import",
-        dest="imprt",
-        action="store_true",
-        help="Import the data into the database"
-    )
 
 def subparser_show(subparser):
     """Subparser for show command."""
@@ -494,7 +470,6 @@ def get_parser():
     subparser_shop(subparser)
     subparser_dump(subparser)
     subparser_export(subparser)
-    subparser_ocr(subparser)
     subparser_show(subparser)
 
     return parser
@@ -530,7 +505,6 @@ def main():
         'shop': cmd_shop,
         'dump': cmd_dump,
         'export': cmd_export,
-        'ocr': cmd_ocr,
         'show': cmd_show,
     }
     if args.version:

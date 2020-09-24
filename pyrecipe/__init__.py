@@ -12,21 +12,18 @@
 
 import os
 import sys
-import pkg_resources
 from math import ceil
+import pkg_resources
 
 from pint import UnitRegistry
 import inflect
 
 import pyrecipe.config as config
 
-try:
-    __version__ = pkg_resources.get_distribution('pyrecipe').version
-except:
-    __version__ = 'unknown'
-
+__version__ = pkg_resources.get_distribution('pyrecipe').version
 __email__ = 'm.k.miller@gmx.com'
 __scriptname__ = os.path.basename(sys.argv[0])
+
 p = inflect.engine()
 
 class Ureg(UnitRegistry):

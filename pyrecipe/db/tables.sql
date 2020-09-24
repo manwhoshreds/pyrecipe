@@ -25,13 +25,13 @@ CREATE TABLE IF NOT EXISTS RecipeIngredients (
 	recipe_ingredient_id INTEGER PRIMARY KEY AUTOINCREMENT, 
 	recipe_id INTEGER,
 	amount TEXT,
-	unit_id INTEGER,
-	ingredient_id INTEGER, 
 	size_id INTEGER,
+	unit_id INTEGER,
+	ingredient_id INTEGER,
 	FOREIGN KEY(recipe_id) REFERENCES Recipes(id)
+	FOREIGN KEY(size_id) REFERENCES IngredientSizes(id)
 	FOREIGN KEY(unit_id) REFERENCES Units(id)
 	FOREIGN KEY(ingredient_id) REFERENCES Ingredients(id)
-	FOREIGN KEY(size_id) REFERENCES IngredientSizes(id)
 );
 
 CREATE TABLE IF NOT EXISTS Ingredients (

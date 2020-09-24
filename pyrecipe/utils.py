@@ -10,11 +10,10 @@ import textwrap
 import lxml.etree as ET
 from termcolor import colored
 
-from pyrecipe.db import DBInfo, DISH_TYPES
 from pyrecipe import config
 
 S_DIV = lambda m: colored('~' * m, 'white')
-
+DISH_TYPES = "TEST"
 
 def format_text(string):
     """Format text for use in pyrecipe function.
