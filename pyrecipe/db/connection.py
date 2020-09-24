@@ -6,14 +6,18 @@
     the connection, query, and building of the database.
 """
 import os
+import sys
 import sqlite3
 
 from pyrecipe.recipe import Recipe
 
 if not os.path.isdir(os.path.expanduser("~/.local/share/pyrecipe")):
     os.makedirs(os.path.expanduser("~/.local/share/pyrecipe"))
-#DB_FILE = os.path.expanduser("~/.local/share/pyrecipe/recipes.db")
-DB_FILE = os.path.expanduser("~/Code/pyrecipe/pyrecipe/db/recipes.db")
+
+if sys.base_prefix == sys.prefix:
+    DB_FILE = os.path.expanduser("~/.local/share/pyrecipe/recipes.db")
+else:
+    DB_FILE = os.path.expanduser("~/Code/pyrecipe/pyrecipe/db/recipes.db")
 
 DB_DIR = os.path.dirname(os.path.realpath(__file__))
 TABLES = os.path.join(DB_DIR, "tables.sql")
@@ -101,7 +105,7 @@ class RecipeDB:
         recipe_id = self.c.fetchone()['id']
 
         for item in recipe.get_ingredients()[0]:
-            self._insert_ingredient(item, recipe_id)
+            self._insert_ingredient(item)
 
             self.c.execute(
                 '''SELECT id FROM Ingredients
