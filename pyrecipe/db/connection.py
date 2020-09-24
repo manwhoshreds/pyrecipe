@@ -46,23 +46,17 @@ class RecipeDB:
             "INSERT OR IGNORE INTO Units (unit) VALUES(?)",
                (str(ingred.unit),)
         )
-        self.c.execute(
-            "INSERT OR IGNORE INTO IngredientSizes (ingredient_size) VALUES(?)",
-               (str(ingred.size),)
-        )
-        self.c.execute(
-            '''SELECT id FROM Ingredients
-               WHERE name=?''',
-               (ingred.name,)
-        )
-
-        ingredient_size_id = None
+        
         if ingred.size:
-            ingredient_size_id = self.c.execute(
-                '''SELECT id
-                   FROM IngredientSizes
-                   WHERE ingredient_size=?''',
-                   (ingred.size,)
+            self.c.execute(
+                "INSERT OR IGNORE INTO IngredientSizes (ingredient_size) VALUES(?)",
+                   (str(ingred.size),)
+            )
+        
+        if ingred.prep:
+            self.c.execute(
+                "INSERT OR IGNORE INTO IngredientPrep (prep) VALUES(?)",
+                   (str(ingred.prep),)
             )
 
     def add_recipe(self, recipe):
@@ -107,7 +101,7 @@ class RecipeDB:
         recipe_id = self.c.fetchone()['id']
 
         for item in recipe.get_ingredients()[0]:
-            self._insert_ingredient(item)
+            self._insert_ingredient(item, recipe_id)
 
             self.c.execute(
                 '''SELECT id FROM Ingredients
@@ -125,28 +119,45 @@ class RecipeDB:
 
             unit_id = self.c.fetchone()['id']
             
-            ingredient_size_id = 2
-            if item.size:
-                ingredient_size_id = self.c.execute(
-                    '''SELECT id 
-                       FROM IngredientSizes
-                       WHERE ingredient_size=?''',
-                       (item.size,)
-                )
-                test = self.c.fetchone()
+            self.c.execute(
+                '''SELECT id 
+                   FROM IngredientSizes
+                   WHERE ingredient_size=?''',
+                   (item.size,)
+            )
+            try:
+                ingredient_size_id = self.c.fetchone()['id']
+            except TypeError:
+                ingredient_size_id = None
             
             self.c.execute(
-                '''INSERT OR IGNORE
+                '''SELECT id 
+                   FROM IngredientPrep
+                   WHERE prep=?''',
+                   (item.prep,)
+            )
+            
+            try:
+                prep_id = self.c.fetchone()['id']
+            except TypeError:
+                prep_id = None
+            
+            self.c.execute(
+                '''INSERT OR IGNORE 
                    INTO RecipeIngredients 
-                   (recipe_id,
-                    amount,
-                    unit_id,
-                    ingredient_id
-                    ) VALUES(?, ?, ?, ?)''', 
+                   (recipe_id, 
+                    amount, 
+                    size_id, 
+                    unit_id, 
+                    ingredient_id,
+                    prep_id
+                    ) VALUES(?, ?, ?, ?, ?, ?)''', 
                     (recipe_id, 
-                    str(item.amount),
-                    int(unit_id),
-                    int(ingredient_id))
+                     str(item.amount), 
+                     ingredient_size_id,
+                     int(unit_id), 
+                     int(ingredient_id),
+                     prep_id)
             )
     
         if recipe.get_ingredients()[1]:
@@ -224,21 +235,19 @@ class RecipeDB:
 
     def _get_recipe_ingredients(self, recipe_id):
         self.c.execute(
-            #SELECT amount, ingredient_size, unit, name
-            '''SELECT ingredient_size
+            '''SELECT amount, ingredient_size, unit, name, prep
                FROM RecipeIngredients AS ri
-               INNER JOIN IngredientSizes AS isi ON ri.size_id=isi.id
-               --INNER JOIN Units AS u ON ri.unit_id=u.id
-               --INNER JOIN Ingredients AS i ON ri.ingredient_id=i.id
+               LEFT JOIN IngredientSizes AS isi ON ri.size_id=isi.id
+               INNER JOIN Units AS u ON ri.unit_id=u.id
+               INNER JOIN Ingredients AS i ON ri.ingredient_id=i.id
+               LEFT JOIN IngredientPrep AS ip ON ri.prep_id=ip.id
                WHERE recipe_id=?''', (recipe_id,)
         )
+        
         ingred_rows = self.c.fetchall()
-        print('this is ', ingred_rows)
-
         ingred_list = []
         for item in ingred_rows:
             ingredient = self._get_dict_from_row(item)
-            print(ingredient)
             ingred_list.append(ingredient)
         return ingred_list
 
@@ -257,10 +266,10 @@ class RecipeDB:
                    FROM NamedIngredients AS ni
                    INNER JOIN NamedIngredientsNames
                        AS nin ON ni.named_ingredient_id=nin.id
-                       --AS nin ON ni.recipe_id=nin.recipe_id
-                   INNER JOIN IngredientSizes AS isi ON ni.size_id=isi.id
+                   LEFT JOIN IngredientSizes AS isi ON ni.size_id=isi.id
                    INNER JOIN Units AS u ON ni.unit_id=u.id
                    INNER JOIN Ingredients AS i ON ni.ingredient_id=i.id
+                   LEFT JOIN IngredientPrep AS ip ON ni.ingredient_id=ip.id
                    WHERE ni.recipe_id=? AND alt_name=?''', (recipe_id, alt_name)
             )
             named_ingred_rows = self.c.fetchall()

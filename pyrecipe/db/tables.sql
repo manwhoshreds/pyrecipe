@@ -28,10 +28,12 @@ CREATE TABLE IF NOT EXISTS RecipeIngredients (
 	size_id INTEGER,
 	unit_id INTEGER,
 	ingredient_id INTEGER,
+	prep_id INTEGER,
 	FOREIGN KEY(recipe_id) REFERENCES Recipes(id)
 	FOREIGN KEY(size_id) REFERENCES IngredientSizes(id)
 	FOREIGN KEY(unit_id) REFERENCES Units(id)
 	FOREIGN KEY(ingredient_id) REFERENCES Ingredients(id)
+	FOREIGN KEY(prep_id) REFERENCES IngredientPrep(id)
 );
 
 CREATE TABLE IF NOT EXISTS Ingredients (
@@ -69,6 +71,11 @@ CREATE TABLE IF NOT EXISTS IngredientSizes (
 CREATE TABLE IF NOT EXISTS Units (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	unit TEXT UNIQUE
+);
+
+CREATE TABLE IF NOT EXISTS IngredientPrep (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	prep TEXT UNIQUE
 );
 
 CREATE TABLE IF NOT EXISTS IngredientNotes (
