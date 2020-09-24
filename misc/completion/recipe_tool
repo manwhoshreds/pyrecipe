@@ -3,7 +3,8 @@
 _recipes() 
 {
 	sql='SELECT replace(lower(name)," ","\ ") FROM recipes'
-	recipes=$(sqlite3 $HOME/.config/pyrecipe/recipes.db "$sql" 2> /dev/null || echo "no\ recipes\ found")
+	db_file="$HOME/.local/share/pyrecipe/recipes.db"
+	recipes=$(sqlite3 $db_file "$sql" 2> /dev/null || echo "no\ recipes\ found")
 	echo $recipes
 }
 

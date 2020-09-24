@@ -292,7 +292,7 @@ class RecipeDB:
             row = self._get_dict_from_row(row)
             recipe = Recipe(row)
         else:
-            exit("No recipe found by the name of {}".format(recipe))
+            return
         
         recipe.ingredients = self._get_recipe_ingredients(recipe.id)
 

@@ -88,7 +88,7 @@ class Recipe:
         elif HTTP_RE.search(source):
             data = RecipeWebScraper.scrape(source)
             self._set_data(data)
-        elif source != '':
+        elif os.path.isfile(source):
             self.file_name = source#utils.get_source_path(source)
             try:
                 with ZipFile(self.file_name, 'r') as zfile:
