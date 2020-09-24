@@ -14,7 +14,7 @@ import uuid
 
 import urwid as ur
 
-from pyrecipe.db import DBInfo, DISH_TYPES
+from pyrecipe.db import RecipeDB, DBInfo, DISH_TYPES
 from pyrecipe.recipe import Recipe
 from pyrecipe.utils import wrap
 
@@ -200,6 +200,7 @@ class EntryBlock(ur.WidgetWrap):
             text = ' '.join(text.split())
             entries.append(text)
         return entries
+
 
 class IngredBlock(EntryBlock):
     """Ingredient block for displaying editable ingredients."""
@@ -591,7 +592,8 @@ class RecipeEditor:
     def save_recipe(self):
         """Save the current state of the recipe and exit."""
         self.update_recipe_data()
-        self.recipe.save()
+        db = RecipeDB()
+        db.add_recipe(self.recipe)
         raise ur.ExitMainLoop()
 
     def start(self):
@@ -602,5 +604,6 @@ class RecipeEditor:
 
 if __name__ == '__main__':
     r = Recipe('test')
+    r.print_recipe()
     #RecipeEditor(r).start()
     test = RecipeEditor(r)

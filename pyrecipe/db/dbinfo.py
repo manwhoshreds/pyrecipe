@@ -12,7 +12,7 @@ class DBInfo(RecipeDB):
     
     def get_recipes(self):
         """Return all of the recipe names in the database."""
-        names = self.query("SELECT name FROM recipes")
+        names = self.c.execute("SELECT name FROM recipes")
         names = [x[0] for x in names]
         return names
     
@@ -26,7 +26,7 @@ class DBInfo(RecipeDB):
     
     def get_recipes_by_author(self, author):
         """Get recipenames of a cirtain dishtype.""" 
-        names = self.query(
+        names = self.c.execute(
             "SELECT name FROM recipes WHERE author = \'{}\'".format(author)
         )
         names = [x[0] for x in names]

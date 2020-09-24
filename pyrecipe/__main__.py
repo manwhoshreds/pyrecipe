@@ -17,9 +17,9 @@ import pyrecipe.shopper as shopper
 from pyrecipe.recipe import Recipe
 from pyrecipe.api import RecipeAPI
 #from pyrecipe.spell import spell_check
+from pyrecipe.db import RecipeDB, DB_FILE
 from pyrecipe.webscraper import SCRAPEABLE_SITES
 from pyrecipe import __scriptname__, version_info
-from pyrecipe.db import (RecipeDB, DBInfo, DB_FILE, delete_recipe)
 from pyrecipe.console_gui import RecipeEditor
 
 
@@ -28,8 +28,7 @@ __all__ = [c for c in dir() if c.startswith('cmd_')] + ['get_parser']
 
 def cmd_print(args):
     """Print a recipe to stdout."""
-    data = RecipeDB().get_recipe(args.source)
-    recipe = Recipe(data)
+    recipe = RecipeDB().get_recipe(args.source)
     recipe.print_recipe(args.verbose)
 
 def cmd_edit(args):
@@ -39,15 +38,8 @@ def cmd_edit(args):
 
 def cmd_add(args):
     """Add a recipe to the recipe store."""
-    name = utils.get_file_name(args.name)
-    if name in config.RECIPE_DATA_FILES:
-        sys.exit(
-            utils.msg('A recipe with that name already'
-                      ' exist in the database.', 'ERROR')
-        )
-    else:
-        name = args.name.strip()
-        RecipeEditor(name, add=True).start()
+    name = args.name.strip()
+    RecipeEditor(name, add=True).start()
 
 def cmd_remote(args):
     """Add a recipe to the recipe store."""
@@ -73,7 +65,6 @@ def cmd_remote(args):
         added = recipe_api.create(data)
         print(added['message'])
 
-@delete_recipe
 def cmd_remove(args):
     """Delete a recipe from the recipe store."""
     recipe = Recipe(args.source)
@@ -479,6 +470,7 @@ def main():
     # Build the databse first if it does not exist.
     # A good way to rebuild the db is to delete the
     # db file.
+    print(DB_FILE)
     db_exists = os.path.exists(DB_FILE)
     recipe_exists = len(config.RECIPE_DATA_FILES) > 0
     if not db_exists and recipe_exists:

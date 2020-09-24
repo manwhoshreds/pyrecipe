@@ -66,7 +66,7 @@ class Recipe:
     """
     # All keys applicable to the Open Recipe Format
     SIMPLE_KEYS = [
-        'author', 'bake_time', 'categories', 'cook_time', 'description',
+        'id', 'author', 'bake_time', 'categories', 'cook_time', 'description',
         'dish_type', 'name', 'notes', 'prep_time', 'price', 'recipe_yield',
         'region', 'source_book', 'source_url', 'steps','tags', 'uuid', 'yields'
     ]

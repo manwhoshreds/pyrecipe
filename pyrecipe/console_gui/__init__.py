@@ -1,2 +1,2 @@
-from .edit_recipe import RecipeEditor
+from .editor import RecipeEditor
 
