@@ -2,9 +2,16 @@
 
 _recipes() 
 {
-	sql='SELECT replace(lower(name)," ","\ ") FROM recipes'
 	python_bin=$(which python)
-	db_file="$HOME/.local/share/pyrecipe/recipes.db"
+	case $python_bin in
+		*.virtual*)
+			db_file="$HOME/Code/pyrecipe/pyrecipe/db/recipes.db"
+			;;
+		*)
+			db_file="$HOME/.local/share/pyrecipe/recipes.db"
+			;;
+	esac
+	sql='SELECT replace(lower(name)," ","\ ") FROM recipes'
 	recipes=$(sqlite3 $db_file "$sql" 2> /dev/null || echo "no\ recipes\ found")
 	echo $recipes
 }
