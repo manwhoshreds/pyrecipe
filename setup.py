@@ -31,8 +31,10 @@ setup(
     long_description_content_type="text/markdown",
     data_files=DATA_FILES,
     package_data={
-        'pyrecipe': ['culinary_units.txt'],
-        'db': ['tables.sql']
+        'pyrecipe': [
+            'db/tables.sql', 
+            'culinary_units.txt'
+        ],
     },
     url="https://github.com/manwhoshreds/pyrecipe",
     entry_points={
