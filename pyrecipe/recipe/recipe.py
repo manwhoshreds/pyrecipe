@@ -43,7 +43,7 @@ import pyrecipe.utils as utils
 import pyrecipe.config as config
 from pyrecipe.recipe.recipe_numbers import RecipeNum
 from pyrecipe import Q_, CULINARY_UNITS
-from pyrecipe.webscraper import RecipeWebScraper
+#from pyrecipe.webscraper import RecipeWebScraper
 
 __all__ = ['Recipe']
 
@@ -85,9 +85,9 @@ class Recipe:
         self.source = source
         if isinstance(source, dict):
             self._set_data(source)
-        elif HTTP_RE.search(source):
-            data = RecipeWebScraper.scrape(source)
-            self._set_data(data)
+        #elif HTTP_RE.search(source):
+        #    data = RecipeWebScraper.scrape(source)
+        #    self._set_data(data)
         elif os.path.isfile(source):
             self.file_name = source#utils.get_source_path(source)
             try:

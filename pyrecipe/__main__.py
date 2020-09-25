@@ -13,10 +13,7 @@ import argparse
 
 import pyrecipe.utils as utils
 import pyrecipe.config as config
-import pyrecipe.shopper as shopper
 from pyrecipe.recipe import Recipe
-from pyrecipe.api import RecipeAPI
-#from pyrecipe.spell import spell_check
 from pyrecipe.db import RecipeDB, DB_FILE
 from pyrecipe.webscraper import SCRAPEABLE_SITES
 from pyrecipe import __scriptname__, version_info
@@ -26,44 +23,24 @@ from pyrecipe.console_gui import RecipeEditor
 # For the testsuite
 __all__ = [c for c in dir() if c.startswith('cmd_')] + ['get_parser']
 
+
 def cmd_print(args):
     """Print a recipe to stdout."""
     recipe = RecipeDB().get_recipe(args.source)
     recipe.print_recipe(args.verbose)
+
 
 def cmd_edit(args):
     """Edit a recipe using the urwid console interface."""
     recipe = RecipeDB().get_recipe(args.source)
     RecipeEditor(recipe).start()
 
+
 def cmd_add(args):
     """Add a recipe to the recipe store."""
     name = args.name.strip()
     RecipeEditor(name, add=True).start()
 
-def cmd_remote(args):
-    """Add a recipe to the recipe store."""
-    recipe_api = RecipeAPI(args.debug)
-    if args.print_r:
-        data = recipe_api.read_one(args.source)
-        args.source = data
-        if args.debug:
-            sys.exit(print(data))
-        if 'message' in data:
-            sys.exit(data['message'])
-        cmd_print(args)
-    elif args.search:
-        search = recipe_api.search(args.source)
-        if args.debug:
-            sys.exit(print(search))
-        if 'message' in search:
-            sys.exit(search['message'])
-        for item in search['recipes']:
-            print(item['name'].title())
-    elif args.add_recipe:
-        data = Recipe(args.source).get_json()
-        added = recipe_api.create(data)
-        print(added['message'])
 
 def cmd_remove(args):
     """Delete a recipe from the recipe store."""
@@ -94,35 +71,12 @@ def cmd_search(args):
     results = "\n".join(s.lower() for s in results)
     sys.exit(results)
 
-def cmd_shop(args):
-    """Print a shopping list."""
-    shoplist = shopper.ShoppingList()
-    #if args.print_list:
-    #    shoplist.print_list()
-    if args.random:
-        shoplist.choose_random(count=args.random, write=args.save)
-        shoplist.print_list(write=args.save)
-    else:
-        menu_items = args.recipes
-        if not menu_items:
-            sys.exit('You must supply at least one recipe'
-                     ' to build your shopping list from!')
-
-        for item in menu_items:
-            shoplist.update(item)
-        #shoplist.update_remote()
-        shoplist.print_list(write=args.save)
-        if args.new:
-            shoplist.create_new()
-    #if args.add_remote:
-    #    data = shoplist.get_json()
-    #    shopper_api = ShoppingListAPI()
-    #    shopper_api.create(data)
 
 def cmd_dump(args):
     """Dump recipe data in 1 of three formats."""
     recipe = Recipe(args.source)
     sys.exit(recipe.dump_data(args.data_type))
+
 
 def cmd_export(args):
     """Export recipes in xml format."""
@@ -161,11 +115,11 @@ def cmd_show(args):
     else:
         sys.exit(utils.stats(args.verbose))
 
+
 def version():
     """Print pyrecipe version information."""
     version_info()
 
-## End command funtions
 
 def build_recipe_database():
     """Build the recipe database."""
@@ -174,6 +128,7 @@ def build_recipe_database():
     for item in config.RECIPE_DATA_FILES:
         recipe = Recipe(item)
         database.add_recipe(recipe)
+
 
 def subparser_print(subparser):
     """Subparser for print command."""
@@ -195,6 +150,7 @@ def subparser_print(subparser):
         help="Specify a yield for the recipe."
     )
 
+
 def subparser_edit(subparser):
     """Subparser for edit command."""
     parser = subparser.add_parser(
@@ -207,54 +163,12 @@ def subparser_edit(subparser):
         help="Recipe to edit"
     )
 
+
 def subparser_add(subparser):
     """Subparser for add command."""
     parser_add = subparser.add_parser("add", help='Add a recipe')
     parser_add.add_argument("name", help='Name of the recipe to add')
 
-def subparser_remote(subparser):
-    """Subparser for add command."""
-    parser = subparser.add_parser(
-        "remote",
-        help='Access recipes on openrecipes.org'
-    )
-    parser.add_argument(
-        "source",
-        help='Print recipe'
-    )
-    parser.add_argument(
-        "-a",
-        "--add-recipe",
-        action="store_true",
-        help='Add a recipe to openrecipes.org'
-    )
-    parser.add_argument(
-        "-p",
-        "--print",
-        action="store_true",
-        dest="print_r",
-        help='Print recipe'
-    )
-    parser.add_argument(
-        "-s",
-        "--search",
-        action="store_true",
-        help='Search recipes'
-    )
-    parser.add_argument(
-        "--debug",
-        action="store_true",
-        help='Get data back in raw json'
-    )
-    parser.add_argument(
-        "--yield",
-        default=0,
-        nargs='?',
-        metavar='N',
-        type=int,
-        dest="recipe_yield",
-        help="Specify a yield for the recipe."
-    )
 
 def subparser_remove(subparser):
     """Subparser for remove command."""
@@ -263,6 +177,7 @@ def subparser_remove(subparser):
         "source",
         help='Recipe to delete'
     )
+
 
 def subparser_search(subparser):
     """Subparser for search command."""
@@ -276,55 +191,6 @@ def subparser_search(subparser):
         help="Search the recipe database"
     )
 
-def subparser_shop(subparser):
-    """Subparser for shop command."""
-    parser_shop = subparser.add_parser("shop", help='Make a shopping list')
-    parser_shop.add_argument(
-        "recipes",
-        nargs="*",
-        help='List of recipe to compile shopping list'
-    )
-    parser_shop.add_argument(
-        "-a",
-        "--add",
-        nargs='?',
-        type=str,
-        help="Add an ingredient or a list of ingredients to the current "
-             "shopping list."
-    )
-    parser_shop.add_argument(
-        "-c",
-        "--commit",
-        action="store_true",
-        help="Commit the current shopping list to a remote server."
-    )
-    parser_shop.add_argument(
-        "-n",
-        "--new",
-        action="store_true",
-        help="Make a new list. The old list will be overwritten."
-    )
-    parser_shop.add_argument(
-        "-p",
-        "--print-list",
-        action="store_true",
-        help="Print the current shopping list."
-    )
-    parser_shop.add_argument(
-        "-r",
-        "--random",
-        nargs='?',
-        const=config.RAND_RECIPE_COUNT,
-        type=int,
-        metavar="NUM",
-        help="Pick n random recipes for the week"
-    )
-    parser_shop.add_argument(
-        "-s",
-        "--save",
-        action="store_true",
-        help="Save the current shopping list."
-    )
 
 def subparser_dump(subparser):
     """Subparser for dump command."""
@@ -360,6 +226,7 @@ def subparser_dump(subparser):
         const="json",
         help="Dump source json"
     )
+
 
 def subparser_export(subparser):
     """Subparser for export command."""
@@ -423,6 +290,7 @@ def subparser_show(subparser):
         help="List sites that can be scraped"
     )
 
+
 def get_parser():
     """Parse args for recipe_tool."""
     parser = argparse.ArgumentParser(
@@ -455,15 +323,14 @@ def get_parser():
     subparser_print(subparser)
     subparser_edit(subparser)
     subparser_add(subparser)
-    subparser_remote(subparser)
     subparser_remove(subparser)
     subparser_search(subparser)
-    subparser_shop(subparser)
     subparser_dump(subparser)
     subparser_export(subparser)
     subparser_show(subparser)
 
     return parser
+
 
 def main():
     """Main entry point of recipe_tool."""
@@ -490,10 +357,8 @@ def main():
         'print': cmd_print,
         'edit': cmd_edit,
         'add': cmd_add,
-        'remote': cmd_remote,
         'remove': cmd_remove,
         'search': cmd_search,
-        'shop': cmd_shop,
         'dump': cmd_dump,
         'export': cmd_export,
         'show': cmd_show,

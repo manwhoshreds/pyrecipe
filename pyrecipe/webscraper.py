@@ -25,6 +25,7 @@ import bs4
 import requests
 
 import pyrecipe.utils as utils
+from pyrecipe.recipe import Recipe
 
 
 SCRAPERS = {
@@ -51,7 +52,7 @@ class RecipeWebScraper:
                 "{} is not scrapeable by pyrecipe. Please select from the "
                 "following sites:\n\n{}".format(url, sites), "WARN"))
 
-        return eval(SCRAPERS[scrapeable])(url).data
+        return eval(SCRAPERS[scrapeable])(url).recipe
 
 
 class TemplateWebScraper(ABC):
@@ -60,21 +61,20 @@ class TemplateWebScraper(ABC):
         super().__init__()
         req = requests.get(url).text
         self.soup = bs4.BeautifulSoup(req, 'html.parser')
-        self.data = {}
-        self.data['uuid'] = str(uuid.uuid4())
-        self.data['source_url'] = url
+        self.recipe = Recipe()
+        self.recipe.uuid = str(uuid.uuid4())
+        self.recipe.source_url = url
         self.__scrape()
 
     def __scrape(self):
-        self.data['prep_time'] = self.scrape_prep_time()
-        self.data['cook_time'] = self.scrape_cook_time()
-        self.data['name'] = self.scrape_name()
-        self.data['author'] = self.scrape_author()
-        self.data['ingredients'] = self.scrape_ingredients()
-        self.data['named_ingredients'] = self.scrape_named_ingredients()
-        self.data['steps'] = self.scrape_method()
-        # If site has no dish_type data, default to main
-        self.data['dish_type'] = 'main'
+        self.recipe.prep_time = self.scrape_prep_time()
+        self.recipe.cook_time = self.scrape_cook_time()
+        self.recipe.name = self.scrape_name()
+        self.recipe.author = self.scrape_author()
+        self.recipe.ingredients = self.scrape_ingredients()
+        self.recipe.named_ingredients = self.scrape_named_ingredients()
+        self.recipe.steps = self.scrape_method()
+        self.recipe.dish_type = 'main'
     
     @abstractmethod
     def scrape_prep_time(self):
@@ -431,13 +431,12 @@ class FoodNetworkWebScraper(TemplateWebScraper):
 
 
 if __name__ == '__main__':
-    from pyrecipe.recipe import Recipe
-    #webrecipe = "https://tasty.co/recipe/easy-butter-chicken"
+    webrecipe = "https://tasty.co/recipe/easy-butter-chicken"
     #webrecipe = "http://www.geniuskitchen.com/recipe/ina-gartens-baked-sweet-potato-fries-333618"
     #webrecipe = "https://www.allrecipes.com/recipe/232062/chef-johns-creme-caramel/"
     #webrecipe = "https://www.foodnetwork.com/recipes/ree-drummond/salisbury-steak-recipe-2126533"
-    webrecipe = "https://www.food.com/recipe/easiest-greek-salad-dressing-428819"
-    r = Recipe(webrecipe)
+    #webrecipe = "https://www.food.com/recipe/easiest-greek-salad-dressing-428819"
+    r = RecipeWebScraper.scrape(webrecipe)
     r.print_recipe()
     #print(r.get_json())
     #test = RecipeWebScraper.get_sites()
