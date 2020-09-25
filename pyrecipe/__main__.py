@@ -33,7 +33,7 @@ def cmd_print(args):
 
 def cmd_edit(args):
     """Edit a recipe using the urwid console interface."""
-    recipe = Recipe(args.source)
+    recipe = RecipeDB().get_recipe(args.source)
     RecipeEditor(recipe).start()
 
 def cmd_add(args):
@@ -470,7 +470,6 @@ def main():
     # Build the databse first if it does not exist.
     # A good way to rebuild the db is to delete the
     # db file.
-    print(DB_FILE)
     db_exists = os.path.exists(DB_FILE)
     recipe_exists = len(config.RECIPE_DATA_FILES) > 0
     if not db_exists and recipe_exists:

@@ -593,6 +593,7 @@ class RecipeEditor:
         """Save the current state of the recipe and exit."""
         self.update_recipe_data()
         db = RecipeDB()
+        print('no')
         db.add_recipe(self.recipe)
         raise ur.ExitMainLoop()
 

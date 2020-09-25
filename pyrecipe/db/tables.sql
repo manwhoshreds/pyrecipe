@@ -29,7 +29,10 @@ CREATE TABLE IF NOT EXISTS RecipeIngredients (
 	unit_id INTEGER,
 	ingredient_id INTEGER,
 	prep_id INTEGER,
-	FOREIGN KEY(recipe_id) REFERENCES Recipes(id)
+	CONSTRAINT fk_recipes
+		FOREIGN KEY(recipe_id) 
+		REFERENCES Recipes(id)
+		ON DELETE CASCADE
 	FOREIGN KEY(size_id) REFERENCES IngredientSizes(id)
 	FOREIGN KEY(unit_id) REFERENCES Units(id)
 	FOREIGN KEY(ingredient_id) REFERENCES Ingredients(id)
@@ -51,6 +54,7 @@ CREATE TABLE IF NOT EXISTS NamedIngredients (
 	size_id INTEGER,
 	FOREIGN KEY(named_ingredient_id) REFERENCES NamedIngredientsNames(id)
 	FOREIGN KEY(recipe_id) REFERENCES Recipes(id)
+		ON DELETE CASCADE
 	FOREIGN KEY(unit_id) REFERENCES Units(id)
 	FOREIGN KEY(ingredient_id) REFERENCES Ingredients(id)
 	FOREIGN KEY(size_id) REFERENCES IngredientSizes(id)

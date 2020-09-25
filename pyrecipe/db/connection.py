@@ -325,9 +325,10 @@ class RecipeDB:
     def delete_recipe(self, recipe):
         """Decorater for updating pyrecipe db."""
         self.c.execute(
-                "DELETE FROM Recipes WHERE name=?",
+                "DELETE FROM Recipes WHERE id=?",
                 (recipe,)
         )
+        self.conn.commit()
 
 
     def __del__(self):
@@ -359,5 +360,7 @@ def update_db(save_func):
 
 
 if __name__ == '__main__':
-    pass
+    db = RecipeDB()
+    db.delete_recipe('112')
+
 
