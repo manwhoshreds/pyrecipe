@@ -592,15 +592,13 @@ class RecipeEditor:
     def save_recipe(self):
         """Save the current state of the recipe and exit."""
         self.update_recipe_data()
-        db = RecipeDB()
-        print('no')
-        db.add_recipe(self.recipe)
         raise ur.ExitMainLoop()
 
     def start(self):
         """Main entry point of the recipe editor."""
         self.loop = self.setup_view()
         self.loop.run()
+        return self.recipe
 
 
 if __name__ == '__main__':

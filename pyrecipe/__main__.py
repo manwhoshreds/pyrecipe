@@ -24,22 +24,39 @@ from pyrecipe.console_gui import RecipeEditor
 __all__ = [c for c in dir() if c.startswith('cmd_')] + ['get_parser']
 
 
+class RecipeController:
+
+    def __init__(self, RecipeDB, view):
+        self.RecipeDB = RecipeDB
+        self.view = view
+
+    def print_recipe(self, args):
+        recipe = RecipeDB().get_recipe(args.source)
+        recipe.print_recipe(args.verbose)
+
+    def create_recipe(self):
+        pass
+
+    def edit_recipe(self, args):
+        recipe = RecipeDB().get_recipe(args.source)
+        edit_recipe = self.view(recipe).start()
+        edit_recipe.print_recipe()
+
+
 def cmd_print(args):
     """Print a recipe to stdout."""
-    recipe = RecipeDB().get_recipe(args.source)
-    recipe.print_recipe(args.verbose)
-
-
-def cmd_edit(args):
-    """Edit a recipe using the urwid console interface."""
-    recipe = RecipeDB().get_recipe(args.source)
-    RecipeEditor(recipe).start()
+    RecipeController(RecipeDB, 'print').print_recipe(args)
 
 
 def cmd_add(args):
     """Add a recipe to the recipe store."""
     name = args.name.strip()
     RecipeEditor(name, add=True).start()
+
+
+def cmd_edit(args):
+    """Edit a recipe using the urwid console interface."""
+    RecipeController(RecipeDB, RecipeEditor).edit_recipe(args)
 
 
 def cmd_remove(args):
@@ -318,7 +335,6 @@ def get_parser():
         help="Print version and exit"
     )
 
-    # Subparsers start here
     subparser = parser.add_subparsers(dest='subparser')
     subparser_print(subparser)
     subparser_edit(subparser)

@@ -234,7 +234,7 @@ class RecipeDB:
                 ''', (recipe_id, item['step'])
             )
 
-        self._commit()
+        self.conn.commit()
 
 
     def _get_recipe_ingredients(self, recipe_id):
@@ -317,13 +317,11 @@ class RecipeDB:
             step_list.append(step)
 
         recipe.steps = step_list
-
-
         return recipe
 
 
     def delete_recipe(self, recipe):
-        """Decorater for updating pyrecipe db."""
+        """Delete recipe from database."""
         self.c.execute(
                 "DELETE FROM Recipes WHERE id=?",
                 (recipe,)
@@ -333,10 +331,6 @@ class RecipeDB:
 
     def __del__(self):
         self.conn.close()
-
-
-    def _commit(self):
-        self.conn.commit()
 
 
     def create_database(self):
