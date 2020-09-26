@@ -10,7 +10,6 @@ import textwrap
 import lxml.etree as ET
 from termcolor import colored
 
-from pyrecipe import config
 
 S_DIV = lambda m: colored('~' * m, 'white')
 DISH_TYPES = "TEST"
@@ -92,11 +91,6 @@ def get_file_name(source):
     file_name = get_file_name_from_uuid(recipe_uuid)
     return file_name
 
-def get_file_name_from_uuid(uuid):
-    """Return a file name using the recipes uuid."""
-    file_name = uuid.replace('-', '') + ".recipe"
-    file_name = os.path.join(config.RECIPE_DATA_DIR, file_name)
-    return file_name
 
 def strip_punctuation(phrase):
     """Returns a phrase without punctuation."""
@@ -110,20 +104,6 @@ def get_file_name_from_recipe(recipe_name, file_extention='recipe'):
     file_name = '{}.{}'.format(recipe_name, file_extention)
     return file_name
 
-def stats(verb=0):
-    """Print statistics about your recipe database and exit."""
-    print("Recipes: {}".format(len(config.RECIPE_DATA_FILES)))
-    print("\nRecipes by Dishtype:")
-    for dt in DISH_TYPES: 
-        print("{}: {}".format(dt, len(DBInfo().get_recipes_by_dishtype(dt))))
-    print("\nMy Recipes:")
-    print("{}: {}".format(
-        config.USER_NAME, 
-        len(DBInfo().get_recipes_by_author(config.USER_NAME)))
-    ) 
-    print("\nPaths:")
-    print("Recipe data directory: {}".format(config.RECIPE_DATA_DIR))
-    print("Recipe xml directory: {}".format(config.RECIPE_XML_DIR))
 
 def msg(text, level='INFORM'):
     """Pyrecipe message function with color."""

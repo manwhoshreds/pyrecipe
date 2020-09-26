@@ -40,7 +40,6 @@ from termcolor import colored
 from ruamel.yaml import YAML
 
 import pyrecipe.utils as utils
-import pyrecipe.config as config
 from pyrecipe.recipe.recipe_numbers import RecipeNum
 from pyrecipe import Q_, CULINARY_UNITS
 #from pyrecipe.webscraper import RecipeWebScraper
@@ -51,7 +50,7 @@ __all__ = ['Recipe']
 PORTIONED_UNIT_RE = re.compile(r'\(?\d+\.?\d*? (ounce|pound)\)? (cans?|bags?)')
 PAREN_RE = re.compile(r'\((.*?)\)')
 HTTP_RE = re.compile(r'^https?\://')
-
+SIZE_STRINGS = ['large', 'medium', 'small', 'heaping']
 PUNCTUATION = ''.join(c for c in string.punctuation if c not in '-/(),.')
 
 yaml = YAML(typ='safe')
@@ -604,7 +603,7 @@ class Ingredient:
         ingred_list = [x for x in ingred_list if x not in amnt_list]
         ingred_string = ' '.join(ingred_list)
 
-        for item in config.SIZE_STRINGS:
+        for item in SIZE_STRINGS:
             if item in ingred_string:
                 self.size = item
                 ingred_string = ingred_string.replace(item, '')

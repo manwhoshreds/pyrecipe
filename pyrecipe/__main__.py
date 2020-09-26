@@ -12,9 +12,8 @@ import sys
 import argparse
 
 import pyrecipe.utils as utils
-import pyrecipe.config as config
 from pyrecipe.recipe import Recipe
-from pyrecipe.db import RecipeDB, DB_FILE
+from pyrecipe.db import RecipeDB, DB_FILE, RecipeNotFound
 from pyrecipe.webscraper import SCRAPEABLE_SITES
 from pyrecipe import __scriptname__, version_info
 from pyrecipe.console_gui import RecipeEditor
@@ -31,14 +30,18 @@ class RecipeController:
         self.view = view
 
     def print_recipe(self, args):
-        recipe = RecipeDB().get_recipe(args.source)
-        recipe.print_recipe(args.verbose)
+        try: 
+            recipe = RecipeDB().read_recipe(args.source)
+            recipe.print_recipe(args.verbose)
+        except RecipeNotFound as e:
+            exit(e)
+
 
     def create_recipe(self):
         pass
 
     def edit_recipe(self, args):
-        recipe = RecipeDB().get_recipe(args.source)
+        recipe = RecipeDB().read_recipe(args.source)
         edit_recipe = self.view(recipe).start()
         edit_recipe.print_recipe()
 
@@ -354,7 +357,8 @@ def main():
     # A good way to rebuild the db is to delete the
     # db file.
     db_exists = os.path.exists(DB_FILE)
-    recipe_exists = len(config.RECIPE_DATA_FILES) > 0
+    recipe_data_dir = os.path.expanduser("~/.config/pyrecipe/recipe_data")
+    recipe_exists = len(os.listdir(recipe_data_dir)) > 0
     if not db_exists and recipe_exists:
         print('Building recipe database...')
         build_recipe_database()
@@ -385,4 +389,6 @@ def main():
         case[args.subparser](args)
 
 if __name__ == '__main__':
-    main()
+    import os
+    print(os.path.listdir())
+    #main()

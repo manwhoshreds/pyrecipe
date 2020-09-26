@@ -18,7 +18,6 @@ import pkg_resources
 from pint import UnitRegistry
 import inflect
 
-import pyrecipe.config as config
 
 __version__ = pkg_resources.get_distribution('pyrecipe').version
 __email__ = 'm.k.miller@gmx.com'

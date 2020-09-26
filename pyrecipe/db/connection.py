@@ -9,6 +9,7 @@ import os
 import sys
 import sqlite3
 
+import pyrecipe.utils as utils
 from pyrecipe.recipe import Recipe
 
 if not os.path.isdir(os.path.expanduser("~/.local/share/pyrecipe")):
@@ -21,6 +22,9 @@ else:
 
 DB_DIR = os.path.dirname(os.path.realpath(__file__))
 TABLES = os.path.join(DB_DIR, "tables.sql")
+
+class RecipeNotFound(Exception):
+    pass
 
 
 class RecipeDB:
@@ -285,14 +289,15 @@ class RecipeDB:
         return ingred_list
 
 
-    def get_recipe(self, name):
+    def read_recipe(self, name):
         self.c.execute("SELECT * FROM Recipes WHERE name=?", (name,))
         row = self.c.fetchone()
         if row:
             row = self._get_dict_from_row(row)
             recipe = Recipe(row)
         else:
-            return
+            msg = '"{}" was not found in the database.'.format(name)
+            raise RecipeNotFound(utils.msg(msg, 'ERROR'))
         
         recipe.ingredients = self._get_recipe_ingredients(recipe.id)
 
