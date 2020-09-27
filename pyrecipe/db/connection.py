@@ -23,7 +23,12 @@ else:
 DB_DIR = os.path.dirname(os.path.realpath(__file__))
 TABLES = os.path.join(DB_DIR, "tables.sql")
 
+
 class RecipeNotFound(Exception):
+    pass
+
+
+class RecipeAlreadyStored(Exception):
     pass
 
 
@@ -69,13 +74,16 @@ class RecipeDB:
 
     def add_recipe(self, recipe):
         '''Add a recipe to the database.'''
+        print('Adding {}'.format(recipe.name))
         self.c.execute(
             '''SELECT name FROM Recipes
-               WHERE name=?''', (recipe.name.lower(),)
+               WHERE name=?''', (recipe.name,)
         )
         if self.c.fetchone():
-            #pass
-            return
+            msg = 'A recipe with the name "{}" already exists in the \
+                   database. Please Select another name for this \
+                   recipe'.format(recipe.name)
+            raise RecipeAlreadyStored(utils.msg(msg, 'ERROR'))
 
         recipe_data = [(
             recipe.uuid,
@@ -325,11 +333,11 @@ class RecipeDB:
         return recipe
 
 
-    def delete_recipe(self, recipe):
+    def delete_recipe(self, name):
         """Delete recipe from database."""
         self.c.execute(
-                "DELETE FROM Recipes WHERE id=?",
-                (recipe,)
+                "DELETE FROM Recipes WHERE name=?",
+                (name,)
         )
         self.conn.commit()
 

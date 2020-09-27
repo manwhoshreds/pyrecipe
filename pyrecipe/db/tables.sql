@@ -102,4 +102,5 @@ CREATE TABLE IF NOT EXISTS RecipeSteps (
 	recipe_id INTEGER,
 	step TEXT,
 	FOREIGN KEY(recipe_id) REFERENCES Recipes(id)
+		ON DELETE CASCADE
 );

@@ -25,10 +25,12 @@ __all__ = [c for c in dir() if c.startswith('cmd_')] + ['get_parser']
 
 class RecipeController:
 
+    
     def __init__(self, RecipeDB, view):
         self.RecipeDB = RecipeDB
         self.view = view
 
+    
     def print_recipe(self, args):
         try: 
             recipe = RecipeDB().read_recipe(args.source)
@@ -37,8 +39,22 @@ class RecipeController:
             exit(e)
 
 
-    def create_recipe(self):
-        pass
+    def create_recipe(self, args):
+        recipe = self.view(args.name, add=True).start()
+        self.RecipeDB().add_recipe(recipe)
+    
+    
+    def delete_recipe(self, args):
+        answer = input("Are you sure your want to delete {}? yes/no "
+                       .format(args.source))
+        if answer.strip() == 'yes':
+            self.RecipeDB().delete_recipe(args.source)
+            msg = '{} has been deleted'.format(args.source)
+            sys.exit(utils.msg(msg, 'INFORM'))
+
+        msg = '{} was not deleted'.format(args.source)
+        sys.exit(utils.msg(msg, 'INFORM'))
+    
 
     def edit_recipe(self, args):
         recipe = RecipeDB().read_recipe(args.source)
@@ -53,8 +69,7 @@ def cmd_print(args):
 
 def cmd_add(args):
     """Add a recipe to the recipe store."""
-    name = args.name.strip()
-    RecipeEditor(name, add=True).start()
+    RecipeController(RecipeDB, RecipeEditor).create_recipe(args)
 
 
 def cmd_edit(args):
@@ -64,16 +79,7 @@ def cmd_edit(args):
 
 def cmd_remove(args):
     """Delete a recipe from the recipe store."""
-    recipe = Recipe(args.source)
-    answer = input("Are you sure your want to delete {}? yes/no "
-                   .format(recipe.name))
-    if answer.strip() == 'yes':
-        os.remove(recipe.file_name)
-        print("{} has been deleted".format(recipe.name))
-        return recipe.uuid
-
-    print("{} not deleted".format(recipe.name))
-    return None
+    RecipeController(RecipeDB, 'test').delete_recipe(args)
 
 def cmd_search(args):
     """Search the recipe database."""
@@ -98,33 +104,6 @@ def cmd_dump(args):
     sys.exit(recipe.dump_data(args.data_type))
 
 
-def cmd_export(args):
-    """Export recipes in xml format."""
-    try:
-        output_dir = os.path.realpath(args.output_dir)
-        os.makedirs(output_dir)
-    except FileExistsError:
-        sys.exit(utils.msg("A directory with that name already exists.",
-                           "ERROR"))
-    except TypeError:
-        # no output dir indicated on the cmdline throws a type error we
-        # can use to default to the current working directory.
-        if args.all:
-            output_dir = os.path.realpath('recipes')
-            os.makedirs(output_dir)
-        else:
-            output_dir = os.getcwd()
-
-    if args.all:
-        for item in config.RECIPE_DATA_FILES:
-            recipe = Recipe(item)
-            recipe.export(args.data_type, output_dir)
-        sys.exit(0)
-
-    recipe = Recipe(args.source)
-    recipe.export(args.data_type, output_dir)
-
-
 def cmd_show(args):
     """Show the statistics information of the recipe database."""
     dbinfo = DBInfo()
@@ -145,9 +124,10 @@ def build_recipe_database():
     """Build the recipe database."""
     database = RecipeDB()
     database.create_database()
-    for item in config.RECIPE_DATA_FILES:
-        recipe = Recipe(item)
-        database.add_recipe(recipe)
+    recipe_data_dir = os.path.expanduser("~/.config/pyrecipe/recipe_data")
+    for item in os.listdir(recipe_data_dir):
+        r = Recipe(os.path.join(recipe_data_dir, item))
+        database.add_recipe(r)
 
 
 def subparser_print(subparser):
@@ -248,49 +228,6 @@ def subparser_dump(subparser):
     )
 
 
-def subparser_export(subparser):
-    """Subparser for export command."""
-    parser_export = subparser.add_parser(
-        "export",
-        help="Export recipes in xml format"
-    )
-    parser_export.add_argument(
-        "source",
-        nargs="?",
-        help="Sorce file to export"
-    )
-    parser_export.add_argument(
-        "-o",
-        "--output-dir",
-        metavar="dir",
-        type=str,
-        nargs="?",
-        help="Choose a directory to output file"
-    )
-    parser_export.add_argument(
-        "-a",
-        "--all",
-        action="store_true",
-        help="Export all files in the database"
-    )
-    parser_export.add_argument(
-        "-x",
-        "--xml",
-        dest="data_type",
-        action='store_const',
-        const='xml',
-        help="Export file in xml format"
-    )
-    parser_export.add_argument(
-        "-r",
-        "--recipe",
-        dest="data_type",
-        action='store_const',
-        const='recipe',
-        help="Export recipe file"
-    )
-
-
 def subparser_show(subparser):
     """Subparser for show command."""
     parser_show = subparser.add_parser(
@@ -345,7 +282,6 @@ def get_parser():
     subparser_remove(subparser)
     subparser_search(subparser)
     subparser_dump(subparser)
-    subparser_export(subparser)
     subparser_show(subparser)
 
     return parser
@@ -380,7 +316,6 @@ def main():
         'remove': cmd_remove,
         'search': cmd_search,
         'dump': cmd_dump,
-        'export': cmd_export,
         'show': cmd_show,
     }
     if args.version:
