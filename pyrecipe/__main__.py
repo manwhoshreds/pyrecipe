@@ -16,7 +16,7 @@ from pyrecipe.recipe import Recipe
 from pyrecipe.db import RecipeDB, DB_FILE, RecipeNotFound
 from pyrecipe.webscraper import SCRAPEABLE_SITES
 from pyrecipe import __scriptname__, version_info
-from pyrecipe.console_gui import RecipeEditor
+from pyrecipe.user_interface import View
 
 
 # For the testsuite
@@ -26,15 +26,15 @@ __all__ = [c for c in dir() if c.startswith('cmd_')] + ['get_parser']
 class RecipeController:
 
     
-    def __init__(self, RecipeDB, view):
+    def __init__(self, RecipeDB, View):
         self.RecipeDB = RecipeDB
-        self.view = view
+        self.View = View
 
     
     def print_recipe(self, args):
         try: 
             recipe = RecipeDB().read_recipe(args.source)
-            recipe.print_recipe(args.verbose)
+            self.View.print_recipe(recipe)
         except RecipeNotFound as e:
             exit(e)
 
@@ -64,22 +64,22 @@ class RecipeController:
 
 def cmd_print(args):
     """Print a recipe to stdout."""
-    RecipeController(RecipeDB, 'print').print_recipe(args)
+    RecipeController(RecipeDB, View).print_recipe(args)
 
 
 def cmd_add(args):
     """Add a recipe to the recipe store."""
-    RecipeController(RecipeDB, RecipeEditor).create_recipe(args)
+    RecipeController(RecipeDB, View).create_recipe(args)
 
 
 def cmd_edit(args):
     """Edit a recipe using the urwid console interface."""
-    RecipeController(RecipeDB, RecipeEditor).edit_recipe(args)
+    RecipeController(RecipeDB, View).edit_recipe(args)
 
 
 def cmd_remove(args):
     """Delete a recipe from the recipe store."""
-    RecipeController(RecipeDB, 'test').delete_recipe(args)
+    RecipeController(RecipeDB, View).delete_recipe(args)
 
 def cmd_search(args):
     """Search the recipe database."""
