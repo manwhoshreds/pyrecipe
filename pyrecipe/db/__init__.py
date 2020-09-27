@@ -1,5 +1,4 @@
-from .dbinfo import DBInfo
-from .connection import RecipeDB, DB_FILE, RecipeNotFound
+from .backend import RecipeDB, DB_FILE, RecipeNotFound, DBInfo
 
 
 SIZE_STRINGS = ['large', 'medium', 'small', 'heaping']

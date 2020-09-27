@@ -33,7 +33,6 @@ class RecipeController:
     
     def print_recipe(self, args):
         try: 
-            print(args.verbose)
             recipe = RecipeDB().read_recipe(args.source)
             self.View.print_recipe(recipe, args.verbose)
         except RecipeNotFound as e:

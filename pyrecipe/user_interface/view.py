@@ -16,7 +16,6 @@ from pyrecipe.recipe.recipe_numbers import RecipeNum
 
 def print_recipe(recipe, verbose=False, color=True):
     """Print the recipe to standard output."""
-    print(verbose)
     recipe_str = colored(recipe.name.title(), 'cyan', attrs=['bold'])
     recipe_str += "\n\nDish Type: {}".format(str(recipe.dish_type))
     for item in ('prep_time', 'cook_time', 'bake_time'):

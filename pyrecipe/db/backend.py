@@ -11,6 +11,7 @@ import sqlite3
 
 import pyrecipe.utils as utils
 from pyrecipe.recipe import Recipe
+from pyrecipe import p
 
 if not os.path.isdir(os.path.expanduser("~/.local/share/pyrecipe")):
     os.makedirs(os.path.expanduser("~/.local/share/pyrecipe"))
@@ -21,7 +22,6 @@ else:
     DB_FILE = os.path.expanduser("~/Code/pyrecipe/pyrecipe/db/recipes.db")
 
 DB_DIR = os.path.dirname(os.path.realpath(__file__))
-TABLES = os.path.join(DB_DIR, "tables.sql")
 
 
 class RecipeNotFound(Exception):
@@ -72,9 +72,58 @@ class RecipeDB:
                    (str(ingred.prep),)
             )
 
-    def add_recipe(self, recipe):
+    
+    def _get_recipe_ingredients(self, recipe_id):
+        self.c.execute(
+            '''SELECT amount, ingredient_size, unit, name, prep
+               FROM RecipeIngredients AS ri
+               LEFT JOIN IngredientSizes AS isi ON ri.size_id=isi.id
+               INNER JOIN Units AS u ON ri.unit_id=u.id
+               INNER JOIN Ingredients AS i ON ri.ingredient_id=i.id
+               LEFT JOIN IngredientPrep AS ip ON ri.prep_id=ip.id
+               WHERE recipe_id=?''', (recipe_id,)
+        )
+        
+        ingred_rows = self.c.fetchall()
+        ingred_list = []
+        for item in ingred_rows:
+            ingredient = self._get_dict_from_row(item)
+            ingred_list.append(ingredient)
+        return ingred_list
+
+    
+    def _get_recipe_named_ingredients(self, recipe_id):
+        self.c.execute(
+            '''SELECT alt_name
+               FROM NamedIngredientsNames
+               WHERE recipe_id=?''', (recipe_id,)
+        )
+        alt_names = self.c.fetchall()
+        ingred_list = {}
+        for item in alt_names:
+            alt_name = self._get_dict_from_row(item)['alt_name']
+            self.c.execute(
+                '''SELECT amount, unit, name
+                   FROM NamedIngredients AS ni
+                   INNER JOIN NamedIngredientsNames
+                       AS nin ON ni.named_ingredient_id=nin.id
+                   LEFT JOIN IngredientSizes AS isi ON ni.size_id=isi.id
+                   INNER JOIN Units AS u ON ni.unit_id=u.id
+                   INNER JOIN Ingredients AS i ON ni.ingredient_id=i.id
+                   LEFT JOIN IngredientPrep AS ip ON ni.ingredient_id=ip.id
+                   WHERE ni.recipe_id=? AND alt_name=?''', (recipe_id, alt_name)
+            )
+            named_ingred_rows = self.c.fetchall()
+            ingredients = []
+            for item in named_ingred_rows:
+                ingredient = self._get_dict_from_row(item)
+                ingredients.append(ingredient)
+            ingred_list[alt_name] = ingredients
+        return ingred_list
+    
+
+    def create_recipe(self, recipe):
         '''Add a recipe to the database.'''
-        print('Adding {}'.format(recipe.name))
         self.c.execute(
             '''SELECT name FROM Recipes
                WHERE name=?''', (recipe.name,)
@@ -249,54 +298,6 @@ class RecipeDB:
         self.conn.commit()
 
 
-    def _get_recipe_ingredients(self, recipe_id):
-        self.c.execute(
-            '''SELECT amount, ingredient_size, unit, name, prep
-               FROM RecipeIngredients AS ri
-               LEFT JOIN IngredientSizes AS isi ON ri.size_id=isi.id
-               INNER JOIN Units AS u ON ri.unit_id=u.id
-               INNER JOIN Ingredients AS i ON ri.ingredient_id=i.id
-               LEFT JOIN IngredientPrep AS ip ON ri.prep_id=ip.id
-               WHERE recipe_id=?''', (recipe_id,)
-        )
-        
-        ingred_rows = self.c.fetchall()
-        ingred_list = []
-        for item in ingred_rows:
-            ingredient = self._get_dict_from_row(item)
-            ingred_list.append(ingredient)
-        return ingred_list
-
-    def _get_recipe_named_ingredients(self, recipe_id):
-        self.c.execute(
-            '''SELECT alt_name
-               FROM NamedIngredientsNames
-               WHERE recipe_id=?''', (recipe_id,)
-        )
-        alt_names = self.c.fetchall()
-        ingred_list = {}
-        for item in alt_names:
-            alt_name = self._get_dict_from_row(item)['alt_name']
-            self.c.execute(
-                '''SELECT amount, unit, name
-                   FROM NamedIngredients AS ni
-                   INNER JOIN NamedIngredientsNames
-                       AS nin ON ni.named_ingredient_id=nin.id
-                   LEFT JOIN IngredientSizes AS isi ON ni.size_id=isi.id
-                   INNER JOIN Units AS u ON ni.unit_id=u.id
-                   INNER JOIN Ingredients AS i ON ni.ingredient_id=i.id
-                   LEFT JOIN IngredientPrep AS ip ON ni.ingredient_id=ip.id
-                   WHERE ni.recipe_id=? AND alt_name=?''', (recipe_id, alt_name)
-            )
-            named_ingred_rows = self.c.fetchall()
-            ingredients = []
-            for item in named_ingred_rows:
-                ingredient = self._get_dict_from_row(item)
-                ingredients.append(ingredient)
-            ingred_list[alt_name] = ingredients
-        return ingred_list
-
-
     def read_recipe(self, name):
         self.c.execute("SELECT * FROM Recipes WHERE name=?", (name,))
         row = self.c.fetchone()
@@ -348,26 +349,88 @@ class RecipeDB:
 
     def create_database(self):
         """Create the recipe database."""
-        with open(TABLES) as fi:
+        tables = os.path.join(DB_DIR, "tables.sql")
+        with open(tables) as fi:
             commands = fi.read().split(';')
             for command in commands:
                 self.c.execute(command)
 
 
-def update_db(save_func):
-    """Decorater for updating pyrecipe db."""
-    def wrapper(recipe):
-        db = RecipeDB()
-        db.add_recipe(recipe)
-        save_func(recipe)
-    return wrapper
+class DBInfo(RecipeDB):
+    """Get data from the database as a dict."""
+    
+    def get_recipes(self):
+        """Return all of the recipe names in the database."""
+        names = self.c.execute("SELECT name FROM recipes")
+        names = [x[0] for x in names]
+        return names
+    
+    def get_recipes_by_dishtype(self, dishtype):
+        """Get recipenames of a cirtain dishtype.""" 
+        names = self.query(
+            "SELECT name FROM recipes WHERE dish_type = \'{}\'".format(dishtype)
+        )
+        names = [x[0] for x in names]
+        return names
+    
+    def get_recipes_by_author(self, author):
+        """Get recipenames of a cirtain dishtype.""" 
+        names = self.c.execute(
+            "SELECT name FROM recipes WHERE author = \'{}\'".format(author)
+        )
+        names = [x[0] for x in names]
+        return names
+    
+    def get_uuid(self, name):
+        """Get the uuid of the recipe."""
+        uuid = self.query(
+            "SELECT recipe_uuid FROM recipes WHERE name = \'{}\' COLLATE NOCASE".format(name)
+        )
+        if uuid:
+            return uuid[0][0]
+        return None
 
-
-
+    @property
+    def words(self):
+        """A complete list of searchable words from the database."""
+        words = []
+        results = []
+        queries = [
+            'SELECT * FROM recipesearch',
+            'SELECT * FROM ingredientsearch'
+        ]
+        for query in queries:
+            results += self.query(query)
+        for w in results:
+            # Get rid of empty strings
+            w = [i for i in w if i]
+            # Split words at spaces 
+            w = [w for s in w for w in s.split()]
+            words += w
+        return set(words)
+    
+    def search(self, args=[]):
+        """Search the database."""
+        arg_list = []
+        for arg in args:
+            arg_list += arg.split()
+        arg_list += [p.plural(w) for w in arg_list] 
+        queries = [
+            'SELECT name FROM recipesearch WHERE recipesearch MATCH "{}"',
+            'SELECT name FROM ingredientsearch WHERE ingredientsearch MATCH "{}"'
+        ]
+        results = []
+        for string in arg_list:
+            for query in queries:
+                result = self.query(query.format(string))
+                result = [i[0] for i in result]
+                results += result
+        return set(results)
 
 
 if __name__ == '__main__':
+    dbinfo = DBInfo()
+    recipes = dbinfo.get_recipes()
+    print(recipes)
     db = RecipeDB()
     db.delete_recipe('112')
-
-
