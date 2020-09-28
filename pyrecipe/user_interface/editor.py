@@ -14,9 +14,9 @@ import uuid
 
 import urwid as ur
 
-from pyrecipe.db import RecipeDB, DBInfo, DISH_TYPES
+from pyrecipe.backend import RecipeDB, DBInfo, DISH_TYPES
 from pyrecipe.recipe import Recipe
-from pyrecipe.utils import wrap
+from .helpers import wrap
 
 
 PALETTE = ([

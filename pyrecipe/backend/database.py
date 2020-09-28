@@ -19,7 +19,7 @@ if not os.path.isdir(os.path.expanduser("~/.local/share/pyrecipe")):
 if sys.base_prefix == sys.prefix:
     DB_FILE = os.path.expanduser("~/.local/share/pyrecipe/recipes.db")
 else:
-    DB_FILE = os.path.expanduser("~/Code/pyrecipe/pyrecipe/db/recipes.db")
+    DB_FILE = os.path.expanduser("~/Code/pyrecipe/pyrecipe/backend/recipes.db")
 
 DB_DIR = os.path.dirname(os.path.realpath(__file__))
 
@@ -52,23 +52,23 @@ class RecipeDB:
         """Inserts ingredients data into the database"""
 
         self.c.execute(
-            "INSERT OR IGNORE INTO Ingredients (name) VALUES(?)",
+            "INSERT OR IGNORE INTO Ingredients(name) VALUES(?)",
                (ingred.name,)
         )
         self.c.execute(
-            "INSERT OR IGNORE INTO Units (unit) VALUES(?)",
+            "INSERT OR IGNORE INTO Units(unit) VALUES(?)",
                (str(ingred.unit),)
         )
         
         if ingred.size:
             self.c.execute(
-                "INSERT OR IGNORE INTO IngredientSizes (ingredient_size) VALUES(?)",
+                "INSERT OR IGNORE INTO IngredientSizes(ingredient_size) VALUES(?)",
                    (str(ingred.size),)
             )
         
         if ingred.prep:
             self.c.execute(
-                "INSERT OR IGNORE INTO IngredientPrep (prep) VALUES(?)",
+                "INSERT OR IGNORE INTO IngredientPrep(prep) VALUES(?)",
                    (str(ingred.prep),)
             )
 
@@ -120,7 +120,7 @@ class RecipeDB:
                 ingredients.append(ingredient)
             ingred_list[alt_name] = ingredients
         return ingred_list
-    
+
 
     def create_recipe(self, recipe):
         '''Add a recipe to the database.'''
@@ -129,13 +129,13 @@ class RecipeDB:
                WHERE name=?''', (recipe.name,)
         )
         if self.c.fetchone():
-            msg = 'A recipe with the name "{}" already exists in the \
-                   database. Please Select another name for this \
-                   recipe'.format(recipe.name)
+            msg = ("A recipe with the name '{}' already exists in the "
+                   "database. Please Select another name for this "
+                   "recipe.".format(recipe.name))
             raise RecipeAlreadyStored(utils.msg(msg, 'ERROR'))
 
         recipe_data = [(
-            recipe.uuid,
+            recipe.uuid, 
             recipe.name.lower(),
             recipe.dish_type,
             recipe.author,
@@ -147,7 +147,7 @@ class RecipeDB:
 
         self.c.executemany(
             '''INSERT OR IGNORE INTO recipes (
-                recipe_uuid,
+                uuid,
                 name,
                 dish_type,
                 author,
@@ -334,6 +334,180 @@ class RecipeDB:
         return recipe
 
 
+    def update_recipe(self, recipe):
+        '''Update a recipe in the database.'''
+        recipe_data = [(
+            recipe.name,
+            recipe.dish_type,
+            recipe.author,
+            recipe.tags,
+            recipe.categories,
+            recipe.price,
+            recipe.source_url,
+            recipe.id
+        )]
+
+        self.c.executemany(
+            '''UPDATE Recipes
+               SET
+                name=?,
+                dish_type=?,
+                author=?,
+                tags=?,
+                categories=?,
+                price=?,
+                source_url=?
+               WHERE id=?''', recipe_data
+        )
+
+        for item in recipe.get_ingredients()[0]:
+            self._insert_ingredient(item)
+
+            self.c.execute(
+                '''SELECT id FROM Ingredients
+                   WHERE name=?''',
+                   (item.name,)
+            )
+
+            ingredient_id = self.c.fetchone()['id']
+            
+            self.c.execute(
+                '''SELECT id FROM Units
+                   WHERE unit=?''',
+                   (item.unit,)
+            )
+
+            unit_id = self.c.fetchone()['id']
+            
+            self.c.execute(
+                '''SELECT id 
+                   FROM IngredientSizes
+                   WHERE ingredient_size=?''',
+                   (item.size,)
+            )
+            try:
+                ingredient_size_id = self.c.fetchone()['id']
+            except TypeError:
+                ingredient_size_id = None
+            
+            self.c.execute(
+                '''SELECT id 
+                   FROM IngredientPrep
+                   WHERE prep=?''',
+                   (item.prep,)
+            )
+            
+            try:
+                prep_id = self.c.fetchone()['id']
+            except TypeError:
+                prep_id = None
+            
+            self.c.execute(
+                '''UPDATE RecipeIngredients 
+                   SET
+                    amount=?, 
+                    size_id=?, 
+                    unit_id=?, 
+                    ingredient_id=?,
+                    prep_id=?
+                   WHERE recipe_id=?''',
+                    (str(item.amount), 
+                     ingredient_size_id,
+                     int(unit_id), 
+                     int(ingredient_id),
+                     prep_id,
+                     recipe.id)
+            )
+
+            self.c.execute(
+                '''INSERT OR IGNORE INTO RecipeIngredients (
+                        recipe_id,
+                        amount,
+                        size_id,
+                        unit_id,
+                        ingredient_id
+                        ) VALUES(?, ?, ?, ?, ?)
+                        WHERE (select changes() = 0)''', 
+                        (recipe.id,
+                         str(item.amount),
+                         ingredient_size_id,
+                         int(unit_id),
+                         int(ingredient_id))
+                    )
+    
+        if recipe.get_ingredients()[1]:
+            for item, ingreds in recipe.get_ingredients()[1].items():
+                self.c.execute(
+                    '''INSERT OR IGNORE INTO NamedIngredientsNames (
+                            recipe_id,
+                            alt_name
+                            ) VALUES(?, ?)''',
+                            (recipe.id,
+                             item)
+                )
+                self.c.execute(
+                    '''SELECT id FROM NamedIngredientsNames
+                       WHERE alt_name=?''', (item,)
+                )
+                alt_name_id = self._get_dict_from_row(self.c.fetchone())['id']
+
+                for ingred in ingreds:
+                    self._insert_ingredient(ingred)
+
+                    self.c.execute(
+                        '''SELECT id FROM Ingredients
+                           WHERE name=?''',
+                           (ingred.name,)
+                    )
+
+                    ingredient_id = self.c.fetchone()['id']
+
+                    self.c.execute(
+                        '''SELECT id FROM Units
+                           WHERE unit=?''',
+                           (ingred.unit,)
+                    )
+
+                    unit_id = self.c.fetchone()['id']
+
+                    ingredient_size_id = None
+                    if ingred.size:
+                        ingredient_size_id = self.c.execute(
+                            '''SELECT id 
+                               FROM IngredientSizes
+                               WHERE ingredient_size=?''',
+                               (ingred.size,)
+                        )
+
+                    self.c.execute(
+                        '''INSERT OR REPLACE INTO NamedIngredients (
+                                recipe_id,
+                                named_ingredient_id,
+                                amount,
+                                size_id,
+                                unit_id,
+                                ingredient_id
+                                ) VALUES(?, ?, ?, ?, ?, ?)''', 
+                                (recipe.id,
+                                 alt_name_id,
+                                 str(ingred.amount),
+                                 ingredient_size_id,
+                                 int(unit_id),
+                                 int(ingredient_id))
+                    )
+
+        for item in recipe.steps:
+            self.c.execute(
+                '''INSERT OR IGNORE INTO RecipeSteps (
+                    recipe_id,
+                    step
+                    ) VALUES(?, ?)
+                ''', (recipe.id, item['step'])
+            )
+
+        self.conn.commit()
+    
+
     def delete_recipe(self, name):
         """Delete recipe from database."""
         self.c.execute(
@@ -351,9 +525,7 @@ class RecipeDB:
         """Create the recipe database."""
         tables = os.path.join(DB_DIR, "tables.sql")
         with open(tables) as fi:
-            commands = fi.read().split(';')
-            for command in commands:
-                self.c.execute(command)
+            self.c.executescript(fi.read())
 
 
 class DBInfo(RecipeDB):
@@ -361,14 +533,14 @@ class DBInfo(RecipeDB):
     
     def get_recipes(self):
         """Return all of the recipe names in the database."""
-        names = self.c.execute("SELECT name FROM recipes")
+        names = self.c.execute("SELECT name FROM Recipes")
         names = [x[0] for x in names]
         return names
     
     def get_recipes_by_dishtype(self, dishtype):
         """Get recipenames of a cirtain dishtype.""" 
         names = self.query(
-            "SELECT name FROM recipes WHERE dish_type = \'{}\'".format(dishtype)
+            "SELECT name FROM Recipes WHERE dish_type = \'{}\'".format(dishtype)
         )
         names = [x[0] for x in names]
         return names
@@ -376,7 +548,7 @@ class DBInfo(RecipeDB):
     def get_recipes_by_author(self, author):
         """Get recipenames of a cirtain dishtype.""" 
         names = self.c.execute(
-            "SELECT name FROM recipes WHERE author = \'{}\'".format(author)
+            "SELECT name FROM Recipes WHERE author = \'{}\'".format(author)
         )
         names = [x[0] for x in names]
         return names

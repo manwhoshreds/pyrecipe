@@ -46,7 +46,6 @@ from pyrecipe import Q_, CULINARY_UNITS
 
 __all__ = ['Recipe']
 
-# GLOBAL REs
 PORTIONED_UNIT_RE = re.compile(r'\(?\d+\.?\d*? (ounce|pound)\)? (cans?|bags?)')
 PAREN_RE = re.compile(r'\((.*?)\)')
 HTTP_RE = re.compile(r'^https?\://')
@@ -65,9 +64,10 @@ class Recipe:
     """
     # All keys applicable to the Open Recipe Format
     SIMPLE_KEYS = [
-        'id', 'author', 'bake_time', 'categories', 'cook_time', 'description',
-        'dish_type', 'name', 'notes', 'prep_time', 'price', 'recipe_yield',
-        'region', 'source_book', 'source_url', 'steps','tags', 'uuid', 'yields'
+        'id', 'uuid', 'name', 'dish_type', 'author', 'categories', 'tags',
+        'description', 'cook_time', 'bake_time', 'notes', 'prep_time', 
+        'price', 'recipe_yield', 'region', 'source_book', 'source_url', 
+        'steps', 'yields'
     ]
 
     # These require their own setters and getters
@@ -125,9 +125,9 @@ class Recipe:
                              .format(key))
 
     def __setattr__(self, key, value):
-        #if key not in self.ALL_KEYS:
-        #    raise AttributeError("Cannot set attribute '{}', its not apart "
-        #                         "of the ORF spec.".format(key))
+        if key not in self.ALL_KEYS:
+            raise AttributeError("Cannot set attribute '{}', its not apart "
+                                 "of the ORF spec.".format(key))
         if key in Recipe.SIMPLE_KEYS:
             self._recipe_data[key] = value
         else:
@@ -562,6 +562,4 @@ class Ingredient:
         self.name = name.strip(', ')
 
 if __name__ == '__main__':
-    test = Ingredient("1 goofy goober snack, chopped")
-    print(test._get_data_dict())
-    print(test)
+    pass

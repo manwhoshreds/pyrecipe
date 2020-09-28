@@ -5,24 +5,13 @@
 import os
 import sys
 import string
-import textwrap
 
 import lxml.etree as ET
 from termcolor import colored
 
 
-S_DIV = lambda m: colored('~' * m, 'white')
 DISH_TYPES = "TEST"
 
-def format_text(string):
-    """Format text for use in pyrecipe function.
-    
-    Formats the text so that it is more consistant and
-    can be used throughout pyrecipe. Text is striped of 
-    extraneous whitepace and lower cased. This function
-    is mainly used when string input is recieved from the user.
-    """
-    return string.lower().strip()
 
 def mins_to_hours(mins):
     """Convert minutes to hours."""
@@ -35,24 +24,6 @@ def mins_to_hours(mins):
         converted_time = "%d h %02d m" % (hours, minutes)
     return converted_time
 
-def wrap(str_list, width=79):
-    """Textwrap for recipes."""
-    if not isinstance(str_list, list):
-        raise TypeError('First argument must be a list.')
-    wrapped = []
-    wrapper = textwrap.TextWrapper(width)
-    wrapper.subsequent_indent = '   '
-    if len(str_list) > 9:
-        wrapper.initial_indent = ' '
-        wrapper.subsequent_indent = '    '
-
-    for index, step in enumerate(str_list, start=1):
-        if index >= 10:
-            wrapper.initial_indent = ''
-        wrapp = wrapper.fill(step)
-        wrapped_str = str(index) + ". ", wrapp
-        wrapped.append(wrapped_str)
-    return wrapped
 
 def get_source_path(source):
     """Closer inspection of the source.

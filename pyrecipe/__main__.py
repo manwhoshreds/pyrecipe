@@ -13,7 +13,7 @@ import argparse
 
 import pyrecipe.utils as utils
 from pyrecipe.recipe import Recipe
-from pyrecipe.db import RecipeDB, DB_FILE, RecipeNotFound
+from pyrecipe.backend import RecipeDB, DB_FILE, RecipeNotFound
 from pyrecipe.webscraper import SCRAPEABLE_SITES
 from pyrecipe import __scriptname__, version_info
 from pyrecipe.user_interface import View
@@ -31,17 +31,24 @@ class RecipeController:
         self.View = View
 
     
+    def create_recipe(self, args):
+        recipe = self.view(args.name, add=True).start()
+        self.RecipeDB().add_recipe(recipe)
+    
+    
     def print_recipe(self, args):
         try: 
             recipe = RecipeDB().read_recipe(args.source)
             self.View.print_recipe(recipe, args.verbose)
+            #print(recipe._recipe_data)
         except RecipeNotFound as e:
             exit(e)
+    
 
-
-    def create_recipe(self, args):
-        recipe = self.view(args.name, add=True).start()
-        self.RecipeDB().add_recipe(recipe)
+    def edit_recipe(self, args):
+        recipe = RecipeDB().read_recipe(args.source)
+        new_recipe = self.View.edit_recipe(recipe)
+        self.RecipeDB().update_recipe(new_recipe)
     
     
     def delete_recipe(self, args):
@@ -55,12 +62,6 @@ class RecipeController:
         msg = '{} was not deleted'.format(args.source)
         sys.exit(utils.msg(msg, 'INFORM'))
     
-
-    def edit_recipe(self, args):
-        recipe = RecipeDB().read_recipe(args.source)
-        edit_recipe = self.view(recipe).start()
-        edit_recipe.print_recipe()
-
 
 def cmd_print(args):
     """Print a recipe to stdout."""
@@ -127,7 +128,7 @@ def build_recipe_database():
     recipe_data_dir = os.path.expanduser("~/.config/pyrecipe/recipe_data")
     for item in os.listdir(recipe_data_dir):
         r = Recipe(os.path.join(recipe_data_dir, item))
-        database.add_recipe(r)
+        database.create_recipe(r)
 
 
 def subparser_print(subparser):
