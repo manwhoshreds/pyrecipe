@@ -75,7 +75,7 @@ class RecipeDB:
     
     def _get_recipe_ingredients(self, recipe_id):
         self.c.execute(
-            '''SELECT amount, ingredient_size, unit, name, prep
+            '''SELECT recipe_ingredient_id, amount, ingredient_size, name, unit, prep
                FROM RecipeIngredients AS ri
                LEFT JOIN IngredientSizes AS isi ON ri.size_id=isi.id
                INNER JOIN Units AS u ON ri.unit_id=u.id
@@ -401,39 +401,62 @@ class RecipeDB:
                 prep_id = self.c.fetchone()['id']
             except TypeError:
                 prep_id = None
+           
+            self.c.execute('''
+                SELECT recipe_ingredient_id FROM RecipeIngredients
+                WHERE recipe_id=?
+                AND ingredient_id=?
+                ''', (recipe.id, ingredient_id))
+            recipe_ingredient_id = self.c.fetchone()['recipe_ingredient_id']
             
             self.c.execute(
-                '''UPDATE RecipeIngredients 
-                   SET
-                    amount=?, 
-                    size_id=?, 
-                    unit_id=?, 
-                    ingredient_id=?,
-                    prep_id=?
-                   WHERE recipe_id=?''',
-                    (str(item.amount), 
+                '''INSERT OR IGNORE into RecipeIngredients(
+                    recipe_ingredient_id,
+                    amount, 
+                    size_id, 
+                    unit_id, 
+                    ingredient_id,
+                    prep_id)
+                   VALUES(?, ?, ?, ?, ?, ?)''',
+                   (recipe_ingredient_id,
+                     str(item.amount), 
                      ingredient_size_id,
                      int(unit_id), 
                      int(ingredient_id),
-                     prep_id,
-                     recipe.id)
+                     prep_id)
             )
+            #self.c.execute(
+            #    '''UPDATE RecipeIngredients
+            #       SET
+            #        amount=?,
+            #        size_id=?,
+            #        unit_id=?,
+            #        ingredient_id=?,
+            #        prep_id=?
+            #       WHERE recipe_ingredient_id=?''',
+            #       (str(item.amount),
+            #        ingredient_size_id,
+            #        int(unit_id),
+            #        int(ingredient_id),
+            #        prep_id,
+            #        recipe_ingredient_id)
+            #)
 
-            self.c.execute(
-                '''INSERT OR IGNORE INTO RecipeIngredients (
-                        recipe_id,
-                        amount,
-                        size_id,
-                        unit_id,
-                        ingredient_id
-                        ) VALUES(?, ?, ?, ?, ?)
-                        WHERE (select changes() = 0)''', 
-                        (recipe.id,
-                         str(item.amount),
-                         ingredient_size_id,
-                         int(unit_id),
-                         int(ingredient_id))
-                    )
+            #self.c.execute(
+            #    '''INSERT OR IGNORE INTO RecipeIngredients (
+            #            recipe_id,
+            #            amount,
+            #            size_id,
+            #            unit_id,
+            #            ingredient_id
+            #            ) VALUES(?, ?, ?, ?, ?)
+            #            WHERE (select changes() = 0)''', 
+            #            (recipe.id,
+            #             str(item.amount),
+            #             ingredient_size_id,
+            #             int(unit_id),
+            #             int(ingredient_id))
+            #        )
     
         if recipe.get_ingredients()[1]:
             for item, ingreds in recipe.get_ingredients()[1].items():
@@ -496,14 +519,14 @@ class RecipeDB:
                                  int(ingredient_id))
                     )
 
-        for item in recipe.steps:
-            self.c.execute(
-                '''INSERT OR IGNORE INTO RecipeSteps (
-                    recipe_id,
-                    step
-                    ) VALUES(?, ?)
-                ''', (recipe.id, item['step'])
-            )
+        #for item in recipe.steps:
+        #    self.c.execute(
+        #        '''INSERT OR IGNORE INTO RecipeSteps (
+        #            recipe_id,
+        #            step
+        #            ) VALUES(?, ?)
+        #        ''', (recipe.id, item['step'])
+        #    )
 
         self.conn.commit()
     
