@@ -12,9 +12,8 @@ import sys
 import argparse
 
 import pyrecipe.utils as utils
-from pyrecipe.recipe import Recipe
-from pyrecipe.backend import RecipeDB, DB_FILE, RecipeNotFound
-from pyrecipe.webscraper import SCRAPEABLE_SITES
+#from pyrecipe.recipe import Recipe
+from pyrecipe.backend import RecipeDB, DB_FILE, RecipeNotFound, SCRAPEABLE_SITES
 from pyrecipe import __scriptname__, version_info
 from pyrecipe.user_interface import View
 
@@ -32,15 +31,14 @@ class RecipeController:
 
     
     def create_recipe(self, args):
-        recipe = self.view(args.name, add=True).start()
-        self.RecipeDB().add_recipe(recipe)
+        recipe = self.View.create_recipe(args.name)
+        self.RecipeDB().create_recipe(recipe)
     
     
     def print_recipe(self, args):
         try: 
             recipe = RecipeDB().read_recipe(args.source)
             self.View.print_recipe(recipe, args.verbose)
-            #print(recipe._recipe_data)
         except RecipeNotFound as e:
             exit(e)
     
@@ -101,8 +99,9 @@ def cmd_search(args):
 
 def cmd_dump(args):
     """Dump recipe data in 1 of three formats."""
-    recipe = Recipe(args.source)
-    sys.exit(recipe.dump_data(args.data_type))
+    pass
+    #recipe = Recipe(args.source)
+    #sys.exit(recipe.dump_data(args.data_type))
 
 
 def cmd_show(args):
@@ -127,8 +126,9 @@ def build_recipe_database():
     database.create_database()
     recipe_data_dir = os.path.expanduser("~/.config/pyrecipe/recipe_data")
     for item in os.listdir(recipe_data_dir):
-        r = Recipe(os.path.join(recipe_data_dir, item))
-        database.create_recipe(r)
+        pass
+        #r = Recipe(os.path.join(recipe_data_dir, item))
+        #database.create_recipe(r)
 
 
 def subparser_print(subparser):

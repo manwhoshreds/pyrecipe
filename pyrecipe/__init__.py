@@ -56,7 +56,7 @@ VER_STR = """
 
 VER_STR = VER_STR.format(
     __scriptname__, __version__,
-    'The recipe management program.',
+    'The python recipe management program.',
     'For any questions, contact me at', __email__,
     'or type', '--help for more information.',
     'This program may be freely redistrubuted under',

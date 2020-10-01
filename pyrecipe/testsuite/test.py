@@ -3,9 +3,8 @@ import sys
 import unittest
 
 from pyrecipe.__main__ import *
-from pyrecipe.recipe import Recipe, Ingredient
+from pyrecipe.backend.recipe import Recipe, Ingredient
 from pyrecipe import CULINARY_UNITS
-from pyrecipe.shopper import ShoppingList
 from pyrecipe.config import RECIPE_DATA_FILES
 
 skip = unittest.skip

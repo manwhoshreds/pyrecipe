@@ -10,7 +10,7 @@ import sys
 import sqlite3
 
 import pyrecipe.utils as utils
-from pyrecipe.recipe import Recipe
+from pyrecipe.backend.recipe import Recipe
 from pyrecipe import p
 
 if not os.path.isdir(os.path.expanduser("~/.local/share/pyrecipe")):
@@ -359,8 +359,9 @@ class RecipeDB:
                 source_url=?
                WHERE id=?''', recipe_data
         )
-
-        for item in recipe.get_ingredients()[0]:
+        
+        ingreds, named = recipe.get_ingredients()
+        for item in ingreds:
             self._insert_ingredient(item)
 
             self.c.execute(
@@ -402,13 +403,7 @@ class RecipeDB:
             except TypeError:
                 prep_id = None
            
-            self.c.execute('''
-                SELECT recipe_ingredient_id FROM RecipeIngredients
-                WHERE recipe_id=?
-                AND ingredient_id=?
-                ''', (recipe.id, ingredient_id))
-            recipe_ingredient_id = self.c.fetchone()['recipe_ingredient_id']
-            
+            print(vars(item)) 
             self.c.execute(
                 '''INSERT OR IGNORE into RecipeIngredients(
                     recipe_ingredient_id,
@@ -418,29 +413,29 @@ class RecipeDB:
                     ingredient_id,
                     prep_id)
                    VALUES(?, ?, ?, ?, ?, ?)''',
-                   (recipe_ingredient_id,
+                   (item.id,
                      str(item.amount), 
                      ingredient_size_id,
                      int(unit_id), 
                      int(ingredient_id),
                      prep_id)
             )
-            #self.c.execute(
-            #    '''UPDATE RecipeIngredients
-            #       SET
-            #        amount=?,
-            #        size_id=?,
-            #        unit_id=?,
-            #        ingredient_id=?,
-            #        prep_id=?
-            #       WHERE recipe_ingredient_id=?''',
-            #       (str(item.amount),
-            #        ingredient_size_id,
-            #        int(unit_id),
-            #        int(ingredient_id),
-            #        prep_id,
-            #        recipe_ingredient_id)
-            #)
+            self.c.execute(
+                '''UPDATE RecipeIngredients
+                   SET
+                    amount=?,
+                    size_id=?,
+                    unit_id=?,
+                    ingredient_id=?,
+                    prep_id=?
+                   WHERE recipe_ingredient_id=?''',
+                   (str(item.amount),
+                    ingredient_size_id,
+                    int(unit_id),
+                    int(ingredient_id),
+                    prep_id,
+                    item.id)
+            )
 
             #self.c.execute(
             #    '''INSERT OR IGNORE INTO RecipeIngredients (
@@ -624,8 +619,6 @@ class DBInfo(RecipeDB):
 
 
 if __name__ == '__main__':
-    dbinfo = DBInfo()
-    recipes = dbinfo.get_recipes()
-    print(recipes)
     db = RecipeDB()
-    db.delete_recipe('112')
+    recipe = db.read_recipe('pesto')
+    print(recipe.__dict__)

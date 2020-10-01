@@ -14,8 +14,7 @@ import uuid
 
 import urwid as ur
 
-from pyrecipe.backend import RecipeDB, DBInfo, DISH_TYPES
-from pyrecipe.recipe import Recipe
+from pyrecipe.backend import RecipeDB, DBInfo, DISH_TYPES, Recipe
 from .helpers import wrap
 
 
@@ -209,7 +208,7 @@ class IngredBlock(EntryBlock):
             self.ingredients = ingredients
         else:
             self.ingredients = ["add"]
-
+        self.ids = []
         self.name = name
         self.widgets = deque([BLANK])
         buttons = self._get_buttons()
@@ -219,7 +218,8 @@ class IngredBlock(EntryBlock):
             self.widgets.append(self.named_name)
         
         for item in self.ingredients:
-            ingred_entry = ur.Edit("- ", item)
+            #self.ids.append(item.id)
+            ingred_entry = ur.Edit("- ", str(item))
             self.widgets.append(ingred_entry)
         self._refresh()
 
@@ -287,12 +287,16 @@ class IngredBlock(EntryBlock):
                 self.name = item.original_widget.get_edit_text()
             if isinstance(item, ur.Edit):
                 ingredients.append(item.get_edit_text())
-
+        ingred_objects = []
+        for (a, b) in zip(self.ingredients, ingredients):
+            a.parse_ingredient(b)
+            ingred_objects.append(a)
+            
         if self.name:
             named_ingreds[self.name] = ingredients
             return named_ingreds
         else:
-            return ingredients
+            return ingred_objects
 
 
 class MethodBlock(EntryBlock):
@@ -426,7 +430,7 @@ class RecipeEditor:
                      HEADINGS['method'],
                      ], 79, 0, 2, 'left'
         )
-        ingreds, named = self.recipe.get_ingredients(fmt='string')
+        ingreds, named = self.recipe.get_ingredients()
 
         self.ingred_block = IngredientsContainer(
             ingredients=ingreds, named_ingredients=named

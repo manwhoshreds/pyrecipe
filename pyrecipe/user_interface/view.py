@@ -14,7 +14,7 @@ import textwrap
 from termcolor import colored
 
 import pyrecipe.utils as utils
-from ..recipe.recipe_numbers import RecipeNum
+from ..backend.recipe_numbers import RecipeNum
 from .editor import RecipeEditor
 from .helpers import wrap
 
@@ -91,6 +91,11 @@ class View:
 
         print(recipe_str)
     
+    @staticmethod
+    def create_recipe(recipe):
+        return RecipeEditor(recipe, add=True).start()
+         
+
     @staticmethod
     def edit_recipe(recipe):
         return RecipeEditor(recipe).start()

@@ -40,7 +40,7 @@ from termcolor import colored
 from ruamel.yaml import YAML
 
 import pyrecipe.utils as utils
-from pyrecipe.recipe.recipe_numbers import RecipeNum
+from pyrecipe.backend.recipe_numbers import RecipeNum
 from pyrecipe import Q_, CULINARY_UNITS
 #from pyrecipe.webscraper import RecipeWebScraper
 
@@ -72,7 +72,7 @@ class Recipe:
 
     # These require their own setters and getters
     COMPLEX_KEYS = [
-        'ingredients', 'named_ingredients',
+        'ingredients', '_ingredients', 'named_ingredients',
         'oven_temp', 'steps'
     ]
 
@@ -80,7 +80,7 @@ class Recipe:
     ALL_KEYS = ORF_KEYS + ['source', '_recipe_data', 'file_name']
 
     def __init__(self, source=''):
-        self._recipe_data = {}
+        #self._recipe_data = {}
         self.source = source
         if isinstance(source, dict):
             self._set_data(source)
@@ -116,11 +116,11 @@ class Recipe:
 
     def __dir__(self):
         _dir = ['source']
-        return list(self._recipe_data.keys()) + _dir
+        return list(self.__dict__.keys()) + _dir
 
     def __getattr__(self, key):
         if key in Recipe.ALL_KEYS:
-            return self._recipe_data.get(key, '')
+            return self.__dict__.get(key, '')
         raise AttributeError("'{}' is not an ORF key or Recipe function"
                              .format(key))
 
@@ -129,18 +129,16 @@ class Recipe:
             raise AttributeError("Cannot set attribute '{}', its not apart "
                                  "of the ORF spec.".format(key))
         if key in Recipe.SIMPLE_KEYS:
-            self._recipe_data[key] = value
+            self.__dict__[key] = value
         else:
             super().__setattr__(key, value)
 
     def __delattr__(self, key):
         if key in Recipe.ORF_KEYS:
             try:
-                del self._recipe_data[key]
+                del self.__dict__[key]
             except KeyError:
                 pass
-        else:
-            del self.__dict__[key]
 
     __setitem__ = __setattr__
     __getitem__ = __getattr__
@@ -179,47 +177,23 @@ class Recipe:
             raise RuntimeError("oven_temp format must be '300 F'")
         self._recipe_data['oven_temp'] = {'amount': amnt, 'unit': unit}
 
-    def get_ingredients(self, fmt='object'):
+    def get_ingredients(self):
         """
         Get the ingredients and named ingredients at the same time.
 
         This is the recomended way of getting the ingredients for a recipe.
-        Example: ingreds, named = recipe.get_ingredients(fmt='string')
+        Example: ingreds, named = recipe.get_ingredients()
 
-        :param fmt: specifies the format of the ingredient to be returned.
-                    'object', 'string', 'data', 'quantity'
-        :type fmt: str
-        :return: the recipe ingredients and named ingredients int the format
-                 specified
+        :return: the recipe ingredient and named ingredient objects
         """
-        fmts = ('object', 'string', 'data', 'quantity')
-        if fmt not in fmts:
-            raise ValueError("fmt should be one of '{}', not '{}'"
-                             .format(', '.join(fmts), fmt))
-
-        ingreds = []
-        if fmt == "object":
-            ingreds = self.ingredients
-        elif fmt == "string":
-            ingreds = [str(i) for i in self.ingredients]
-        elif fmt == "data":
-            ingreds = [i.data for i in self.ingredients]
-        elif fmt == "quantity":
-            ingreds = [i.quantity for i in self.ingredients]
+        ingreds = self.ingredients
 
         named = OrderedDict()
         named_ingreds = self.named_ingredients
         for item in self.named_ingredients:
             ingred_list = []
             named_ingred_list = named_ingreds[item]
-            if fmt == "object":
-                ingred_list = named_ingred_list
-            elif fmt == "string":
-                ingred_list = [str(i) for i in named_ingred_list]
-            elif fmt == "data":
-                ingred_list = [i.data for i in named_ingred_list]
-            elif fmt == "quantity":
-                ingred_list = [i.quantity for i in named_ingred_list]
+            ingred_list = named_ingred_list
             named[item] = ingred_list
 
         return ingreds, named
@@ -227,16 +201,20 @@ class Recipe:
     @property
     def ingredients(self):
         """Return ingredient data."""
-        ingredients = self._recipe_data.get('ingredients', '')
-        return [Ingredient(i) for i in ingredients]
+        #ingredients = self.ingredients
+        #return [Ingredient(i) for i in ingredients]
+        return self._ingredients
+        
 
     @ingredients.setter
     def ingredients(self, value):
         """Set the ingredients of a recipe."""
         if not value:
             return
-        ingredients = [Ingredient(i).data for i in value]
-        self._recipe_data['ingredients'] = ingredients
+        if type(value[0]) in (str, dict):
+            self._ingredients = [Ingredient(i) for i in value]
+        else:
+            self._ingredients = [i for i in value]
 
     @property
     def named_ingredients(self):
@@ -363,15 +341,12 @@ class Ingredient:
     :param ingredient: dict or string of ingredient.
     """
     def __init__(self, ingredient):
-        self.name, self.size, self.prep, self.portion = ('',) * 4
-        self.note, self.amount, self.unit = ('',) * 3
+        self.amount, self.portion, self.size, self.name = ('',) * 4
+        self.unit, self.prep, self.note, self.id = ('',) * 4
         if isinstance(ingredient, str):
-            self.string = ingredient
-            self.data = {}
-            self._parse_ingredient(ingredient)
-            self.data = self._get_data_dict()
+            self.parse_ingredient(ingredient)
         else:
-            self.data = ingredient
+            self.id = ingredient['recipe_ingredient_id']
             self.name = ingredient['name']
             self.portion = ingredient.get('portion', '')
             self.size = ingredient.get('size', None)
@@ -380,27 +355,13 @@ class Ingredient:
             self.amount = ingredient.get('amount', '')
             if self.amount:
                 self.amount = RecipeNum(self.amount)
-            self.unit = ingredient.get('unit')
-            self.string = str(self)
+            self.unit = ingredient.get('unit', '')
 
-    def _get_data_dict(self):
-        data = {}
-        data['name'] = self.name
-        if self.portion:
-            data['portion'] = self.portion
-        if self.size:
-            data['size'] = self.size
-        if self.prep:
-            data['prep'] = self.prep
-        if self.note:
-            data['note'] = self.note
-        data['amount'] = self.amount
-        data['unit'] = self.unit
-        return data
 
     def __repr__(self):
         return "<Ingredient('{}')>".format(self.name)
 
+    
     def __str__(self):
         """Turn ingredient object into a string
 
@@ -486,7 +447,7 @@ class Ingredient:
     def _strip_punct(self, string):
         return ''.join(c for c in string if c not in PUNCTUATION)
 
-    def _parse_ingredient(self, string):
+    def parse_ingredient(self, string):
         """parse the ingredient string"""
         # string preprocessing
         ingred_string = self._preprocess_string(string)
@@ -562,4 +523,8 @@ class Ingredient:
         self.name = name.strip(', ')
 
 if __name__ == '__main__':
-    pass
+
+    test = Ingredient('1 tablespoon moose hair, roughly chopped')
+    print(vars(test))
+    test.parse_ingredient('3 teaspoons gandolf hair, complety blown to smitherines')
+    print(vars(test))

@@ -25,7 +25,7 @@ import bs4
 import requests
 
 import pyrecipe.utils as utils
-from pyrecipe.recipe import Recipe
+from .recipe import Recipe
 
 
 SCRAPERS = {
