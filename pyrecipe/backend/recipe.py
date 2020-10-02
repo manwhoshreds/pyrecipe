@@ -29,6 +29,7 @@ import re
 import io
 import os
 import sys
+import uuid
 import json
 import shutil
 import string
@@ -42,7 +43,6 @@ from ruamel.yaml import YAML
 import pyrecipe.utils as utils
 from pyrecipe.backend.recipe_numbers import RecipeNum
 from pyrecipe import Q_, CULINARY_UNITS
-#from pyrecipe.webscraper import RecipeWebScraper
 
 __all__ = ['Recipe']
 
@@ -64,44 +64,27 @@ class Recipe:
     """
     # All keys applicable to the Open Recipe Format
     SIMPLE_KEYS = [
-        'id', 'uuid', 'name', 'dish_type', 'author', 'categories', 'tags',
+        'id', 'uuid', 'name', 'dish_type', 'author', 'category', 'categories', 'tags',
         'description', 'cook_time', 'bake_time', 'notes', 'prep_time', 
-        'price', 'recipe_yield', 'region', 'source_book', 'source_url', 
-        'steps', 'yields'
+        'price', 'recipe_yield', 'region', 'source_book', 'source_url', 'url',
+        'steps', 'yields', 'ready_in'
     ]
 
     # These require their own setters and getters
     COMPLEX_KEYS = [
         'ingredients', '_ingredients', 'named_ingredients',
-        'oven_temp', 'steps'
+        '_named_ingredients', 'oven_temp', 'steps'
     ]
 
     ORF_KEYS = COMPLEX_KEYS + SIMPLE_KEYS
     ALL_KEYS = ORF_KEYS + ['source', '_recipe_data', 'file_name']
 
     def __init__(self, source=''):
-        #self._recipe_data = {}
-        self.source = source
         if isinstance(source, dict):
             self._set_data(source)
-        #elif HTTP_RE.search(source):
-        #    data = RecipeWebScraper.scrape(source)
-        #    self._set_data(data)
-        elif os.path.isfile(source):
-            self.file_name = source#utils.get_source_path(source)
-            try:
-                with ZipFile(self.file_name, 'r') as zfile:
-                    try:
-                        with zfile.open('recipe.yaml', 'r') as stream:
-                            self._recipe_data = yaml.load(stream)
-                    except KeyError:
-                        sys.exit(utils.msg("Can not find recipe.yaml. Is this "
-                                           "really a recipe file?", "ERROR"))
-            except BadZipFile as e:
-                sys.exit(utils.msg("{}".format(e), "ERROR"))
         else:
-            self.dish_type = 'main'
-            self.file_name = self.uuid + '.recipe'
+            self.source = source
+            self.uuid = str(uuid.uuid4())
 
     def _set_data(self, data):
         """
@@ -110,20 +93,24 @@ class Recipe:
         """
         for key, value in data.items():
             setattr(self, key, value)
-
+    
+    
     def __repr__(self):
         return "<Recipe(name='{}')>".format(self.name)
 
+    
     def __dir__(self):
         _dir = ['source']
         return list(self.__dict__.keys()) + _dir
 
+    
     def __getattr__(self, key):
         if key in Recipe.ALL_KEYS:
             return self.__dict__.get(key, '')
         raise AttributeError("'{}' is not an ORF key or Recipe function"
                              .format(key))
 
+    
     def __setattr__(self, key, value):
         if key not in self.ALL_KEYS:
             raise AttributeError("Cannot set attribute '{}', its not apart "
@@ -133,6 +120,7 @@ class Recipe:
         else:
             super().__setattr__(key, value)
 
+    
     def __delattr__(self, key):
         if key in Recipe.ORF_KEYS:
             try:
@@ -140,16 +128,19 @@ class Recipe:
             except KeyError:
                 pass
 
+    
     __setitem__ = __setattr__
     __getitem__ = __getattr__
     __delitem__ = __delattr__
 
+    
     def __copy__(self):
         cls = self.__class__
         newobj = cls.__new__(cls)
         newobj.__dict__.update(self.__dict__)
         return newobj
 
+    
     def __deepcopy__(self, memo):
         cls = self.__class__
         result = cls.__new__(cls)
@@ -158,9 +149,11 @@ class Recipe:
             setattr(result, k, deepcopy(v, memo))
         return result
 
+    
     def __eq__(self, other):
         return self.get_yaml_string() == other.get_yaml_string()
 
+    
     @property
     def oven_temp(self):
         """Return the oven temperature string."""
@@ -172,6 +165,7 @@ class Recipe:
     @oven_temp.setter
     def oven_temp(self, value):
         """Set the oven temperature."""
+        return
         amnt, unit = value.split()
         if len(value.split()) != 2:
             raise RuntimeError("oven_temp format must be '300 F'")
@@ -243,10 +237,10 @@ class Recipe:
             entry = {}
             for ingred in ingreds:
                 parsed = Ingredient(ingred)
-                parsed_ingreds.append(parsed.data)
+                parsed_ingreds.append(vars(parsed))
             entry[named_name] = parsed_ingreds
             named_ingredients.append(entry)
-        self._recipe_data['named_ingredients'] = named_ingredients
+        self._named_ingredients = named_ingredients
 
     @property
     def method(self):
@@ -346,7 +340,7 @@ class Ingredient:
         if isinstance(ingredient, str):
             self.parse_ingredient(ingredient)
         else:
-            self.id = ingredient['recipe_ingredient_id']
+            self.id = ingredient.get('recipe_ingredient_id', '')
             self.name = ingredient['name']
             self.portion = ingredient.get('portion', '')
             self.size = ingredient.get('size', None)
@@ -523,8 +517,10 @@ class Ingredient:
         self.name = name.strip(', ')
 
 if __name__ == '__main__':
-
     test = Ingredient('1 tablespoon moose hair, roughly chopped')
-    print(vars(test))
+
     test.parse_ingredient('3 teaspoons gandolf hair, complety blown to smitherines')
-    print(vars(test))
+    r = Recipe()
+    r.name = 'stupid'
+    print(r)
+    print(r.uuid)

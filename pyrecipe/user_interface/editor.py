@@ -14,7 +14,7 @@ import uuid
 
 import urwid as ur
 
-from pyrecipe.backend import RecipeDB, DBInfo, DISH_TYPES, Recipe
+from pyrecipe.backend import DISH_TYPES
 from .helpers import wrap
 
 
@@ -287,16 +287,16 @@ class IngredBlock(EntryBlock):
                 self.name = item.original_widget.get_edit_text()
             if isinstance(item, ur.Edit):
                 ingredients.append(item.get_edit_text())
-        ingred_objects = []
-        for (a, b) in zip(self.ingredients, ingredients):
-            a.parse_ingredient(b)
-            ingred_objects.append(a)
+        #ingred_objects = []
+        #for (a, b) in zip(self.ingredients, ingredients):
+        #    a.parse_ingredient(b)
+        #    ingred_objects.append(a)
             
         if self.name:
             named_ingreds[self.name] = ingredients
             return named_ingreds
         else:
-            return ingred_objects
+            return ingredients
 
 
 class MethodBlock(EntryBlock):
@@ -352,13 +352,13 @@ class RecipeEditor:
     def __init__(self, recipe, recipe_yield=0, add=False):
         if add:
             # We are adding a new recipe. Init a recipe with no data
-            self.recipe = Recipe()
+            self.recipe = recipe()
             self.recipe.name = recipe
             self.recipe.uuid = str(uuid.uuid4())
             self.welcome = 'Add a Recipe: {}'.format(self.recipe.name)
         else:
             self.recipe = recipe
-            self.welcome = 'Edit: {}'.format(self.recipe.name)
+            self.welcome = 'Edit: {} ({})'.format(self.recipe.name, self.recipe.id)
         #self.initial_state = Recipe(self.recipe.name)
         self.initial_state = copy.deepcopy(self.recipe)
         self.original_name = self.recipe.name
@@ -500,6 +500,8 @@ class RecipeEditor:
                 raise ur.ExitMainLoop()
         elif key in ('f2',):
             self.save_recipe()
+        elif key in ('f3',):
+            self.__debug()
         else:
             pass
 
@@ -512,27 +514,7 @@ class RecipeEditor:
             changed = True
         return changed
 
-    def get_recipe_name(self, name):
-        """Check to see if name is already in database.
-
-        If a recipe with the same name already exist in the database,
-        this does a check and names the recipe with a number if it already
-        exists in the database.
-        """
-        names = DBInfo().get_recipes()
-        # case insensitive
-        lower_name = name.lower()
-        if lower_name != self.original_name.lower():
-            if lower_name in names:
-                i = 2
-                new_name = '{} ({})'.format(name, i)
-                while new_name in names:
-                    new_name = '{} ({})'.format(name, i)
-                    i += 1
-                name = new_name
-
-        return name
-
+    
     def update_recipe_data(self):
         """Grab the data from the editors."""
         # gen info
@@ -543,10 +525,6 @@ class RecipeEditor:
             if edit_text == '':
                 del self.recipe[attr]
             else:
-                # If the name is the same as another recipe
-                # we name it 'recipe_name (2)' 3 4 ... etc
-                if attr == 'name':
-                    edit_text = self.get_recipe_name(edit_text)
                 self.recipe[attr] = edit_text
 
         for item in self.disht_group:
@@ -592,12 +570,19 @@ class RecipeEditor:
         notes = self.notes_block.get_entries()
         if notes:
             self.recipe.notes = notes
+    
+    
+    def __debug(self):
+        """used to debug out put before exiting"""
+        self.update_recipe_data()
 
+    
     def save_recipe(self):
         """Save the current state of the recipe and exit."""
         self.update_recipe_data()
         raise ur.ExitMainLoop()
 
+    
     def start(self):
         """Main entry point of the recipe editor."""
         self.loop = self.setup_view()

@@ -63,9 +63,6 @@ VER_STR = VER_STR.format(
     'the terms of the GNU General Public License.'
 )
 
-def version_info():
-    """Print the current version of pyrecipe and exit."""
-    sys.exit(VER_STR)
 
 class Q_(ureg.Quantity):
     """Subclass to implement a few custom behaviors

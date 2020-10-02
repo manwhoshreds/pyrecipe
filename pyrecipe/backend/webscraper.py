@@ -17,6 +17,7 @@
     :copyright: 2017 by Michael Miller
     :license: GPL, see LICENSE for more details.
 """
+import re
 import sys
 import uuid
 from abc import ABC, abstractmethod
@@ -25,36 +26,43 @@ import bs4
 import requests
 
 import pyrecipe.utils as utils
-from .recipe import Recipe
+from pyrecipe.backend.recipe import Recipe
 
 
-SCRAPERS = {
-    #'https://www.food.com': 'FoodWebScraper',
-    'https://tasty.co': 'TastyWebScraper',
-    'https://www.bigoven.com': 'BigOvenWebScraper',
-    #'https://www.allrecipes.com': 'AllRecipesWebScraper',
-    #'https://www.foodnetwork.com': 'FoodNetworkWebScraper'
-}
-SCRAPEABLE_SITES = list(SCRAPERS.keys())
+class MalformedUrlError(Exception):
+    pass
+
+
+class SiteNotScrapeable(Exception):
+    pass
 
 
 class RecipeWebScraper:
     """Factory for webscrapers."""
-    
-    @staticmethod
-    def scrape(url):
-        try:
-            scrapeable = [s for s in SCRAPEABLE_SITES if url.startswith(s)][0]
-        except IndexError:
-            # url is not among those listed as scrapeable
-            sites = '\n\t'.join(SCRAPEABLE_SITES)
-            sys.exit(utils.msg(
-                "{} is not scrapeable by pyrecipe. Please select from the "
-                "following sites:\n\n{}".format(url, sites), "WARN"))
 
-        return eval(SCRAPERS[scrapeable])(url).recipe
+    def __init__(self):
+        self._scrapers = {}
+        self._scrapeable = self._scrapers.keys()
 
 
+    def register_scraper(self, scraper):
+        self._scrapers[scraper.URL] = scraper
+   
+    def scrape(self, url):
+        is_url = re.compile(r'^https?\://').search(url)
+        if is_url:
+            try:
+                scraper = [s for s in self._scrapeable if url.startswith(s)][0]
+            except IndexError:
+                # url is not among those listed as scrapeable
+                msg = ("{} is not scrapeable by pyrecipe. Please select from "
+                       "the following sites:\n\n{}".format(url, self._scrapeable))
+                raise SiteNotScrapeable(msg)
+            return self._scrapers[scraper](url).recipe
+        else:
+            raise MalformedUrlError('URL is Malformed')
+        
+        
 class TemplateWebScraper(ABC):
     
     def __init__(self, url):
@@ -174,7 +182,9 @@ class FoodWebScraper(TemplateWebScraper):
 
 
 class TastyWebScraper(TemplateWebScraper):
-    """Web Scraper for http://www.tasty.co."""
+    """Web Scraper for https://tasty.co."""
+    
+    URL = 'https://tasty.co'
 
     def scrape_prep_time(self):
         """Scrape the recipe name"""
@@ -235,6 +245,7 @@ class TastyWebScraper(TemplateWebScraper):
 
 class BigOvenWebScraper(TemplateWebScraper):
     """Web Scraper for https://www.bigoven.com."""
+    URL = 'https://www.bigoven.com' 
 
     def scrape_prep_time(self):
         """Scrape the prep time"""
@@ -296,6 +307,8 @@ class BigOvenWebScraper(TemplateWebScraper):
 
 class AllRecipesWebScraper(TemplateWebScraper):
     """Web Scraper for https://www.allrecipes.com."""
+    
+    URL = 'https://www.allrecipes.com'
     
     def scrape_prep_time(self):
         """Scrape the recipe name"""
@@ -430,13 +443,24 @@ class FoodNetworkWebScraper(TemplateWebScraper):
         return steps
 
 
+scraper = RecipeWebScraper()
+scraper.register_scraper(TastyWebScraper)
+scraper.register_scraper(BigOvenWebScraper)
+scraper.register_scraper(AllRecipesWebScraper)
+
+
 if __name__ == '__main__':
-    webrecipe = "https://tasty.co/recipe/easy-butter-chicken"
+    scraper = RecipeWebScraper()
+    scraper.register_scraper(TastyWebScraper)
+    scraper.register_scraper(BigOvenWebScraper)
+    scraper.register_scraper(AllRecipesWebScraper)
+    test = scraper.scrape("https://tasty.co/recipe/easy-butter-chicken")
+    print(test.__dict__)
     #webrecipe = "http://www.geniuskitchen.com/recipe/ina-gartens-baked-sweet-potato-fries-333618"
     #webrecipe = "https://www.allrecipes.com/recipe/232062/chef-johns-creme-caramel/"
     #webrecipe = "https://www.foodnetwork.com/recipes/ree-drummond/salisbury-steak-recipe-2126533"
     #webrecipe = "https://www.food.com/recipe/easiest-greek-salad-dressing-428819"
-    r = RecipeWebScraper.scrape(webrecipe)
-    r.print_recipe()
+    #r = RecipeWebScraper.scrape(webrecipe)
+    #r.print_recipe()
     #print(r.get_json())
     #test = RecipeWebScraper.get_sites()

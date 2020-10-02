@@ -13,6 +13,7 @@ import pyrecipe.utils as utils
 from pyrecipe.backend.recipe import Recipe
 from pyrecipe import p
 
+
 if not os.path.isdir(os.path.expanduser("~/.local/share/pyrecipe")):
     os.makedirs(os.path.expanduser("~/.local/share/pyrecipe"))
 
@@ -128,11 +129,11 @@ class RecipeDB:
             '''SELECT name FROM Recipes
                WHERE name=?''', (recipe.name,)
         )
-        if self.c.fetchone():
-            msg = ("A recipe with the name '{}' already exists in the "
-                   "database. Please Select another name for this "
-                   "recipe.".format(recipe.name))
-            raise RecipeAlreadyStored(utils.msg(msg, 'ERROR'))
+        ##if self.c.fetchone():
+        #    msg = ("A recipe with the name '{}' already exists in the "
+        #           "database. Please Select another name for this "
+        #           "recipe.".format(recipe.name))
+        #    raise RecipeAlreadyStored(utils.msg(msg, 'ERROR'))
 
         recipe_data = [(
             recipe.uuid, 
@@ -146,7 +147,7 @@ class RecipeDB:
         )]
 
         self.c.executemany(
-            '''INSERT OR IGNORE INTO recipes (
+            '''INSERT OR REPLACE INTO Recipes (
                 uuid,
                 name,
                 dish_type,
@@ -167,7 +168,6 @@ class RecipeDB:
 
         for item in recipe.get_ingredients()[0]:
             self._insert_ingredient(item)
-
             self.c.execute(
                 '''SELECT id FROM Ingredients
                    WHERE name=?''',
@@ -208,7 +208,7 @@ class RecipeDB:
                 prep_id = None
             
             self.c.execute(
-                '''INSERT OR IGNORE 
+                '''INSERT OR REPLACE
                    INTO RecipeIngredients 
                    (recipe_id, 
                     amount, 
@@ -288,7 +288,7 @@ class RecipeDB:
 
         for item in recipe.steps:
             self.c.execute(
-                '''INSERT OR IGNORE INTO RecipeSteps (
+                '''INSERT OR REPLACE INTO RecipeSteps (
                     recipe_id,
                     step
                     ) VALUES(?, ?)
@@ -306,7 +306,7 @@ class RecipeDB:
             recipe = Recipe(row)
         else:
             msg = '"{}" was not found in the database.'.format(name)
-            raise RecipeNotFound(utils.msg(msg, 'ERROR'))
+            return RecipeNotFound(utils.msg(msg, 'ERROR'))
         
         recipe.ingredients = self._get_recipe_ingredients(recipe.id)
 
@@ -336,6 +336,8 @@ class RecipeDB:
 
     def update_recipe(self, recipe):
         '''Update a recipe in the database.'''
+        self.create_recipe(recipe)
+        return
         recipe_data = [(
             recipe.name,
             recipe.dish_type,
@@ -403,7 +405,6 @@ class RecipeDB:
             except TypeError:
                 prep_id = None
            
-            print(vars(item)) 
             self.c.execute(
                 '''INSERT OR IGNORE into RecipeIngredients(
                     recipe_ingredient_id,
