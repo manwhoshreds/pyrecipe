@@ -37,6 +37,8 @@ import pyrecipe.utils as utils
 
 
 HTTP_RE = re.compile(r'^https?\://')
+yaml = YAML(typ='safe')
+yaml.default_flow_style = False
 
 
 def build_recipe_database():

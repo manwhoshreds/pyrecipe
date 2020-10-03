@@ -35,10 +35,7 @@ import shutil
 import string
 from copy import deepcopy
 from collections import OrderedDict
-from zipfile import ZipFile, BadZipFile
-
-from termcolor import colored
-from ruamel.yaml import YAML
+from zipfile import ZipFile
 
 import pyrecipe.utils as utils
 from pyrecipe.backend.recipe_numbers import RecipeNum
@@ -48,12 +45,8 @@ __all__ = ['Recipe']
 
 PORTIONED_UNIT_RE = re.compile(r'\(?\d+\.?\d*? (ounce|pound)\)? (cans?|bags?)')
 PAREN_RE = re.compile(r'\((.*?)\)')
-HTTP_RE = re.compile(r'^https?\://')
 SIZE_STRINGS = ['large', 'medium', 'small', 'heaping']
 PUNCTUATION = ''.join(c for c in string.punctuation if c not in '-/(),.')
-
-yaml = YAML(typ='safe')
-yaml.default_flow_style = False
 
 class Recipe:
     """Open a recipe file and extract its data for futher processing
@@ -65,7 +58,7 @@ class Recipe:
     # All keys applicable to the Open Recipe Format
     SIMPLE_KEYS = [
         'id', 'uuid', 'name', 'dish_type', 'author', 'category', 'categories', 'tags',
-        'description', 'cook_time', 'bake_time', 'notes', 'prep_time', 
+        'description', 'cook_time', 'bake_time', 'notes', 'prep_time',
         'price', 'recipe_yield', 'region', 'source_book', 'source_url', 'url',
         'steps', 'yields', 'ready_in'
     ]
@@ -93,24 +86,24 @@ class Recipe:
         """
         for key, value in data.items():
             setattr(self, key, value)
-    
-    
+
+
     def __repr__(self):
         return "<Recipe(name='{}')>".format(self.name)
 
-    
+
     def __dir__(self):
         _dir = ['source']
         return list(self.__dict__.keys()) + _dir
 
-    
+
     def __getattr__(self, key):
         if key in Recipe.ALL_KEYS:
             return self.__dict__.get(key, '')
         raise AttributeError("'{}' is not an ORF key or Recipe function"
                              .format(key))
 
-    
+
     def __setattr__(self, key, value):
         if key not in self.ALL_KEYS:
             raise AttributeError("Cannot set attribute '{}', its not apart "
@@ -120,7 +113,7 @@ class Recipe:
         else:
             super().__setattr__(key, value)
 
-    
+
     def __delattr__(self, key):
         if key in Recipe.ORF_KEYS:
             try:
@@ -128,19 +121,19 @@ class Recipe:
             except KeyError:
                 pass
 
-    
+
     __setitem__ = __setattr__
     __getitem__ = __getattr__
     __delitem__ = __delattr__
 
-    
+
     def __copy__(self):
         cls = self.__class__
         newobj = cls.__new__(cls)
         newobj.__dict__.update(self.__dict__)
         return newobj
 
-    
+
     def __deepcopy__(self, memo):
         cls = self.__class__
         result = cls.__new__(cls)
@@ -149,11 +142,11 @@ class Recipe:
             setattr(result, k, deepcopy(v, memo))
         return result
 
-    
+
     def __eq__(self, other):
         return self.get_yaml_string() == other.get_yaml_string()
 
-    
+
     @property
     def oven_temp(self):
         """Return the oven temperature string."""
@@ -198,7 +191,7 @@ class Recipe:
         #ingredients = self.ingredients
         #return [Ingredient(i) for i in ingredients]
         return self._ingredients
-        
+
 
     @ingredients.setter
     def ingredients(self, value):
@@ -208,7 +201,7 @@ class Recipe:
         if type(value[0]) in (str, dict):
             self._ingredients = [Ingredient(i) for i in value]
         else:
-            self._ingredients = [i for i in value]
+            self._ingredients = value
 
     @property
     def named_ingredients(self):
@@ -255,7 +248,7 @@ class Recipe:
         value = [{"step": v} for v in value]
         self['steps'] = value
 
-    
+
     def export(self, fmt, path):
         """Export the recipe in a chosen file format."""
         fmts = ('xml', 'recipe')
@@ -278,12 +271,9 @@ class Recipe:
             else:
                 shutil.copyfile(src, dst)
 
-    @utils.recipe2xml
-    def get_xml_data(self):
-        """Return the xml data."""
-        pass
 
     def get_json(self):
+        """get json from recipe"""
         data = self._recipe_data
         ingreds, named = self.get_ingredients(fmt="string")
         # just converting ingred data to string so open recipes can
@@ -316,6 +306,7 @@ class Recipe:
                              'json, yaml, or xml')
 
     def get_yaml_string(self):
+        """get the yaml string"""
         string = io.StringIO()
         yaml.dump(self._recipe_data, string)
         return string.getvalue()
@@ -355,7 +346,7 @@ class Ingredient:
     def __repr__(self):
         return "<Ingredient('{}')>".format(self.name)
 
-    
+
     def __str__(self):
         """Turn ingredient object into a string
 
@@ -406,6 +397,7 @@ class Ingredient:
 
     @property
     def quantity(self):
+        """get the quantity"""
         unit = self.unit
         if not self.unit:
             unit = 'each'
@@ -443,9 +435,7 @@ class Ingredient:
 
     def parse_ingredient(self, string):
         """parse the ingredient string"""
-        # string preprocessing
         ingred_string = self._preprocess_string(string)
-
         # get unit
         match = PORTIONED_UNIT_RE.search(ingred_string)
         if match:
@@ -512,7 +502,6 @@ class Ingredient:
             self.unit = 'each'
 
         # at this point we are assuming that all elements have been removed
-        # from list except for the name. Whatever is left gets joined together
         name = ' '.join(ingred_string.split())
         self.name = name.strip(', ')
 
