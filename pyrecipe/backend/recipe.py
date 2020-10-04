@@ -41,12 +41,7 @@ import pyrecipe.utils as utils
 from pyrecipe.backend.recipe_numbers import RecipeNum
 from pyrecipe import Q_, CULINARY_UNITS
 
-__all__ = ['Recipe']
 
-PORTIONED_UNIT_RE = re.compile(r'\(?\d+\.?\d*? (ounce|pound)\)? (cans?|bags?)')
-PAREN_RE = re.compile(r'\((.*?)\)')
-SIZE_STRINGS = ['large', 'medium', 'small', 'heaping']
-PUNCTUATION = ''.join(c for c in string.punctuation if c not in '-/(),.')
 
 class Recipe:
     """Open a recipe file and extract its data for futher processing
@@ -57,10 +52,14 @@ class Recipe:
     """
     # All keys applicable to the Open Recipe Format
     SIMPLE_KEYS = [
-        'id', 'uuid', 'name', 'dish_type', 'author', 'category', 'categories', 'tags',
-        'description', 'cook_time', 'bake_time', 'notes', 'prep_time',
-        'price', 'recipe_yield', 'region', 'source_book', 'source_url', 'url',
-        'steps', 'yields', 'ready_in'
+        'id', 'uuid', 'name', 'dishtype', 'author', 'category', 'categories', 
+        'tags', 'description', 'cooktime', 'baketime', 'preptime', 'ready_in',
+        'notes', 'price', 'yield', 'region', 'sourcebook', 'steps', 
+        'url'
+    ]
+
+    LEGACY_KEYS = ['cook_time', 'bake_time', 'dish_type', 'prep_time', 'yields',
+        'source_url', 'recipe_yield'
     ]
 
     # These require their own setters and getters
@@ -69,17 +68,17 @@ class Recipe:
         '_named_ingredients', 'oven_temp', 'steps'
     ]
 
-    ORF_KEYS = COMPLEX_KEYS + SIMPLE_KEYS
+    ORF_KEYS = COMPLEX_KEYS + SIMPLE_KEYS + LEGACY_KEYS
     ALL_KEYS = ORF_KEYS + ['source', '_recipe_data', 'file_name']
 
     def __init__(self, source=''):
         if isinstance(source, dict):
-            self._set_data(source)
+            self.set_data(source)
         else:
-            self.source = source
+            self.name = source
             self.uuid = str(uuid.uuid4())
 
-    def _set_data(self, data):
+    def set_data(self, data):
         """
         Used to set recipe data from incoming dicts such as from webscraper and
         from openrecipes.org
@@ -90,6 +89,10 @@ class Recipe:
 
     def __repr__(self):
         return "<Recipe(name='{}')>".format(self.name)
+
+
+    def __str__(self):
+        return "Recipe: {}".format(self.name)
 
 
     def __dir__(self):
@@ -207,8 +210,7 @@ class Recipe:
     def named_ingredients(self):
         """Return named ingredient data."""
         named = OrderedDict()
-        named_ingreds = self._recipe_data.get('named_ingredients', '')
-        for item in named_ingreds:
+        for item in self._named_ingredients:
             name = list(item.keys())[0]
             ingred_list = []
             for ingred in list(item.values())[0]:
@@ -295,7 +297,7 @@ class Recipe:
                           'json', 'yaml', 'xml'
         """
         if fmt in ('json', None):
-            print(json.dumps(self._recipe_data, indent=4))
+            print(json.dumps(self.__dict__, indent=4))
         elif fmt == 'yaml':
             yaml.dump(self._recipe_data, sys.stdout)
         elif fmt == 'xml':
@@ -325,6 +327,11 @@ class Ingredient:
 
     :param ingredient: dict or string of ingredient.
     """
+    PORTIONED_UNIT_RE = re.compile(r'\(?\d+\.?\d*? (ounce|pound)\)? (cans?|bags?)')
+    PAREN_RE = re.compile(r'\((.*?)\)')
+    SIZE_STRINGS = ['large', 'medium', 'small', 'heaping']
+    PUNCTUATION = ''.join(c for c in string.punctuation if c not in '-/(),.')
+    
     def __init__(self, ingredient):
         self.amount, self.portion, self.size, self.name = ('',) * 4
         self.unit, self.prep, self.note, self.id = ('',) * 4
@@ -401,7 +408,7 @@ class Ingredient:
         unit = self.unit
         if not self.unit:
             unit = 'each'
-        match = PORTIONED_UNIT_RE.search(unit)
+        match = self.PORTIONED_UNIT_RE.search(unit)
         if match:
             unit = match.group().split()
             self.ounce_can = unit[0:2]
@@ -431,13 +438,13 @@ class Ingredient:
         return ''.join(c for c in string if c not in ('(', ')'))
 
     def _strip_punct(self, string):
-        return ''.join(c for c in string if c not in PUNCTUATION)
+        return ''.join(c for c in string if c not in self.PUNCTUATION)
 
     def parse_ingredient(self, string):
         """parse the ingredient string"""
         ingred_string = self._preprocess_string(string)
         # get unit
-        match = PORTIONED_UNIT_RE.search(ingred_string)
+        match = self.PORTIONED_UNIT_RE.search(ingred_string)
         if match:
             ingred_string = ingred_string.replace(match.group(), '')
             unit = self._strip_parens(match.group()).split()
@@ -460,7 +467,7 @@ class Ingredient:
                         ingred_string = ingred_string.replace(item, '')
 
         # get note if any
-        parens = PAREN_RE.search(ingred_string)
+        parens = self.PAREN_RE.search(ingred_string)
         if parens:
             ingred_string = ingred_string.replace(parens.group(), '').strip()
             self.note = self._strip_parens(parens.group())
@@ -482,7 +489,7 @@ class Ingredient:
         ingred_list = [x for x in ingred_list if x not in amnt_list]
         ingred_string = ' '.join(ingred_list)
 
-        for item in SIZE_STRINGS:
+        for item in self.SIZE_STRINGS:
             if item in ingred_string:
                 self.size = item
                 ingred_string = ingred_string.replace(item, '')
@@ -507,9 +514,9 @@ class Ingredient:
 
 if __name__ == '__main__':
     test = Ingredient('1 tablespoon moose hair, roughly chopped')
-
     test.parse_ingredient('3 teaspoons gandolf hair, complety blown to smitherines')
-    r = Recipe()
-    r.name = 'stupid'
-    print(r)
-    print(r.uuid)
+    test = {'name': 'stupid', 'dishtype': 'dumb'}
+    r = Recipe(test)
+    #r.name = 'stupid'
+    print(r.__dict__)
+    #print(r.uuid)

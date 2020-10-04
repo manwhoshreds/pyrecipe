@@ -7,7 +7,6 @@
     recipe_tool is the frontend commandline interface to
     the pyrecipe library.
 """
-import os
 import sys
 import argparse
 
@@ -17,33 +16,37 @@ from pyrecipe.backend import Chef
 from pyrecipe.user_interface import View
 
 
-
 class RecipeController:
     """Controller for the pyrecipe program"""
 
-    
+
     def __init__(self, Chef, View):
         self.chef = Chef()
         self.view = View()
 
-    
+
     def create_recipe(self, args):
-        recipe = self.view.create_recipe(args.source)
+        """Create a recipe"""
+        empty = self.chef.init_recipe(args.source)
+        recipe = self.view.create_recipe(empty)
         self.chef.create_recipe(recipe)
-    
-    
+
+
     def read_recipe(self, args):
+        """Read and print a recipe"""
         recipe = self.chef.read_recipe(args.source)
         self.view.print_recipe(recipe, args.verbose)
-    
+
 
     def update_recipe(self, args):
+        """Update a recipe"""
         recipe = self.chef.read_recipe(args.source)
         new_recipe = self.view.edit_recipe(recipe)
         self.chef.update_recipe(new_recipe)
-    
-    
+
+
     def delete_recipe(self, args):
+        """Delete a recipe"""
         answer = input("Are you sure your want to delete {}? yes/no "
                        .format(args.source))
         if answer.strip() == 'yes':
@@ -53,20 +56,12 @@ class RecipeController:
 
         msg = '{} was not deleted'.format(args.source)
         sys.exit(utils.msg(msg, 'INFORM'))
-    
-    
-    def dump_recipe(self, args):
-        pass
-
-    
-    def show_stats(self, args):
-        pass
 
 
 def subparser_add(subparser):
     """Subparser for add command."""
     parser_add = subparser.add_parser("add", help='Add a recipe')
-    parser_add.add_argument("name", help='Name of the recipe to add')
+    parser_add.add_argument("source", help='Name of the recipe to add')
 
 
 def subparser_print(subparser):
@@ -112,62 +107,6 @@ def subparser_remove(subparser):
     )
 
 
-def subparser_dump(subparser):
-    """Subparser for dump command."""
-    parser_dump = subparser.add_parser(
-        "dump",
-        help="Dump yaml or xml representation of recipe to stdout"
-    )
-    parser_dump.add_argument(
-        "source",
-        help="Recipe to dump data from"
-    )
-    parser_dump.add_argument(
-        "-x",
-        "--xml",
-        dest="data_type",
-        action="store_const",
-        const="xml",
-        help="Dump source xml tree to standard output"
-    )
-    parser_dump.add_argument(
-        "-y",
-        "--yaml",
-        dest="data_type",
-        action="store_const",
-        const="yaml",
-        help="Dump source yaml to standard output"
-    )
-    parser_dump.add_argument(
-        "-j",
-        "--json",
-        dest="data_type",
-        action="store_const",
-        const="json",
-        help="Dump source json"
-    )
-
-
-def subparser_show(subparser):
-    """Subparser for show command."""
-    parser_show = subparser.add_parser(
-        "show",
-        help="Show statistic from the recipe database"
-    )
-    parser_show.add_argument(
-        "-d",
-        "--dish-type",
-        metavar="DISHTYPE",
-        help="List sites that can be scraped"
-    )
-    parser_show.add_argument(
-        "--scrapeable-sites",
-        action="store_true",
-        dest="sites",
-        help="List sites that can be scraped"
-    )
-
-
 def get_parser():
     """Parse args for recipe_tool."""
     parser = argparse.ArgumentParser(
@@ -196,19 +135,16 @@ def get_parser():
     )
 
     subparser = parser.add_subparsers(dest='subparser')
+    subparser_add(subparser)
     subparser_print(subparser)
     subparser_edit(subparser)
-    subparser_add(subparser)
     subparser_remove(subparser)
-    subparser_dump(subparser)
-    subparser_show(subparser)
-
     return parser
 
 
 def main():
     """Main entry point of recipe_tool."""
-    
+
     parser = get_parser()
     args = parser.parse_args()
     if len(sys.argv) == 1:
@@ -218,15 +154,13 @@ def main():
         # verbose flag it causes an exception so
         # here we offer help if no other flags are given
         sys.exit(parser.print_help())
-    
+
     rc = RecipeController(Chef, View)
     case = {
-        'create': rc.create_recipe,
+        'add': rc.create_recipe,
         'print': rc.read_recipe,
         'edit': rc.update_recipe,
         'remove': rc.delete_recipe,
-        'dump': rc.dump_recipe,
-        'show': rc.show_stats,
     }
     if args.version:
         sys.exit(VER_STR)

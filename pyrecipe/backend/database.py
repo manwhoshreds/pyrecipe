@@ -129,33 +129,33 @@ class RecipeDB:
             '''SELECT name FROM Recipes
                WHERE name=?''', (recipe.name,)
         )
-        ##if self.c.fetchone():
-        #    msg = ("A recipe with the name '{}' already exists in the "
-        #           "database. Please Select another name for this "
-        #           "recipe.".format(recipe.name))
-        #    raise RecipeAlreadyStored(utils.msg(msg, 'ERROR'))
+        if self.c.fetchone():
+            msg = ("A recipe with the name '{}' already exists in the "
+                   "database. Please Select another name for this "
+                   "recipe.".format(recipe.name))
+            raise RecipeAlreadyStored(utils.msg(msg, 'ERROR'))
 
         recipe_data = [(
             recipe.uuid, 
             recipe.name.lower(),
-            recipe.dish_type,
+            recipe.dishtype,
             recipe.author,
             recipe.tags,
             recipe.categories,
             recipe.price,
-            recipe.source_url
+            recipe.url
         )]
 
         self.c.executemany(
-            '''INSERT OR REPLACE INTO Recipes (
+            '''INSERT OR IGNORE INTO Recipes (
                 uuid,
                 name,
-                dish_type,
+                dishtype,
                 author,
                 tags,
                 categories,
                 price,
-                source_url
+                url
                 ) VALUES(?, ?, ?, ?, ?, ?, ?, ?)''', recipe_data
         )
 
@@ -208,7 +208,7 @@ class RecipeDB:
                 prep_id = None
             
             self.c.execute(
-                '''INSERT OR REPLACE
+                '''INSERT OR IGNORE
                    INTO RecipeIngredients 
                    (recipe_id, 
                     amount, 
@@ -340,12 +340,12 @@ class RecipeDB:
         return
         recipe_data = [(
             recipe.name,
-            recipe.dish_type,
+            recipe.dishtype,
             recipe.author,
             recipe.tags,
             recipe.categories,
             recipe.price,
-            recipe.source_url,
+            recipe.url,
             recipe.id
         )]
 
@@ -353,12 +353,12 @@ class RecipeDB:
             '''UPDATE Recipes
                SET
                 name=?,
-                dish_type=?,
+                dishtype=?,
                 author=?,
                 tags=?,
                 categories=?,
                 price=?,
-                source_url=?
+                sourceurl=?
                WHERE id=?''', recipe_data
         )
         
@@ -404,7 +404,7 @@ class RecipeDB:
                 prep_id = self.c.fetchone()['id']
             except TypeError:
                 prep_id = None
-           
+            print(item.id)       
             self.c.execute(
                 '''INSERT OR IGNORE into RecipeIngredients(
                     recipe_ingredient_id,
@@ -559,7 +559,7 @@ class DBInfo(RecipeDB):
     def get_recipes_by_dishtype(self, dishtype):
         """Get recipenames of a cirtain dishtype.""" 
         names = self.query(
-            "SELECT name FROM Recipes WHERE dish_type = \'{}\'".format(dishtype)
+            "SELECT name FROM Recipes WHERE dishtype = \'{}\'".format(dishtype)
         )
         names = [x[0] for x in names]
         return names

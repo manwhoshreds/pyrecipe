@@ -10,7 +10,7 @@
 CREATE TABLE IF NOT EXISTS Recipes (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	uuid TEXT NOT NULL UNIQUE,
-	dish_type TEXT,
+	dishtype TEXT,
 	description TEXT,
 	name TEXT NOT NULL UNIQUE,
 	author TEXT,
@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS Recipes (
 	tags TEXT,
 	categories TEXT,
 	price TEXT,
-	source_url TEXT
+	url TEXT
 );
 
 CREATE TABLE IF NOT EXISTS RecipeIngredients (

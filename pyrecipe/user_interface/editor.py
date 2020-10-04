@@ -352,9 +352,7 @@ class RecipeEditor:
     def __init__(self, recipe, recipe_yield=0, add=False):
         if add:
             # We are adding a new recipe. Init a recipe with no data
-            self.recipe = recipe()
-            self.recipe.name = recipe
-            self.recipe.uuid = str(uuid.uuid4())
+            self.recipe = recipe
             self.welcome = 'Add a Recipe: {}'.format(self.recipe.name)
         else:
             self.recipe = recipe
