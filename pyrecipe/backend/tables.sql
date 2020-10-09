@@ -21,9 +21,16 @@ CREATE TABLE IF NOT EXISTS Recipes (
 	url TEXT
 );
 
-CREATE TABLE IF NOT EXISTS RecipeIngredients (
-	recipe_ingredient_id INTEGER PRIMARY KEY AUTOINCREMENT, 
+CREATE TABLE IF NOT EXISTS IngredientAltNames (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	recipe_id INTEGER,
+	alt_name TEXT
+);
+
+CREATE TABLE IF NOT EXISTS RecipeIngredients (
+	recipe_ingredient_id INTEGER PRIMARY KEY AUTOINCREMENT,
+	recipe_id INTEGER,
+	alt_name_id INTEGER,
 	amount TEXT,
 	size_id INTEGER,
 	unit_id INTEGER,
@@ -32,6 +39,10 @@ CREATE TABLE IF NOT EXISTS RecipeIngredients (
 	CONSTRAINT fk_recipes
 		FOREIGN KEY(recipe_id) 
 		REFERENCES Recipes(id)
+		ON DELETE CASCADE
+	CONSTRAINT an_recipes
+		FOREIGN KEY(alt_name_id) 
+		REFERENCES IngredientAltNames(id)
 		ON DELETE CASCADE
 	FOREIGN KEY(size_id) REFERENCES IngredientSizes(id)
 	FOREIGN KEY(unit_id) REFERENCES Units(id)
@@ -44,29 +55,7 @@ CREATE TABLE IF NOT EXISTS Ingredients (
 	name TEXT UNIQUE
 );
 
-CREATE TABLE IF NOT EXISTS NamedIngredients (
-	id INTEGER PRIMARY KEY AUTOINCREMENT, 
-	named_ingredient_id INTEGER, 
-	recipe_id INTEGER,
-	amount TEXT,
-	unit_id INTEGER,
-	ingredient_id INTEGER, 
-	size_id INTEGER,
-	FOREIGN KEY(named_ingredient_id) REFERENCES NamedIngredientsNames(id)
-	FOREIGN KEY(recipe_id) REFERENCES Recipes(id)
-		ON DELETE CASCADE
-	FOREIGN KEY(unit_id) REFERENCES Units(id)
-	FOREIGN KEY(ingredient_id) REFERENCES Ingredients(id)
-	FOREIGN KEY(size_id) REFERENCES IngredientSizes(id)
-);
 
-CREATE TABLE IF NOT EXISTS NamedIngredientsNames (
-	id INTEGER PRIMARY KEY AUTOINCREMENT,
-	recipe_id INTEGER,
-	alt_name TEXT
-);
-
-		
 CREATE TABLE IF NOT EXISTS IngredientSizes (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	ingredient_size TEXT UNIQUE
