@@ -104,7 +104,7 @@ class RecipeDB:
         for item in alt_names:
             alt_name = self._get_dict_from_row(item)['alt_name']
             self.c.execute(
-                '''SELECT amount, unit, name
+                '''SELECT recipe_ingredient_id, amount, ingredient_size, name, unit, prep
                    FROM NamedIngredients AS ni
                    INNER JOIN NamedIngredientsNames
                        AS nin ON ni.named_ingredient_id=nin.id
@@ -336,8 +336,6 @@ class RecipeDB:
 
     def update_recipe(self, recipe):
         '''Update a recipe in the database.'''
-        self.create_recipe(recipe)
-        return
         recipe_data = [(
             recipe.name,
             recipe.dishtype,
@@ -358,7 +356,7 @@ class RecipeDB:
                 tags=?,
                 categories=?,
                 price=?,
-                sourceurl=?
+                url=?
                WHERE id=?''', recipe_data
         )
         
@@ -404,58 +402,44 @@ class RecipeDB:
                 prep_id = self.c.fetchone()['id']
             except TypeError:
                 prep_id = None
-            print(item.id)       
-            self.c.execute(
-                '''INSERT OR IGNORE into RecipeIngredients(
-                    recipe_ingredient_id,
-                    amount, 
-                    size_id, 
-                    unit_id, 
-                    ingredient_id,
-                    prep_id)
-                   VALUES(?, ?, ?, ?, ?, ?)''',
-                   (item.id,
-                     str(item.amount), 
-                     ingredient_size_id,
-                     int(unit_id), 
-                     int(ingredient_id),
-                     prep_id)
-            )
-            self.c.execute(
-                '''UPDATE RecipeIngredients
-                   SET
-                    amount=?,
-                    size_id=?,
-                    unit_id=?,
-                    ingredient_id=?,
-                    prep_id=?
-                   WHERE recipe_ingredient_id=?''',
-                   (str(item.amount),
-                    ingredient_size_id,
-                    int(unit_id),
-                    int(ingredient_id),
-                    prep_id,
-                    item.id)
-            )
+            if item.id:
+                self.c.execute(
+                    '''UPDATE RecipeIngredients
+                       SET
+                        amount=?,
+                        size_id=?,
+                        unit_id=?,
+                        ingredient_id=?,
+                        prep_id=?
+                       WHERE recipe_ingredient_id=?''',
+                       (str(item.amount),
+                        ingredient_size_id,
+                        int(unit_id),
+                        int(ingredient_id),
+                        prep_id,
+                        item.id)
+                )
+            else:
+                self.c.execute(
+                    '''INSERT into RecipeIngredients(
+                        recipe_id,
+                        amount, 
+                        size_id, 
+                        unit_id, 
+                        ingredient_id,
+                        prep_id)
+                       VALUES(?, ?, ?, ?, ?, ?)''',
+                       (recipe.id,
+                        str(item.amount), 
+                        ingredient_size_id,
+                        int(unit_id), 
+                        int(ingredient_id),
+                        prep_id)
+                )
 
-            #self.c.execute(
-            #    '''INSERT OR IGNORE INTO RecipeIngredients (
-            #            recipe_id,
-            #            amount,
-            #            size_id,
-            #            unit_id,
-            #            ingredient_id
-            #            ) VALUES(?, ?, ?, ?, ?)
-            #            WHERE (select changes() = 0)''', 
-            #            (recipe.id,
-            #             str(item.amount),
-            #             ingredient_size_id,
-            #             int(unit_id),
-            #             int(ingredient_id))
-            #        )
     
-        if recipe.get_ingredients()[1]:
-            for item, ingreds in recipe.get_ingredients()[1].items():
+        if named:
+            for item, ingreds in named.items():
                 self.c.execute(
                     '''INSERT OR IGNORE INTO NamedIngredientsNames (
                             recipe_id,
@@ -498,22 +482,41 @@ class RecipeDB:
                                (ingred.size,)
                         )
 
-                    self.c.execute(
-                        '''INSERT OR REPLACE INTO NamedIngredients (
+                    if ingred.id:
+
+                        self.c.execute(
+                            '''UPDATE NamedIngredients
+                               SET
+                                amount=?,
+                                size_id=?,
+                                unit_id=?,
+                                ingredient_id=?,
+                                prep_id=?
+                               WHERE recipe_ingredient_id=?''',
+                               (str(ingred.amount),
+                                ingredient_size_id,
+                                int(unit_id),
+                                int(ingredient_id),
+                                prep_id,
+                                ingred.id)
+                        )
+                    else:
+                        self.c.execute(
+                            '''INSERT into NamedIngredients(
                                 recipe_id,
-                                named_ingredient_id,
-                                amount,
-                                size_id,
-                                unit_id,
-                                ingredient_id
-                                ) VALUES(?, ?, ?, ?, ?, ?)''', 
-                                (recipe.id,
-                                 alt_name_id,
-                                 str(ingred.amount),
-                                 ingredient_size_id,
-                                 int(unit_id),
-                                 int(ingredient_id))
-                    )
+                                amount, 
+                                size_id, 
+                                unit_id, 
+                                ingredient_id,
+                                prep_id)
+                               VALUES(?, ?, ?, ?, ?, ?)''',
+                               (recipe.id,
+                                str(ingred.amount), 
+                                ingredient_size_id,
+                                int(unit_id), 
+                                int(ingredient_id),
+                                prep_id)
+                        )
 
         #for item in recipe.steps:
         #    self.c.execute(

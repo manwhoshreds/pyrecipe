@@ -14,7 +14,7 @@ import uuid
 
 import urwid as ur
 
-from pyrecipe.backend import DISH_TYPES
+from pyrecipe.backend import DISH_TYPES, Recipe
 from .helpers import wrap
 
 
@@ -207,8 +207,7 @@ class IngredBlock(EntryBlock):
         if ingredients:
             self.ingredients = ingredients
         else:
-            self.ingredients = ["add"]
-        self.ids = []
+            self.ingredients = [Recipe.ingredient("add")]
         self.name = name
         self.widgets = deque([BLANK])
         buttons = self._get_buttons()
@@ -218,8 +217,7 @@ class IngredBlock(EntryBlock):
             self.widgets.append(self.named_name)
         
         for item in self.ingredients:
-            #self.ids.append(item.id)
-            ingred_entry = ur.Edit("- ", str(item))
+            ingred_entry = ur.Edit("* ", str(item))
             self.widgets.append(ingred_entry)
         self._refresh()
 
@@ -278,7 +276,14 @@ class IngredBlock(EntryBlock):
             # We are at the end of the ingredient list,
             # start deleting goin back
             self._refresh(self.row-1)
+    
 
+    def _split_ingred_list(self, ilist):
+        """split Ingredients into ones with ids and ones without"""
+        foo = len(self.ingredients)
+        return ilist[:foo], ilist[foo:]
+    
+    
     def get_ingredients(self):
         ingredients = []
         named_ingreds = {}
@@ -287,16 +292,22 @@ class IngredBlock(EntryBlock):
                 self.name = item.original_widget.get_edit_text()
             if isinstance(item, ur.Edit):
                 ingredients.append(item.get_edit_text())
-        #ingred_objects = []
-        #for (a, b) in zip(self.ingredients, ingredients):
-        #    a.parse_ingredient(b)
-        #    ingred_objects.append(a)
-            
+        
+        ingred_objects = []
+        ided, nonided = self._split_ingred_list(ingredients)
+        for (a, b) in zip(self.ingredients, ided):
+            a.parse_ingredient(b)
+            ingred_objects.append(a)
+        
+        nonided = [Recipe.ingredient(i) for i in nonided]
         if self.name:
-            named_ingreds[self.name] = ingredients
+            named_ingreds[self.name] = ingred_objects + nonided
+            for item in named_ingreds[self.name]:
+                print(item.__dict__)
+                print(item.id)
             return named_ingreds
         else:
-            return ingredients
+            return ingred_objects + nonided
 
 
 class MethodBlock(EntryBlock):
@@ -309,7 +320,6 @@ class MethodBlock(EntryBlock):
     
     def insert_entry(self, size, key):
         """Insert entry on next line and move cursor."""
-
         row_plus = self.row + 1
         ingred_entry = ur.Edit('- ', '')
         

@@ -34,15 +34,16 @@ import json
 import shutil
 import string
 from copy import deepcopy
-from collections import OrderedDict
 from zipfile import ZipFile
+from dataclasses import dataclass
+from collections import OrderedDict
 
 import pyrecipe.utils as utils
 from pyrecipe.backend.recipe_numbers import RecipeNum
 from pyrecipe import Q_, CULINARY_UNITS
 
 
-
+#@dataclass
 class Recipe:
     """Open a recipe file and extract its data for futher processing
 
@@ -50,6 +51,15 @@ class Recipe:
     change the state of a recipe file and then save the new data back to
     the recipe file.
     """
+    #id: int
+    #uuid: str
+    #name: str
+    #dishtype: str
+    #author: str
+    #_ingredients: []
+    #_named_ingredients: OrderedDict()
+
+
     # All keys applicable to the Open Recipe Format
     SIMPLE_KEYS = [
         'id', 'uuid', 'name', 'dishtype', 'author', 'category', 'categories', 
@@ -187,12 +197,16 @@ class Recipe:
             named[item] = ingred_list
 
         return ingreds, named
+    
 
+    @staticmethod
+    def ingredient(ingredient):
+        return Ingredient(ingredient)
+
+    
     @property
     def ingredients(self):
         """Return ingredient data."""
-        #ingredients = self.ingredients
-        #return [Ingredient(i) for i in ingredients]
         return self._ingredients
 
 
@@ -231,7 +245,10 @@ class Recipe:
             parsed_ingreds = []
             entry = {}
             for ingred in ingreds:
-                parsed = Ingredient(ingred)
+                if type(ingred) in (str, dict):
+                    parsed = Ingredient(ingred)
+                else:
+                    parsed = ingred
                 parsed_ingreds.append(vars(parsed))
             entry[named_name] = parsed_ingreds
             named_ingredients.append(entry)
@@ -338,16 +355,16 @@ class Ingredient:
         if isinstance(ingredient, str):
             self.parse_ingredient(ingredient)
         else:
-            self.id = ingredient.get('recipe_ingredient_id', '')
-            self.name = ingredient['name']
-            self.portion = ingredient.get('portion', '')
-            self.size = ingredient.get('size', None)
-            self.prep = ingredient.get('prep', '')
-            self.note = ingredient.get('note', '')
-            self.amount = ingredient.get('amount', '')
+            self.id = ingredient.get('recipe_ingredient_id', None)
             if self.amount:
                 self.amount = RecipeNum(self.amount)
-            self.unit = ingredient.get('unit', '')
+            self.amount = ingredient.get('amount', '')
+            self.size = ingredient.get('size', None)
+            self.portion = ingredient.get('portion', None)
+            self.unit = ingredient.get('unit', None)
+            self.name = ingredient['name']
+            self.prep = ingredient.get('prep', None)
+            self.note = ingredient.get('note', None)
 
 
     def __repr__(self):
@@ -513,10 +530,7 @@ class Ingredient:
         self.name = name.strip(', ')
 
 if __name__ == '__main__':
-    test = Ingredient('1 tablespoon moose hair, roughly chopped')
-    test.parse_ingredient('3 teaspoons gandolf hair, complety blown to smitherines')
-    test = {'name': 'stupid', 'dishtype': 'dumb'}
-    r = Recipe(test)
+    test = Recipe.ingredient('1 tablespoon moose hair, roughly chopped')
+    print(test)
     #r.name = 'stupid'
-    print(r.__dict__)
     #print(r.uuid)

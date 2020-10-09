@@ -18,16 +18,13 @@
     :license: GPL, see LICENSE for more details.
 """
 import re
-import sys
 import uuid
 from abc import ABC, abstractmethod
 
 import bs4
 import requests
 
-import pyrecipe.utils as utils
 from pyrecipe.backend.recipe import Recipe
-
 
 class MalformedUrlError(Exception):
     pass
@@ -47,7 +44,7 @@ class RecipeWebScraper:
 
     def register_scraper(self, scraper):
         self._scrapers[scraper.URL] = scraper
-   
+
     def scrape(self, url):
         is_url = re.compile(r'^https?\://').search(url)
         if is_url:
@@ -61,10 +58,10 @@ class RecipeWebScraper:
             return self._scrapers[scraper](url).recipe
         else:
             raise MalformedUrlError('URL is Malformed')
-        
-        
+
+
 class TemplateWebScraper(ABC):
-    
+
     def __init__(self, url):
         super().__init__()
         req = requests.get(url).text
@@ -75,30 +72,30 @@ class TemplateWebScraper(ABC):
         self.__scrape()
 
     def __scrape(self):
+        self.recipe.name = self.scrape_name()
         self.recipe.prep_time = self.scrape_prep_time()
         self.recipe.cook_time = self.scrape_cook_time()
-        self.recipe.name = self.scrape_name()
         self.recipe.author = self.scrape_author()
         self.recipe.ingredients = self.scrape_ingredients()
         self.recipe.named_ingredients = self.scrape_named_ingredients()
         self.recipe.steps = self.scrape_method()
         self.recipe.dish_type = 'main'
-    
+
     @abstractmethod
     def scrape_prep_time(self):
         """Scrape the prep time"""
         pass
-    
+
     @abstractmethod
     def scrape_cook_time(self):
         """Scrape the cook time"""
         pass
-    
+
     @abstractmethod
     def scrape_name(self):
         """Scrape the recipe name"""
         pass
-        
+
     @abstractmethod
     def scrape_author(self):
         """Scrape the recipe author."""
@@ -108,31 +105,31 @@ class TemplateWebScraper(ABC):
     def scrape_ingredients(self):
         """Scrape the recipe ingredients."""
         pass
-    
+
     @abstractmethod
     def scrape_named_ingredients(self):
         """Scrape the recipe named ingredients."""
         pass
-    
+
     @abstractmethod
     def scrape_method(self):
         """Scrape the recipe method."""
         pass
 
 
-class FoodWebScraper(TemplateWebScraper):
+class FoodWebScraperWIP(TemplateWebScraper):
     """Web Scraper for https://www.food.com."""
-    
+
     def scrape_prep_time(self):
         """Scrape the prep time"""
         prep_time = ''
         return prep_time
-    
+
     def scrape_cook_time(self):
         """Scrape the cook time"""
         cook_time = ''
         return cook_time
-    
+
     def scrape_name(self):
         """Scrape the recipe name."""
         name_box = self.soup.find('div', attrs={'class': 'recipe-title'})
@@ -149,13 +146,11 @@ class FoodWebScraper(TemplateWebScraper):
         """Scrape the recipe ingredients."""
         attrs = {'class': 'recipe-ingredients__ingredient-part'}
         ingred_box = self.soup.find_all('span', attrs=attrs)
-        print(ingred_box)
         ingredients = []
         for item in ingred_box:
             for litag in item.find_all('li'):
                 ingred = ' '.join(litag.text.strip().split())
                 ingredients.append(ingred)
-        print(ingredients)
         return ingredients
 
     def scrape_named_ingredients(self):
@@ -163,7 +158,7 @@ class FoodWebScraper(TemplateWebScraper):
         # Not implemented yet
         named_ingreds = []
         return named_ingreds
-    
+
     def scrape_method(self):
         """Scrape the recipe method."""
         attrs = {'class': 'directions-inner container-xs'}
@@ -183,19 +178,19 @@ class FoodWebScraper(TemplateWebScraper):
 
 class TastyWebScraper(TemplateWebScraper):
     """Web Scraper for https://tasty.co."""
-    
+
     URL = 'https://tasty.co'
 
     def scrape_prep_time(self):
         """Scrape the recipe name"""
         prep_time = ''
         return prep_time
-    
+
     def scrape_cook_time(self):
         """Scrape the recipe name"""
         cook_time = ''
         return cook_time
-    
+
     def scrape_name(self):
         """Recipe name."""
         recipe_name = ""
@@ -226,7 +221,7 @@ class TastyWebScraper(TemplateWebScraper):
         """Recipe named ingredients."""
         named_ingredients = []
         return named_ingredients
-    
+
     def scrape_method(self):
         """Recipe method."""
         method_box = self.soup.find('ol', attrs={'class': 'prep-steps'})
@@ -245,18 +240,19 @@ class TastyWebScraper(TemplateWebScraper):
 
 class BigOvenWebScraper(TemplateWebScraper):
     """Web Scraper for https://www.bigoven.com."""
-    URL = 'https://www.bigoven.com' 
+
+    URL = 'https://www.bigoven.com'
 
     def scrape_prep_time(self):
         """Scrape the prep time"""
         prep_time = ''
         return prep_time
-    
+
     def scrape_cook_time(self):
         """Scrape the cook time"""
         cook_time = ''
         return cook_time
-    
+
     def scrape_name(self):
         """Scrape the recipe name."""
         attributes = {'class', 'recipe-container modern'}
@@ -273,13 +269,11 @@ class BigOvenWebScraper(TemplateWebScraper):
         """Scrape the recipe ingredients."""
         attrs = {'class': 'recipe-ingredients__ingredient-part'}
         ingred_box = self.soup.find_all('span', attrs=attrs)
-        print(ingred_box)
         ingredients = []
         for item in ingred_box:
             for litag in item.find_all('li'):
                 ingred = ' '.join(litag.text.strip().split())
                 ingredients.append(ingred)
-        print(ingredients)
         return ingredients
 
     def scrape_named_ingredients(self):
@@ -287,7 +281,7 @@ class BigOvenWebScraper(TemplateWebScraper):
         # Not implemented yet
         named_ingreds = []
         return named_ingreds
-    
+
     def scrape_method(self):
         """Scrape the recipe method."""
         attrs = {'class': 'directions-inner container-xs'}
@@ -307,23 +301,23 @@ class BigOvenWebScraper(TemplateWebScraper):
 
 class AllRecipesWebScraper(TemplateWebScraper):
     """Web Scraper for https://www.allrecipes.com."""
-    
+
     URL = 'https://www.allrecipes.com'
-    
+
     def scrape_prep_time(self):
         """Scrape the recipe name"""
         attrs = {'itemprop': 'prepTime'}
         prep_time = self.soup.find('time', attrs=attrs).get_text()
         prep_time = prep_time.strip(' m')
         return prep_time
-    
+
     def scrape_cook_time(self):
         """Scrape the recipe name"""
         attrs = {'itemprop': 'cookTime'}
         cook_time = self.soup.find('time', attrs=attrs).get_text()
         cook_time = cook_time.strip(' m')
         return cook_time
-    
+
     def scrape_name(self):
         """Scrape the recipe name."""
         attrs = {'class': 'recipe-title'}
@@ -353,13 +347,13 @@ class AllRecipesWebScraper(TemplateWebScraper):
         # Not implemented yet
         named_ingreds = []
         return named_ingreds
-    
+
     def scrape_method(self):
         """Scrape the recipe method."""
         attrs = {'itemprop': 'recipeInstructions'}
         method_box = self.soup.find('ol', attrs=attrs)
         litags = method_box.find_all('li')
-        
+
         recipe_steps = []
         for item in litags:
             step_dict = {}
@@ -371,19 +365,19 @@ class AllRecipesWebScraper(TemplateWebScraper):
 
 
 #TODO: FoodNetworkWebScraper IS NOT CURRENTLY WORKING
-class FoodNetworkWebScraper(TemplateWebScraper):
+class FoodNetworkWebScraperWIP(TemplateWebScraper):
     """Web Scraper for https://www.foodnetwork.com."""
-    
+
     def scrape_prep_time(self):
         """Scrape the recipe name"""
         prep_time = ''
         return prep_time
-    
+
     def scrape_cook_time(self):
         """Scrape the recipe name"""
         cook_time = ''
         return cook_time
-    
+
     def scrape_name(self):
         """Recipe name."""
         attrs = {'class': 'o-AssetTitle__a-HeadlineText'}
@@ -415,17 +409,13 @@ class FoodNetworkWebScraper(TemplateWebScraper):
         attrs = {'class': 'o-Ingredients__m-Body'}
         ingred_box = self.soup.find('div', attrs=attrs)
         #TODO: need to make this work if I want to scrape food network
-        print(len(list(ingred_box.children)))
-
-            
-        exit()
         ingredients = []
         for item in ingred_box:
             for litag in item.find_all('li'):
                 ingred = ' '.join(litag.text.strip().split())
                 ingredients.append(ingred)
         return ingredients
-    
+
     def scrape_method(self):
         """Method."""
         attrs = {'class': 'directions-inner container-xs'}
@@ -442,7 +432,7 @@ class FoodNetworkWebScraper(TemplateWebScraper):
         steps = recipe_steps
         return steps
 
-
+scrapers = [s for s in dir() if s.endswith('Scraper')]
 scraper = RecipeWebScraper()
 scraper.register_scraper(TastyWebScraper)
 scraper.register_scraper(BigOvenWebScraper)
@@ -450,12 +440,12 @@ scraper.register_scraper(AllRecipesWebScraper)
 
 
 if __name__ == '__main__':
-    scraper = RecipeWebScraper()
-    scraper.register_scraper(TastyWebScraper)
-    scraper.register_scraper(BigOvenWebScraper)
-    scraper.register_scraper(AllRecipesWebScraper)
-    test = scraper.scrape("https://tasty.co/recipe/easy-butter-chicken")
-    print(test.__dict__)
+    pass
+    #scraper = RecipeWebScraper()
+    #scraper.register_scraper(TastyWebScraper)
+    #scraper.register_scraper(BigOvenWebScraper)
+    #scraper.register_scraper(AllRecipesWebScraper)
+    #test = scraper.scrape("https://tasty.co/recipe/easy-butter-chicken")
     #webrecipe = "http://www.geniuskitchen.com/recipe/ina-gartens-baked-sweet-potato-fries-333618"
     #webrecipe = "https://www.allrecipes.com/recipe/232062/chef-johns-creme-caramel/"
     #webrecipe = "https://www.foodnetwork.com/recipes/ree-drummond/salisbury-steak-recipe-2126533"

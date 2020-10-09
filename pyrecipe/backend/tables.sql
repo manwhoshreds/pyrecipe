@@ -45,19 +45,21 @@ CREATE TABLE IF NOT EXISTS Ingredients (
 );
 
 CREATE TABLE IF NOT EXISTS NamedIngredients (
-	id INTEGER PRIMARY KEY AUTOINCREMENT, 
+	recipe_ingredient_id INTEGER PRIMARY KEY AUTOINCREMENT, 
 	named_ingredient_id INTEGER, 
 	recipe_id INTEGER,
 	amount TEXT,
 	unit_id INTEGER,
 	ingredient_id INTEGER, 
 	size_id INTEGER,
+	prep_id INTEGER,
 	FOREIGN KEY(named_ingredient_id) REFERENCES NamedIngredientsNames(id)
 	FOREIGN KEY(recipe_id) REFERENCES Recipes(id)
 		ON DELETE CASCADE
+	FOREIGN KEY(size_id) REFERENCES IngredientSizes(id)
 	FOREIGN KEY(unit_id) REFERENCES Units(id)
 	FOREIGN KEY(ingredient_id) REFERENCES Ingredients(id)
-	FOREIGN KEY(size_id) REFERENCES IngredientSizes(id)
+	FOREIGN KEY(prep_id) REFERENCES IngredientPrep(id)
 );
 
 CREATE TABLE IF NOT EXISTS NamedIngredientsNames (

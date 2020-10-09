@@ -107,20 +107,27 @@ class Chef:
 
 
 if __name__ == '__main__':
-    def build_recipe_database():
-        """Build the recipe database."""
-        database = RecipeDB()
-        database.create_database()
-        recipe_data_dir = os.path.expanduser("~/.config/pyrecipe/recipe_data")
-        chef = Chef()
-        for item in os.listdir(recipe_data_dir):
-            chef.create_recipe(os.path.join(recipe_data_dir, item))
+    import shutil
+    env = shutil.which('python')
+    if '.virtual' in env:
+        def build_recipe_database():
+            """Build the recipe database."""
+            database = RecipeDB()
+            database.create_database()
+            recipe_data_dir = os.path.expanduser("~/.config/pyrecipe/recipe_data")
+            chef = Chef()
+            for item in os.listdir(recipe_data_dir):
+                r = chef.create_recipe(os.path.join(recipe_data_dir, item))
+                print('Adding...    {}'.format(item))
 
-    # Build the databse first if it does not exist.
-    db_exists = os.path.exists(DB_FILE)
-    recipe_data_dir = os.path.expanduser("~/.config/pyrecipe/recipe_data")
-    recipe_exists = len(os.listdir(recipe_data_dir)) > 0
-    if not db_exists and recipe_exists:
-        print('Building recipe database...')
-        build_recipe_database()
+        # Build the databse first if it does not exist.
+        db_exists = os.path.exists(DB_FILE)
+        recipe_data_dir = os.path.expanduser("~/.config/pyrecipe/recipe_data")
+        recipe_exists = len(os.listdir(recipe_data_dir)) > 0
+        if db_exists and recipe_exists:
+            os.remove(DB_FILE)
+            print('Building recipe database...')
+            build_recipe_database()
+    else:
+        sys.exit(print('You are not working in a development environment'))
     

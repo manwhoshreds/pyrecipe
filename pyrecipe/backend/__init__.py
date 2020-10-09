@@ -1,6 +1,7 @@
 import os
 
 from .chef import Chef
+from .recipe import Recipe
 
 
 SIZE_STRINGS = ['large', 'medium', 'small', 'heaping']
