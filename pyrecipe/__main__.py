@@ -41,17 +41,9 @@ class RecipeController:
     def update_recipe(self, args):
         """Update a recipe"""
         recipe = self.chef.read_recipe(args.source)
-        ingred, named = recipe.get_ingredients()
-        print("these are the releger ingreds")
-        for item in ingred:
-            print(item.__dict__)
-        for item in named:
-            print("this is the {} ingred".format(item))
-            for item in named[item]:
-                print(item.__dict__)
-        #new_recipe = self.view.edit_recipe(recipe)
-        #self.view.print_recipe(new_recipe, args.verbose)
-        #self.chef.update_recipe(new_recipe)
+        new_recipe = self.view.edit_recipe(recipe)
+        self.view.print_recipe(new_recipe, args.verbose)
+        self.chef.update_recipe(new_recipe)
 
 
     def delete_recipe(self, args):

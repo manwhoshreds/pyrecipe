@@ -441,7 +441,7 @@ class RecipeDB:
         if named:
             for item, ingreds in named.items():
                 self.c.execute(
-                    '''INSERT OR IGNORE INTO NamedIngredientsNames (
+                    '''INSERT OR REPLACE INTO NamedIngredientsNames (
                             recipe_id,
                             alt_name
                             ) VALUES(?, ?)''',
@@ -501,16 +501,19 @@ class RecipeDB:
                                 ingred.id)
                         )
                     else:
+                        print('im inserting ingred')
                         self.c.execute(
                             '''INSERT into NamedIngredients(
+                                named_ingredient_id,
                                 recipe_id,
                                 amount, 
                                 size_id, 
                                 unit_id, 
                                 ingredient_id,
                                 prep_id)
-                               VALUES(?, ?, ?, ?, ?, ?)''',
-                               (recipe.id,
+                               VALUES(?, ?, ?, ?, ?, ?, ?)''',
+                               (alt_name_id,
+                                recipe.id,
                                 str(ingred.amount), 
                                 ingredient_size_id,
                                 int(unit_id), 

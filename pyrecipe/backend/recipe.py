@@ -209,40 +209,26 @@ class Recipe:
     @property
     def named_ingredients(self):
         """Return named ingredient data."""
-        named = OrderedDict()
-        for item in self._named_ingredients:
-            name = list(item.keys())[0]
-            ingred_list = []
-            for ingred in list(item.values())[0]:
-                ingred = Ingredient(ingred)
-                ingred_list.append(ingred)
-            named[name] = ingred_list
-        return named
+        return self._named_ingredients
 
+    
     @named_ingredients.setter
     def named_ingredients(self, value):
         """Set named ingredients."""
         if not value:
             return
-        named_ingredients = []
-        print(value)
+        named = OrderedDict()
         for item in value:
-            named_name = list(item.keys())[0]
-            ingreds = list(item.values())[0]
-            parsed_ingreds = []
-            entry = {}
-            for ingred in ingreds:
+            name = list(item.keys())[0]
+            ingred_list = []
+            for ingred in list(item.values())[0]:
                 if type(ingred) in (str, dict):
-                    parsed = Ingredient(ingred)
-                else:
-                    parsed = ingred
-                parsed_ingreds.append(vars(parsed))
-            entry[named_name] = parsed_ingreds
-            named_ingredients.append(entry)
-        self._named_ingredients = named_ingredients
-        for item in named_ingredients:
-            print(item)
+                    ingred = Ingredient(ingred)
+                ingred_list.append(ingred)
+            named[name] = ingred_list
+        self._named_ingredients = named
 
+    
     @property
     def method(self):
         """Return a list of steps."""
