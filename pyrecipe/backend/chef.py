@@ -110,6 +110,7 @@ if __name__ == '__main__':
     import shutil
     env = shutil.which('python')
     if '.virtual' in env:
+        print('hello')
         def build_recipe_database():
             """Build the recipe database."""
             database = RecipeDB()
@@ -121,11 +122,12 @@ if __name__ == '__main__':
                 print('Adding...    {}'.format(item))
 
         # Build the databse first if it does not exist.
-        db_exists = os.path.exists(DB_FILE)
+        db_exists = os.path.isfile(DB_FILE)
+        if db_exists:
+            os.remove(DB_FILE)
         recipe_data_dir = os.path.expanduser("~/.config/pyrecipe/recipe_data")
         recipe_exists = len(os.listdir(recipe_data_dir)) > 0
-        if db_exists and recipe_exists:
-            os.remove(DB_FILE)
+        if recipe_exists:
             print('Building recipe database...')
             build_recipe_database()
     else:

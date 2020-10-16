@@ -45,12 +45,7 @@ from pyrecipe import Q_, CULINARY_UNITS
 
 #@dataclass
 class Recipe:
-    """Open a recipe file and extract its data for futher processing
-
-    The recipe class can open recipe files and read their data. It can
-    change the state of a recipe file and then save the new data back to
-    the recipe file.
-    """
+    """The recipe dataclass"""
     #id: int
     #uuid: str
     #name: str
@@ -89,9 +84,8 @@ class Recipe:
             self.uuid = str(uuid.uuid4())
 
     def set_data(self, data):
-        """
-        Used to set recipe data from incoming dicts such as from webscraper and
-        from openrecipes.org
+        """Used to set recipe data from incoming dicts such as from webscraper 
+        and from openrecipes.org
         """
         for key, value in data.items():
             setattr(self, key, value)
@@ -187,15 +181,7 @@ class Recipe:
         :return: the recipe ingredient and named ingredient objects
         """
         ingreds = self.ingredients
-
-        named = OrderedDict()
-        named_ingreds = self.named_ingredients
-        for item in self.named_ingredients:
-            ingred_list = []
-            named_ingred_list = named_ingreds[item]
-            ingred_list = named_ingred_list
-            named[item] = ingred_list
-
+        named = self.named_ingredients
         return ingreds, named
     
 
@@ -239,6 +225,7 @@ class Recipe:
         if not value:
             return
         named_ingredients = []
+        print(value)
         for item in value:
             named_name = list(item.keys())[0]
             ingreds = list(item.values())[0]
@@ -253,6 +240,8 @@ class Recipe:
             entry[named_name] = parsed_ingreds
             named_ingredients.append(entry)
         self._named_ingredients = named_ingredients
+        for item in named_ingredients:
+            print(item)
 
     @property
     def method(self):
