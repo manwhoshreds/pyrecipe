@@ -200,6 +200,17 @@ class EntryBlock(ur.WidgetWrap):
             entries.append(text)
         return entries
 
+class IngredientEdit(ur.WidgetWrap):
+
+    def __init__(self, ingredient):
+        self.ingredient = ingredient
+        ingredient_edit = ur.Edit("* ", str(self.ingredient))
+        ur.WidgetWrap.__init__(self, ingredient_edit)
+
+    def get_ingredient_edit(self):
+        ingred_str = self.get_edit_text()
+        return self.ingredient.parse_ingredient(ingred_str)
+
 
 class IngredBlock(EntryBlock):
     """Ingredient block for displaying editable ingredients."""
@@ -210,14 +221,13 @@ class IngredBlock(EntryBlock):
             self.ingredients = [Recipe.ingredient("add")]
         self.name = name
         self.widgets = deque([BLANK])
-        buttons = self._get_buttons()
-        self.widgets.append(buttons)
+        self.widgets.append(self._get_buttons())
         if name:
             self.named_name = ur.AttrMap(ur.Edit('* ', name), 'title')
             self.widgets.append(self.named_name)
         
         for item in self.ingredients:
-            ingred_entry = ur.Edit("* ", str(item))
+            ingred_entry = IngredientEdit(item)
             self.widgets.append(ingred_entry)
         self._refresh()
 
@@ -233,10 +243,11 @@ class IngredBlock(EntryBlock):
     def delete_block(self, button):
         """Delete entire block of ingredients."""
         self.widgets.clear()
-        del self.ingredients
-        self.name = ''
+        for item in self.ingredients:
+            item.name = None
         self._refresh()
 
+    
     def toggle_name(self, button):
         """Toggle between name for ingredients or no name."""
         if not self.name:
@@ -254,7 +265,9 @@ class IngredBlock(EntryBlock):
                 except AttributeError:
                     pass
             self._refresh(2)
+        print(self.ingredients)
 
+    
     def del_entry(self, size, key):
         """Delete an entry."""
         widget = self.widgets[self.row]
@@ -267,6 +280,10 @@ class IngredBlock(EntryBlock):
 
         self.entry_block.move_cursor_to_coords(size, self.col, self.row)
         item = list(self.widgets)[self.row]
+        test = Recipe.ingredient(item.get_edit_text())
+        for ingred in self.ingredients:
+            if ingred.name == test.name:
+                ingred.name = None
         self.widgets.remove(item)
         if len(self.widgets) == one_ingred_left:
             self.add_entry()
@@ -302,9 +319,6 @@ class IngredBlock(EntryBlock):
         nonided = [Recipe.ingredient(i) for i in nonided]
         if self.name:
             named_ingreds[self.name] = ingred_objects + nonided
-            for item in named_ingreds[self.name]:
-                print(item.__dict__)
-                print(item.id)
             return named_ingreds
         else:
             return ingred_objects + nonided

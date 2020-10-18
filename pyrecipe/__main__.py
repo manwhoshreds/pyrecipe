@@ -42,6 +42,7 @@ class RecipeController:
         """Update a recipe"""
         recipe = self.chef.read_recipe(args.source)
         new_recipe = self.view.edit_recipe(recipe)
+        print(new_recipe.ingredients)
         self.view.print_recipe(new_recipe, args.verbose)
         self.chef.update_recipe(new_recipe)
 

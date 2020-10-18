@@ -319,7 +319,7 @@ class RecipeDB:
             recipe.named_ingredients = test
 
         self.c.execute(
-            '''SELECT step
+            '''SELECT id, step
                FROM RecipeSteps
                WHERE recipe_id=?''', (recipe.id,)
         )
@@ -362,6 +362,14 @@ class RecipeDB:
         
         ingreds, named = recipe.get_ingredients()
         for item in ingreds:
+            if not item.name:
+                self.c.execute(
+                    '''DELETE FROM RecipeIngredients
+                       WHERE recipe_ingredient_id=?''',
+                       (item.id,)
+                )
+                continue
+            
             self._insert_ingredient(item)
 
             self.c.execute(
@@ -402,6 +410,14 @@ class RecipeDB:
                 prep_id = self.c.fetchone()['id']
             except TypeError:
                 prep_id = None
+            
+            if not item.name:
+                self.c.execute(
+                    '''DELETE FROM RecipeIngredients
+                       WHERE recipe_ingredient_id=?''',
+                       (item.id,)
+                )
+            
             if item.id:
                 self.c.execute(
                     '''UPDATE RecipeIngredients
@@ -441,20 +457,26 @@ class RecipeDB:
         if named:
             for item, ingreds in named.items():
                 self.c.execute(
-                    '''INSERT OR REPLACE INTO NamedIngredientsNames (
-                            recipe_id,
-                            alt_name
-                            ) VALUES(?, ?)''',
-                            (recipe.id,
-                             item)
-                )
-                self.c.execute(
                     '''SELECT id FROM NamedIngredientsNames
                        WHERE alt_name=?''', (item,)
                 )
                 alt_name_id = self._get_dict_from_row(self.c.fetchone())['id']
-
+                
+                self.c.execute(
+                    '''UPDATE NamedIngredientsNames
+                       SET alt_name=?
+                       WHERE id=?''',
+                       (item, alt_name_id)
+                )
                 for ingred in ingreds:
+                    if not ingred.name:
+                        print(ingred)
+                        self.c.execute(
+                            '''DELETE FROM RecipeIngredients
+                               WHERE recipe_ingredient_id=?''',
+                               (ingred.id,)
+                        )
+                        continue
                     self._insert_ingredient(ingred)
 
                     self.c.execute(
@@ -482,6 +504,11 @@ class RecipeDB:
                                (ingred.size,)
                         )
 
+                    try:
+                        prep_id = self.c.fetchone()['id']
+                    except TypeError:
+                        prep_id = None
+                    
                     if ingred.id:
 
                         self.c.execute(
@@ -501,7 +528,6 @@ class RecipeDB:
                                 ingred.id)
                         )
                     else:
-                        print('im inserting ingred')
                         self.c.execute(
                             '''INSERT into NamedIngredients(
                                 named_ingredient_id,
@@ -521,14 +547,15 @@ class RecipeDB:
                                 prep_id)
                         )
 
-        #for item in recipe.steps:
-        #    self.c.execute(
-        #        '''INSERT OR IGNORE INTO RecipeSteps (
-        #            recipe_id,
-        #            step
-        #            ) VALUES(?, ?)
-        #        ''', (recipe.id, item['step'])
-        #    )
+        for item in recipe.steps:
+            continue
+            if item.id:
+                self.c.execute(
+                    '''UPDATE RecipeSteps
+                       SET step=?
+                       WHERE id=?''',
+                       (item['step'], item.id)
+                )
 
         self.conn.commit()
     

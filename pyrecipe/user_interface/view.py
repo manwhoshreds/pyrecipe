@@ -84,7 +84,7 @@ class View:
         recipe_str += colored("\nMethod:", "cyan", attrs=["underline"])
 
         # print steps
-        wrapped = wrap(recipe.method)
+        wrapped = wrap(recipe.get_method())
         for index, step in wrapped:
             recipe_str += "\n{}".format(colored(index, "yellow"))
             recipe_str += step

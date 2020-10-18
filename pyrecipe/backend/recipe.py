@@ -232,16 +232,18 @@ class Recipe:
     @property
     def method(self):
         """Return a list of steps."""
-        steps = []
-        for step in self.steps:
-            steps.append(step['step'])
-        return steps
+        return self.get_method()
+        return self.steps
 
     @method.setter
     def method(self, value):
         value = [{"step": v} for v in value]
         self['steps'] = value
 
+    
+    def get_method(self):
+        return [s['step'] for s in self.steps]
+    
 
     def export(self, fmt, path):
         """Export the recipe in a chosen file format."""
