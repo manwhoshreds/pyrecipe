@@ -85,8 +85,7 @@ class Chef:
 
     def create_recipe(self, recipe):
         recipe = self._check_source(recipe)
-        test = self.db.create_recipe(recipe)
-        return test
+        self.db.create_recipe(recipe)
 
 
     def read_recipe(self, recipe):
@@ -110,7 +109,6 @@ if __name__ == '__main__':
     import shutil
     env = shutil.which('python')
     if '.virtual' in env:
-        print('hello')
         def build_recipe_database():
             """Build the recipe database."""
             database = RecipeDB()
@@ -118,7 +116,7 @@ if __name__ == '__main__':
             recipe_data_dir = os.path.expanduser("~/.config/pyrecipe/recipe_data")
             chef = Chef()
             for item in os.listdir(recipe_data_dir):
-                r = chef.create_recipe(os.path.join(recipe_data_dir, item))
+                chef.create_recipe(os.path.join(recipe_data_dir, item))
                 print('Adding...    {}'.format(item))
 
         # Build the databse first if it does not exist.

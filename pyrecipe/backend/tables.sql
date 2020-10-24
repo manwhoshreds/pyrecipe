@@ -10,7 +10,7 @@
 CREATE TABLE IF NOT EXISTS Recipes (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	uuid TEXT NOT NULL UNIQUE,
-	dishtype TEXT,
+	dish_type TEXT,
 	description TEXT,
 	name TEXT NOT NULL UNIQUE,
 	author TEXT,

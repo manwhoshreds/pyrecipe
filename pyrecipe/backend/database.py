@@ -8,6 +8,7 @@
 import os
 import sys
 import sqlite3
+from itertools import zip_longest
 
 import pyrecipe.utils as utils
 from pyrecipe.backend.recipe import Recipe
@@ -134,11 +135,11 @@ class RecipeDB:
                    "database. Please Select another name for this "
                    "recipe.".format(recipe.name))
             raise RecipeAlreadyStored(utils.msg(msg, 'ERROR'))
-
+        
         recipe_data = [(
             recipe.uuid, 
             recipe.name.lower(),
-            recipe.dishtype,
+            recipe.dish_type,
             recipe.author,
             recipe.tags,
             recipe.categories,
@@ -150,7 +151,7 @@ class RecipeDB:
             '''INSERT OR IGNORE INTO Recipes (
                 uuid,
                 name,
-                dishtype,
+                dish_type,
                 author,
                 tags,
                 categories,
@@ -328,17 +329,28 @@ class RecipeDB:
         step_list = []
         for item in step_rows:
             step = self._get_dict_from_row(item)
-            step_list.append(step)
-
+            step_list.append(step['step'])
         recipe.steps = step_list
         return recipe
 
+    
+    def _get_step_ids(self, recipe_id):
+        self.c.execute(
+            '''SELECT id
+               FROM RecipeSteps
+               WHERE recipe_id=?''', (recipe_id,)
+        )
+        step_ids = self.c.fetchall()
+        ids = []
+        for item in step_ids:
+            ids.append(self._get_dict_from_row(item)['id'])
+        return ids
 
     def update_recipe(self, recipe):
         '''Update a recipe in the database.'''
         recipe_data = [(
             recipe.name,
-            recipe.dishtype,
+            recipe.dish_type,
             recipe.author,
             recipe.tags,
             recipe.categories,
@@ -351,7 +363,7 @@ class RecipeDB:
             '''UPDATE Recipes
                SET
                 name=?,
-                dishtype=?,
+                dish_type=?,
                 author=?,
                 tags=?,
                 categories=?,
@@ -361,12 +373,14 @@ class RecipeDB:
         )
         
         ingreds, named = recipe.get_ingredients()
-        for item in ingreds:
+        ingredient_ids = self._get_recipe_ingredients(recipe.id)
+        ingredient_ids = [i['recipe_ingredient_id'] for i in ingredient_ids]
+        for idd, item in zip_longest(ingredient_ids, ingreds):
             if not item.name:
                 self.c.execute(
                     '''DELETE FROM RecipeIngredients
                        WHERE recipe_ingredient_id=?''',
-                       (item.id,)
+                       (idd,)
                 )
                 continue
             
@@ -411,14 +425,7 @@ class RecipeDB:
             except TypeError:
                 prep_id = None
             
-            if not item.name:
-                self.c.execute(
-                    '''DELETE FROM RecipeIngredients
-                       WHERE recipe_ingredient_id=?''',
-                       (item.id,)
-                )
-            
-            if item.id:
+            if idd:
                 self.c.execute(
                     '''UPDATE RecipeIngredients
                        SET
@@ -433,7 +440,7 @@ class RecipeDB:
                         int(unit_id),
                         int(ingredient_id),
                         prep_id,
-                        item.id)
+                        idd)
                 )
             else:
                 self.c.execute(
@@ -470,7 +477,6 @@ class RecipeDB:
                 )
                 for ingred in ingreds:
                     if not ingred.name:
-                        print(ingred)
                         self.c.execute(
                             '''DELETE FROM RecipeIngredients
                                WHERE recipe_ingredient_id=?''',
@@ -547,14 +553,22 @@ class RecipeDB:
                                 prep_id)
                         )
 
-        for item in recipe.steps:
-            continue
-            if item.id:
+        step_ids = self._get_step_ids(recipe.id)
+        for idd, step in zip_longest(step_ids, recipe.steps):
+            if idd:
                 self.c.execute(
                     '''UPDATE RecipeSteps
                        SET step=?
                        WHERE id=?''',
-                       (item['step'], item.id)
+                       (step, idd)
+                )
+            else:
+                self.c.execute(
+                    '''INSERT into RecipeSteps(
+                        recipe_id,
+                        step)
+                       VALUES(?, ?)''',
+                       (recipe.id, step)
                 )
 
         self.conn.commit()

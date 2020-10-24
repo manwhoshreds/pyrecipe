@@ -36,6 +36,7 @@ import string
 from copy import deepcopy
 from zipfile import ZipFile
 from dataclasses import dataclass
+from itertools import zip_longest
 from collections import OrderedDict
 
 import pyrecipe.utils as utils
@@ -57,23 +58,19 @@ class Recipe:
 
     # All keys applicable to the Open Recipe Format
     SIMPLE_KEYS = [
-        'id', 'uuid', 'name', 'dishtype', 'author', 'category', 'categories', 
-        'tags', 'description', 'cooktime', 'baketime', 'preptime', 'ready_in',
-        'notes', 'price', 'yield', 'region', 'sourcebook', 'steps', 
-        'url'
-    ]
-
-    LEGACY_KEYS = ['cook_time', 'bake_time', 'dish_type', 'prep_time', 'yields',
-        'source_url', 'recipe_yield'
+        'id', 'uuid', 'name', 'dish_type', 'author', 'category', 'categories', 
+        'tags', 'description', 'cook_time', 'bake_time', 'prep_time', 
+        'ready_in', 'notes', 'price', 'yield', 'yields', 'region', 
+        'sourcebook', 'steps', 'url', 'source_url', 'recipe_yield'
     ]
 
     # These require their own setters and getters
     COMPLEX_KEYS = [
         'ingredients', '_ingredients', 'named_ingredients',
-        '_named_ingredients', 'oven_temp', 'steps'
+        '_named_ingredients', 'oven_temp', 'steps', 'set_method'
     ]
 
-    ORF_KEYS = COMPLEX_KEYS + SIMPLE_KEYS + LEGACY_KEYS
+    ORF_KEYS = COMPLEX_KEYS + SIMPLE_KEYS
     ALL_KEYS = ORF_KEYS + ['source', '_recipe_data', 'file_name']
 
     def __init__(self, source=''):
@@ -229,22 +226,6 @@ class Recipe:
         self._named_ingredients = named
 
     
-    @property
-    def method(self):
-        """Return a list of steps."""
-        return self.get_method()
-        return self.steps
-
-    @method.setter
-    def method(self, value):
-        value = [{"step": v} for v in value]
-        self['steps'] = value
-
-    
-    def get_method(self):
-        return [s['step'] for s in self.steps]
-    
-
     def export(self, fmt, path):
         """Export the recipe in a chosen file format."""
         fmts = ('xml', 'recipe')
@@ -328,11 +309,10 @@ class Ingredient:
     
     def __init__(self, ingredient):
         self.amount, self.portion, self.size, self.name = ('',) * 4
-        self.unit, self.prep, self.note, self.id = ('',) * 4
+        self.unit, self.prep, self.note = ('',) * 3
         if isinstance(ingredient, str):
             self.parse_ingredient(ingredient)
         else:
-            self.id = ingredient.get('recipe_ingredient_id', None)
             if self.amount:
                 self.amount = RecipeNum(self.amount)
             self.amount = ingredient.get('amount', '')

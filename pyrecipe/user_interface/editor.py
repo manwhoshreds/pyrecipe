@@ -85,9 +85,30 @@ class IngredientsContainer(ur.WidgetWrap):
         return self.ingred_blocks[1:]
 
 
+class IngredientEdit(ur.Edit):
+    """Ingredient editor"""
+
+    def __init__(self, ingredient):
+        self.ingredient = ingredient
+        super().__init__("* ", str(self.ingredient))
+    
+    
+    def get_ingredient_edit(self):
+        ingred_str = super().get_edit_text()
+        self.ingredient.parse_ingredient(ingred_str)
+        return self.ingredient
+
+    
+    def delete_ingredient(self):
+        self.ingredient.name = None
+
+
 class EntryBlock(ur.WidgetWrap):
     """Base class for stacked entry widgets."""
+    
     def __init__(self, entries=[], wrap_amount=70):
+        if not entries:
+            entries = ['write here']
         self.widgets = deque()
         wrapped = wrap(entries, wrap_amount)
 
@@ -96,15 +117,117 @@ class EntryBlock(ur.WidgetWrap):
             self.widgets.append(entry_widget)
         self._refresh()
 
+    
     def _refresh(self, focus_item=0):
         """Refresh the class to reflect changes to the entry stack."""
-        self.entry_block = ur.Pile(self.widgets, focus_item=focus_item)
-        super().__init__(self.entry_block)
+        self.pile = ur.Pile(self.widgets, focus_item=focus_item)
+        super().__init__(self.pile)
 
+    
     def keypress(self, size, key):
         """Capture and process a keypress."""
         key = super().keypress(size, key)
-        self.row = self.entry_block.focus_position
+        self.row = self.pile.focus_position
+        self.col = len(self.widgets[self.row].edit_text) + 2
+        pressed = {
+            'enter': self.on_enter,
+            'ctrl d': self.del_entry,
+        }
+        try:
+            pressed[key](size, key)
+        except KeyError:
+            return key
+    
+
+    def add_entry(self, button=None):
+        """Add an entry to the end of the list."""
+        caption = str(len(self.widgets) + 1) + '. '
+        entry = ur.Edit(caption, '')
+        self.widgets.append(entry)
+        new_focus = len(self.widgets) - 1
+        self._refresh(new_focus)
+
+
+    def del_entry(self, size, key):
+        """Delete an entry."""
+        widget = self.widgets[self.row]
+        self.pile.move_cursor_to_coords(size, self.col, self.row)
+        item = list(self.widgets)[self.row]
+        self.widgets.remove(item)
+        if len(self.widgets) == 0:
+            self.add_entry()
+        try:
+            self._refresh(self.row)
+        except IndexError:
+            # We are at the end of the ingredient list,
+            # start deleting goin back
+            self._refresh(self.row-1)
+
+
+    def on_enter(self, size, key):
+        """Move cursor to next entry or add an entry if no next entry exists."""
+        try:
+            col = len(self.widgets[self.row + 1].edit_text) + 2
+            self.pile.move_cursor_to_coords(size, col, self.row + 1)
+        except IndexError:
+            self.pile.move_cursor_to_coords(size, 2, self.row)
+            self.add_entry()
+
+    
+    @property
+    def widget_list(self):
+        """Return a list of widgets from the entry stack."""
+        return self.pile.widget_list
+
+    
+    def get_entries(self):
+        """Retrieve the text from the entries."""
+        entries = []
+        for item in self.widget_list:
+            if isinstance(item, ur.GridFlow):
+                continue
+            text = item.get_edit_text()
+            text = ' '.join(text.split())
+            entries.append(text)
+        return entries
+
+
+class IngredBlock(EntryBlock):
+    """Ingredient block for displaying editable ingredients."""
+    
+    def __init__(self, ingredients=[], name=None):
+        if ingredients:
+            self.ingredients = ingredients
+        else:
+            self.ingredients = [Recipe.ingredient("add")]
+        self.name = name
+        self.widgets = deque([BLANK])
+        self.widgets.append(self._get_buttons())
+        self.deleted_ingredients = []
+        if name:
+            self.named_name = ur.AttrMap(ur.Edit('* ', name), 'title')
+            self.widgets.append(self.named_name)
+        
+        for item in self.ingredients:
+            ingred_entry = IngredientEdit(item)
+            self.widgets.append(ingred_entry)
+        self._refresh()
+
+    
+    def _get_buttons(self):
+        """Get block buttons."""
+        add_name = ur.Button('Toggle Name', on_press=self.toggle_name)
+        add_name = ur.Padding(add_name, 'left', right=10)
+        del_block = ur.Button('Delete Block', on_press=self.delete_block)
+        del_block = ur.Padding(del_block, 'left', right=8)
+        buttons = ur.Columns([add_name, del_block])
+        return buttons
+
+    
+    def keypress(self, size, key):
+        """Capture and process a keypress."""
+        key = super().keypress(size, key)
+        self.row = self.pile.focus_position
         try:
             self.col = len(self.widgets[self.row].edit_text) + 2
         except AttributeError:
@@ -123,40 +246,11 @@ class EntryBlock(ur.WidgetWrap):
             pressed[key](size, key)
         except KeyError:
             return key
-
-    def add_entry(self, button=None):
-        """Add an entry to the end of the list."""
-        ingred_entry = ur.Edit("- ", '')
-        self.widgets.append(ingred_entry)
-        new_focus = len(self.widgets) - 1
-        self._refresh(new_focus)
-
-    def insert_entry(self, size, key):
-        """Insert entry on next line and move cursor."""
-        ingred_entry = ur.Edit("- ", '')
-        row_plus = self.row + 1
-        self.widgets.insert(row_plus, ingred_entry)
-        self.entry_block.move_cursor_to_coords(size, 2, self.row)
-        self._refresh(row_plus)
-
-    def del_entry(self, size, key):
-        """Delete an entry."""
-        widget = self.widgets[self.row]
-        self.entry_block.move_cursor_to_coords(size, self.col, self.row)
-        item = list(self.widgets)[self.row]
-        self.widgets.remove(item)
-        if len(self.widgets) == 0:
-            self.add_entry()
-        try:
-            self._refresh(self.row)
-        except IndexError:
-            # We are at the end of the ingredient list,
-            # start deleting goin back
-            self._refresh(self.row-1)
+    
 
     def move_entry(self, size, key):
         """Move entry up or down."""
-        self.entry_block.move_cursor_to_coords(size, self.col, self.row)
+        self.pile.move_cursor_to_coords(size, self.col, self.row)
         if key == 'ctrl up':
             widget = self.widgets[self.row-1]
             if isinstance(widget, (ur.AttrMap, ur.Padding, ur.Columns)):
@@ -174,77 +268,21 @@ class EntryBlock(ur.WidgetWrap):
             self._refresh(newfocus)
         except IndexError:
             return
+    
 
-    def on_enter(self, size, key):
-        """Move cursor to next entry or add an entry if no next entry exists."""
-        try:
-            col = len(self.widgets[self.row + 1].edit_text) + 2
-            self.entry_block.move_cursor_to_coords(size, col, self.row + 1)
-        except IndexError:
-            self.entry_block.move_cursor_to_coords(size, 2, self.row)
-            self.add_entry()
-
-    @property
-    def widget_list(self):
-        """Return a list of widgets from the entry stack."""
-        return self.entry_block.widget_list
-
-    def get_entries(self):
-        """Retrieve the text from the entries."""
-        entries = []
-        for item in self.widget_list:
-            if isinstance(item, ur.GridFlow):
-                continue
-            text = item.get_edit_text()
-            text = ' '.join(text.split())
-            entries.append(text)
-        return entries
-
-class IngredientEdit(ur.WidgetWrap):
-
-    def __init__(self, ingredient):
-        self.ingredient = ingredient
-        ingredient_edit = ur.Edit("* ", str(self.ingredient))
-        ur.WidgetWrap.__init__(self, ingredient_edit)
-
-    def get_ingredient_edit(self):
-        ingred_str = self.get_edit_text()
-        return self.ingredient.parse_ingredient(ingred_str)
-
-
-class IngredBlock(EntryBlock):
-    """Ingredient block for displaying editable ingredients."""
-    def __init__(self, ingredients=[], name=None):
-        if ingredients:
-            self.ingredients = ingredients
-        else:
-            self.ingredients = [Recipe.ingredient("add")]
-        self.name = name
-        self.widgets = deque([BLANK])
-        self.widgets.append(self._get_buttons())
-        if name:
-            self.named_name = ur.AttrMap(ur.Edit('* ', name), 'title')
-            self.widgets.append(self.named_name)
-        
-        for item in self.ingredients:
-            ingred_entry = IngredientEdit(item)
-            self.widgets.append(ingred_entry)
-        self._refresh()
-
-    def _get_buttons(self):
-        """Get block buttons."""
-        add_name = ur.Button('Toggle Name', on_press=self.toggle_name)
-        add_name = ur.Padding(add_name, 'left', right=10)
-        del_block = ur.Button('Delete Block', on_press=self.delete_block)
-        del_block = ur.Padding(del_block, 'left', right=8)
-        buttons = ur.Columns([add_name, del_block])
-        return buttons
+    def add_entry(self, button=None):
+        """Add an entry to the end of the list."""
+        ingred_entry = IngredientEdit(Recipe.ingredient(''))
+        self.widgets.append(ingred_entry)
+        new_focus = len(self.widgets) - 1
+        self._refresh(new_focus)
+    
 
     def delete_block(self, button):
         """Delete entire block of ingredients."""
-        self.widgets.clear()
-        for item in self.ingredients:
+        for item in self.widgets:
             item.name = None
+        self.widgets.clear()
         self._refresh()
 
     
@@ -265,26 +303,34 @@ class IngredBlock(EntryBlock):
                 except AttributeError:
                     pass
             self._refresh(2)
-        print(self.ingredients)
 
     
+    def insert_entry(self, size, key):
+        """Insert entry on next line and move cursor."""
+        ingred_entry = ur.Edit("- ", '')
+        row_plus = self.row + 1
+        self.widgets.insert(row_plus, ingred_entry)
+        self.pile.move_cursor_to_coords(size, 2, self.row)
+        self._refresh(row_plus)
+    
+
     def del_entry(self, size, key):
         """Delete an entry."""
-        widget = self.widgets[self.row]
         try:
             # We have an alt_name to account for
             assert isinstance(self.widgets[2], ur.AttrMap)
             one_ingred_left = 3
         except AssertionError:
             one_ingred_left = 2
-
-        self.entry_block.move_cursor_to_coords(size, self.col, self.row)
-        item = list(self.widgets)[self.row]
-        test = Recipe.ingredient(item.get_edit_text())
-        for ingred in self.ingredients:
-            if ingred.name == test.name:
-                ingred.name = None
-        self.widgets.remove(item)
+        
+        self.pile.move_cursor_to_coords(size, self.col, self.row)
+        
+        widget = self.widgets[self.row]
+        ingredient = widget.get_ingredient_edit()
+        ingredient.name = None
+        self.deleted_ingredients.append(ingredient)
+        self.widgets.remove(widget)
+        
         if len(self.widgets) == one_ingred_left:
             self.add_entry()
         try:
@@ -295,84 +341,35 @@ class IngredBlock(EntryBlock):
             self._refresh(self.row-1)
     
 
-    def _split_ingred_list(self, ilist):
-        """split Ingredients into ones with ids and ones without"""
-        foo = len(self.ingredients)
-        return ilist[:foo], ilist[foo:]
-    
-    
     def get_ingredients(self):
         ingredients = []
         named_ingreds = {}
         for item in self.widgets:
             if isinstance(item, ur.AttrMap):
                 self.name = item.original_widget.get_edit_text()
-            if isinstance(item, ur.Edit):
-                ingredients.append(item.get_edit_text())
-        
-        ingred_objects = []
-        ided, nonided = self._split_ingred_list(ingredients)
-        for (a, b) in zip(self.ingredients, ided):
-            a.parse_ingredient(b)
-            ingred_objects.append(a)
-        
-        nonided = [Recipe.ingredient(i) for i in nonided]
+            if isinstance(item, IngredientEdit):
+                ingredients.append(item.get_ingredient_edit())
         if self.name:
-            named_ingreds[self.name] = ingred_objects + nonided
+            named_ingreds[self.name] = ingredients
             return named_ingreds
         else:
-            return ingred_objects + nonided
+            return ingredients + self.deleted_ingredients
 
-
-class MethodBlock(EntryBlock):
-    """Display an editable list of methods."""
-    def __init__(self, method=[]):
-        self.method = method
-        if not self.method:
-            self.method = ['Add method here.']
-        super().__init__(self.method)
-    
-    def insert_entry(self, size, key):
-        """Insert entry on next line and move cursor."""
-        row_plus = self.row + 1
-        ingred_entry = ur.Edit('- ', '')
-        
-        self.widgets.insert(row_plus, ingred_entry)
-        self.entry_block.move_cursor_to_coords(size, 2, self.row)
-        self._refresh(row_plus)
-
-class NoteBlock(EntryBlock):
-    """Display an editable list of notes."""
-    def __init__(self, notes=[]):
-        self.notes = notes
-        if len(self.notes) < 1:
-            self.notes = ['No notes added yet']
-        super().__init__(self.notes, wrap_amount=45)
-
-    def get_entries(self):
-        """Get text from the entries."""
-        entries = []
-        for item in self.widget_list:
-            if isinstance(item, ur.GridFlow):
-                continue
-            text = item.get_edit_text()
-            text = ' '.join(text.split())
-            entries.append(text)
-        if entries[0] == 'No notes added yet':
-            entries = ''
-        return entries
 
 
 class RecipeEditor:
     """The pyrecipe console interface for managing recipes."""
+    
     footer_text = ('foot', [
         ('pyrecipe', ' PYRECIPE    '),
         ('key', "F2"), ('footer', ' Save  '),
         ('key', "Esc"), ('footer', ' Quit  '),
-        ('key', "Ctrl-UP/DOWN"), ('footer', ' Move item UP/DOWN  '),
-        ('key', "Ctrl-a"), ('footer', ' Insert item  '),
+        ('key', "Ctrl-UP/DOWN"), ('footer', ' Move ingredient UP/DOWN  '),
+        ('key', "Ctrl-a"), ('footer', ' Insert ingredient  '),
         ('key', "Ctrl-d"), ('footer', ' Delete item  ')
     ])
+    
+    
     def __init__(self, recipe, recipe_yield=0, add=False):
         if add:
             # We are adding a new recipe. Init a recipe with no data
@@ -385,6 +382,7 @@ class RecipeEditor:
         self.initial_state = copy.deepcopy(self.recipe)
         self.original_name = self.recipe.name
 
+    
     def setup_view(self):
         header = ur.AttrMap(ur.Text(self.welcome), 'header')
         listbox = self.setup_listbox()
@@ -395,6 +393,7 @@ class RecipeEditor:
         loop.pop_ups = True
         return loop
    
+    
     def _get_general_info(self):
         """General info editors."""
         general_info = [
@@ -423,6 +422,7 @@ class RecipeEditor:
                                 )
         ]
         return general_info
+    
     
     def setup_listbox(self):
         """The main listbox"""
@@ -457,10 +457,10 @@ class RecipeEditor:
         self.ingred_block = IngredientsContainer(
             ingredients=ingreds, named_ingredients=named
         )
-        self.method_block = MethodBlock(
-            self.recipe.method
+        self.method_block = EntryBlock(
+            self.recipe.steps
         )
-        self.notes_block = NoteBlock(
+        self.notes_block = EntryBlock(
             self.recipe.notes
         )
         general_and_dish = ur.GridFlow(
@@ -481,6 +481,7 @@ class RecipeEditor:
         list_box = ur.ListBox(ur.SimpleListWalker(self.listbox_content))
         return list_box
 
+    
     def quit_prompt(self):
         """Pop-up window that appears when you try to quit."""
         text = "Changes have been made. Quit?"
@@ -503,6 +504,7 @@ class RecipeEditor:
 
         self.loop.widget = overlay
 
+    
     def prompt_answer(self, button, label):
         """Prompt answer"""
         if label == 'quit':
@@ -512,6 +514,7 @@ class RecipeEditor:
         else:
             self.loop.widget = self.frame
 
+    
     def handle_input(self, key):
         """Handle the input."""
         if key in ('f8', 'esc'):
@@ -523,10 +526,11 @@ class RecipeEditor:
         elif key in ('f2',):
             self.save_recipe()
         elif key in ('f3',):
-            self.__debug()
+            self.save_recipe(debug=True)
         else:
             pass
 
+    
     @property
     def recipe_changed(self):
         """Check if the state of the recipe has changed."""
@@ -582,11 +586,7 @@ class RecipeEditor:
                 pass
 
         # method
-        steps = []
-        method_entries = self.method_block.get_entries()
-        for item in method_entries:
-            steps.append({'step': item})
-        self.recipe.steps = steps
+        self.recipe.steps = self.method_block.get_entries()
 
         # notes if any
         notes = self.notes_block.get_entries()
@@ -594,15 +594,11 @@ class RecipeEditor:
             self.recipe.notes = notes
     
     
-    def __debug(self):
-        """used to debug out put before exiting"""
-        self.update_recipe_data()
-
-    
-    def save_recipe(self):
+    def save_recipe(self, debug=False):
         """Save the current state of the recipe and exit."""
         self.update_recipe_data()
-        raise ur.ExitMainLoop()
+        if not debug:
+            raise ur.ExitMainLoop()
 
     
     def start(self):
