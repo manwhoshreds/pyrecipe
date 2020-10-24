@@ -184,8 +184,7 @@ class EntryBlock(ur.WidgetWrap):
         """Retrieve the text from the entries."""
         entries = []
         for item in self.widget_list:
-            if isinstance(item, ur.GridFlow):
-                continue
+            print(type(item))
             text = item.get_edit_text()
             text = ' '.join(text.split())
             entries.append(text)

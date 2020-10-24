@@ -555,6 +555,12 @@ class RecipeDB:
 
         step_ids = self._get_step_ids(recipe.id)
         for idd, step in zip_longest(step_ids, recipe.steps):
+            if step is None:
+                self.c.execute(
+                    '''DELETE FROM RecipeSteps
+                       WHERE id=?''', (idd,)
+                )
+            
             if idd:
                 self.c.execute(
                     '''UPDATE RecipeSteps
