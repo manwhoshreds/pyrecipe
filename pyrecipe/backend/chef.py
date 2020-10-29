@@ -28,71 +28,31 @@
 import os
 import re
 import sys
-from zipfile import ZipFile, BadZipFile
-
-from ruamel.yaml import YAML
 
 from pyrecipe.backend.webscraper import scraper, MalformedUrlError, SiteNotScrapeable
-from pyrecipe.backend.database import RecipeDB, DB_FILE
+from pyrecipe.backend import RecipeDB, DB_FILE
 from pyrecipe.backend.recipe import Recipe
 import pyrecipe.utils as utils
 
 
 HTTP_RE = re.compile(r'^https?\://')
-yaml = YAML(typ='safe')
-yaml.default_flow_style = False
-
 
 class Chef:
     """Factory class for the pyrecipe model layer
     
     The chef class can recieve one of three inputs:
-    a recipe name, url or filename.
     """
 
-    
     def __init__(self):
         self.db = RecipeDB()
     
-    def _check_source(self, source):
-        if os.path.isfile(source):
-            try:
-                with ZipFile(source, 'r') as zfile:
-                    try:
-                        with zfile.open('recipe.yaml', 'r') as stream:
-                            recipe = Recipe(yaml.load(stream))
-                            return recipe
-                    except KeyError:
-                        sys.exit(utils.msg("Can not find recipe.yaml. Is this "
-                                           "really a recipe file?", "ERROR"))
-            except BadZipFile as e:
-                sys.exit(utils.msg("{}".format(e), "ERROR"))
-        else:
-            recipe = source
-        try:
-            return scraper.scrape(source)
-        except MalformedUrlError:
-            pass
-        except SiteNotScrapeable as e:
-            return e
-
-        return recipe
-
-    
-    def __repr__(self):
-        return '<Chef({})>'.format(self.source)
-    
-
     def create_recipe(self, recipe):
-        recipe = self._check_source(recipe)
         self.db.create_recipe(recipe)
 
-
     def read_recipe(self, recipe):
-        recipe = self._check_source(recipe)
-        test = self.db.read_recipe(recipe)
-        return test
-
+        rec = self.db.read_recipe(recipe)
+        return rec
+    
     def update_recipe(self, recipe):
         self.db.update_recipe(recipe)
 
@@ -116,8 +76,9 @@ if __name__ == '__main__':
             recipe_data_dir = os.path.expanduser("~/.config/pyrecipe/recipe_data")
             chef = Chef()
             for item in os.listdir(recipe_data_dir):
-                chef.create_recipe(os.path.join(recipe_data_dir, item))
-                print('Adding...    {}'.format(item))
+                rec = Recipe(os.path.join(recipe_data_dir, item))
+                chef.create_recipe(rec)
+                print('Adding: {}'.format(rec.name))
 
         # Build the databse first if it does not exist.
         db_exists = os.path.isfile(DB_FILE)
@@ -129,5 +90,8 @@ if __name__ == '__main__':
             print('Building recipe database...')
             build_recipe_database()
     else:
-        sys.exit(print('You are not working in a development environment'))
+        sys.exit(
+            print('Cannot build database. You are not working in a ',
+                  'development environment')
+        )
     

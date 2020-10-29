@@ -14,7 +14,7 @@ import textwrap
 from termcolor import colored
 
 import pyrecipe.utils as utils
-from ..backend.recipe_numbers import RecipeNum
+from pyrecipe.backend.recipe_numbers import RecipeNum
 from .editor import RecipeEditor
 from .helpers import wrap
 

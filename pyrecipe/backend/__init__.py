@@ -1,6 +1,4 @@
-import os
-
-from .chef import Chef
+from .database import RecipeDB, DB_FILE
 from .recipe import Recipe
 
 
@@ -9,4 +7,3 @@ DISH_TYPES = [
     'main', 'side', 'dessert', 'condiment', 'dip', 'prep',
     'salad dressing', 'sauce', 'base', 'garnish', 'seasoning'
 ]
-

@@ -11,7 +11,7 @@ import sqlite3
 from itertools import zip_longest
 
 import pyrecipe.utils as utils
-from pyrecipe.backend.recipe import Recipe
+from .recipe import Recipe
 from pyrecipe import p
 
 
@@ -375,8 +375,26 @@ class RecipeDB:
         ingreds, named = recipe.get_ingredients()
         ingredient_ids = self._get_recipe_ingredients(recipe.id)
         ingredient_ids = [i['recipe_ingredient_id'] for i in ingredient_ids]
+        
+        alt_names = list(named.keys())
+        self.c.execute(
+            '''SELECT id from NamedIngredientsNames
+                WHERE recipe_id=?''', (recipe.id,)
+        )
+        alt_name_ids = []
+        for item in self.c.fetchall():
+            alt_name_ids.append(self._get_dict_from_row(item)['id'])
+        for idd, name in zip_longest(alt_name_ids, alt_names):
+            self.c.execute(
+                '''UPDATE NamedIngredientsNames
+                   SET 
+                    recipe_id=?,
+                    alt_name=?
+                   WHERE id=?''',
+                   (recipe.id, name, idd)
+            )
         for idd, item in zip_longest(ingredient_ids, ingreds):
-            if not item.name:
+            if not item:
                 self.c.execute(
                     '''DELETE FROM RecipeIngredients
                        WHERE recipe_ingredient_id=?''',
@@ -462,25 +480,28 @@ class RecipeDB:
 
     
         if named:
-            for item, ingreds in named.items():
+            for name, ingreds in named.items():
                 self.c.execute(
-                    '''SELECT id FROM NamedIngredientsNames
-                       WHERE alt_name=?''', (item,)
+                    '''SELECT id from NamedIngredientsNames
+                        WHERE recipe_id=?''', (recipe.id,)
                 )
                 alt_name_id = self._get_dict_from_row(self.c.fetchone())['id']
-                
                 self.c.execute(
-                    '''UPDATE NamedIngredientsNames
-                       SET alt_name=?
-                       WHERE id=?''',
-                       (item, alt_name_id)
+                    '''SELECT recipe_ingredient_id
+                       FROM NamedIngredients
+                       WHERE recipe_id=? AND named_ingredient_id=?''', (recipe.id, alt_name_id)
                 )
-                for ingred in ingreds:
-                    if not ingred.name:
+                ingred_ids = self.c.fetchall()
+                ids = []
+                for item in ingred_ids:
+                    ids.append(self._get_dict_from_row(item)['recipe_ingredient_id'])
+                
+                for idd, ingred in zip_longest(ids, ingreds):
+                    if not ingred:
                         self.c.execute(
-                            '''DELETE FROM RecipeIngredients
-                               WHERE recipe_ingredient_id=?''',
-                               (ingred.id,)
+                            '''DELETE FROM NamedIngredients
+                               WHERE recipe_ingredient_id=? AND named_ingredient_id=?''',
+                               (idd, alt_name_id)
                         )
                         continue
                     self._insert_ingredient(ingred)
@@ -515,7 +536,7 @@ class RecipeDB:
                     except TypeError:
                         prep_id = None
                     
-                    if ingred.id:
+                    if idd:
 
                         self.c.execute(
                             '''UPDATE NamedIngredients
@@ -531,7 +552,7 @@ class RecipeDB:
                                 int(unit_id),
                                 int(ingredient_id),
                                 prep_id,
-                                ingred.id)
+                                idd)
                         )
                     else:
                         self.c.execute(

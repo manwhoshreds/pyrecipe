@@ -34,14 +34,21 @@ import json
 import shutil
 import string
 from copy import deepcopy
-from zipfile import ZipFile
+from zipfile import ZipFile, BadZipFile
 from dataclasses import dataclass
 from itertools import zip_longest
 from collections import OrderedDict
 
+from ruamel.yaml import YAML
+
 import pyrecipe.utils as utils
+from pyrecipe import Quant, CULINARY_UNITS
 from pyrecipe.backend.recipe_numbers import RecipeNum
-from pyrecipe import Q_, CULINARY_UNITS
+#from pyrecipe.backend.webscraper import MalformedUrlError, SiteNotScrapeable
+
+
+yaml = YAML(typ='safe')
+yaml.default_flow_style = False
 
 
 #@dataclass
@@ -75,39 +82,61 @@ class Recipe:
 
     def __init__(self, source=''):
         if isinstance(source, dict):
-            self.set_data(source)
-        else:
+            self._set_data(source)
+            return
+        
+        if os.path.isfile(source):
+            self._load_file(source)
+            return
+        
+        if isinstance(source, str):
             self.name = source
-            self.uuid = str(uuid.uuid4())
+            return
+        #try:
+        #    return scraper.scrape(source)
+        #except MalformedUrlError:
+        #    pass
+        #except SiteNotScrapeable as e:
+        #    return e
+    
+    
+    def _load_file(self, fil):
+        try:
+            with ZipFile(fil, 'r') as zfile:
+                try:
+                    with zfile.open('recipe.yaml', 'r') as stream:
+                        self._set_data(yaml.load(stream))
+                except KeyError:
+                    sys.exit(utils.msg("Can not find recipe.yaml. Is this "
+                                       "really a recipe file?", "ERROR"))
+        except BadZipFile as e:
+            sys.exit(utils.msg("{}".format(e), "ERROR"))
+    
 
-    def set_data(self, data):
+    def _set_data(self, data):
         """Used to set recipe data from incoming dicts such as from webscraper 
         and from openrecipes.org
         """
         for key, value in data.items():
             setattr(self, key, value)
 
-
+    def __hash__(self):
+        print(self.get_yaml_string())
+        return 3
+    
     def __repr__(self):
         return "<Recipe(name='{}')>".format(self.name)
-
-
-    def __str__(self):
-        return "Recipe: {}".format(self.name)
-
 
     def __dir__(self):
         _dir = ['source']
         return list(self.__dict__.keys()) + _dir
-
 
     def __getattr__(self, key):
         if key in Recipe.ALL_KEYS:
             return self.__dict__.get(key, '')
         raise AttributeError("'{}' is not an ORF key or Recipe function"
                              .format(key))
-
-
+    
     def __setattr__(self, key, value):
         if key not in self.ALL_KEYS:
             raise AttributeError("Cannot set attribute '{}', its not apart "
@@ -117,7 +146,6 @@ class Recipe:
         else:
             super().__setattr__(key, value)
 
-
     def __delattr__(self, key):
         if key in Recipe.ORF_KEYS:
             try:
@@ -125,18 +153,15 @@ class Recipe:
             except KeyError:
                 pass
 
-
     __setitem__ = __setattr__
     __getitem__ = __getattr__
     __delitem__ = __delattr__
-
 
     def __copy__(self):
         cls = self.__class__
         newobj = cls.__new__(cls)
         newobj.__dict__.update(self.__dict__)
         return newobj
-
 
     def __deepcopy__(self, memo):
         cls = self.__class__
@@ -146,10 +171,8 @@ class Recipe:
             setattr(result, k, deepcopy(v, memo))
         return result
 
-
     def __eq__(self, other):
         return self.get_yaml_string() == other.get_yaml_string()
-
 
     @property
     def oven_temp(self):
@@ -181,17 +204,14 @@ class Recipe:
         named = self.named_ingredients
         return ingreds, named
     
-
     @staticmethod
     def ingredient(ingredient):
         return Ingredient(ingredient)
 
-    
     @property
     def ingredients(self):
         """Return ingredient data."""
         return self._ingredients
-
 
     @ingredients.setter
     def ingredients(self, value):
@@ -208,7 +228,6 @@ class Recipe:
         """Return named ingredient data."""
         return self._named_ingredients
 
-    
     @named_ingredients.setter
     def named_ingredients(self, value):
         """Set named ingredients."""
@@ -225,7 +244,6 @@ class Recipe:
             named[name] = ingred_list
         self._named_ingredients = named
 
-    
     def export(self, fmt, path):
         """Export the recipe in a chosen file format."""
         fmts = ('xml', 'recipe')
@@ -247,7 +265,6 @@ class Recipe:
                 sys.exit(utils.msg("File already exists.", "ERROR"))
             else:
                 shutil.copyfile(src, dst)
-
 
     def get_json(self):
         """get json from recipe"""
@@ -285,7 +302,7 @@ class Recipe:
     def get_yaml_string(self):
         """get the yaml string"""
         string = io.StringIO()
-        yaml.dump(self._recipe_data, string)
+        yaml.dump(self.__dict__, string)
         return string.getvalue()
 
     def save(self):
@@ -388,7 +405,7 @@ class Ingredient:
             self.ounce_can = unit[0:2]
             self.amount = 1
             unit = unit[-1]
-        return Q_(RecipeNum(self.amount), unit)
+        return Quant(RecipeNum(self.amount), unit)
 
     def _preprocess_string(self, string):
         """preprocess the string"""
@@ -487,7 +504,7 @@ class Ingredient:
         self.name = name.strip(', ')
 
 if __name__ == '__main__':
-    test = Recipe.ingredient('1 tablespoon moose hair, roughly chopped')
+    test = Recipe('/home/michael/Code/pyrecipe/pyrecipe/__init_.py')
     print(test)
     #r.name = 'stupid'
     #print(r.uuid)

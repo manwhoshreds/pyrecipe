@@ -34,7 +34,7 @@ class SiteNotScrapeable(Exception):
     pass
 
 
-class RecipeWebScraper:
+class WebScraperFactory:
     """Factory for webscrapers."""
 
     def __init__(self):
@@ -60,7 +60,7 @@ class RecipeWebScraper:
             raise MalformedUrlError('URL is Malformed')
 
 
-class TemplateWebScraper(ABC):
+class WebScraperTemplate(ABC):
 
     def __init__(self, url):
         super().__init__()
@@ -117,7 +117,7 @@ class TemplateWebScraper(ABC):
         pass
 
 
-class FoodWebScraperWIP(TemplateWebScraper):
+class FoodWebScraperWIP(WebScraperTemplate):
     """Web Scraper for https://www.food.com."""
 
     def scrape_prep_time(self):
@@ -176,7 +176,7 @@ class FoodWebScraperWIP(TemplateWebScraper):
         return steps
 
 
-class TastyWebScraper(TemplateWebScraper):
+class TastyWebScraper(WebScraperTemplate):
     """Web Scraper for https://tasty.co."""
 
     URL = 'https://tasty.co'
@@ -238,7 +238,7 @@ class TastyWebScraper(TemplateWebScraper):
         return recipe_steps
 
 
-class BigOvenWebScraper(TemplateWebScraper):
+class BigOvenWebScraper(WebScraperTemplate):
     """Web Scraper for https://www.bigoven.com."""
 
     URL = 'https://www.bigoven.com'
@@ -299,7 +299,7 @@ class BigOvenWebScraper(TemplateWebScraper):
         return steps
 
 
-class AllRecipesWebScraper(TemplateWebScraper):
+class AllRecipesWebScraper(WebScraperTemplate):
     """Web Scraper for https://www.allrecipes.com."""
 
     URL = 'https://www.allrecipes.com'
@@ -365,7 +365,7 @@ class AllRecipesWebScraper(TemplateWebScraper):
 
 
 #TODO: FoodNetworkWebScraper IS NOT CURRENTLY WORKING
-class FoodNetworkWebScraperWIP(TemplateWebScraper):
+class FoodNetworkWebScraperWIP(WebScraperTemplate):
     """Web Scraper for https://www.foodnetwork.com."""
 
     def scrape_prep_time(self):
@@ -432,25 +432,11 @@ class FoodNetworkWebScraperWIP(TemplateWebScraper):
         steps = recipe_steps
         return steps
 
-scrapers = [s for s in dir() if s.endswith('Scraper')]
-scraper = RecipeWebScraper()
-scraper.register_scraper(TastyWebScraper)
-scraper.register_scraper(BigOvenWebScraper)
-scraper.register_scraper(AllRecipesWebScraper)
+scrapers = [eval(s) for s in dir() if s.endswith('Scraper')]
+scraper = WebScraperFactory()
+for item in scrapers:
+    scraper.register_scraper(item)
 
 
 if __name__ == '__main__':
     pass
-    #scraper = RecipeWebScraper()
-    #scraper.register_scraper(TastyWebScraper)
-    #scraper.register_scraper(BigOvenWebScraper)
-    #scraper.register_scraper(AllRecipesWebScraper)
-    #test = scraper.scrape("https://tasty.co/recipe/easy-butter-chicken")
-    #webrecipe = "http://www.geniuskitchen.com/recipe/ina-gartens-baked-sweet-potato-fries-333618"
-    #webrecipe = "https://www.allrecipes.com/recipe/232062/chef-johns-creme-caramel/"
-    #webrecipe = "https://www.foodnetwork.com/recipes/ree-drummond/salisbury-steak-recipe-2126533"
-    #webrecipe = "https://www.food.com/recipe/easiest-greek-salad-dressing-428819"
-    #r = RecipeWebScraper.scrape(webrecipe)
-    #r.print_recipe()
-    #print(r.get_json())
-    #test = RecipeWebScraper.get_sites()

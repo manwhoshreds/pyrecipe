@@ -26,6 +26,7 @@ __scriptname__ = os.path.basename(sys.argv[0])
 p = inflect.engine()
 
 class Ureg(UnitRegistry):
+    """Unit Registry subclass to add functionality"""
 
     def get_culinary_units(self):
         """Returns a list of units used by pyrecipe."""
@@ -43,7 +44,7 @@ _definitions = os.path.join(_dir, 'culinary_units.txt')
 ureg = Ureg(_definitions)
 CULINARY_UNITS = ureg.get_culinary_units()
 
-VER_STR = """
+VER_STR = r"""
                  _              _              _   {0} v{1}
                 (_)            | |            | |  {2}
    _ __ ___  ___ _ _ __   ___  | |_ ___   ___ | |
@@ -52,7 +53,7 @@ VER_STR = """
   |_|  \___|\___|_| .__/ \___|  \__\___/ \___/|_|
                   | |                              {7}
                   |_|                              {8}
-"""# pylint: ignore
+"""
 
 VER_STR = VER_STR.format(
     __scriptname__, __version__,
@@ -64,13 +65,14 @@ VER_STR = VER_STR.format(
 )
 
 
-class Q_(ureg.Quantity):
+class Quant(ureg.Quantity):
     """Subclass to implement a few custom behaviors
 
     Capabilities include always rounding up to the nearest whole
     and printing plural units dependent upon the objects magnitude
     """
     def round_up(self):
+        """Round up functionality"""
         return self.__class__(ceil(self._magnitude), self._units)
 
     def reduce(self):
@@ -93,7 +95,6 @@ class Q_(ureg.Quantity):
     def __str__(self):
         if str(self.units) == 'each':
             return format(self)
-        elif self.magnitude > 1:
+        if self.magnitude > 1:
             return '{} {}'.format(self.magnitude, p.plural(str(self.units)))
-        else:
-            return format(self)
+        return format(self)

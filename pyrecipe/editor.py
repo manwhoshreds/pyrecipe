@@ -15,7 +15,7 @@ import uuid
 import urwid as ur
 
 from pyrecipe.backend import DISH_TYPES, Recipe
-from .helpers import wrap
+from pyrecipe.helpers import wrap
 
 
 PALETTE = ([
@@ -45,7 +45,7 @@ class IngredientsContainer(ur.WidgetWrap):
     """Main container for holding ingredient blocks."""
     def __init__(self, ingredients=None, named_ingredients=None):
         if not ingredients and not named_ingredients:
-            self.ingredients = ['Add ingredient']
+            self.ingredients = [Recipe.ingredient('Add ingredient')]
         else:
             self.ingredients = ingredients
         self.named_ingredients = named_ingredients
@@ -126,9 +126,14 @@ class EntryBlock(ur.WidgetWrap):
     
     def keypress(self, size, key):
         """Capture and process a keypress."""
-        key = super().keypress(size, key)
+        super().keypress(size, key)
         self.row = self.pile.focus_position
-        self.col = len(self.widgets[self.row].edit_text) + 2
+        try:
+            self.col = len(self.widgets[self.row].edit_text) + 2
+        except AttributeError:
+            # Object has no edit_text attribute. In other words its a
+            # ur.attr_map() and not a ur.Edit()
+            return key
         pressed = {
             'enter': self.on_enter,
             'ctrl d': self.del_entry,
@@ -368,7 +373,6 @@ class RecipeEditor:
         ('key', "Ctrl-d"), ('footer', ' Delete item  ')
     ])
     
-    
     def __init__(self, recipe, recipe_yield=0, add=False):
         if add:
             # We are adding a new recipe. Init a recipe with no data
@@ -377,8 +381,9 @@ class RecipeEditor:
         else:
             self.recipe = recipe
             self.welcome = 'Edit: {} ({})'.format(self.recipe.name, self.recipe.id)
-        #self.initial_state = Recipe(self.recipe.name)
-        self.initial_state = copy.deepcopy(self.recipe)
+        self.initial_state = hash(recipe)
+        print(self.initial_state)
+        #self.initial_state = copy.deepcopy(self.recipe)
         self.original_name = self.recipe.name
 
     

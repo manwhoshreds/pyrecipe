@@ -11,19 +11,17 @@ import sys
 import argparse
 
 import pyrecipe.utils as utils
+from pyrecipe.backend.chef import Chef
 from pyrecipe import VER_STR
-from pyrecipe.backend import Chef
-from pyrecipe.user_interface import View
+from pyrecipe.view import View
 
 
 class RecipeController:
     """Controller for the pyrecipe program"""
 
-
     def __init__(self, chef, view):
-        self.chef = chef()
-        self.view = view()
-
+        self.chef = Chef()
+        self.view = View()
 
     def create_recipe(self, args):
         """Create a recipe"""
@@ -31,19 +29,16 @@ class RecipeController:
         recipe = self.view.create_recipe(empty)
         self.chef.create_recipe(recipe)
 
-
     def read_recipe(self, args):
         """Read and print a recipe"""
         recipe = self.chef.read_recipe(args.source)
         self.view.print_recipe(recipe, args.verbose)
-
 
     def update_recipe(self, args):
         """Update a recipe"""
         recipe = self.chef.read_recipe(args.source)
         new_recipe = self.view.edit_recipe(recipe)
         self.chef.update_recipe(new_recipe)
-
 
     def delete_recipe(self, args):
         """Delete a recipe"""
@@ -103,7 +98,7 @@ def subparser_remove(subparser):
     parser_remove = subparser.add_parser("remove", help='Delete a recipe')
     parser_remove.add_argument(
         "source",
-        help='Recipe to delete'
+        help="Recipe to delete"
     )
 
 
@@ -118,7 +113,7 @@ def get_parser():
     parser.add_argument(
         "-h", "--help",
         action='help',
-        help='Show this help message and quit'
+        help="Show this help message and quit"
     )
     parser.add_argument(
         "-v",
@@ -155,12 +150,12 @@ def main():
         # here we offer help if no other flags are given
         sys.exit(parser.print_help())
 
-    rc = RecipeController(Chef, View)
+    rec_con = RecipeController(Chef, View)
     case = {
-        'add': rc.create_recipe,
-        'print': rc.read_recipe,
-        'edit': rc.update_recipe,
-        'remove': rc.delete_recipe,
+        'add': rec_con.create_recipe,
+        'print': rec_con.read_recipe,
+        'edit': rec_con.update_recipe,
+        'remove': rec_con.delete_recipe,
     }
     if args.version:
         sys.exit(VER_STR)
