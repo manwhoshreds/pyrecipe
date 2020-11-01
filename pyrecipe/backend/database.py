@@ -375,24 +375,6 @@ class RecipeDB:
         ingreds, named = recipe.get_ingredients()
         ingredient_ids = self._get_recipe_ingredients(recipe.id)
         ingredient_ids = [i['recipe_ingredient_id'] for i in ingredient_ids]
-        
-        alt_names = list(named.keys())
-        self.c.execute(
-            '''SELECT id from NamedIngredientsNames
-                WHERE recipe_id=?''', (recipe.id,)
-        )
-        alt_name_ids = []
-        for item in self.c.fetchall():
-            alt_name_ids.append(self._get_dict_from_row(item)['id'])
-        for idd, name in zip_longest(alt_name_ids, alt_names):
-            self.c.execute(
-                '''UPDATE NamedIngredientsNames
-                   SET 
-                    recipe_id=?,
-                    alt_name=?
-                   WHERE id=?''',
-                   (recipe.id, name, idd)
-            )
         for idd, item in zip_longest(ingredient_ids, ingreds):
             if not item:
                 self.c.execute(
@@ -480,10 +462,30 @@ class RecipeDB:
 
     
         if named:
+            alt_names = list(named.keys())
+            self.c.execute(
+                '''SELECT id from NamedIngredientsNames
+                    WHERE recipe_id=?''', (recipe.id,)
+            )
+            
+            alt_name_ids = []
+            for item in self.c.fetchall():
+                alt_name_ids.append(self._get_dict_from_row(item)['id'])
+
+            for idd, name in zip_longest(alt_name_ids, alt_names):
+                self.c.execute(
+                    '''UPDATE NamedIngredientsNames
+                       SET 
+                        recipe_id=?,
+                        alt_name=?
+                       WHERE id=?''',
+                       (recipe.id, name, idd)
+                )
+            
             for name, ingreds in named.items():
                 self.c.execute(
                     '''SELECT id from NamedIngredientsNames
-                        WHERE recipe_id=?''', (recipe.id,)
+                        WHERE alt_name=?''', (name,)
                 )
                 alt_name_id = self._get_dict_from_row(self.c.fetchone())['id']
                 self.c.execute(

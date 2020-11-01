@@ -9,7 +9,6 @@
     :license: GPL, see LICENSE for more details.
 """
 import copy
-from collections import deque
 import uuid
 
 import urwid as ur
@@ -109,7 +108,7 @@ class EntryBlock(ur.WidgetWrap):
     def __init__(self, entries=[], wrap_amount=70):
         if not entries:
             entries = ['write here']
-        self.widgets = deque()
+        self.widgets = []
         wrapped = wrap(entries, wrap_amount)
 
         for index, item in wrapped:
@@ -126,7 +125,7 @@ class EntryBlock(ur.WidgetWrap):
     
     def keypress(self, size, key):
         """Capture and process a keypress."""
-        super().keypress(size, key)
+        key = super().keypress(size, key)
         self.row = self.pile.focus_position
         try:
             self.col = len(self.widgets[self.row].edit_text) + 2
@@ -189,7 +188,6 @@ class EntryBlock(ur.WidgetWrap):
         """Retrieve the text from the entries."""
         entries = []
         for item in self.widget_list:
-            print(type(item))
             text = item.get_edit_text()
             text = ' '.join(text.split())
             entries.append(text)
@@ -205,7 +203,7 @@ class IngredBlock(EntryBlock):
         else:
             self.ingredients = [Recipe.ingredient("add")]
         self.name = name
-        self.widgets = deque([BLANK])
+        self.widgets = [BLANK]
         self.widgets.append(self._get_buttons())
         self.deleted_ingredients = []
         if name:
@@ -264,9 +262,7 @@ class IngredBlock(EntryBlock):
         else:
             # down
             newfocus = self.row + 1
-
-        item = self.widgets[self.row]
-        self.widgets.remove(item)
+        item = self.widgets.pop(self.row)
         self.widgets.insert(newfocus, item)
         try:
             self._refresh(newfocus)
@@ -311,7 +307,7 @@ class IngredBlock(EntryBlock):
     
     def insert_entry(self, size, key):
         """Insert entry on next line and move cursor."""
-        ingred_entry = ur.Edit("- ", '')
+        ingred_entry = IngredientEdit(Recipe.ingredient(''))
         row_plus = self.row + 1
         self.widgets.insert(row_plus, ingred_entry)
         self.pile.move_cursor_to_coords(size, 2, self.row)
@@ -381,8 +377,7 @@ class RecipeEditor:
         else:
             self.recipe = recipe
             self.welcome = 'Edit: {} ({})'.format(self.recipe.name, self.recipe.id)
-        self.initial_state = hash(recipe)
-        print(self.initial_state)
+        self.initial_state = self.recipe
         #self.initial_state = copy.deepcopy(self.recipe)
         self.original_name = self.recipe.name
 
