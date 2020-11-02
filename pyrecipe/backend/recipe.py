@@ -81,6 +81,7 @@ class Recipe:
     ALL_KEYS = ORF_KEYS + ['source', '_recipe_data', 'file_name']
 
     def __init__(self, source=''):
+        self._ingredients = []
         if isinstance(source, dict):
             self._set_data(source)
             return
@@ -212,6 +213,10 @@ class Recipe:
     def ingredients(self):
         """Return ingredient data."""
         return self._ingredients
+    
+    def add_ingredient(self, ingredient, group):
+        ingred = Ingredient(ingredient, group=group)
+        self._ingredients.append(ingred)
 
     @ingredients.setter
     def ingredients(self, value):
@@ -324,9 +329,10 @@ class Ingredient:
     SIZE_STRINGS = ['large', 'medium', 'small', 'heaping']
     PUNCTUATION = ''.join(c for c in string.punctuation if c not in '-/(),.')
     
-    def __init__(self, ingredient):
+    def __init__(self, ingredient, group=None):
         self.amount, self.portion, self.size, self.name = ('',) * 4
-        self.unit, self.prep, self.note = ('',) * 3
+        self.unit, self.prep, self.note, self.group = ('',) * 4
+        self.group = group
         if isinstance(ingredient, str):
             self.parse_ingredient(ingredient)
         else:
@@ -504,7 +510,19 @@ class Ingredient:
         self.name = name.strip(', ')
 
 if __name__ == '__main__':
-    test = Recipe('/home/michael/Code/pyrecipe/pyrecipe/__init_.py')
-    print(test)
-    #r.name = 'stupid'
-    #print(r.uuid)
+    one = ('1 tablespoon onion', None)
+    two = ('1 tablespoon shredded cabbage soup', None)
+    three = ('8 teaspoons sillyness', 'what')
+    four = ('8 teaspoons porkupine', 'what')
+    five = ('3 cups willy wonka', 'nope')
+    six = ('5 pounds chocolate onion rings', 'nope')
+    ingreds = [one, five, three, four, two, six]
+    
+    r = Recipe('test')
+    for ingred, group in ingreds:
+        r.add_ingredient(ingred, group)
+    print(r.ingredients)
+
+    for item in r.ingredients:
+        print(item.group)
+        print(item)

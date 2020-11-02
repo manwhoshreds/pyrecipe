@@ -143,7 +143,6 @@ class RecipeDB:
             recipe.author,
             recipe.tags,
             recipe.categories,
-            recipe.price,
             recipe.url
         )]
 
@@ -155,9 +154,8 @@ class RecipeDB:
                 author,
                 tags,
                 categories,
-                price,
                 url
-                ) VALUES(?, ?, ?, ?, ?, ?, ?, ?)''', recipe_data
+                ) VALUES(?, ?, ?, ?, ?, ?, ?)''', recipe_data
         )
 
         self.c.execute(
@@ -295,7 +293,17 @@ class RecipeDB:
                     ) VALUES(?, ?)
                 ''', (recipe_id, item['step'])
             )
+        recipe.notes = ['Add note.']
 
+        for note in recipe.notes:
+            self.c.execute(
+                '''INSERT OR REPLACE INTO RecipeNotes (
+                    recipe_id,
+                    note
+                    ) VALUES(?, ?)
+                ''', (recipe_id, note)
+            )
+        
         self.conn.commit()
 
 
@@ -331,6 +339,20 @@ class RecipeDB:
             step = self._get_dict_from_row(item)
             step_list.append(step['step'])
         recipe.steps = step_list
+        
+        self.c.execute(
+            '''SELECT id, note
+               FROM RecipeNotes
+               WHERE recipe_id=?''', (recipe.id,)
+        )
+        
+        note_rows = self.c.fetchall()
+        note_list = []
+        for item in note_rows:
+            note = self._get_dict_from_row(item)
+            note_list.append(note['note'])
+        recipe.notes = note_list
+        print(note_list)
         return recipe
 
     
@@ -346,6 +368,18 @@ class RecipeDB:
             ids.append(self._get_dict_from_row(item)['id'])
         return ids
 
+    def _get_note_ids(self, recipe_id):
+        self.c.execute(
+            '''SELECT id
+               FROM RecipeNotes
+               WHERE recipe_id=?''', (recipe_id,)
+        )
+        note_ids = self.c.fetchall()
+        ids = []
+        for item in note_ids:
+            ids.append(self._get_dict_from_row(item)['id'])
+        return ids
+    
     def update_recipe(self, recipe):
         '''Update a recipe in the database.'''
         recipe_data = [(
@@ -354,7 +388,6 @@ class RecipeDB:
             recipe.author,
             recipe.tags,
             recipe.categories,
-            recipe.price,
             recipe.url,
             recipe.id
         )]
@@ -367,7 +400,6 @@ class RecipeDB:
                 author=?,
                 tags=?,
                 categories=?,
-                price=?,
                 url=?
                WHERE id=?''', recipe_data
         )
@@ -600,6 +632,30 @@ class RecipeDB:
                        (recipe.id, step)
                 )
 
+        note_ids = self._get_note_ids(recipe.id)
+        for idd, note in zip_longest(note_ids, recipe.notes):
+            if note is None:
+                self.c.execute(
+                    '''DELETE FROM RecipeNotes
+                       WHERE id=?''', (idd,)
+                )
+            
+            if idd:
+                self.c.execute(
+                    '''UPDATE RecipeNotes
+                       SET note=?
+                       WHERE id=?''',
+                       (step, idd)
+                )
+            else:
+                self.c.execute(
+                    '''INSERT into RecipeNotes(
+                        recipe_id,
+                        note)
+                       VALUES(?, ?)''',
+                       (recipe.id, note)
+                )
+        
         self.conn.commit()
     
 

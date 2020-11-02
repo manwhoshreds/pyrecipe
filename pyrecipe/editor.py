@@ -326,9 +326,6 @@ class IngredBlock(EntryBlock):
         self.pile.move_cursor_to_coords(size, self.col, self.row)
         
         widget = self.widgets[self.row]
-        ingredient = widget.get_ingredient_edit()
-        ingredient.name = None
-        self.deleted_ingredients.append(ingredient)
         self.widgets.remove(widget)
         
         if len(self.widgets) == one_ingred_left:
@@ -370,15 +367,16 @@ class RecipeEditor:
     ])
     
     def __init__(self, recipe, recipe_yield=0, add=False):
+        self.recipe = recipe
+        
         if add:
             # We are adding a new recipe. Init a recipe with no data
-            self.recipe = recipe
             self.welcome = 'Add a Recipe: {}'.format(self.recipe.name)
         else:
-            self.recipe = recipe
             self.welcome = 'Edit: {} ({})'.format(self.recipe.name, self.recipe.id)
-        self.initial_state = self.recipe
-        #self.initial_state = copy.deepcopy(self.recipe)
+        
+        #self.initial_state = self.recipe
+        self.initial_state = copy.deepcopy(self.recipe)
         self.original_name = self.recipe.name
 
     
@@ -411,7 +409,6 @@ class RecipeEditor:
                                   ),
             ur.AttrMap(ur.Edit('Oven Temp: ', 
                                self.recipe.oven_temp),'oven_temp'),
-            ur.AttrMap(ur.Edit('Price($): ', self.recipe.price), 'price'),
             ur.AttrMap(ur.Edit('Source URL: ',
                                      self.recipe.source_url,
                                      wrap='clip'), 'source_url'
@@ -535,6 +532,8 @@ class RecipeEditor:
         """Check if the state of the recipe has changed."""
         changed = False
         self.update_recipe_data()
+        print(self.initial_state.__dict__)
+        print(self.recipe.__dict__)
         if self.initial_state != self.recipe:
             changed = True
         return changed

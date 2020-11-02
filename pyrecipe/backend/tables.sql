@@ -17,7 +17,6 @@ CREATE TABLE IF NOT EXISTS Recipes (
 	source TEXT,
 	tags TEXT,
 	categories TEXT,
-	price TEXT,
 	url TEXT
 );
 
