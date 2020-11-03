@@ -91,6 +91,7 @@ class Recipe:
             return
         
         if isinstance(source, str):
+            self.uuid = str(uuid.uuid4())
             self.name = source
             return
         #try:
@@ -309,11 +310,17 @@ class Recipe:
         string = io.StringIO()
         yaml.dump(self.__dict__, string)
         return string.getvalue()
-
+    
+    @property
+    def file_name(self):
+        return self.uuid.replace('-', '') + '.recipe'
+    
     def save(self):
         """save state of class."""
         stream = io.StringIO()
-        yaml.dump(self._recipe_data, stream)
+        print(self.__dict__)
+        return
+        yaml.dump(self.__dict__, stream)
         with ZipFile(self.file_name, 'w') as zfile:
             zfile.writestr('recipe.yaml', stream.getvalue())
             zfile.writestr('MIMETYPE', 'application/recipe+zip')
@@ -521,8 +528,9 @@ if __name__ == '__main__':
     r = Recipe('test')
     for ingred, group in ingreds:
         r.add_ingredient(ingred, group)
-    print(r.ingredients)
-
+    r.save()
+    from collections import defaultdict
+    ings = defaultdict(list)
     for item in r.ingredients:
-        print(item.group)
-        print(item)
+        ings[item.group].append(item)
+    
