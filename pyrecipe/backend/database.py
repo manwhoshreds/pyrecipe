@@ -135,7 +135,6 @@ class RecipeDB:
                    "database. Please Select another name for this "
                    "recipe.".format(recipe.name))
             raise RecipeAlreadyStored(utils.msg(msg, 'ERROR'))
-        
         recipe_data = [(
             recipe.uuid, 
             recipe.name.lower(),
@@ -158,11 +157,11 @@ class RecipeDB:
                 ) VALUES(?, ?, ?, ?, ?, ?, ?)''', recipe_data
         )
 
+        self.conn.commit()
         self.c.execute(
             "SELECT id FROM recipes WHERE name=?",
             (recipe.name.lower(),)
         )
-
         recipe_id = self.c.fetchone()['id']
 
         for item in recipe.get_ingredients()[0]:
@@ -286,15 +285,22 @@ class RecipeDB:
                     )
 
         for item in recipe.steps:
+            try:
+                #temp fix for reading from file
+                step = item['step']
+            except TypeError:
+                step = item
+            
             self.c.execute(
                 '''INSERT OR REPLACE INTO RecipeSteps (
                     recipe_id,
                     step
                     ) VALUES(?, ?)
-                ''', (recipe_id, item['step'])
+                ''', (recipe_id, step)
             )
-        recipe.notes = ['Add note.']
 
+        
+        recipe.notes = ['Add note.']
         for note in recipe.notes:
             self.c.execute(
                 '''INSERT OR REPLACE INTO RecipeNotes (

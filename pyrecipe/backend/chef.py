@@ -57,7 +57,7 @@ class Chef:
         self.db.update_recipe(recipe)
 
     def delete_recipe(self, recipe):
-        pass
+        self.db.delete_recipe(recipe)
 
     def init_recipe(self, recipe):
         """Return an empty recipe"""

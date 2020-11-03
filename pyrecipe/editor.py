@@ -372,6 +372,7 @@ class RecipeEditor:
         if add:
             # We are adding a new recipe. Init a recipe with no data
             self.welcome = 'Add a Recipe: {}'.format(self.recipe.name)
+            self.recipe.uuid = str(uuid.uuid4())
         else:
             self.welcome = 'Edit: {} ({})'.format(self.recipe.name, self.recipe.id)
         

@@ -45,7 +45,7 @@ class RecipeController:
         answer = input("Are you sure your want to delete {}? yes/no "
                        .format(args.source))
         if answer.strip() == 'yes':
-            self.Chef.delete_recipe(args.source)
+            self.chef.delete_recipe(args.source)
             msg = '{} has been deleted'.format(args.source)
             sys.exit(utils.msg(msg, 'INFORM'))
 
