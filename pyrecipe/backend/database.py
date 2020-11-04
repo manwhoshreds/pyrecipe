@@ -11,7 +11,7 @@ import sqlite3
 from itertools import zip_longest
 
 import pyrecipe.utils as utils
-from .recipe import Recipe
+#from .recipe import Recipe
 from pyrecipe import p
 
 
@@ -313,14 +313,14 @@ class RecipeDB:
         self.conn.commit()
 
 
-    def read_recipe(self, name):
-        self.c.execute("SELECT * FROM Recipes WHERE name=?", (name,))
+    def read_recipe(self, recipe):
+        self.c.execute("SELECT * FROM Recipes WHERE name=?", (recipe.name,))
         row = self.c.fetchone()
         if row:
             row = self._get_dict_from_row(row)
-            recipe = Recipe(row)
+            recipe._set_data(row)
         else:
-            msg = '"{}" was not found in the database.'.format(name)
+            msg = '"{}" was not found in the database.'.format(recipe.name)
             return RecipeNotFound(utils.msg(msg, 'ERROR'))
         
         recipe.ingredients = self._get_recipe_ingredients(recipe.id)

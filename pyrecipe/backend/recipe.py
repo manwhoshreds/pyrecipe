@@ -34,16 +34,19 @@ import json
 import shutil
 import string
 from copy import deepcopy
+from typing import List
 from zipfile import ZipFile, BadZipFile
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from itertools import zip_longest
 from collections import OrderedDict
+from collections import defaultdict
 
 from ruamel.yaml import YAML
 
 import pyrecipe.utils as utils
 from pyrecipe import Quant, CULINARY_UNITS
 from pyrecipe.backend.recipe_numbers import RecipeNum
+from pyrecipe.backend.database import RecipeDB
 #from pyrecipe.backend.webscraper import MalformedUrlError, SiteNotScrapeable
 
 
@@ -51,15 +54,15 @@ yaml = YAML(typ='safe')
 yaml.default_flow_style = False
 
 
-#@dataclass
-class Recipe:
+@dataclass
+class RecipeData:
     """The recipe dataclass"""
-    #id: int
-    #uuid: str
-    #name: str
-    #dishtype: str
-    #author: str
-    #_ingredients: []
+    id: int = None
+    uuid: str = None
+    name: str = None
+    dish_type: str = None
+    author: str = None
+    _ingredients: List[int] = field(default_factory=list)
     #_named_ingredients: OrderedDict()
 
 
@@ -80,7 +83,7 @@ class Recipe:
     ORF_KEYS = COMPLEX_KEYS + SIMPLE_KEYS
     ALL_KEYS = ORF_KEYS + ['source', '_recipe_data', 'file_name']
 
-    def __init__(self, source=''):
+    def ___init__(self, source=''):
         self._ingredients = []
         if isinstance(source, dict):
             self._set_data(source)
@@ -126,9 +129,6 @@ class Recipe:
         print(self.get_yaml_string())
         return 3
     
-    def __repr__(self):
-        return "<Recipe(name='{}')>".format(self.name)
-
     def __dir__(self):
         _dir = ['source']
         return list(self.__dict__.keys()) + _dir
@@ -202,6 +202,11 @@ class Recipe:
 
         :return: the recipe ingredient and named ingredient objects
         """
+        ings = defaultdict(list)
+        for ingredient in self._ingredients:
+            ings[ingredient.group].append(item)
+        return ings
+        
         ingreds = self.ingredients
         named = self.named_ingredients
         return ingreds, named
@@ -215,20 +220,22 @@ class Recipe:
         """Return ingredient data."""
         return self._ingredients
     
-    def add_ingredient(self, ingredient, group):
-        ingred = Ingredient(ingredient, group=group)
-        self._ingredients.append(ingred)
-
+    
     @ingredients.setter
     def ingredients(self, value):
         """Set the ingredients of a recipe."""
+        return print(value)
         if not value:
             return
         if type(value[0]) in (str, dict):
-            self._ingredients = [Ingredient(i) for i in value]
+            self._ingredients = [Ingredient(i, group) for i in value]
         else:
             self._ingredients = value
 
+    def add_ingredient(self, ingredient, group):
+        ingred = Ingredient(ingredient, group=group)
+        self._ingredients.append(ingred)
+    
     @property
     def named_ingredients(self):
         """Return named ingredient data."""
@@ -284,7 +291,7 @@ class Recipe:
             data['named_ingredients'] = named
         return json.dumps(data, indent=4)
 
-    def dump_data(self, fmt=None):
+    def dump_data(self, fmt='json'):
         """Dump a data format to screen.
 
         This method is mostly useful for troubleshooting
@@ -294,7 +301,7 @@ class Recipe:
         :param data_type: specify the data type that you wish to dump.
                           'json', 'yaml', 'xml'
         """
-        if fmt in ('json', None):
+        if fmt == 'json':
             print(json.dumps(self.__dict__, indent=4))
         elif fmt == 'yaml':
             yaml.dump(self._recipe_data, sys.stdout)
@@ -318,9 +325,8 @@ class Recipe:
     def save(self):
         """save state of class."""
         stream = io.StringIO()
-        print(self.__dict__)
+        yaml.dump([self], sys.stdout)
         return
-        yaml.dump(self.__dict__, stream)
         with ZipFile(self.file_name, 'w') as zfile:
             zfile.writestr('recipe.yaml', stream.getvalue())
             zfile.writestr('MIMETYPE', 'application/recipe+zip')
@@ -516,6 +522,39 @@ class Ingredient:
         name = ' '.join(ingred_string.split())
         self.name = name.strip(', ')
 
+
+class Recipe(RecipeData):
+    """Recipe Factory""" 
+
+    def __init__(self, source):
+        super().__init__()
+        
+        if isinstance(source, dict):
+            self._set_data(source)
+            return
+        
+        if os.path.isfile(source):
+            self._load_file(source)
+            return
+        
+        if isinstance(source, str):
+            self.name = source
+            db = RecipeDB()
+            test = db.read_recipe(self)
+            print(test.__dict__)
+            #self.uuid = str(uuid.uuid4())
+            #self.name = source
+            return
+        #try:
+        #    return scraper.scrape(source)
+        #except MalformedUrlError:
+        #    pass
+        #except SiteNotScrapeable as e:
+        #    return e
+
+    def __repr__(self):
+        return "<Recipe(name='{}')>".format(self.name)
+
 if __name__ == '__main__':
     one = ('1 tablespoon onion', None)
     two = ('1 tablespoon shredded cabbage soup', None)
@@ -524,13 +563,12 @@ if __name__ == '__main__':
     five = ('3 cups willy wonka', 'nope')
     six = ('5 pounds chocolate onion rings', 'nope')
     ingreds = [one, five, three, four, two, six]
-    
-    r = Recipe('test')
+    r = Recipe('pesto')
     for ingred, group in ingreds:
         r.add_ingredient(ingred, group)
-    r.save()
     from collections import defaultdict
     ings = defaultdict(list)
     for item in r.ingredients:
         ings[item.group].append(item)
+    r.id = 3232
     
