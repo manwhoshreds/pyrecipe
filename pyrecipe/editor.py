@@ -42,12 +42,11 @@ BLANK = ur.Divider()
 
 class IngredientsContainer(ur.WidgetWrap):
     """Main container for holding ingredient blocks."""
-    def __init__(self, ingredients=None, named_ingredients=None):
-        if not ingredients and not named_ingredients:
+    def __init__(self, ingredients):
+        if not ingredients:
             self.ingredients = [Recipe.ingredient('Add ingredient')]
         else:
             self.ingredients = ingredients
-        self.named_ingredients = named_ingredients
         add_ingred_block = ur.Button('Add Ingredient Block',
                                         on_press=self._add_block)
 
@@ -56,11 +55,8 @@ class IngredientsContainer(ur.WidgetWrap):
         self.ingred_blocks = []
         self.ingred_blocks.append(add_ingred_block)
         if self.ingredients:
-            self._add_block(self.ingredients)
-        if self.named_ingredients:
-            for item in self.named_ingredients:
-                ingreds = self.named_ingredients[item]
-                self._add_block(ingredients=ingreds, name=item)
+            for name, ingreds in ingredients.items():
+                self._add_block(ingreds, name)
 
     def _add_block(self, ingredients=[], name=None):
         if isinstance(ingredients, ur.Button):
@@ -92,16 +88,12 @@ class IngredientEdit(ur.Edit):
         super().__init__("* ", str(self.ingredient))
     
     
-    def get_ingredient_edit(self):
+    def get_edit_ingredient(self):
         ingred_str = super().get_edit_text()
         self.ingredient.parse_ingredient(ingred_str)
         return self.ingredient
 
     
-    def delete_ingredient(self):
-        self.ingredient.name = None
-
-
 class EntryBlock(ur.WidgetWrap):
     """Base class for stacked entry widgets."""
     
@@ -205,7 +197,6 @@ class IngredBlock(EntryBlock):
         self.name = name
         self.widgets = [BLANK]
         self.widgets.append(self._get_buttons())
-        self.deleted_ingredients = []
         if name:
             self.named_name = ur.AttrMap(ur.Edit('* ', name), 'title')
             self.widgets.append(self.named_name)
@@ -272,7 +263,9 @@ class IngredBlock(EntryBlock):
 
     def add_entry(self, button=None):
         """Add an entry to the end of the list."""
-        ingred_entry = IngredientEdit(Recipe.ingredient(''))
+        ingredient = Recipe.ingredient('')
+        ingredient.group_name = self.name
+        ingred_entry = IngredientEdit(ingredient)
         self.widgets.append(ingred_entry)
         new_focus = len(self.widgets) - 1
         self._refresh(new_focus)
@@ -340,17 +333,16 @@ class IngredBlock(EntryBlock):
 
     def get_ingredients(self):
         ingredients = []
-        named_ingreds = {}
         for item in self.widgets:
             if isinstance(item, ur.AttrMap):
                 self.name = item.original_widget.get_edit_text()
+                continue
             if isinstance(item, IngredientEdit):
-                ingredients.append(item.get_ingredient_edit())
-        if self.name:
-            named_ingreds[self.name] = ingredients
-            return named_ingreds
-        else:
-            return ingredients + self.deleted_ingredients
+                ingred = item.get_edit_ingredient()
+                ingred.group_name = self.name
+                print(self.name)
+                ingredients.append(ingred)
+        return ingredients
 
 
 
@@ -449,10 +441,10 @@ class RecipeEditor:
                      HEADINGS['method'],
                      ], 79, 0, 2, 'left'
         )
-        ingreds, named = self.recipe.get_ingredients()
+        ingreds = self.recipe.get_ingredients()
 
         self.ingred_block = IngredientsContainer(
-            ingredients=ingreds, named_ingredients=named
+            ingredients=ingreds
         )
         self.method_block = EntryBlock(
             self.recipe.steps
@@ -558,32 +550,13 @@ class RecipeEditor:
 
         # ingredients
         ingredients = []
-        named_ingreds = []
-        names = []
         for block in self.ingred_block.blocks:
             ingreds = block.get_ingredients()
-            if isinstance(ingreds, dict):
-                named_ingreds.append(ingreds)
-                names += list(ingreds.keys())
-            else:
-                ingredients += ingreds
-
-        if len(ingredients) > 0:
-            self.recipe.ingredients = ingredients
-        else:
-            try:
-                del self.recipe['ingredients']
-            except KeyError:
-                pass
-
-        if len(named_ingreds) > 0:
-            self.recipe.named_ingredients = named_ingreds
-        else:
-            try:
-                del self.recipe.named_ingredients
-            except KeyError:
-                pass
-
+            ingredients += ingreds
+        for item in ingredients:
+            print(item.__dict__)
+        self.recipe.ingredients = ingredients
+        
         # method
         self.recipe.steps = self.method_block.get_entries()
 

@@ -50,8 +50,8 @@ class Chef:
         self.db.create_recipe(recipe)
 
     def read_recipe(self, recipe):
-        r = Recipe(recipe)
-        rec = self.db.read_recipe(r)
+        rec = Recipe(recipe)
+        #rec = self.db.read_recipe(r)
         return rec
     
     def update_recipe(self, recipe):

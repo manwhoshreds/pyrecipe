@@ -68,22 +68,18 @@ class View:
         recipe_str += "\n\n{}".format(S_DIV(79))
         recipe_str += colored("\nIngredients:", "cyan", attrs=['underline'])
 
-        # Put together all the ingredients
-        ingreds, named_ingreds = recipe.get_ingredients()
-        for ingred in ingreds:
-            recipe_str += "\n{}".format(ingred)
-
-        if named_ingreds:
-            for item in named_ingreds:
+        # Ingredients
+        ingreds = recipe.get_ingredients()
+        for item, ingreds in ingreds.items():
+            if item:
                 recipe_str += colored("\n\n{}".format(item.title()), "cyan")
-
-                for ingred in named_ingreds[item]:
-                    recipe_str += "\n{}".format(ingred)
+            for ingred in ingreds:
+                recipe_str += "\n{}".format(ingred)
 
         recipe_str += "\n\n{}".format(S_DIV(79))
+        
+        # Method
         recipe_str += colored("\nMethod:", "cyan", attrs=["underline"])
-
-        # print steps
         wrapped = wrap(recipe.steps)
         for index, step in wrapped:
             recipe_str += "\n{}".format(colored(index, "yellow"))
