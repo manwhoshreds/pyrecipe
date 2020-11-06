@@ -24,7 +24,6 @@ from abc import ABC, abstractmethod
 import bs4
 import requests
 
-from pyrecipe.backend.recipe import Recipe
 
 class MalformedUrlError(Exception):
     pass
@@ -62,11 +61,11 @@ class WebScraperFactory:
 
 class WebScraperTemplate(ABC):
 
-    def __init__(self, url):
+    def __init__(self, url, recipe):
         super().__init__()
         req = requests.get(url).text
         self.soup = bs4.BeautifulSoup(req, 'html.parser')
-        self.recipe = Recipe()
+        self.recipe = recipe
         self.recipe.uuid = str(uuid.uuid4())
         self.recipe.source_url = url
         self.__scrape()
@@ -77,10 +76,12 @@ class WebScraperTemplate(ABC):
         self.recipe.cook_time = self.scrape_cook_time()
         self.recipe.author = self.scrape_author()
         self.recipe.ingredients = self.scrape_ingredients()
-        self.recipe.named_ingredients = self.scrape_named_ingredients()
         self.recipe.steps = self.scrape_method()
         self.recipe.dish_type = 'main'
 
+    def __repr__(self):
+        return '<RecipeWebScraper("{}")>'.format(self.URL)
+    
     @abstractmethod
     def scrape_prep_time(self):
         """Scrape the prep time"""
@@ -107,11 +108,6 @@ class WebScraperTemplate(ABC):
         pass
 
     @abstractmethod
-    def scrape_named_ingredients(self):
-        """Scrape the recipe named ingredients."""
-        pass
-
-    @abstractmethod
     def scrape_method(self):
         """Scrape the recipe method."""
         pass
@@ -119,7 +115,7 @@ class WebScraperTemplate(ABC):
 
 class FoodWebScraperWIP(WebScraperTemplate):
     """Web Scraper for https://www.food.com."""
-
+    
     def scrape_prep_time(self):
         """Scrape the prep time"""
         prep_time = ''
@@ -152,12 +148,6 @@ class FoodWebScraperWIP(WebScraperTemplate):
                 ingred = ' '.join(litag.text.strip().split())
                 ingredients.append(ingred)
         return ingredients
-
-    def scrape_named_ingredients(self):
-        """Scrape the recipe named ingredients."""
-        # Not implemented yet
-        named_ingreds = []
-        return named_ingreds
 
     def scrape_method(self):
         """Scrape the recipe method."""
@@ -217,11 +207,6 @@ class TastyWebScraper(WebScraperTemplate):
             ingredients.append(ingred)
         return ingredients
 
-    def scrape_named_ingredients(self):
-        """Recipe named ingredients."""
-        named_ingredients = []
-        return named_ingredients
-
     def scrape_method(self):
         """Recipe method."""
         method_box = self.soup.find('ol', attrs={'class': 'prep-steps'})
@@ -232,9 +217,7 @@ class TastyWebScraper(WebScraperTemplate):
         #del litags[-1]
         recipe_steps = []
         for item in litags:
-            step_dict = {}
-            step_dict['step'] = item.text.strip()
-            recipe_steps.append(step_dict)
+            recipe_steps.append(item.text.strip())
         return recipe_steps
 
 
@@ -275,12 +258,6 @@ class BigOvenWebScraper(WebScraperTemplate):
                 ingred = ' '.join(litag.text.strip().split())
                 ingredients.append(ingred)
         return ingredients
-
-    def scrape_named_ingredients(self):
-        """Scrape the recipe named ingredients."""
-        # Not implemented yet
-        named_ingreds = []
-        return named_ingreds
 
     def scrape_method(self):
         """Scrape the recipe method."""
@@ -342,12 +319,6 @@ class AllRecipesWebScraper(WebScraperTemplate):
             ingredients.append(ingred)
         return ingredients
 
-    def scrape_named_ingredients(self):
-        """Scrape the recipe named ingredients."""
-        # Not implemented yet
-        named_ingreds = []
-        return named_ingreds
-
     def scrape_method(self):
         """Scrape the recipe method."""
         attrs = {'itemprop': 'recipeInstructions'}
@@ -396,19 +367,6 @@ class FoodNetworkWebScraperWIP(WebScraperTemplate):
         """Ingredients."""
         attrs = {'class': 'ingredient-list'}
         ingred_box = self.soup.find_all('ul', attrs=attrs)
-        ingredients = []
-        for item in ingred_box:
-            for litag in item.find_all('li'):
-                ingred = ' '.join(litag.text.strip().split())
-                ingredients.append(ingred)
-        return ingredients
-
-    def scrape_named_ingredients(self):
-        """Recipe named ingredients."""
-        #attrs = {'class': 'o-Ingredients__a-SubHeadline'}
-        attrs = {'class': 'o-Ingredients__m-Body'}
-        ingred_box = self.soup.find('div', attrs=attrs)
-        #TODO: need to make this work if I want to scrape food network
         ingredients = []
         for item in ingred_box:
             for litag in item.find_all('li'):

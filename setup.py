@@ -5,7 +5,6 @@ DEPS = [
     'pint',
     'urwid',
     'bs4',
-    'ruamel.yaml',
     'lxml',
     'termcolor',
     'inflect',

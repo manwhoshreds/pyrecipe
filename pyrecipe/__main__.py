@@ -11,9 +11,9 @@ import sys
 import argparse
 
 import pyrecipe.utils as utils
-from pyrecipe.backend import Recipe
 from pyrecipe import VER_STR
 from pyrecipe.view import View
+from pyrecipe.backend import Recipe
 
 
 def create_recipe(args):

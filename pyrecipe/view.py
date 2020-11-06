@@ -4,48 +4,37 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     The pyrecipe presentation layer
-    
+
     :copyright: 2017 by Michael Miller
     :license: GPL, see LICENSE for more details.
 """
-
-import textwrap
 
 from termcolor import colored
 
 import pyrecipe.utils as utils
 from pyrecipe.backend.recipe_numbers import RecipeNum
-from .editor import RecipeEditor
-from .helpers import wrap
+from pyrecipe.editor import RecipeEditor
+from pyrecipe.helpers import wrap
+
 
 S_DIV = lambda m: colored('~' * m, 'white')
 
 
 class View:
+    """View class for the pyrecipe program"""
 
     @staticmethod
-    def print_recipe(recipe, verbose=False, color=True):
+    def print_recipe(recipe, verbose=False):
         """Print the recipe to standard output."""
+        
         recipe_str = colored(recipe.name.title(), 'cyan', attrs=['bold'])
         recipe_str += "\n\nDish Type: {}".format(str(recipe.dish_type))
-        for item in ('prep_time', 'cook_time', 'bake_time'):
-            if recipe[item]:
-                recipe_str += "\n{}: {}".format(
-                    item.replace('_', ' ').title(),
-                    utils.mins_to_hours(RecipeNum(recipe[item]))
-                )
-
-        if recipe.oven_temp:
-            recipe_str += "\nOven temp: {}".format(recipe.oven_temp)
-
-        if recipe.author:
-            recipe_str += "\nAuthor: {}".format(recipe.author)
+        recipe_str += "\nPrep Time: {}".format(RecipeNum(recipe.prep_time))
+        recipe_str += "\nCook Time: {}".format(RecipeNum(recipe.cook_time))
+        recipe_str += "\nAuthor: {}".format(recipe.author)
 
         extra_info = False
         if verbose:
-            if recipe.price:
-                recipe_str += "\nPrice: {}".format(recipe.price)
-                extra_info = True
             if recipe.source_url:
                 recipe_str += "\nURL: {}".format(recipe.source_url)
                 extra_info = True
@@ -77,7 +66,7 @@ class View:
                 recipe_str += "\n{}".format(ingred)
 
         recipe_str += "\n\n{}".format(S_DIV(79))
-        
+
         # Method
         recipe_str += colored("\nMethod:", "cyan", attrs=["underline"])
         wrapped = wrap(recipe.steps)
@@ -86,12 +75,15 @@ class View:
             recipe_str += step
 
         print(recipe_str)
-    
+
     @staticmethod
     def create_recipe(recipe):
+        """Create recipe"""
+
         return RecipeEditor(recipe, add=True).start()
-         
 
     @staticmethod
     def edit_recipe(recipe):
+        """Edit recipe"""
+
         return RecipeEditor(recipe).start()

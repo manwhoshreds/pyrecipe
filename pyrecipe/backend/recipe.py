@@ -33,37 +33,36 @@ import uuid
 import json
 import shutil
 import string
-from copy import deepcopy
 from typing import List
+from copy import deepcopy
+from itertools import zip_longest
+from collections import OrderedDict, defaultdict
 from zipfile import ZipFile, BadZipFile
 from dataclasses import dataclass, field
-from itertools import zip_longest
-from collections import OrderedDict
-from collections import defaultdict
-
-from ruamel.yaml import YAML
 
 import pyrecipe.utils as utils
 from pyrecipe import Quant, CULINARY_UNITS
 from pyrecipe.backend.recipe_numbers import RecipeNum
 from pyrecipe.backend.database import RecipeDB, RecipeNotFound
-#from pyrecipe.backend.webscraper import MalformedUrlError, SiteNotScrapeable
-
-
-yaml = YAML(typ='safe')
-yaml.default_flow_style = False
+from pyrecipe.backend.webscraper import MalformedUrlError, SiteNotScrapeable, scrapers
 
 
 @dataclass
 class RecipeData:
     """The recipe dataclass"""
-    id: int = ''
+    
+    recipe_id: int = ''
     uuid: str = ''
     name: str = ''
     dish_type: str = ''
+    prep_time: int = 0
+    cook_time: int = 0
     author: str = ''
+    categories: List[int] = field(default_factory=list)
     _ingredients: List[int] = field(default_factory=list)
-    #_named_ingredients: OrderedDict()
+    steps: List[int] = field(default_factory=list)
+    notes: List[int] = field(default_factory=list)
+
 
 
     # All keys applicable to the Open Recipe Format
@@ -71,7 +70,8 @@ class RecipeData:
         'id', 'uuid', 'name', 'dish_type', 'author', 'category', 'categories', 
         'tags', 'description', 'cook_time', 'bake_time', 'prep_time', 
         'ready_in', 'notes', 'price', 'yield', 'yields', 'region', 
-        'sourcebook', 'steps', 'url', 'source_url', 'recipe_yield'
+        'sourcebook', 'steps', 'url', 'source_url', 'recipe_yield', '_scrapers',
+        '_scrapeable'
     ]
 
     # These require their own setters and getters
@@ -132,31 +132,31 @@ class RecipeData:
         _dir = ['source']
         return list(self.__dict__.keys()) + _dir
 
-    def __getattr__(self, key):
-        if key in Recipe.ALL_KEYS:
-            return self.__dict__.get(key, '')
-        raise AttributeError("'{}' is not an ORF key or Recipe function"
-                             .format(key))
-    
-    def __setattr__(self, key, value):
-        if key not in self.ALL_KEYS:
-            raise AttributeError("Cannot set attribute '{}', its not apart "
-                                 "of the ORF spec.".format(key))
-        if key in Recipe.SIMPLE_KEYS:
-            self.__dict__[key] = value
-        else:
-            super().__setattr__(key, value)
+    #def __getattr__(self, key):
+    #    if key in Recipe.ALL_KEYS:
+    #        return self.__dict__.get(key, '')
+    #    raise AttributeError("'{}' is not an ORF key or Recipe function"
+    #                         .format(key))
+    #
+    #def __setattr__(self, key, value):
+    #    if key not in self.ALL_KEYS:
+    #        raise AttributeError("Cannot set attribute '{}', its not apart "
+    #                             "of the ORF spec.".format(key))
+    #    if key in Recipe.SIMPLE_KEYS:
+    #        self.__dict__[key] = value
+    #    else:
+    #        super().__setattr__(key, value)
 
-    def __delattr__(self, key):
-        if key in Recipe.ORF_KEYS:
-            try:
-                del self.__dict__[key]
-            except KeyError:
-                pass
+    #def __delattr__(self, key):
+    #    if key in Recipe.ORF_KEYS:
+    #        try:
+    #            del self.__dict__[key]
+    #        except KeyError:
+    #            pass
 
-    __setitem__ = __setattr__
-    __getitem__ = __getattr__
-    __delitem__ = __delattr__
+    #__setitem__ = __setattr__
+    #__getitem__ = __getattr__
+    #__delitem__ = __delattr__
 
     def __copy__(self):
         cls = self.__class__
@@ -173,7 +173,7 @@ class RecipeData:
         return result
 
     def __eq__(self, other):
-        return self.get_yaml_string() == other.get_yaml_string()
+        return ''
 
     @property
     def oven_temp(self):
@@ -230,24 +230,6 @@ class RecipeData:
         ingred = Ingredient(ingredient, group=group)
         self._ingredients.append(ingred)
     
-    @property
-    def named_ingredients(self):
-        """Return named ingredient data."""
-        return self._ingredients
-
-    @named_ingredients.setter
-    def named_ingredients(self, value):
-        """Set named ingredients."""
-        named = OrderedDict()
-        for item in value:
-            name = list(item.keys())[0]
-            ingred_list = []
-            for ingred in list(item.values())[0]:
-                if type(ingred) in (str, dict):
-                    ingred['group_name'] = name
-                    ingred = Ingredient(ingred)
-                self._ingredients.append(ingred)
-
     def export(self, fmt, path):
         """Export the recipe in a chosen file format."""
         fmts = ('xml', 'recipe')
@@ -287,27 +269,20 @@ class RecipeData:
 
         This method is mostly useful for troubleshooting
         and development. It prints data in three formats.
-        json, yaml, and xml.
+        json, and xml.
 
         :param data_type: specify the data type that you wish to dump.
-                          'json', 'yaml', 'xml'
+                          'json', 'xml'
         """
         if fmt == 'json':
             print(json.dumps(self, default=lambda o: o.__dict__, indent=4))
-        elif fmt == 'yaml':
-            yaml.dump(self._recipe_data, sys.stdout)
         elif fmt == 'xml':
             data = self.get_xml_data()
             print(data)
         else:
             raise ValueError('data_type argument must be one of '
-                             'json, yaml, or xml')
+                             'json, or xml')
 
-    def get_yaml_string(self):
-        """get the yaml string"""
-        string = io.StringIO()
-        yaml.dump(self.__dict__, string)
-        return string.getvalue()
     
     @property
     def file_name(self):
@@ -519,6 +494,34 @@ class Ingredient:
 
 HTTP_RE = re.compile(r'^https?\://')
 
+
+class RecipeWebScraper(RecipeData):
+    """Factory for webscrapers."""
+
+    def __init__(self):
+        super().__init__()
+        self._scrapers = {}
+        self._scrapeable = self._scrapers.keys()
+
+
+    def register_scraper(self, scraper):
+        self._scrapers[scraper.URL] = scraper
+
+    def scrape(self, url):
+        is_url = re.compile(r'^https?\://').search(url)
+        if is_url:
+            try:
+                scraper = [s for s in self._scrapeable if url.startswith(s)][0]
+            except IndexError:
+                # url is not among those listed as scrapeable
+                msg = ("{} is not scrapeable by pyrecipe. Please select from "
+                       "the following sites:\n\n{}".format(url, self._scrapeable))
+                raise SiteNotScrapeable(msg)
+            return self._scrapers[scraper](url, self)
+        else:
+            raise MalformedUrlError('URL is Malformed')
+
+
 class Recipe(RecipeData):
     """Recipe Factory""" 
 
@@ -534,6 +537,13 @@ class Recipe(RecipeData):
             return
         
         if isinstance(source, str):
+            if HTTP_RE.search(source):
+                scr = RecipeWebScraper()
+                for item in scrapers:
+                    scr.register_scraper(item)
+                test = scr.scrape(source)
+                return
+            
             self.name = source
             db = RecipeDB()
             try:
@@ -541,12 +551,6 @@ class Recipe(RecipeData):
             except RecipeNotFound:
                 self.uuid = str(uuid.uuid4())
             return
-        #try:
-        #    return scraper.scrape(source)
-        #except MalformedUrlError:
-        #    pass
-        #except SiteNotScrapeable as e:
-        #    return e
     
     def __repr__(self):
         return "<Recipe(name='{}')>".format(self.name)
@@ -566,8 +570,12 @@ class Recipe(RecipeData):
         db.delete_recipe(name)
 
 if __name__ == '__main__':
-    db = RecipeDB()
-    for item in db.recipes:
-        r = Recipe(item)
-        r.save_to_file(save_to_data_dir=True)
+    from pyrecipe.backend.webscraper import scrapers
+    for item in scrapers:
+        pass
+
+    #db = RecipeDB()
+    #for item in db.recipes:
+    #    r = Recipe(item)
+    #    r.save_to_file(save_to_data_dir=True)
     

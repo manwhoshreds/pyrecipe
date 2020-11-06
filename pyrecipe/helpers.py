@@ -12,10 +12,8 @@
 import textwrap
 
 
-def wrap(str_list, width=79):
+def wrap(str_list: list, width=79):
     """Textwrap for recipes."""
-    if not isinstance(str_list, list):
-        raise TypeError('First argument must be a list.')
     wrapped = []
     wrapper = textwrap.TextWrapper(width)
     wrapper.subsequent_indent = '   '
