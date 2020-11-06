@@ -8,16 +8,14 @@
 --;
 
 CREATE TABLE IF NOT EXISTS Recipes (
-	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	recipe_id INTEGER PRIMARY KEY AUTOINCREMENT,
 	uuid TEXT NOT NULL UNIQUE,
 	dish_type TEXT,
-	description TEXT,
 	name TEXT NOT NULL UNIQUE,
 	author TEXT,
-	source TEXT,
-	tags TEXT,
-	categories TEXT,
-	url TEXT
+	source_url TEXT,
+	prep_time INTEGER,
+	cook_time INTEGER
 );
 
 CREATE TABLE IF NOT EXISTS RecipeIngredients (
@@ -31,7 +29,7 @@ CREATE TABLE IF NOT EXISTS RecipeIngredients (
 	prep_id INTEGER,
 	CONSTRAINT fk_recipes
 		FOREIGN KEY(recipe_id) 
-		REFERENCES Recipes(id)
+		REFERENCES Recipes(recipe_id)
 		ON DELETE CASCADE
 	FOREIGN KEY(size_id) REFERENCES IngredientSizes(id)
 	FOREIGN KEY(unit_id) REFERENCES Units(id)
@@ -69,7 +67,7 @@ CREATE TABLE IF NOT EXISTS IngredientPrep (
 CREATE TABLE IF NOT EXISTS IngredientNotes (
 	recipe_id INTEGER,
 	step TEXT,
-	FOREIGN KEY(recipe_id) REFERENCES Recipes(id)
+	FOREIGN KEY(recipe_id) REFERENCES Recipes(recipe_id)
 );
 
 CREATE TABLE IF NOT EXISTS DishTypes (
@@ -86,7 +84,7 @@ CREATE TABLE IF NOT EXISTS RecipeSteps (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	recipe_id INTEGER,
 	step TEXT,
-	FOREIGN KEY(recipe_id) REFERENCES Recipes(id)
+	FOREIGN KEY(recipe_id) REFERENCES Recipes(recipe_id)
 		ON DELETE CASCADE
 );
 
@@ -94,6 +92,6 @@ CREATE TABLE IF NOT EXISTS RecipeNotes (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	recipe_id INTEGER,
 	note TEXT,
-	FOREIGN KEY(recipe_id) REFERENCES Recipes(id)
+	FOREIGN KEY(recipe_id) REFERENCES Recipes(recipe_id)
 		ON DELETE CASCADE
 );

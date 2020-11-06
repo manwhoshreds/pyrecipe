@@ -340,7 +340,6 @@ class IngredBlock(EntryBlock):
             if isinstance(item, IngredientEdit):
                 ingred = item.get_edit_ingredient()
                 ingred.group_name = self.name
-                print(self.name)
                 ingredients.append(ingred)
         return ingredients
 
@@ -366,7 +365,7 @@ class RecipeEditor:
             self.welcome = 'Add a Recipe: {}'.format(self.recipe.name)
             self.recipe.uuid = str(uuid.uuid4())
         else:
-            self.welcome = 'Edit: {} ({})'.format(self.recipe.name, self.recipe.id)
+            self.welcome = 'Edit: {} ({})'.format(self.recipe.name, self.recipe.recipe_id)
         
         #self.initial_state = self.recipe
         self.initial_state = copy.deepcopy(self.recipe)
@@ -397,11 +396,6 @@ class RecipeEditor:
             ur.AttrMap(ur.IntEdit('Cook Time: ',
                                   self.recipe.cook_time), 'cook_time'
                                   ),
-            ur.AttrMap(ur.IntEdit('Bake Time: ', self.recipe.bake_time), 
-                                  'bake_time'
-                                  ),
-            ur.AttrMap(ur.Edit('Oven Temp: ', 
-                               self.recipe.oven_temp),'oven_temp'),
             ur.AttrMap(ur.Edit('Source URL: ',
                                      self.recipe.source_url,
                                      wrap='clip'), 'source_url'
@@ -529,8 +523,6 @@ class RecipeEditor:
         """Check if the state of the recipe has changed."""
         changed = False
         self.update_recipe_data()
-        print(self.initial_state.__dict__)
-        print(self.recipe.__dict__)
         if self.initial_state != self.recipe:
             changed = True
         return changed
@@ -543,10 +535,7 @@ class RecipeEditor:
         for item in gen_info:
             attr = item.attr_map[None]
             edit_text = item.original_widget.get_edit_text()
-            if edit_text == '':
-                del self.recipe[attr]
-            else:
-                self.recipe[attr] = edit_text
+            self.recipe[attr] = edit_text
 
         for item in self.disht_group:
             if item.get_state() == True:
@@ -557,8 +546,6 @@ class RecipeEditor:
         for block in self.ingred_block.blocks:
             ingreds = block.get_ingredients()
             ingredients += ingreds
-        for item in ingredients:
-            print(item.__dict__)
         self.recipe.ingredients = ingredients
         
         # method

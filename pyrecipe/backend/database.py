@@ -143,9 +143,9 @@ class RecipeDB:
             recipe.name.lower(),
             recipe.dish_type,
             recipe.author,
-            recipe.tags,
-            recipe.categories,
-            recipe.url
+            recipe.source_url,
+            recipe.prep_time,
+            recipe.cook_time
         )]
 
         self.c.executemany(
@@ -154,17 +154,17 @@ class RecipeDB:
                 name,
                 dish_type,
                 author,
-                tags,
-                categories,
-                url
+                source_url,
+                prep_time,
+                cook_time
                 ) VALUES(?, ?, ?, ?, ?, ?, ?)''', recipe_data
         )
 
         self.c.execute(
-            "SELECT id FROM recipes WHERE name=?",
+            "SELECT recipe_id FROM recipes WHERE name=?",
             (recipe.name.lower(),)
         )
-        recipe_id = self.c.fetchone()['id']
+        recipe_id = self.c.fetchone()['recipe_id']
 
         for item in recipe.ingredients:
             self._insert_ingredient(item)
@@ -276,12 +276,12 @@ class RecipeDB:
         else:
             raise RecipeNotFound()
         
-        recipe.ingredients = self._get_recipe_ingredients(recipe.id)
+        recipe.ingredients = self._get_recipe_ingredients(recipe.recipe_id)
 
         self.c.execute(
             '''SELECT id, step
                FROM RecipeSteps
-               WHERE recipe_id=?''', (recipe.id,)
+               WHERE recipe_id=?''', (recipe.recipe_id,)
         )
 
         step_rows = self.c.fetchall()
@@ -294,7 +294,7 @@ class RecipeDB:
         self.c.execute(
             '''SELECT id, note
                FROM RecipeNotes
-               WHERE recipe_id=?''', (recipe.id,)
+               WHERE recipe_id=?''', (recipe.recipe_id,)
         )
         
         note_rows = self.c.fetchall()
@@ -336,10 +336,10 @@ class RecipeDB:
             recipe.name,
             recipe.dish_type,
             recipe.author,
-            recipe.tags,
-            recipe.categories,
-            recipe.url,
-            recipe.id
+            recipe.prep_time,
+            recipe.cook_time,
+            recipe.source_url,
+            recipe.recipe_id
         )]
 
         self.c.executemany(
@@ -348,14 +348,14 @@ class RecipeDB:
                 name=?,
                 dish_type=?,
                 author=?,
-                tags=?,
-                categories=?,
-                url=?
-               WHERE id=?''', recipe_data
+                prep_time=?,
+                cook_time=?,
+                source_url=?
+               WHERE recipe_id=?''', recipe_data
         )
         
         ingreds = recipe.ingredients
-        ingredient_ids = self._get_recipe_ingredients(recipe.id)
+        ingredient_ids = self._get_recipe_ingredients(recipe.recipe_id)
         ingredient_ids = [i['recipe_ingredient_id'] for i in ingredient_ids]
         for idd, item in zip_longest(ingredient_ids, ingreds):
             if not item:
@@ -448,7 +448,7 @@ class RecipeDB:
                         ingredient_id,
                         prep_id)
                        VALUES(?, ?, ?, ?, ?, ?, ?)''',
-                       (recipe.id,
+                       (recipe.recipe_id,
                         group_id,
                         str(item.amount), 
                         ingredient_size_id,
@@ -457,7 +457,7 @@ class RecipeDB:
                         prep_id)
                 )
 
-        step_ids = self._get_step_ids(recipe.id)
+        step_ids = self._get_step_ids(recipe.recipe_id)
         for idd, step in zip_longest(step_ids, recipe.steps):
             if step is None:
                 self.c.execute(
@@ -478,10 +478,10 @@ class RecipeDB:
                         recipe_id,
                         step)
                        VALUES(?, ?)''',
-                       (recipe.id, step)
+                       (recipe.recipe_id, step)
                 )
 
-        note_ids = self._get_note_ids(recipe.id)
+        note_ids = self._get_note_ids(recipe.recipe_id)
         for idd, note in zip_longest(note_ids, recipe.notes):
             if note is None:
                 self.c.execute(
@@ -502,7 +502,7 @@ class RecipeDB:
                         recipe_id,
                         note)
                        VALUES(?, ?)''',
-                       (recipe.id, note)
+                       (recipe.recipe_id, note)
                 )
         
         self.conn.commit()
