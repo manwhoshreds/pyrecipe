@@ -11,46 +11,40 @@ import sys
 import argparse
 
 import pyrecipe.utils as utils
-from pyrecipe.backend.chef import Chef
+from pyrecipe.backend import Recipe
 from pyrecipe import VER_STR
 from pyrecipe.view import View
 
 
-class RecipeController:
-    """Controller for the pyrecipe program"""
+def create_recipe(args):
+    """Create a recipe"""
+    rec = View.edit_recipe(Recipe(args.source))
+    rec.create_recipe()
 
-    def __init__(self, chef, view):
-        self.chef = Chef()
-        self.view = View()
 
-    def create_recipe(self, args):
-        """Create a recipe"""
-        empty = self.chef.init_recipe(args.source)
-        recipe = self.view.create_recipe(empty)
-        self.chef.create_recipe(recipe)
+def read_recipe(args):
+    """Read and print a recipe"""
+    rec = Recipe(args.source)
+    View.print_recipe(rec, args.verbose)
 
-    def read_recipe(self, args):
-        """Read and print a recipe"""
-        recipe = self.chef.read_recipe(args.source)
-        self.view.print_recipe(recipe, args.verbose)
 
-    def update_recipe(self, args):
-        """Update a recipe"""
-        recipe = self.chef.read_recipe(args.source)
-        new_recipe = self.view.edit_recipe(recipe)
-        self.chef.update_recipe(new_recipe)
+def update_recipe(args):
+    """Update a recipe"""
+    rec = View.edit_recipe(Recipe(args.source))
+    rec.update_recipe()
 
-    def delete_recipe(self, args):
-        """Delete a recipe"""
-        answer = input("Are you sure your want to delete {}? yes/no "
-                       .format(args.source))
-        if answer.strip() == 'yes':
-            self.chef.delete_recipe(args.source)
-            msg = '{} has been deleted'.format(args.source)
-            sys.exit(utils.msg(msg, 'INFORM'))
 
-        msg = '{} was not deleted'.format(args.source)
+def delete_recipe(args):
+    """Delete a recipe"""
+    answer = input("Are you sure your want to delete {}? yes/no "
+                   .format(args.source))
+    if answer.strip() in ('yes', 'y'):
+        Recipe.delete_recipe(args.source)
+        msg = '{} has been deleted from the database'.format(args.source)
         sys.exit(utils.msg(msg, 'INFORM'))
+
+    msg = '{} was not deleted'.format(args.source)
+    sys.exit(utils.msg(msg, 'INFORM'))
 
 
 def subparser_add(subparser):
@@ -150,12 +144,11 @@ def main():
         # here we offer help if no other flags are given
         sys.exit(parser.print_help())
 
-    rec_con = RecipeController(Chef, View)
     case = {
-        'add': rec_con.create_recipe,
-        'print': rec_con.read_recipe,
-        'edit': rec_con.update_recipe,
-        'remove': rec_con.delete_recipe,
+        'add': create_recipe,
+        'print': read_recipe,
+        'edit': update_recipe,
+        'remove': delete_recipe,
     }
     if args.version:
         sys.exit(VER_STR)

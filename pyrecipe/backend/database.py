@@ -11,8 +11,7 @@ import sqlite3
 from itertools import zip_longest
 
 import pyrecipe.utils as utils
-#from .recipe import Recipe
-from pyrecipe import p
+#from pyrecipe import p
 
 
 if not os.path.isdir(os.path.expanduser("~/.local/share/pyrecipe")):
@@ -275,8 +274,7 @@ class RecipeDB:
             row = self._get_dict_from_row(row)
             recipe._set_data(row)
         else:
-            msg = '"{}" was not found in the database.'.format(recipe.name)
-            return RecipeNotFound(utils.msg(msg, 'ERROR'))
+            raise RecipeNotFound()
         
         recipe.ingredients = self._get_recipe_ingredients(recipe.id)
 

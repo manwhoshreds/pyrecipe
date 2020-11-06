@@ -44,9 +44,10 @@ class IngredientsContainer(ur.WidgetWrap):
     """Main container for holding ingredient blocks."""
     def __init__(self, ingredients):
         if not ingredients:
-            self.ingredients = [Recipe.ingredient('Add ingredient')]
+            self.ingredients = {None: [Recipe.ingredient('Add ingredient')]}
         else:
             self.ingredients = ingredients
+        
         add_ingred_block = ur.Button('Add Ingredient Block',
                                         on_press=self._add_block)
 
@@ -54,9 +55,8 @@ class IngredientsContainer(ur.WidgetWrap):
 
         self.ingred_blocks = []
         self.ingred_blocks.append(add_ingred_block)
-        if self.ingredients:
-            for name, ingreds in ingredients.items():
-                self._add_block(ingreds, name)
+        for name, ingreds in self.ingredients.items():
+            self._add_block(ingreds, name)
 
     def _add_block(self, ingredients=[], name=None):
         if isinstance(ingredients, ur.Button):
@@ -441,26 +441,30 @@ class RecipeEditor:
                      HEADINGS['method'],
                      ], 79, 0, 2, 'left'
         )
-        ingreds = self.recipe.get_ingredients()
 
         self.ingred_block = IngredientsContainer(
-            ingredients=ingreds
+            ingredients = self.recipe.get_ingredients()
         )
+        
         self.method_block = EntryBlock(
             self.recipe.steps
         )
+        
         self.notes_block = EntryBlock(
             self.recipe.notes
         )
+        
         general_and_dish = ur.GridFlow(
             [self.general_info,
             radio_dish_types,
             self.notes_block], 53, 0, 2, 'left'
         )
+        
         ingred_and_method = ur.GridFlow(
             [self.ingred_block,
             self.method_block], 79, 0, 2, 'left'
         )
+        
         self.listbox_content = [
             BLANK, headings_general_and_dish_types,
             BLANK, general_and_dish,

@@ -46,7 +46,7 @@ from ruamel.yaml import YAML
 import pyrecipe.utils as utils
 from pyrecipe import Quant, CULINARY_UNITS
 from pyrecipe.backend.recipe_numbers import RecipeNum
-from pyrecipe.backend.database import RecipeDB
+from pyrecipe.backend.database import RecipeDB, RecipeNotFound
 #from pyrecipe.backend.webscraper import MalformedUrlError, SiteNotScrapeable
 
 
@@ -57,11 +57,11 @@ yaml.default_flow_style = False
 @dataclass
 class RecipeData:
     """The recipe dataclass"""
-    id: int = None
-    uuid: str = None
-    name: str = None
-    dish_type: str = None
-    author: str = None
+    id: int = ''
+    uuid: str = ''
+    name: str = ''
+    dish_type: str = ''
+    author: str = ''
     _ingredients: List[int] = field(default_factory=list)
     #_named_ingredients: OrderedDict()
 
@@ -517,12 +517,14 @@ class Ingredient:
         self.name = name.strip(', ')
 
 
+HTTP_RE = re.compile(r'^https?\://')
+
 class Recipe(RecipeData):
     """Recipe Factory""" 
 
     def __init__(self, source):
         super().__init__()
-        
+    
         if isinstance(source, dict):
             self._set_data(source)
             return
@@ -534,10 +536,10 @@ class Recipe(RecipeData):
         if isinstance(source, str):
             self.name = source
             db = RecipeDB()
-            test = db.read_recipe(self)
-            #print(test.__dict__)
-            #self.uuid = str(uuid.uuid4())
-            #self.name = source
+            try:
+                rec = db.read_recipe(self)
+            except RecipeNotFound:
+                self.uuid = str(uuid.uuid4())
             return
         #try:
         #    return scraper.scrape(source)
@@ -545,9 +547,23 @@ class Recipe(RecipeData):
         #    pass
         #except SiteNotScrapeable as e:
         #    return e
-
+    
     def __repr__(self):
         return "<Recipe(name='{}')>".format(self.name)
+    
+    def create_recipe(self):
+        '''Create a recipe in the database'''
+        db = RecipeDB()
+        db.create_recipe(self)
+
+    def update_recipe(self):
+        db = RecipeDB()
+        db.update_recipe(self)
+    
+    @staticmethod
+    def delete_recipe(name):
+        db = RecipeDB()
+        db.delete_recipe(name)
 
 if __name__ == '__main__':
     db = RecipeDB()
