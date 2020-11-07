@@ -4,7 +4,6 @@
    ~~~~~~~~~~~~~~~
     The recipe module contains the main recipe
     class used to interact with ORF (open recipe format) files.
-    You can simply print the recipe or print the xml dump.
 
     - Recipe: The main recipe class is responsible for caching all the
               data associated with an Open Recipe Format file. Give the
@@ -43,7 +42,7 @@ from dataclasses import dataclass, field
 import pyrecipe.utils as utils
 from pyrecipe import Quant, CULINARY_UNITS
 from pyrecipe.backend.recipe_numbers import RecipeNum
-from pyrecipe.backend.database import RecipeDB, RecipeNotFound
+from pyrecipe.backend.database import RecipeDB, RecipeNotFound, RecipeAlreadyStored
 #from pyrecipe.backend.webscraper import MalformedUrlError, SiteNotScrapeable, scrapers
 
 
@@ -62,7 +61,6 @@ class RecipeData:
     _ingredients: List[int] = field(default_factory=list)
     steps: List[int] = field(default_factory=list)
     notes: List[int] = field(default_factory=list)
-
 
     def _load_file(self, fil):
         '''Load a recipe from a file'''
@@ -101,8 +99,8 @@ class RecipeData:
         return result
 
     def __eq__(self, other):
-        return ''
-
+        return self.dump_data() == other.dump_data()
+    
     def get_ingredients(self):
         """
         Get the ingredients and named ingredients at the same time.
@@ -136,20 +134,14 @@ class RecipeData:
                 self._ingredients.append(item)
         else:
             self._ingredients = value
-
-    def dump_data(self, fmt='json'):
+    
+    def dump_data(self):
         """Dump a data format to screen.
 
         This method is mostly useful for troubleshooting
-        and development. It prints data in three formats.
-        json, and xml.
-
-        :param data_type: specify the data type that you wish to dump.
-                          'json'
+        and development.
         """
-        
-        if fmt == 'json':
-            print(json.dumps(self, default=lambda o: o.__dict__, indent=4))
+        return json.dumps(self, default=lambda o: o.__dict__, indent=4)
 
     @property
     def file_name(self):
@@ -248,20 +240,6 @@ class Ingredient:
         string = ''.join(ingred_string).strip().capitalize()
         return string
 
-    @property
-    def quantity(self):
-        """get the quantity"""
-        unit = self.unit
-        if not self.unit:
-            unit = 'each'
-        match = self.PORTIONED_UNIT_RE.search(unit)
-        if match:
-            unit = match.group().split()
-            self.ounce_can = unit[0:2]
-            self.amount = 1
-            unit = unit[-1]
-        return Quant(RecipeNum(self.amount), unit)
-
     def _preprocess_string(self, string):
         """preprocess the string"""
         # this special forward slash character (differs from '/') is encounterd
@@ -285,6 +263,20 @@ class Ingredient:
 
     def _strip_punct(self, string):
         return ''.join(c for c in string if c not in self.PUNCTUATION)
+    
+    @property
+    def quantity(self):
+        """get the quantity"""
+        unit = self.unit
+        if not self.unit:
+            unit = 'each'
+        match = self.PORTIONED_UNIT_RE.search(unit)
+        if match:
+            unit = match.group().split()
+            self.ounce_can = unit[0:2]
+            self.amount = 1
+            unit = unit[-1]
+        return Quant(RecipeNum(self.amount), unit)
 
     def parse_ingredient(self, string):
         """parse the ingredient string"""
@@ -349,7 +341,7 @@ class Ingredient:
             self.prep = ingred_string.split(',')[-1].strip()
             ingred_string = ingred_string.replace(self.prep, '')
         else:
-            self.prep = ''
+            self.prep = None
 
         if not self.unit:
             self.unit = 'each'
@@ -378,6 +370,8 @@ class Recipe(RecipeData):
             db = RecipeDB()
             try:
                 rec = db.read_recipe(self)
+            except RecipeAlreadyStored:
+                sys.exit('hell')
             except RecipeNotFound:
                 self.uuid = str(uuid.uuid4())
             return

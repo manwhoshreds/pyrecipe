@@ -8,6 +8,7 @@
     :copyright: 2017 by Michael Miller
     :license: GPL, see LICENSE for more details.
 """
+import sys
 import copy
 import uuid
 
@@ -108,13 +109,11 @@ class EntryBlock(ur.WidgetWrap):
             self.widgets.append(entry_widget)
         self._refresh()
 
-    
     def _refresh(self, focus_item=0):
         """Refresh the class to reflect changes to the entry stack."""
         self.pile = ur.Pile(self.widgets, focus_item=focus_item)
         super().__init__(self.pile)
 
-    
     def keypress(self, size, key):
         """Capture and process a keypress."""
         key = super().keypress(size, key)
@@ -134,7 +133,6 @@ class EntryBlock(ur.WidgetWrap):
         except KeyError:
             return key
     
-
     def add_entry(self, button=None):
         """Add an entry to the end of the list."""
         caption = str(len(self.widgets) + 1) + '. '
@@ -142,7 +140,6 @@ class EntryBlock(ur.WidgetWrap):
         self.widgets.append(entry)
         new_focus = len(self.widgets) - 1
         self._refresh(new_focus)
-
 
     def del_entry(self, size, key):
         """Delete an entry."""
@@ -159,7 +156,6 @@ class EntryBlock(ur.WidgetWrap):
             # start deleting goin back
             self._refresh(self.row-1)
 
-
     def on_enter(self, size, key):
         """Move cursor to next entry or add an entry if no next entry exists."""
         try:
@@ -175,7 +171,6 @@ class EntryBlock(ur.WidgetWrap):
         """Return a list of widgets from the entry stack."""
         return self.pile.widget_list
 
-    
     def get_entries(self):
         """Retrieve the text from the entries."""
         entries = []
@@ -233,6 +228,7 @@ class IngredBlock(EntryBlock):
             'ctrl a': self.insert_entry,
             'ctrl up': self.move_entry,
             'ctrl down': self.move_entry,
+            'ctrl left': self.debug
         }
         try:
             # The closest thing to php's switch statement that I can think of.
@@ -240,7 +236,9 @@ class IngredBlock(EntryBlock):
         except KeyError:
             return key
     
-
+    def debug(self, size, key):
+        print(dir(self.base_widget))
+    
     def move_entry(self, size, key):
         """Move entry up or down."""
         self.pile.move_cursor_to_coords(size, self.col, self.row)
@@ -363,12 +361,10 @@ class RecipeEditor:
         if add:
             # We are adding a new recipe. Init a recipe with no data
             self.welcome = 'Add a Recipe: {}'.format(self.recipe.name)
-            self.recipe.uuid = str(uuid.uuid4())
         else:
             self.welcome = 'Edit: {} ({})'.format(self.recipe.name, self.recipe.recipe_id)
         
-        #self.initial_state = self.recipe
-        self.initial_state = copy.deepcopy(self.recipe)
+        self.initial_state = self.recipe.dump_data()
         self.original_name = self.recipe.name
 
     
@@ -495,7 +491,7 @@ class RecipeEditor:
     def prompt_answer(self, button, label):
         """Prompt answer"""
         if label == 'quit':
-            raise ur.ExitMainLoop()
+            sys.exit()
         elif label == 'save':
             self.save_recipe()
         else:
@@ -523,7 +519,7 @@ class RecipeEditor:
         """Check if the state of the recipe has changed."""
         changed = False
         self.update_recipe_data()
-        if self.initial_state != self.recipe:
+        if self.initial_state != self.recipe.dump_data():
             changed = True
         return changed
 
@@ -535,6 +531,10 @@ class RecipeEditor:
         for item in gen_info:
             attr = item.attr_map[None]
             edit_text = item.original_widget.get_edit_text()
+            try:
+                edit_text = int(edit_text)
+            except ValueError:
+                pass
             self.recipe[attr] = edit_text
 
         for item in self.disht_group:

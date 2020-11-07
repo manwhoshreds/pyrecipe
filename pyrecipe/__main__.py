@@ -20,6 +20,8 @@ def create_recipe(args):
     """Create a recipe"""
     rec = View.edit_recipe(Recipe(args.source))
     rec.create_recipe()
+    #new_rec_with_id = Recipe(args.source)
+    #new_rec_with_id.save_to_file()
 
 
 def read_recipe(args):
@@ -30,6 +32,7 @@ def read_recipe(args):
 
 def update_recipe(args):
     """Update a recipe"""
+    rec = Recipe(args.source)
     rec = View.edit_recipe(Recipe(args.source))
     rec.update_recipe()
 
