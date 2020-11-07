@@ -103,23 +103,6 @@ class RecipeData:
     def __eq__(self, other):
         return ''
 
-    @property
-    def oven_temp(self):
-        """Return the oven temperature string."""
-        temp = self._recipe_data.get('oven_temp', '')
-        if temp:
-            temp = "{} {}".format(temp['amount'], temp['unit'])
-        return temp
-
-    @oven_temp.setter
-    def oven_temp(self, value):
-        """Set the oven temperature."""
-        return
-        amnt, unit = value.split()
-        if len(value.split()) != 2:
-            raise RuntimeError("oven_temp format must be '300 F'")
-        self._recipe_data['oven_temp'] = {'amount': amnt, 'unit': unit}
-
     def get_ingredients(self):
         """
         Get the ingredients and named ingredients at the same time.
@@ -162,16 +145,11 @@ class RecipeData:
         json, and xml.
 
         :param data_type: specify the data type that you wish to dump.
-                          'json', 'xml'
+                          'json'
         """
+        
         if fmt == 'json':
             print(json.dumps(self, default=lambda o: o.__dict__, indent=4))
-        elif fmt == 'xml':
-            data = self.get_xml_data()
-            print(data)
-        else:
-            raise ValueError('data_type argument must be one of '
-                             'json, or xml')
 
     @property
     def file_name(self):

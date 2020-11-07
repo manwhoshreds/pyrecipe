@@ -494,7 +494,7 @@ class RecipeDB:
                     '''UPDATE RecipeNotes
                        SET note=?
                        WHERE id=?''',
-                       (step, idd)
+                       (note, idd)
                 )
             else:
                 self.c.execute(
