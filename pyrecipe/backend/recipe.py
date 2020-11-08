@@ -61,7 +61,7 @@ class RecipeData:
     _ingredients: List[int] = field(default_factory=list)
     steps: List[int] = field(default_factory=list)
     notes: List[int] = field(default_factory=list)
-
+    
     def _load_file(self, fil):
         '''Load a recipe from a file'''
         try:
@@ -387,6 +387,10 @@ class Recipe(RecipeData):
     def update_recipe(self):
         db = RecipeDB()
         db.update_recipe(self)
+   
+    @property
+    def recipe_exists(self):
+        return RecipeDB().recipe_exists(self.name)
     
     @staticmethod
     def delete_recipe(name):
@@ -394,8 +398,9 @@ class Recipe(RecipeData):
         db.delete_recipe(name)
 
 if __name__ == '__main__':
-    db = RecipeDB()
-    print(len(db.recipes))
+    r = Recipe('pesto')
+    test = r.dump_data()
+    print(test)
     #for item in db.recipes:
     #    r = Recipe(item)
     #    #r.save_to_file(save_to_data_dir=True)

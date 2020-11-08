@@ -18,6 +18,12 @@ from pyrecipe.backend import Recipe
 
 def create_recipe(args):
     """Create a recipe"""
+    if Recipe(args.source).recipe_exists:
+        msg = (
+            "{} already exists in the database. Please choose"
+            " another name for this recipe.".format(args.source)
+        )
+        sys.exit(utils.msg(msg, 'ERROR'))
     rec = View.edit_recipe(Recipe(args.source))
     rec.create_recipe()
     #new_rec_with_id = Recipe(args.source)
@@ -32,6 +38,9 @@ def read_recipe(args):
 
 def update_recipe(args):
     """Update a recipe"""
+    if not Recipe(args.source).recipe_exists:
+        msg = "There is no recipe in the database by that name"
+        sys.exit(utils.msg(msg, 'ERROR'))
     rec = View.edit_recipe(Recipe(args.source))
     rec.update_recipe()
 
