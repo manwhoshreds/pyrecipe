@@ -32,6 +32,9 @@ def create_recipe(args):
 
 def read_recipe(args):
     """Read and print a recipe"""
+    if not Recipe(args.source).recipe_exists:
+        msg = "There is no recipe in the database by that name"
+        sys.exit(utils.msg(msg, 'ERROR'))
     rec = Recipe(args.source)
     View.print_recipe(rec, args.verbose)
 
