@@ -32,7 +32,6 @@ def read_recipe(args):
 
 def update_recipe(args):
     """Update a recipe"""
-    rec = Recipe(args.source)
     rec = View.edit_recipe(Recipe(args.source))
     rec.update_recipe()
 

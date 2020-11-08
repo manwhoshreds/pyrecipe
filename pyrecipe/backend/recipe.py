@@ -395,7 +395,8 @@ class Recipe(RecipeData):
 
 if __name__ == '__main__':
     db = RecipeDB()
-    for item in db.recipes:
-        r = Recipe(item)
-        #r.save_to_file(save_to_data_dir=True)
+    print(len(db.recipes))
+    #for item in db.recipes:
+    #    r = Recipe(item)
+    #    #r.save_to_file(save_to_data_dir=True)
     

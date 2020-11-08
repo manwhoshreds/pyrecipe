@@ -38,10 +38,6 @@ class View:
             if recipe.source_url:
                 recipe_str += "\nURL: {}".format(recipe.source_url)
                 extra_info = True
-            if recipe.categories:
-                recipe_str += ("\nCategory(s): {}"
-                               .format(", ".join(recipe.categoies)))
-                extra_info = True
             if recipe.notes:
                 recipe_str += colored("\n\nNotes:", "cyan")
                 wrapped = wrap(recipe.notes)

@@ -62,19 +62,24 @@ class IngredientsContainer(ur.WidgetWrap):
     def _add_block(self, ingredients=[], name=None):
         if isinstance(ingredients, ur.Button):
             ingred_block = IngredBlock()
+            ingred_block.subscribe_destroy_notify(self)
             self.ingred_blocks.append(ingred_block)
         else:
             ingred_block = IngredBlock(ingredients, name)
+            ingred_block.subscribe_destroy_notify(self)
             self.ingred_blocks.append(ingred_block)
-        try:
-            new_focus = len(self.ingred_blocks) - 1
-        except AttributeError:
-            new_focus = 0
-        self._refresh(new_focus)
+        self._refresh()
 
     def _refresh(self, focus_item=0):
         self.main_container = ur.Pile(self.ingred_blocks, focus_item=focus_item)
         super().__init__(self.main_container)
+    
+    def destroy_ingredient_block(self):
+        if len(self.ingred_blocks) == 2:
+            return
+        block = self.main_container.focus_position
+        self.ingred_blocks.pop(block)
+        self._refresh()
 
     @property
     def blocks(self):
@@ -196,6 +201,8 @@ class IngredBlock(EntryBlock):
             self.named_name = ur.AttrMap(ur.Edit('* ', name), 'title')
             self.widgets.append(self.named_name)
         
+        self.ingredient_container = None
+        
         for item in self.ingredients:
             ingred_entry = IngredientEdit(item)
             self.widgets.append(ingred_entry)
@@ -211,7 +218,9 @@ class IngredBlock(EntryBlock):
         buttons = ur.Columns([add_name, del_block])
         return buttons
 
-    
+    def subscribe_destroy_notify(self, ingredient_container):
+        self.ingredient_container = ingredient_container
+        
     def keypress(self, size, key):
         """Capture and process a keypress."""
         key = super().keypress(size, key)
@@ -228,16 +237,12 @@ class IngredBlock(EntryBlock):
             'ctrl a': self.insert_entry,
             'ctrl up': self.move_entry,
             'ctrl down': self.move_entry,
-            'ctrl left': self.debug
         }
         try:
             # The closest thing to php's switch statement that I can think of.
             pressed[key](size, key)
         except KeyError:
             return key
-    
-    def debug(self, size, key):
-        print(dir(self.base_widget))
     
     def move_entry(self, size, key):
         """Move entry up or down."""
@@ -271,11 +276,7 @@ class IngredBlock(EntryBlock):
 
     def delete_block(self, button):
         """Delete entire block of ingredients."""
-        for item in self.widgets:
-            item.name = None
-        self.widgets.clear()
-        self._refresh()
-
+        self.ingredient_container.destroy_ingredient_block()
     
     def toggle_name(self, button):
         """Toggle between name for ingredients or no name."""

@@ -329,6 +329,9 @@ class RecipeDB:
         for item in note_ids:
             ids.append(self._get_dict_from_row(item)['id'])
         return ids
+   
+    def recipe_exists(self, recipe):
+        return recipe in self.recipes
     
     def update_recipe(self, recipe):
         '''Update a recipe in the database.'''
@@ -602,5 +605,4 @@ class DBInfo(RecipeDB):
 
 if __name__ == '__main__':
     db = RecipeDB()
-    recipe = db.read_recipe('pesto')
-    print(recipe.__dict__)
+    print(db.recipe_exists('pesto'))
