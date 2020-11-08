@@ -41,7 +41,7 @@ _pyrecipe()
     prev=${COMP_WORDS[COMP_CWORD-1]}
 	# without this, completion breaks once a space is encountered
     esccur="${cur//\\ /___}"
-	subcmds='print add remove dump export show --help -h --version -V -v --verbose'
+	subcmds='print add remove edit --help -h --version -V -v --verbose'
 	case "$prev" in
 		print|edit|remove)
 			_comp_reply_for_recipes $esccur

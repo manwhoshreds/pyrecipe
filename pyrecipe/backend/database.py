@@ -11,7 +11,6 @@ import sqlite3
 from itertools import zip_longest
 
 import pyrecipe.utils as utils
-#from pyrecipe import p
 
 
 if not os.path.isdir(os.path.expanduser("~/.local/share/pyrecipe")):
@@ -44,8 +43,8 @@ class RecipeDB:
         self.c = self.conn.cursor()
         self.c.execute("PRAGMA foreign_keys = ON")
 
-
     def _get_dict_from_row(self, row):
+        """Given a sqlite row, return a dict"""
         return dict(zip(row.keys(), row))
 
 
