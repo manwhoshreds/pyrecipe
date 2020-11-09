@@ -68,9 +68,8 @@ class WebScraperTemplate(ABC):
         self.recipe = recipe
         self.recipe.uuid = str(uuid.uuid4())
         self.recipe.source_url = url
-        self.__scrape()
 
-    def __scrape(self):
+    def scrape(self):
         self.recipe.name = self.scrape_name()
         self.recipe.prep_time = self.scrape_prep_time()
         self.recipe.cook_time = self.scrape_cook_time()
@@ -78,6 +77,8 @@ class WebScraperTemplate(ABC):
         self.recipe.ingredients = self.scrape_ingredients()
         self.recipe.steps = self.scrape_method()
         self.recipe.dish_type = 'main'
+        print(type(self.recipe))
+        return self.recipe
 
     def __repr__(self):
         return '<RecipeWebScraper("{}")>'.format(self.URL)

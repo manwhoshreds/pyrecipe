@@ -43,7 +43,7 @@ import pyrecipe.utils as utils
 from pyrecipe import Quant, CULINARY_UNITS
 from pyrecipe.backend.recipe_numbers import RecipeNum
 from pyrecipe.backend.database import RecipeDB, RecipeNotFound, RecipeAlreadyStored
-#from pyrecipe.backend.webscraper import MalformedUrlError, SiteNotScrapeable, scrapers
+from pyrecipe.backend.webscraper import MalformedUrlError, SiteNotScrapeable, scrapers
 
 
 @dataclass
@@ -351,6 +351,28 @@ class Ingredient:
         self.name = name.strip(', ')
 
 
+class RecipeWebScraper:
+    """Factory for webscrapers."""
+
+    def __init__(self):
+        self._scrapers = {}
+        self._scrapeable = self._scrapers.keys()
+        for item in scrapers:
+            self.register_scraper(item)
+
+
+    def register_scraper(self, scraper):
+        self._scrapers[scraper.URL] = scraper
+
+    def scrape(self, url):
+        is_url = re.compile(r'^https?\://').search(url)
+        rec = RecipeData()
+        if is_url:
+            scraper = [s for s in self._scrapeable if url.startswith(s)][0]
+            recipe = self._scrapers[scraper](url, rec).scrape()
+            return recipe
+
+
 class Recipe(RecipeData):
     """Recipe Factory""" 
 
@@ -399,8 +421,10 @@ class Recipe(RecipeData):
 
 if __name__ == '__main__':
     r = Recipe('pesto')
-    test = r.dump_data()
-    print(test)
+    test = RecipeWebScraper()
+    ok = test.scrape('https://tasty.co/recipe/creamy-tuscan-chicken')
+    print(ok.dump_data())
+
     #for item in db.recipes:
     #    r = Recipe(item)
     #    #r.save_to_file(save_to_data_dir=True)
