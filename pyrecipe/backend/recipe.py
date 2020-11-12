@@ -419,6 +419,9 @@ class Recipe(RecipeData):
         db = RecipeDB()
         db.delete_recipe(name)
 
+test = RecipeWebScraper()
+ok = test.scrape('https://tasty.co/recipe/creamy-tuscan-chicken')
+
 if __name__ == '__main__':
     r = Recipe('pesto')
     test = RecipeWebScraper()

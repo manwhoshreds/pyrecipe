@@ -14,6 +14,7 @@ import pyrecipe.utils as utils
 from pyrecipe import VER_STR
 from pyrecipe.view import View
 from pyrecipe.backend import Recipe
+from pyrecipe.backend.recipe import ok
 
 
 def create_recipe(args):
@@ -35,8 +36,8 @@ def read_recipe(args):
     if not Recipe(args.source).recipe_exists:
         msg = "There is no recipe in the database by that name"
         sys.exit(utils.msg(msg, 'ERROR'))
-    rec = Recipe(args.source)
-    View.print_recipe(rec, args.verbose)
+    #rec = Recipe(args.source)
+    View.print_recipe(ok, args.verbose)
 
 
 def update_recipe(args):
