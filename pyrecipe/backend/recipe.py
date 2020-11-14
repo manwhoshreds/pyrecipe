@@ -364,42 +364,36 @@ class RecipeWebScraper:
     def register_scraper(self, scraper):
         self._scrapers[scraper.URL] = scraper
 
-    def scrape(self, url):
-        is_url = re.compile(r'^https?\://').search(url)
-        rec = RecipeData()
-        if is_url:
-            scraper = [s for s in self._scrapeable if url.startswith(s)][0]
-            recipe = self._scrapers[scraper](url, rec).scrape()
-            return recipe
+    def scrape(self, url, rec):
+        scraper = [s for s in self._scrapeable if url.startswith(s)][0]
+        recipe = self._scrapers[scraper](url, rec).scrape()
+        return recipe
 
 
 class Recipe(RecipeData):
-    """Recipe Factory""" 
+    """Recipe class""" 
 
     def __init__(self, source):
         super().__init__()
     
         if isinstance(source, dict):
             self._set_data(source)
-            return
         
         if os.path.isfile(source):
             self._load_file(source)
+        
+        if re.compile(r'^https?\://').search(source):
+            scraper = RecipeWebScraper()
+            scraper.scrape(source, self)
             return
         
         if isinstance(source, str):
             self.name = source
             db = RecipeDB()
-            try:
-                rec = db.read_recipe(self)
-            except RecipeAlreadyStored:
-                sys.exit('hell')
-            except RecipeNotFound:
-                self.uuid = str(uuid.uuid4())
-            return
+            db.read_recipe(self)
     
     def __repr__(self):
-        return "<Recipe(name='{}')>".format(self.name)
+        return "<Recipe('{}')>".format(self.name)
     
     def create_recipe(self):
         '''Create a recipe in the database'''
@@ -419,13 +413,11 @@ class Recipe(RecipeData):
         db = RecipeDB()
         db.delete_recipe(name)
 
-test = RecipeWebScraper()
-ok = test.scrape('https://tasty.co/recipe/creamy-tuscan-chicken')
 
 if __name__ == '__main__':
     r = Recipe('pesto')
     test = RecipeWebScraper()
-    ok = test.scrape('https://tasty.co/recipe/creamy-tuscan-chicken')
+    ok = test.scrape('https://tasty.co/recipe/weekday-meal-prep-pesto-chicken-veggies')
     print(ok.dump_data())
 
     #for item in db.recipes:

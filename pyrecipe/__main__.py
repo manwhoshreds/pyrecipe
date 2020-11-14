@@ -14,37 +14,22 @@ import pyrecipe.utils as utils
 from pyrecipe import VER_STR
 from pyrecipe.view import View
 from pyrecipe.backend import Recipe
-from pyrecipe.backend.recipe import ok
 
 
 def create_recipe(args):
     """Create a recipe"""
-    if Recipe(args.source).recipe_exists:
-        msg = (
-            "{} already exists in the database. Please choose"
-            " another name for this recipe.".format(args.source)
-        )
-        sys.exit(utils.msg(msg, 'ERROR'))
     rec = View.edit_recipe(Recipe(args.source))
     rec.create_recipe()
-    #new_rec_with_id = Recipe(args.source)
-    #new_rec_with_id.save_to_file()
 
 
 def read_recipe(args):
     """Read and print a recipe"""
-    if not Recipe(args.source).recipe_exists:
-        msg = "There is no recipe in the database by that name"
-        sys.exit(utils.msg(msg, 'ERROR'))
-    #rec = Recipe(args.source)
-    View.print_recipe(ok, args.verbose)
+    rec = Recipe(args.source)
+    View.print_recipe(rec, args.verbose)
 
 
 def update_recipe(args):
     """Update a recipe"""
-    if not Recipe(args.source).recipe_exists:
-        msg = "There is no recipe in the database by that name"
-        sys.exit(utils.msg(msg, 'ERROR'))
     rec = View.edit_recipe(Recipe(args.source))
     rec.update_recipe()
 
