@@ -41,6 +41,7 @@ class WebScraperTemplate(ABC):
         self.recipe = recipe
         self.recipe.uuid = str(uuid.uuid4())
         self.recipe.source_url = url
+        print(self.__doc__.split())
 
     def scrape(self):
         """Scraper method"""

@@ -363,7 +363,9 @@ class RecipeEditor:
             # We are adding a new recipe. Init a recipe with no data
             self.welcome = 'Add a Recipe: {}'.format(self.recipe.name)
         else:
-            self.welcome = 'Edit: {} ({})'.format(self.recipe.name, self.recipe.recipe_id)
+            self.welcome = 'Edit: {} ({})'.format(
+                    self.recipe.name, self.recipe.recipe_id
+            )
         
         self.initial_state = self.recipe.dump_data()
         self.original_name = self.recipe.name

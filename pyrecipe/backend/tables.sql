@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS RecipeIngredients (
 	recipe_id INTEGER,
 	group_id INTEGER,
 	amount TEXT,
+	portion_id INTEGER,
 	size_id INTEGER,
 	unit_id INTEGER,
 	ingredient_id INTEGER,
@@ -31,6 +32,7 @@ CREATE TABLE IF NOT EXISTS RecipeIngredients (
 		FOREIGN KEY(recipe_id) 
 		REFERENCES Recipes(recipe_id)
 		ON DELETE CASCADE
+	FOREIGN KEY(portion_id) REFERENCES IngredientPortions(id)
 	FOREIGN KEY(size_id) REFERENCES IngredientSizes(id)
 	FOREIGN KEY(unit_id) REFERENCES Units(id)
 	FOREIGN KEY(ingredient_id) REFERENCES Ingredients(id)
@@ -49,6 +51,11 @@ CREATE TABLE IF NOT EXISTS IngredientGroups (
 );
 
 		
+CREATE TABLE IF NOT EXISTS IngredientPortions (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	portion TEXT UNIQUE
+);
+
 CREATE TABLE IF NOT EXISTS IngredientSizes (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	ingredient_size TEXT UNIQUE

@@ -222,14 +222,16 @@ class RecipeDB:
                    INTO RecipeIngredients 
                    (recipe_id, 
                     group_id,
+                    portion_id,
                     amount, 
                     size_id, 
                     unit_id, 
                     ingredient_id,
                     prep_id
-                    ) VALUES(?, ?, ?, ?, ?, ?, ?)''', 
+                    ) VALUES(?, ?, ?, ?, ?, ?, ?, ?)''', 
                     (recipe_id,
                      group_id,
+                     portion_id,
                      str(item.amount), 
                      ingredient_size_id,
                      int(unit_id), 

@@ -168,7 +168,6 @@ class Ingredient:
     PAREN_RE = re.compile(r'\((.*?)\)')
     SIZE_STRINGS = ['large', 'medium', 'small', 'heaping']
     PUNCTUATION = ''.join(c for c in string.punctuation if c not in '-/(),.')
-    ggroup_name = None
     
     def __init__(self, ingredient):
         self.amount, self.portion, self.size, self.name = ('',) * 4
@@ -215,7 +214,8 @@ class Ingredient:
             ingred_string.append(string)
         else:
             # amnt
-            ingred_string.append('{}'.format(self.amount))
+            if self.amount:
+                ingred_string.append('{}'.format(self.amount))
             # size
             if self.size:
                 ingred_string.append(' {}'.format(self.size))
@@ -249,6 +249,7 @@ class Ingredient:
         unicode_fractions = {
             '¼': '1/4',
             '½': '1/2',
+            '⅓': '1/3',
             '¾': '3/4'
         }
         for frac in unicode_fractions.keys():
@@ -321,7 +322,7 @@ class Ingredient:
         try:
             self.amount = str(RecipeNum(' '.join(amnt_list)))
         except ValueError:
-            self.amount = ''
+            self.amount = None
 
 
         ingred_list = [x for x in ingred_list if x not in amnt_list]
@@ -415,12 +416,7 @@ class Recipe(RecipeData):
 
 
 if __name__ == '__main__':
-    r = Recipe('pesto')
-    test = RecipeWebScraper()
-    ok = test.scrape('https://tasty.co/recipe/weekday-meal-prep-pesto-chicken-veggies')
-    print(ok.dump_data())
-
-    #for item in db.recipes:
-    #    r = Recipe(item)
-    #    #r.save_to_file(save_to_data_dir=True)
+    test = Ingredient('1 3 ounce can onion tops')
+    print(test.__dict__)
+    print(test)
     
