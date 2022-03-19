@@ -136,6 +136,59 @@ class TastyWebScraper(WebScraperTemplate):
             recipe_steps.append(item.text.strip())
         return recipe_steps
 
+
+class AllRecipesWebScraper(WebScraperTemplate):
+    """Web Scraper for https://www.allrecipes.com."""
+
+    URL = 'https://www.allrecipes.com'
+
+    def scrape_name(self):
+        """Recipe name."""
+        name_box = self.soup.find('h1', attrs={'class': 'recipe-name'})
+        if name_box:
+            recipe_name = name_box.text.strip()
+        return recipe_name
+    
+    def scrape_author(self):
+        """Recipe author."""
+        name_box = self.soup.find('div', attrs={'class': 'byline'})
+        if name_box:
+            author = name_box.text.strip()
+        return author
+    
+    def scrape_prep_time(self):
+        """Scrape the recipe name"""
+        prep_time = 0
+        return prep_time
+
+    def scrape_cook_time(self):
+        """Scrape the recipe name"""
+        cook_time = 0
+        return cook_time
+
+    def scrape_ingredients(self):
+        """Recipe ingredients."""
+        ingred_box = self.soup.find('ul', attrs={'class': 'list-unstyled xs-text-3'})
+        ingredients = []
+        for litag in ingred_box.find_all('li'):
+            ingred = ' '.join(litag.text.strip().split())
+            ingredients.append(ingred)
+        return ingredients
+
+    def scrape_method(self):
+        """Recipe method."""
+        method_box = self.soup.find('ol', attrs={'class': 'prep-steps'})
+        litags = method_box.find_all('li')
+        # Quite often, a recipe site has something unnessasary at the end of
+        # the steps such as Enjoy! or 'submit a correction'. be on the look out
+        # for such behavior and uncomment the next line if need be.
+        #del litags[-1]
+        recipe_steps = []
+        for item in litags:
+            recipe_steps.append(item.text.strip())
+        return recipe_steps
+
+
 scrapers = [eval(s) for s in dir() if s.endswith('Scraper')]
 
 if __name__ == '__main__':
