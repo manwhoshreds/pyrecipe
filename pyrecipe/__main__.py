@@ -15,7 +15,6 @@ from pyrecipe import VER_STR
 from pyrecipe.view import View
 from pyrecipe.backend import Recipe
 
-
 def create_recipe(args):
     """Create a recipe"""
     rec = View.edit_recipe(Recipe(args.source))
@@ -150,7 +149,7 @@ def main():
         'edit': update_recipe,
         'remove': delete_recipe,
     }
-    print("test")
+    print("he")
     if args.version:
         sys.exit(VER_STR)
     else:
