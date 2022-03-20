@@ -149,7 +149,6 @@ def main():
         'edit': update_recipe,
         'remove': delete_recipe,
     }
-    print("he")
     if args.version:
         sys.exit(VER_STR)
     else:

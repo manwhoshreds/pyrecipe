@@ -41,7 +41,6 @@ class WebScraperTemplate(ABC):
         self.recipe = recipe
         self.recipe.uuid = str(uuid.uuid4())
         self.recipe.source_url = url
-        print(self.__doc__.split())
 
     def scrape(self):
         """Scraper method"""
@@ -144,14 +143,16 @@ class AllRecipesWebScraper(WebScraperTemplate):
 
     def scrape_name(self):
         """Recipe name."""
-        name_box = self.soup.find('h1', attrs={'class': 'recipe-name'})
+        name = "headline heading-content elementFont__display"
+        name_box = self.soup.find('h1', attrs={'class': name})
         if name_box:
             recipe_name = name_box.text.strip()
         return recipe_name
     
     def scrape_author(self):
         """Recipe author."""
-        name_box = self.soup.find('div', attrs={'class': 'byline'})
+        name = "author-name author-text__block elementFont__detailsLinkOnly--underlined elementFont__details--bold"
+        name_box = self.soup.find('a', attrs={'class': name})
         if name_box:
             author = name_box.text.strip()
         return author
@@ -168,7 +169,7 @@ class AllRecipesWebScraper(WebScraperTemplate):
 
     def scrape_ingredients(self):
         """Recipe ingredients."""
-        ingred_box = self.soup.find('ul', attrs={'class': 'list-unstyled xs-text-3'})
+        ingred_box = self.soup.find('ul', attrs={'class': 'ingredients-section'})
         ingredients = []
         for litag in ingred_box.find_all('li'):
             ingred = ' '.join(litag.text.strip().split())
@@ -177,7 +178,7 @@ class AllRecipesWebScraper(WebScraperTemplate):
 
     def scrape_method(self):
         """Recipe method."""
-        method_box = self.soup.find('ol', attrs={'class': 'prep-steps'})
+        method_box = self.soup.find('ul', attrs={'class': 'instructions-section'})
         litags = method_box.find_all('li')
         # Quite often, a recipe site has something unnessasary at the end of
         # the steps such as Enjoy! or 'submit a correction'. be on the look out
