@@ -17,7 +17,7 @@ from pyrecipe.backend import Recipe
 
 def create_recipe(args):
     """Create a recipe"""
-    rec = View.edit_recipe(Recipe(args.source))
+    rec = View.create_recipe(Recipe(args.source))
     rec.create_recipe()
 
 

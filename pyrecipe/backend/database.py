@@ -275,7 +275,8 @@ class RecipeDB:
             row = self._get_dict_from_row(row)
             recipe._set_data(row)
         else:
-            raise RecipeNotFound()
+            pass
+            #raise RecipeNotFound()
         
         recipe.ingredients = self._get_recipe_ingredients(recipe.recipe_id)
 

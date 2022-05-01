@@ -75,7 +75,8 @@ class View:
     @staticmethod
     def create_recipe(recipe):
         """Create recipe"""
-
+        print(recipe)
+        print("test")
         return RecipeEditor(recipe, add=True).start()
 
     @staticmethod
