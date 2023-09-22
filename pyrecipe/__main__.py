@@ -15,6 +15,7 @@ from pyrecipe import VER_STR
 from pyrecipe.view import View
 from pyrecipe.backend import Recipe
 
+
 def create_recipe(args):
     """Create a recipe"""
     rec = View.create_recipe(Recipe(args.source))

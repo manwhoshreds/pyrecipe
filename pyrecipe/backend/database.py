@@ -443,6 +443,8 @@ class RecipeDB:
                         idd)
                 )
             else:
+                print(recipe.name)
+                exit()
                 self.c.execute(
                     '''INSERT into RecipeIngredients(
                         recipe_id,

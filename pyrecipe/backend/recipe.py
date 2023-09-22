@@ -35,9 +35,9 @@ import string
 from typing import List
 from copy import deepcopy
 from itertools import zip_longest
-from collections import OrderedDict, defaultdict
 from zipfile import ZipFile, BadZipFile
 from dataclasses import dataclass, field
+from collections import OrderedDict, defaultdict
 
 import pyrecipe.utils as utils
 from pyrecipe import Quant, CULINARY_UNITS
@@ -128,6 +128,7 @@ class RecipeData:
     @ingredients.setter
     def ingredients(self, value):
         """Set the ingredients of a recipe."""
+        value = ["test"]
         if type(value[0]) in (str, dict):
             for item in value:
                 item = Ingredient(item)
@@ -420,3 +421,4 @@ if __name__ == '__main__':
     print(test.__dict__)
     print(test)
     
+
