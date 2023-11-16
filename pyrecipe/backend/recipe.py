@@ -25,32 +25,29 @@
     :license: GPL, see LICENSE for more details.
 """
 import re
-import io
 import os
 import sys
-import uuid
 import json
-import shutil
 import string
 from typing import List
 from copy import deepcopy
-from itertools import zip_longest
 from zipfile import ZipFile, BadZipFile
 from dataclasses import dataclass, field
 from collections import OrderedDict, defaultdict
 
-import pyrecipe.utils as utils
+#import pyrecipe.utils as utils
+from pyrecipe import utils
 from pyrecipe import Quant, CULINARY_UNITS
 from pyrecipe.backend.recipe_numbers import RecipeNum
-from pyrecipe.backend.database import RecipeDB, RecipeNotFound, RecipeAlreadyStored
+from pyrecipe.backend.database import Model, RecipeNotFound, RecipeAlreadyStored
 from pyrecipe.backend.webscraper import MalformedUrlError, SiteNotScrapeable, scrapers
 
 
 @dataclass
 class RecipeData:
     """The recipe dataclass"""
-    
-    recipe_id: int = ''
+    # pylint: disable=too-many-instance-attributes
+    recipe_id: int = None
     uuid: str = ''
     name: str = ''
     dish_type: str = ''
@@ -61,7 +58,7 @@ class RecipeData:
     _ingredients: List[int] = field(default_factory=list)
     steps: List[int] = field(default_factory=list)
     notes: List[int] = field(default_factory=list)
-    
+
     def _load_file(self, fil):
         '''Load a recipe from a file'''
         try:
@@ -72,18 +69,18 @@ class RecipeData:
                     self._set_data(data)
                     self.ingredients = ingreds
         except BadZipFile as e:
-            sys.exit(utils.msg("{}".format(e), "ERROR"))
-    
+            sys.exit(utils.msg(f"{e}", "ERROR"))
+
     def _set_data(self, data):
-        """Used to set recipe data from incoming dicts such as from webscraper 
+        """Used to set recipe data from incoming dicts such as from webscraper
         and from openrecipes.org
         """
         for key, value in data.items():
             setattr(self, key, value)
-    
+
     def __setitem__(self, key, value):
         self.__dict__[key] = value
-    
+
     def __copy__(self):
         cls = self.__class__
         newobj = cls.__new__(cls)
@@ -100,7 +97,7 @@ class RecipeData:
 
     def __eq__(self, other):
         return self.dump_data() == other.dump_data()
-    
+
     def get_ingredients(self):
         """
         Get the ingredients and named ingredients at the same time.
@@ -114,7 +111,7 @@ class RecipeData:
         for ingredient in self.ingredients:
             ings[ingredient.group_name].append(ingredient)
         return dict(ings)
-        
+
     @staticmethod
     def ingredient(ingredient):
         return Ingredient(ingredient)
@@ -123,19 +120,19 @@ class RecipeData:
     def ingredients(self):
         """Return ingredient data."""
         return self._ingredients
-    
-    
+
+
     @ingredients.setter
     def ingredients(self, value):
         """Set the ingredients of a recipe."""
-        value = ["test"]
+        #value = ["test"]
         if type(value[0]) in (str, dict):
             for item in value:
                 item = Ingredient(item)
                 self._ingredients.append(item)
         else:
             self._ingredients = value
-    
+
     def dump_data(self):
         """Dump a data format to screen.
 
@@ -147,14 +144,18 @@ class RecipeData:
     @property
     def file_name(self):
         return self.uuid.replace('-', '') + '.recipe'
-    
+
+    @property
+    def has_id(self):
+        return self.recipe_id
+
     def save_to_file(self, save_to_data_dir=True):
         """save state of class."""
         if save_to_data_dir:
             path = os.path.expanduser('~/.config/pyrecipe/recipe_data')
-        else: 
+        else:
             path = os.getcwd()
-        data = json.dumps(self, default=lambda o: o.__dict__, indent=4)
+        data = self.dump_data()
         fil = os.path.join(path, self.file_name)
         with ZipFile(fil, 'w') as zfile:
             zfile.writestr('recipe.json', data)
@@ -169,7 +170,7 @@ class Ingredient:
     PAREN_RE = re.compile(r'\((.*?)\)')
     SIZE_STRINGS = ['large', 'medium', 'small', 'heaping']
     PUNCTUATION = ''.join(c for c in string.punctuation if c not in '-/(),.')
-    
+
     def __init__(self, ingredient):
         self.amount, self.portion, self.size, self.name = ('',) * 4
         self.unit, self.prep, self.note, self.group_name = ('',) * 4
@@ -189,7 +190,7 @@ class Ingredient:
 
 
     def __repr__(self):
-        return "<Ingredient('{}')>".format(self.name)
+        return f"<Ingredient('{self.name}')>"
 
 
     def __str__(self):
@@ -265,7 +266,7 @@ class Ingredient:
 
     def _strip_punct(self, string):
         return ''.join(c for c in string if c not in self.PUNCTUATION)
-    
+
     @property
     def quantity(self):
         """get the quantity"""
@@ -373,52 +374,37 @@ class RecipeWebScraper:
 
 
 class Recipe(RecipeData):
-    """Recipe class""" 
+    """Recipe class"""
 
     def __init__(self, source):
         super().__init__()
-    
+
         if isinstance(source, dict):
             self._set_data(source)
-        
+
         if os.path.isfile(source):
             self._load_file(source)
-        
+
         if re.compile(r'^https?\://').search(source):
             scraper = RecipeWebScraper()
             scraper.scrape(source, self)
             return
-        
+
         if isinstance(source, str):
             self.name = source
-            db = RecipeDB()
-            db.read_recipe(self)
-    
+            db = Model()
+            if db.recipe_exists(self.name):
+                db.read_recipe(self)
+
     def __repr__(self):
         return "<Recipe('{}')>".format(self.name)
-    
-    def create_recipe(self):
-        '''Create a recipe in the database'''
-        db = RecipeDB()
-        db.create_recipe(self)
 
-    def update_recipe(self):
-        db = RecipeDB()
-        db.update_recipe(self)
-   
     @property
     def recipe_exists(self):
-        return RecipeDB().recipe_exists(self.name)
-    
-    @staticmethod
-    def delete_recipe(name):
-        db = RecipeDB()
-        db.delete_recipe(name)
+        return Model().recipe_exists(self.name)
 
 
 if __name__ == '__main__':
-    test = Ingredient('1 3 ounce can onion tops')
+    test = Ingredient('1 3 ounce can onion, chopped')
     print(test.__dict__)
     print(test)
-    
-

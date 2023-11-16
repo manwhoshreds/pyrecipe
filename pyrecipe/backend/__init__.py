@@ -1,4 +1,5 @@
 from .recipe import Recipe
+from .database import Model
 
 
 SIZE_STRINGS = ['large', 'medium', 'small', 'heaping']

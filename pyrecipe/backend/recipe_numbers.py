@@ -327,6 +327,7 @@ class RecipeNum(Fraction):
 if __name__ == '__main__':
     import doctest
     test = doctest.testmod()
+    print(test)
     if test[0] == 0:
         print('PASSED')
 

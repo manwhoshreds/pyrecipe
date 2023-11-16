@@ -1,0 +1,29 @@
+{
+    "_meta": {
+        "hash": {
+            "sha256": "9d299bd54f9efaa77b30500e396331bdc266bb8a6e4dbfeae9e5a6f15fdeeee6"
+        },
+        "pipfile-spec": 6,
+        "requires": {
+            "python_version": "3.11"
+        },
+        "sources": [
+            {
+                "name": "pypi",
+                "url": "https://pypi.org/simple",
+                "verify_ssl": true
+            }
+        ]
+    },
+    "default": {
+        "pyrecipe": {
+            "hashes": [
+                "sha256:bdf0246bfb97cb0a9b6196f0ef6e2524f6c249c084a77e675c2c8e24a9d4e623"
+            ],
+            "index": "pypi",
+            "markers": "python_version >= '3.7' and python_version < '4.0'",
+            "version": "==0.1.0a1"
+        }
+    },
+    "develop": {}
+}

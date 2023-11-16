@@ -32,7 +32,7 @@ class RecipeAlreadyStored(Exception):
     pass
 
 
-class RecipeDB:
+class Model:
     """A database class for pyrecipe."""
     def __init__(self):
         try:
@@ -127,16 +127,6 @@ class RecipeDB:
     
     def create_recipe(self, recipe):
         '''Add a recipe to the database.'''
-        self.c.execute(
-            '''SELECT name FROM Recipes
-               WHERE name=?''', (recipe.name,)
-        )
-        if self.c.fetchone():
-            msg = ("A recipe with the name '{}' already exists in the "
-                   "database. Please Select another name for this "
-                   "recipe.".format(recipe.name))
-            raise RecipeAlreadyStored(utils.msg(msg, 'ERROR'))
-        
         recipe_data = [(
             recipe.uuid, 
             recipe.name.lower(),
@@ -146,9 +136,9 @@ class RecipeDB:
             recipe.prep_time,
             recipe.cook_time
         )]
-
+        
         self.c.executemany(
-            '''INSERT OR IGNORE INTO Recipes (
+            '''INSERT INTO Recipes (
                 uuid,
                 name,
                 dish_type,
@@ -158,12 +148,15 @@ class RecipeDB:
                 cook_time
                 ) VALUES(?, ?, ?, ?, ?, ?, ?)''', recipe_data
         )
-
+        
+        self.conn.commit()
+        
         self.c.execute(
             "SELECT recipe_id FROM recipes WHERE name=?",
             (recipe.name.lower(),)
         )
         recipe_id = self.c.fetchone()['recipe_id']
+        
 
         for item in recipe.ingredients:
             self._insert_ingredient(item)
@@ -222,16 +215,14 @@ class RecipeDB:
                    INTO RecipeIngredients 
                    (recipe_id, 
                     group_id,
-                    portion_id,
                     amount, 
                     size_id, 
                     unit_id, 
                     ingredient_id,
                     prep_id
-                    ) VALUES(?, ?, ?, ?, ?, ?, ?, ?)''', 
+                    ) VALUES(?, ?, ?, ?, ?, ?, ?)''', 
                     (recipe_id,
                      group_id,
-                     portion_id,
                      str(item.amount), 
                      ingredient_size_id,
                      int(unit_id), 
@@ -443,8 +434,6 @@ class RecipeDB:
                         idd)
                 )
             else:
-                print(recipe.name)
-                exit()
                 self.c.execute(
                     '''INSERT into RecipeIngredients(
                         recipe_id,
@@ -535,7 +524,7 @@ class RecipeDB:
             self.c.executescript(fi.read())
 
 
-class DBInfo(RecipeDB):
+class DBInfo(Model):
     """Get data from the database as a dict."""
     
     def get_recipes(self):
@@ -608,5 +597,5 @@ class DBInfo(RecipeDB):
 
 
 if __name__ == '__main__':
-    db = RecipeDB()
+    db = Model()
     print(db.recipe_exists('pesto'))

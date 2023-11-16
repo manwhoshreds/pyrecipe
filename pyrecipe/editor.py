@@ -356,16 +356,15 @@ class RecipeEditor:
         ('key', "Ctrl-d"), ('footer', ' Delete item  ')
     ])
     
-    def __init__(self, recipe, recipe_yield=0, add=False):
+    def __init__(self, recipe: Recipe):
         self.recipe = recipe
         
-        if add:
-            # We are adding a new recipe. Init a recipe with no data
-            self.welcome = 'Add a Recipe: {}'.format(self.recipe.name)
+        if self.recipe.has_id:
+            # Recipe has ID which must mean it exist in the database
+            self.welcome = f'Edit: {self.recipe.name} ({self.recipe.recipe_id})'
         else:
-            self.welcome = 'Edit: {} ({})'.format(
-                    self.recipe.name, self.recipe.recipe_id
-            )
+            self.welcome = f'Add a Recipe: {self.recipe.name}'
+            self.recipe.uuid = str(uuid.uuid4())
         
         self.initial_state = self.recipe.dump_data()
         self.original_name = self.recipe.name

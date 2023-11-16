@@ -14,32 +14,42 @@ import pyrecipe.utils as utils
 from pyrecipe import VER_STR
 from pyrecipe.view import View
 from pyrecipe.backend import Recipe
+from pyrecipe.backend import Model
 
 
 def create_recipe(args):
     """Create a recipe"""
+    model = Model()
+    #if model.recipe_exists(args.source.lower()):
+    #    msg = f'{args.source} already exist in the database \
+    #            please choose a different name for this recipe.'
+    #    sys.exit(utils.msg(msg, 'ERROR'))
+        
     rec = View.create_recipe(Recipe(args.source))
-    rec.create_recipe()
+    model.create_recipe(rec)
 
 
 def read_recipe(args):
     """Read and print a recipe"""
     rec = Recipe(args.source)
+    print(rec.__dict__)
     View.print_recipe(rec, args.verbose)
 
 
 def update_recipe(args):
     """Update a recipe"""
     rec = View.edit_recipe(Recipe(args.source))
-    rec.update_recipe()
+    model = Model()
+    model.update_recipe(rec)
 
 
 def delete_recipe(args):
     """Delete a recipe"""
     answer = input("Are you sure your want to delete {}? yes/no "
                    .format(args.source))
+    model = Model()
     if answer.strip() in ('yes', 'y'):
-        Recipe.delete_recipe(args.source)
+        model.delete_recipe(args.source.lower())
         msg = '{} has been deleted from the database'.format(args.source)
         sys.exit(utils.msg(msg, 'INFORM'))
 
@@ -132,7 +142,7 @@ def get_parser():
 
 
 def main():
-    """Main entry point of recipe_tool."""
+    """Main entry point of pyrecipe."""
 
     parser = get_parser()
     args = parser.parse_args()
