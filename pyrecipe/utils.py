@@ -76,21 +76,21 @@ def get_file_name_from_recipe(recipe_name, file_extention='recipe'):
     return file_name
 
 
-def msg(text, level='INFORM'):
+def message(message, level):
     """Pyrecipe message function with color."""
-    if level == 'ERROR':
-        text = '{} {}'.format(colored('ERROR:', on_color='on_red'),
-                              colored(text, 'white'))
-        return sys.exit(text)
-    
-    elif level == 'INFORM':
-        text = '{} {}'.format(colored('NOTICE:', on_color='on_cyan'),
-                              colored(text, 'white'))
-        return sys.exit(text)
-    
-    elif level == 'WARN':
-        text = colored(text, 'yellow', attrs=['bold'])
-        return text
+    case = {
+        "recipe_not_found": "That recipe could not be found in the database",
+        "recipe_deleted": "{} was deleted from the database",
+        "recipe_not_deleted": "{} was not deleted from the database"
+    }
+    colored_message = colored(case[message], 'white')
+    lvl = {
+        'ERROR': colored('ERROR:', 'white', on_color='on_red'),
+        'WARN': colored('WARN:', 'white', on_color='on_yellow'),
+        'INFORM': colored('INFORM:', 'white', on_color='on_cyan')
+    }
+    text = f'{lvl[level]} {colored_message}'
+    return text
 
 def recipe2xml(func):
     """Get the xml representation of a recipe."""

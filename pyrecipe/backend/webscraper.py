@@ -190,6 +190,24 @@ class AllRecipesWebScraper(WebScraperTemplate):
         return recipe_steps
 
 
+class RecipeWebScraper:
+    """Factory for webscrapers."""
+
+    def __init__(self):
+        self._scrapers = {}
+        self._scrapeable = self._scrapers.keys()
+        for item in scrapers:
+            self.register_scraper(item)
+
+
+    def register_scraper(self, scraper):
+        self._scrapers[scraper.URL] = scraper
+
+    def scrape(self, url, rec):
+        scraper = [s for s in self._scrapeable if url.startswith(s)][0]
+        recipe = self._scrapers[scraper](url, rec).scrape()
+        return recipe
+
 scrapers = [eval(s) for s in dir() if s.endswith('Scraper')]
 
 if __name__ == '__main__':

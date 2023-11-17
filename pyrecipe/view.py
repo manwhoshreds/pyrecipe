@@ -8,6 +8,7 @@
     :copyright: 2017 by Michael Miller
     :license: GPL, see LICENSE for more details.
 """
+import sys
 
 from termcolor import colored
 
@@ -48,7 +49,7 @@ class View:
 
             if not extra_info:
                 recipe_str += '\n'
-                recipe_str += utils.msg('No additional information', 'WARN')
+                recipe_str += utils.message('No additional information', 'WARN')
 
         recipe_str += "\n\n{}".format(S_DIV(79))
         recipe_str += colored("\nIngredients:", "cyan", attrs=['underline'])
@@ -82,3 +83,8 @@ class View:
         """Edit recipe"""
 
         return RecipeEditor(recipe).start()
+
+    @staticmethod
+    def display_message(message, level):
+        print(utils.message(message, level))
+

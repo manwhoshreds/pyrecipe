@@ -6,11 +6,13 @@
     the connection, query, and building of the database.
 """
 import os
+import re
 import sys
 import sqlite3
 from itertools import zip_longest
 
 import pyrecipe.utils as utils
+from pyrecipe.backend.recipe import Recipe
 
 
 if not os.path.isdir(os.path.expanduser("~/.local/share/pyrecipe")):
@@ -32,8 +34,9 @@ class RecipeAlreadyStored(Exception):
     pass
 
 
-class Model:
+class RecipeDB:
     """A database class for pyrecipe."""
+    
     def __init__(self):
         try:
             self.conn = sqlite3.connect(DB_FILE)
@@ -82,6 +85,30 @@ class Model:
                    (str(ingred.prep),)
             )
 
+    
+    def _get_step_ids(self, recipe_id):
+        self.c.execute(
+            '''SELECT id
+               FROM RecipeSteps
+               WHERE recipe_id=?''', (recipe_id,)
+        )
+        step_ids = self.c.fetchall()
+        ids = []
+        for item in step_ids:
+            ids.append(self._get_dict_from_row(item)['id'])
+        return ids
+
+    def _get_note_ids(self, recipe_id):
+        self.c.execute(
+            '''SELECT id
+               FROM RecipeNotes
+               WHERE recipe_id=?''', (recipe_id,)
+        )
+        note_ids = self.c.fetchall()
+        ids = []
+        for item in note_ids:
+            ids.append(self._get_dict_from_row(item)['id'])
+        return ids
     
     def _get_recipe_ingredients(self, recipe_id):
         self.c.execute(
@@ -259,15 +286,15 @@ class Model:
         
         self.conn.commit()
 
-    def read_recipe(self, recipe):
-        self.c.execute("SELECT * FROM Recipes WHERE name=?", (recipe.name,))
+    def read_recipe(self, recipe_name: str):
+        self.c.execute("SELECT * FROM Recipes WHERE name=?", (recipe_name,))
         row = self.c.fetchone()
         if row:
+            recipe = Recipe()
             row = self._get_dict_from_row(row)
             recipe._set_data(row)
         else:
-            pass
-            #raise RecipeNotFound()
+            raise RecipeNotFound()
         
         recipe.ingredients = self._get_recipe_ingredients(recipe.recipe_id)
 
@@ -296,33 +323,9 @@ class Model:
             note = self._get_dict_from_row(item)
             note_list.append(note['note'])
         recipe.notes = note_list
+        
         return recipe
 
-    
-    def _get_step_ids(self, recipe_id):
-        self.c.execute(
-            '''SELECT id
-               FROM RecipeSteps
-               WHERE recipe_id=?''', (recipe_id,)
-        )
-        step_ids = self.c.fetchall()
-        ids = []
-        for item in step_ids:
-            ids.append(self._get_dict_from_row(item)['id'])
-        return ids
-
-    def _get_note_ids(self, recipe_id):
-        self.c.execute(
-            '''SELECT id
-               FROM RecipeNotes
-               WHERE recipe_id=?''', (recipe_id,)
-        )
-        note_ids = self.c.fetchall()
-        ids = []
-        for item in note_ids:
-            ids.append(self._get_dict_from_row(item)['id'])
-        return ids
-   
     def recipe_exists(self, recipe):
         return recipe in self.recipes
     
@@ -524,7 +527,7 @@ class Model:
             self.c.executescript(fi.read())
 
 
-class DBInfo(Model):
+class DBInfo(RecipeDB):
     """Get data from the database as a dict."""
     
     def get_recipes(self):
@@ -595,7 +598,31 @@ class DBInfo(Model):
                 results += result
         return set(results)
 
+class PyRecipe:
+    """PyRecipe class"""
+
+    def __init__(self):
+        self.recipe_db = RecipeDB()
+
+    def get_recipe(self, source):
+        
+        if os.path.isfile(source):
+            self._load_file(source)
+
+        if re.compile(r'^https?\://').search(source):
+            self._scrape_recipe()
+        
+        if isinstance(source, str):
+            rec = self.recipe_db.read_recipe(source)
+
+        return rec
+
+    def _scrape_recipe(self, source):
+        scraper = RecipeWebScraper()
+        scraper.scrape(source)
+        return
+
 
 if __name__ == '__main__':
-    db = Model()
+    db = RecipeDB()
     print(db.recipe_exists('pesto'))

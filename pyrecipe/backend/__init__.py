@@ -1,5 +1,4 @@
-from .recipe import Recipe
-from .database import Model
+from .database import PyRecipe, RecipeNotFound
 
 
 SIZE_STRINGS = ['large', 'medium', 'small', 'heaping']

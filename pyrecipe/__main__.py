@@ -13,48 +13,53 @@ import argparse
 import pyrecipe.utils as utils
 from pyrecipe import VER_STR
 from pyrecipe.view import View
-from pyrecipe.backend import Recipe
-from pyrecipe.backend import Model
+from pyrecipe.backend import PyRecipe, RecipeNotFound
 
 
 def create_recipe(args):
     """Create a recipe"""
-    model = Model()
+    rec = PyRecipe().init_recipe(args.source)
+    print(rec.__dict__)
     #if model.recipe_exists(args.source.lower()):
     #    msg = f'{args.source} already exist in the database \
     #            please choose a different name for this recipe.'
     #    sys.exit(utils.msg(msg, 'ERROR'))
         
-    rec = View.create_recipe(Recipe(args.source))
+    #rec = View.create_recipe(Recipe(args.source))
     model.create_recipe(rec)
 
 
 def read_recipe(args):
     """Read and print a recipe"""
-    rec = Recipe(args.source)
-    print(rec.__dict__)
-    View.print_recipe(rec, args.verbose)
-
+    try:
+        rec = PyRecipe().get_recipe(args.source)
+        View.print_recipe(rec, args.verbose)
+    except RecipeNotFound:
+        sys.exit(View.display_message('recipe_not_found', 'ERROR'))
 
 def update_recipe(args):
     """Update a recipe"""
-    rec = View.edit_recipe(Recipe(args.source))
+    print('not yet implemented')
+    exit()
+    #rec = View.edit_recipe(Recipe(args.source))
     model = Model()
     model.update_recipe(rec)
 
 
 def delete_recipe(args):
     """Delete a recipe"""
+    print('not yet implemented')
+    exit()
     answer = input("Are you sure your want to delete {}? yes/no "
                    .format(args.source))
     model = Model()
     if answer.strip() in ('yes', 'y'):
         model.delete_recipe(args.source.lower())
         msg = '{} has been deleted from the database'.format(args.source)
-        sys.exit(utils.msg(msg, 'INFORM'))
+        sys.exit(utils.message())
 
     msg = '{} was not deleted'.format(args.source)
-    sys.exit(utils.msg(msg, 'INFORM'))
+    sys.exit(utils.message('recipe_not_deleted', 'INFORM'))
 
 
 def subparser_add(subparser):

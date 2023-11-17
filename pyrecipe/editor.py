@@ -14,7 +14,7 @@ import uuid
 
 import urwid as ur
 
-from pyrecipe.backend import DISH_TYPES, Recipe
+from pyrecipe.backend import DISH_TYPES
 from pyrecipe.helpers import wrap
 
 
@@ -356,7 +356,7 @@ class RecipeEditor:
         ('key', "Ctrl-d"), ('footer', ' Delete item  ')
     ])
     
-    def __init__(self, recipe: Recipe):
+    def __init__(self, recipe):
         self.recipe = recipe
         
         if self.recipe.has_id:
@@ -574,7 +574,4 @@ class RecipeEditor:
 
 
 if __name__ == '__main__':
-    r = Recipe('test')
-    r.print_recipe()
-    #RecipeEditor(r).start()
-    test = RecipeEditor(r)
+    pass

@@ -35,16 +35,13 @@ from zipfile import ZipFile, BadZipFile
 from dataclasses import dataclass, field
 from collections import OrderedDict, defaultdict
 
-#import pyrecipe.utils as utils
 from pyrecipe import utils
 from pyrecipe import Quant, CULINARY_UNITS
 from pyrecipe.backend.recipe_numbers import RecipeNum
-from pyrecipe.backend.database import Model, RecipeNotFound, RecipeAlreadyStored
-from pyrecipe.backend.webscraper import MalformedUrlError, SiteNotScrapeable, scrapers
 
 
 @dataclass
-class RecipeData:
+class Recipe:
     """The recipe dataclass"""
     # pylint: disable=too-many-instance-attributes
     recipe_id: int = None
@@ -352,56 +349,6 @@ class Ingredient:
         # at this point we are assuming that all elements have been removed
         name = ' '.join(ingred_string.split())
         self.name = name.strip(', ')
-
-
-class RecipeWebScraper:
-    """Factory for webscrapers."""
-
-    def __init__(self):
-        self._scrapers = {}
-        self._scrapeable = self._scrapers.keys()
-        for item in scrapers:
-            self.register_scraper(item)
-
-
-    def register_scraper(self, scraper):
-        self._scrapers[scraper.URL] = scraper
-
-    def scrape(self, url, rec):
-        scraper = [s for s in self._scrapeable if url.startswith(s)][0]
-        recipe = self._scrapers[scraper](url, rec).scrape()
-        return recipe
-
-
-class Recipe(RecipeData):
-    """Recipe class"""
-
-    def __init__(self, source):
-        super().__init__()
-
-        if isinstance(source, dict):
-            self._set_data(source)
-
-        if os.path.isfile(source):
-            self._load_file(source)
-
-        if re.compile(r'^https?\://').search(source):
-            scraper = RecipeWebScraper()
-            scraper.scrape(source, self)
-            return
-
-        if isinstance(source, str):
-            self.name = source
-            db = Model()
-            if db.recipe_exists(self.name):
-                db.read_recipe(self)
-
-    def __repr__(self):
-        return "<Recipe('{}')>".format(self.name)
-
-    @property
-    def recipe_exists(self):
-        return Model().recipe_exists(self.name)
 
 
 if __name__ == '__main__':
