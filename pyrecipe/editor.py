@@ -14,7 +14,7 @@ import uuid
 
 import urwid as ur
 
-from pyrecipe.backend import DISH_TYPES
+from pyrecipe.backend import DISH_TYPES, Recipe
 from pyrecipe.helpers import wrap
 
 
@@ -45,7 +45,8 @@ class IngredientsContainer(ur.WidgetWrap):
     """Main container for holding ingredient blocks."""
     def __init__(self, ingredients):
         if not ingredients:
-            self.ingredients = {None: [Recipe.ingredient('Add ingredient')]}
+            #self.ingredients = {None: [Recipe.ingredient('Add ingredient')]}
+            self.ingredients = {None: None}
         else:
             self.ingredients = ingredients
         
@@ -438,13 +439,8 @@ class RecipeEditor:
             ingredients = self.recipe.get_ingredients()
         )
         
-        self.method_block = EntryBlock(
-            self.recipe.steps
-        )
-        
-        self.notes_block = EntryBlock(
-            self.recipe.notes
-        )
+        self.method_block = EntryBlock(self.recipe.steps)
+        self.notes_block = EntryBlock(self.recipe.notes)
         
         general_and_dish = ur.GridFlow(
             [self.general_info,

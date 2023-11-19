@@ -13,21 +13,15 @@ import argparse
 import pyrecipe.utils as utils
 from pyrecipe import VER_STR
 from pyrecipe.view import View
-from pyrecipe.backend import PyRecipe, RecipeNotFound
+from pyrecipe.backend import PyRecipe, RecipeNotFound, RecipeAlreadyStored
 
 
 def create_recipe(args):
     """Create a recipe"""
-    rec = PyRecipe().init_recipe(args.source)
-    print(rec.__dict__)
-    #if model.recipe_exists(args.source.lower()):
-    #    msg = f'{args.source} already exist in the database \
-    #            please choose a different name for this recipe.'
-    #    sys.exit(utils.msg(msg, 'ERROR'))
-        
-    #rec = View.create_recipe(Recipe(args.source))
-    model.create_recipe(rec)
-
+    rec = PyRecipe.recipe(args.source)
+    new_rec = View.create_recipe(rec)
+    pyrec = PyRecipe()
+    pyrec.create_recipe(new_rec)
 
 def read_recipe(args):
     """Read and print a recipe"""
@@ -35,38 +29,30 @@ def read_recipe(args):
         rec = PyRecipe().get_recipe(args.source)
         View.print_recipe(rec, args.verbose)
     except RecipeNotFound:
-        sys.exit(View.display_message('recipe_not_found', 'ERROR'))
+        sys.exit(View.display_message('recipe_not_found', 'ERROR', args.source))
 
 def update_recipe(args):
     """Update a recipe"""
-    print('not yet implemented')
-    exit()
-    #rec = View.edit_recipe(Recipe(args.source))
-    model = Model()
-    model.update_recipe(rec)
-
+    pyrec = PyRecipe() 
+    rec = pyrec.get_recipe(args.source)
+    new_rec = View.edit_recipe(rec)
+    pyrec.update_recipe(new_rec)
 
 def delete_recipe(args):
     """Delete a recipe"""
-    print('not yet implemented')
-    exit()
     answer = input("Are you sure your want to delete {}? yes/no "
                    .format(args.source))
-    model = Model()
+    pyrec = PyRecipe()
     if answer.strip() in ('yes', 'y'):
-        model.delete_recipe(args.source.lower())
-        msg = '{} has been deleted from the database'.format(args.source)
-        sys.exit(utils.message())
+        pyrec.delete_recipe(args.source.lower())
+        sys.exit(View.display_message('recipe_deleted', 'INFORM', args.source))
 
-    msg = '{} was not deleted'.format(args.source)
-    sys.exit(utils.message('recipe_not_deleted', 'INFORM'))
-
+    sys.exit(View.display_message('recipe_not_deleted', 'INFORM', args.source))
 
 def subparser_add(subparser):
     """Subparser for add command."""
     parser_add = subparser.add_parser("add", help='Add a recipe')
     parser_add.add_argument("source", help='Name of the recipe to add')
-
 
 def subparser_print(subparser):
     """Subparser for print command."""
@@ -109,7 +95,6 @@ def subparser_remove(subparser):
         "source",
         help="Recipe to delete"
     )
-
 
 def get_parser():
     """Parse args for recipe_tool."""
@@ -165,6 +150,7 @@ def main():
         'edit': update_recipe,
         'remove': delete_recipe,
     }
+    
     if args.version:
         sys.exit(VER_STR)
     else:

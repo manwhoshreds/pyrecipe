@@ -1,5 +1,5 @@
-from .database import PyRecipe, RecipeNotFound
-
+from .database import PyRecipe, RecipeNotFound, RecipeAlreadyStored
+from .recipe import Recipe
 
 SIZE_STRINGS = ['large', 'medium', 'small', 'heaping']
 DISH_TYPES = [

@@ -76,12 +76,12 @@ def get_file_name_from_recipe(recipe_name, file_extention='recipe'):
     return file_name
 
 
-def message(message, level):
+def message(message, level, recipe=None):
     """Pyrecipe message function with color."""
     case = {
-        "recipe_not_found": "That recipe could not be found in the database",
-        "recipe_deleted": "{} was deleted from the database",
-        "recipe_not_deleted": "{} was not deleted from the database"
+        "recipe_not_found": f"{recipe} could not be found in the database",
+        "recipe_deleted": f"{recipe} was deleted from the database",
+        "recipe_not_deleted": f"{recipe} was not deleted from the database"
     }
     colored_message = colored(case[message], 'white')
     lvl = {

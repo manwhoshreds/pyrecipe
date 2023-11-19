@@ -5,7 +5,7 @@ import unittest
 from pyrecipe.__main__ import *
 from pyrecipe.backend.recipe import Recipe, Ingredient
 from pyrecipe import CULINARY_UNITS
-from pyrecipe.config import RECIPE_DATA_FILES
+#from pyrecipe.config import RECIPE_DATA_FILES
 
 skip = unittest.skip
 
@@ -58,7 +58,7 @@ class RecipeTestCase(CommandLineTestCase):
 class PrintCmdTestCase(CommandLineTestCase):
     def setUp(self):
         self.subcmd = 'print'
-        self.cmd = cmd_print
+        self.cmd = read_recipe
 
     def test_print_without_args(self):
         """recipe_tool print"""
@@ -124,14 +124,6 @@ class RemoveCmdTestCase(CommandLineTestCase):
     def setUp(self):
         self.subcmd = 'remove'
         self.cmd = cmd_remove
-
-
-#@skip('because')
-class MakeCmdTestCase(CommandLineTestCase):
-    def setUp(self):
-        self.subcmd = 'make'
-        self.cmd = cmd_make
-
 
 #@skip('because')
 class SearchCmdTestCase(CommandLineTestCase):
@@ -238,36 +230,6 @@ class DumpCmdTestCase(CommandLineTestCase):
         # exit with 0
         error = cm.exception.code
         self.assertIsNone(error)
-
-#@skip('because')
-class ExportCmdTestCase(CommandLineTestCase):
-    def setUp(self):
-        self.subcmd = 'export'
-        self.cmd = cmd_export
-
-
-#@skip('because')
-class OcrCmdTestCase(CommandLineTestCase):
-    def setUp(self):
-        self.subcmd = 'ocr'
-        self.cmd = cmd_ocr
-
-
-#@skip('because')
-class ShowCmdTestCase(CommandLineTestCase):
-    def setUp(self):
-        self.subcmd = 'show'
-        self.cmd = cmd_show
-
-    def test_show_cmd(self):
-        """recipe_tool show"""
-        arg = [self.subcmd]
-        parsed_args = self.parser.parse_args(arg)
-        with self.assertRaises(SystemExit) as cm:
-            self.cmd(parsed_args)
-        error = cm.exception.code
-        self.assertIsNone(error)
-
 
 if __name__ == "__main__":
     unittest.main()

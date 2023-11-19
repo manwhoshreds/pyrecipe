@@ -85,6 +85,6 @@ class View:
         return RecipeEditor(recipe).start()
 
     @staticmethod
-    def display_message(message, level):
-        print(utils.message(message, level))
+    def display_message(message, level, recipe=None):
+        print(utils.message(message, level, recipe))
 
