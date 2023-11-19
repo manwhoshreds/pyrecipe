@@ -96,5 +96,5 @@ class Quant(ureg.Quantity):
         if str(self.units) == 'each':
             return format(self)
         if self.magnitude > 1:
-            return '{} {}'.format(self.magnitude, p.plural(str(self.units)))
+            return f'{self.magnitude} {p.plural(str(self.units))}'
         return format(self)

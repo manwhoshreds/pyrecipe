@@ -10,10 +10,9 @@
 import sys
 import argparse
 
-import pyrecipe.utils as utils
 from pyrecipe import VER_STR
 from pyrecipe.view import View
-from pyrecipe.backend import PyRecipe, RecipeNotFound, RecipeAlreadyStored
+from pyrecipe.backend import PyRecipe, RecipeNotFound#, RecipeAlreadyStored
 
 
 def create_recipe(args):
@@ -33,15 +32,14 @@ def read_recipe(args):
 
 def update_recipe(args):
     """Update a recipe"""
-    pyrec = PyRecipe() 
+    pyrec = PyRecipe()
     rec = pyrec.get_recipe(args.source)
     new_rec = View.edit_recipe(rec)
     pyrec.update_recipe(new_rec)
 
 def delete_recipe(args):
     """Delete a recipe"""
-    answer = input("Are you sure your want to delete {}? yes/no "
-                   .format(args.source))
+    answer = input(f"Are you sure your want to delete {args.source}? yes/no ")
     pyrec = PyRecipe()
     if answer.strip() in ('yes', 'y'):
         pyrec.delete_recipe(args.source.lower())
@@ -150,7 +148,7 @@ def main():
         'edit': update_recipe,
         'remove': delete_recipe,
     }
-    
+
     if args.version:
         sys.exit(VER_STR)
     else:
