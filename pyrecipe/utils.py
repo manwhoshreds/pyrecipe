@@ -1,10 +1,18 @@
+# -*- coding: utf-8 -*-
 """
-    utils for the pyrecipe program
+    pyrecipe.utils
+    ~~~~~~~~~~~~~~
 
+    The pyrecipe utility file
+    
+    :copyright: 2017 by Michael Miller
+    :license: GPL, see LICENSE for more details.
 """
+
 import os
 import sys
 import string
+import textwrap
 
 import lxml.etree as ET
 from termcolor import colored
@@ -24,6 +32,22 @@ def mins_to_hours(mins):
         converted_time = "%d h %02d m" % (hours, minutes)
     return converted_time
 
+def wrap(str_list: list, width=79):
+    """Textwrap for recipes."""
+    wrapped = []
+    wrapper = textwrap.TextWrapper(width)
+    wrapper.subsequent_indent = '   '
+    if len(str_list) > 9:
+        wrapper.initial_indent = ' '
+        wrapper.subsequent_indent = '    '
+
+    for index, step in enumerate(str_list, start=1):
+        if index >= 10:
+            wrapper.initial_indent = ''
+        wrapp = wrapper.fill(step)
+        wrapped_str = str(index) + ". ", wrapp
+        wrapped.append(wrapped_str)
+    return wrapped
 
 def get_source_path(source):
     """Closer inspection of the source.
