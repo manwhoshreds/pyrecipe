@@ -13,6 +13,7 @@ from itertools import zip_longest
 
 import pyrecipe.utils as utils
 from pyrecipe.backend.recipe import Recipe
+from pyrecipe.backend.webscraper import RecipeWebScraper
 
 
 if not os.path.isdir(os.path.expanduser("~/.local/share/pyrecipe")):
@@ -596,9 +597,10 @@ class PyRecipe:
     """PyRecipe class"""
 
     def _scrape_recipe(self, source):
+        rec = Recipe()
         scraper = RecipeWebScraper()
-        scraper.scrape(source)
-        return
+        rec = scraper.scrape(source, rec)
+        return rec
     
     def get_recipe(self, source):
         
@@ -606,7 +608,7 @@ class PyRecipe:
             self._load_file(source)
 
         if re.compile(r'^https?\://').search(source):
-            self._scrape_recipe()
+            return self._scrape_recipe(source)
         
         if isinstance(source, str):
             with RecipeDB() as db:
@@ -622,7 +624,7 @@ class PyRecipe:
             if db.recipe_exists(recipe_name):
                 db.delete_recipe(recipe_name)
             else:
-                return "recipe_not_found"
+                raise RecipeNotFound()
 
     def update_recipe(self, recipe: Recipe):
         with RecipeDB() as db:
@@ -634,11 +636,6 @@ class PyRecipe:
             recs = db.get_all_recipes()
         return recs
 
-    @staticmethod
-    def recipe(name):
-        rec = Recipe()
-        rec.name = name
-        return rec
 
 if __name__ == '__main__':
     db = RecipeDB()

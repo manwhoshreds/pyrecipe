@@ -17,9 +17,9 @@ from pyrecipe.backend import PyRecipe, RecipeNotFound#, RecipeAlreadyStored
 
 def create_recipe(args):
     """Create a recipe"""
-    rec = PyRecipe.recipe(args.source)
-    new_rec = View.create_recipe(rec)
     pyrec = PyRecipe()
+    rec = pyrec.get_recipe(args.source)
+    new_rec = View.create_recipe(rec)
     pyrec.create_recipe(new_rec)
 
 def read_recipe(args):
@@ -39,6 +39,11 @@ def update_recipe(args):
 
 def delete_recipe(args):
     """Delete a recipe"""
+    try:
+        rec = PyRecipe().get_recipe(args.source)
+    except RecipeNotFound:
+        sys.exit(View.display_message('recipe_not_found', 'ERROR', args.source))
+    
     answer = input(f"Are you sure your want to delete {args.source}? yes/no ")
     pyrec = PyRecipe()
     if answer.strip() in ('yes', 'y'):
@@ -112,7 +117,7 @@ def get_parser():
         "--verbose",
         action="store_true",
         help="Increase the verbosity of output. \
-              Only works with print and show subcommands."
+              Only works with the print command."
     )
     parser.add_argument(
         "-V",

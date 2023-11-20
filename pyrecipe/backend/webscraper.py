@@ -39,7 +39,6 @@ class WebScraperTemplate(ABC):
         req = requests.get(url).text
         self.soup = bs4.BeautifulSoup(req, 'html.parser')
         self.recipe = recipe
-        self.recipe.uuid = str(uuid.uuid4())
         self.recipe.source_url = url
 
     def scrape(self):
@@ -98,9 +97,10 @@ class TastyWebScraper(WebScraperTemplate):
     
     def scrape_author(self):
         """Recipe author."""
+        author = ''
         name_box = self.soup.find('div', attrs={'class': 'byline'})
         if name_box:
-            author = name_box.text.strip()
+            return name_box.text.strip()
         return author
     
     def scrape_prep_time(self):
@@ -144,13 +144,13 @@ class AllRecipesWebScraper(WebScraperTemplate):
     def scrape_name(self):
         """Recipe name."""
         name = "headline heading-content elementFont__display"
-        name_box = self.soup.find('h1', attrs={'class': name})
+        name_box = self.soup.find('h1', attrs={'id': 'article-heading_1-0'})
         if name_box:
-            recipe_name = name_box.text.strip()
-        return recipe_name
+            return name_box.text.strip()
     
     def scrape_author(self):
         """Recipe author."""
+        author = ''
         name = "author-name author-text__block elementFont__detailsLinkOnly--underlined elementFont__details--bold"
         name_box = self.soup.find('a', attrs={'class': name})
         if name_box:
@@ -190,6 +190,8 @@ class AllRecipesWebScraper(WebScraperTemplate):
         return recipe_steps
 
 
+scrapers = [eval(s) for s in dir() if s.endswith('Scraper')]
+
 class RecipeWebScraper:
     """Factory for webscrapers."""
 
@@ -207,8 +209,6 @@ class RecipeWebScraper:
         scraper = [s for s in self._scrapeable if url.startswith(s)][0]
         recipe = self._scrapers[scraper](url, rec).scrape()
         return recipe
-
-scrapers = [eval(s) for s in dir() if s.endswith('Scraper')]
 
 if __name__ == '__main__':
     pass

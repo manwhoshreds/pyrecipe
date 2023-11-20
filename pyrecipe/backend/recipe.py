@@ -99,9 +99,6 @@ class Recipe:
         """
         Get the ingredients and named ingredients at the same time.
 
-        This is the recomended way of getting the ingredients for a recipe.
-        Example: ingreds, named = recipe.get_ingredients()
-
         :return: the recipe ingredient and named ingredient objects
         """
         ings = defaultdict(list)
