@@ -602,12 +602,16 @@ class PyRecipe:
         rec = scraper.scrape(source, rec)
         return rec
     
+    def _is_url(self, string: str):
+        test = re.compile(r'^https?\://').search(string)
+        return False
+        
     def get_recipe(self, source):
         
         if os.path.isfile(source):
             self._load_file(source)
 
-        if re.compile(r'^https?\://').search(source):
+        if self._is_url(source):
             return self._scrape_recipe(source)
         
         if isinstance(source, str):

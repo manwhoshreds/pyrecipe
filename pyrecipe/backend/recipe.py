@@ -350,5 +350,3 @@ class Ingredient:
 
 if __name__ == '__main__':
     test = Ingredient('1 3 ounce can onion, chopped')
-    print(test.__dict__)
-    print(test)

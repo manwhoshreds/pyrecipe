@@ -498,6 +498,7 @@ class RecipeEditor:
     
     def handle_input(self, key):
         """Handle the input."""
+        
         if key in ('f8', 'esc'):
             if self.recipe_changed:
                 self.quit_prompt()
@@ -510,7 +511,6 @@ class RecipeEditor:
             self.save_recipe(debug=True)
         else:
             pass
-
     
     @property
     def recipe_changed(self):
