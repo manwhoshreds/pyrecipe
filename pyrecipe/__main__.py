@@ -26,6 +26,7 @@ def read_recipe(args):
     """Read and print a recipe"""
     try:
         rec = PyRecipe().get_recipe(args.source)
+        print(args.verbose)
         View.print_recipe(rec, args.verbose)
     except RecipeNotFound:
         msg = View.display_message('recipe_not_found', 'ERROR', args.source)

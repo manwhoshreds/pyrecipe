@@ -56,18 +56,6 @@ class Recipe:
     steps: List[int] = field(default_factory=list)
     notes: List[int] = field(default_factory=list)
 
-    def _load_file(self, fil):
-        '''Load a recipe from a file'''
-        try:
-            with ZipFile(fil, 'r') as zfile:
-                with zfile.open('recipe.json', 'r') as stream:
-                    data = json.loads(stream.read())
-                    ingreds = data.pop('_ingredients')
-                    self._set_data(data)
-                    self.ingredients = ingreds
-        except BadZipFile as e:
-            sys.exit(utils.msg(f"{e}", "ERROR"))
-
     def _set_data(self, data):
         """Used to set recipe data from incoming dicts such as from webscraper
         and from openrecipes.org
