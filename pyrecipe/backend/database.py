@@ -602,7 +602,11 @@ class PyRecipe:
         elif os.path.isfile(source):
             return 'is_file'
         else:
-            return 'is_str'
+            with RecipeDB() as db:
+                if source in db.get_all_recipes():
+                    return 'is_in_db'
+                else:
+                    return 'new_recipe'
     
     def _load_file(self, source):
         pass
@@ -623,7 +627,8 @@ class PyRecipe:
         handler = {
                 'is_file': self._load_file,
                 'is_url': self._scrape_recipe,
-                'is_str': self._load_from_database
+                'is_in_db': self._load_from_database,
+                'new_recipe': self.recipe
         }
         return handler[a_source](source)
 
