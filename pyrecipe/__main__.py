@@ -24,12 +24,8 @@ def create_recipe(args):
 
 def read_recipe(args):
     """Read and print a recipe"""
-    try:
-        rec = PyRecipe().get_recipe(args.source)
-        View.print_recipe(rec, args.verbose)
-    except RecipeNotFound:
-        msg = View.display_message('recipe_not_found', 'ERROR', args.source)
-        sys.exit(msg)
+    rec = PyRecipe().get_recipe(args.source)
+    View.print_recipe(rec, args.verbose)
 
 def update_recipe(args):
     """Update a recipe"""
