@@ -595,6 +595,17 @@ class DBInfo():
 
 class PyRecipe:
     """PyRecipe class"""
+    
+    def _analyze_source(self, source):
+        if re.compile(r'^https?\://').search(source):
+            return 'is_url'
+        elif os.path.isfile(source):
+            return 'is_file'
+        else:
+            return 'is_str'
+    
+    def _load_file(self, source):
+        pass
 
     def _scrape_recipe(self, source):
         rec = Recipe()
@@ -602,22 +613,19 @@ class PyRecipe:
         rec = scraper.scrape(source, rec)
         return rec
     
-    def _is_url(self, string: str):
-        test = re.compile(r'^https?\://').search(string)
-        return False
-        
-    def get_recipe(self, source):
-        
-        if os.path.isfile(source):
-            self._load_file(source)
+    def _load_from_database(self, source):
+        with RecipeDB() as db:
+            rec = db.read_recipe(source)
+        return rec
 
-        if self._is_url(source):
-            return self._scrape_recipe(source)
-        
-        if isinstance(source, str):
-            with RecipeDB() as db:
-                rec = db.read_recipe(source)
-            return rec
+    def get_recipe(self, source):
+        a_source = self._analyze_source(source) 
+        handler = {
+                'is_file': self._load_file,
+                'is_url': self._scrape_recipe,
+                'is_str': self._load_from_database
+        }
+        return handler[a_source](source)
 
     def create_recipe(self, recipe: Recipe):
         with RecipeDB() as db:
@@ -639,6 +647,9 @@ class PyRecipe:
         with RecipeDB() as db:
             recs = db.get_all_recipes()
         return recs
+
+    def recipe(self, source):
+        return Recipe(name=source)
 
 
 if __name__ == '__main__':

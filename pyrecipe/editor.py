@@ -504,7 +504,7 @@ class RecipeEditor:
                 self.quit_prompt()
                 return
             else:
-                raise ur.ExitMainLoop()
+                sys.exit()
         elif key in ('f2',):
             self.save_recipe()
         elif key in ('f3',):

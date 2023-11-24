@@ -42,16 +42,15 @@ def delete_recipe(args):
     """Delete a recipe"""
     try:
         rec = PyRecipe().get_recipe(args.source)
+        answer = input(f"Are you sure your want to delete {args.source}? yes/no ")
+        pyrec = PyRecipe()
+        if answer.strip() in ('yes', 'y'):
+            pyrec.delete_recipe(args.source.lower())
+            sys.exit(View.display_message('recipe_deleted', 'INFORM', args.source))
+
+        sys.exit(View.display_message('recipe_not_deleted', 'INFORM', args.source))
     except RecipeNotFound:
         sys.exit(View.display_message('recipe_not_found', 'ERROR', args.source))
-    
-    answer = input(f"Are you sure your want to delete {args.source}? yes/no ")
-    pyrec = PyRecipe()
-    if answer.strip() in ('yes', 'y'):
-        pyrec.delete_recipe(args.source.lower())
-        sys.exit(View.display_message('recipe_deleted', 'INFORM', args.source))
-
-    sys.exit(View.display_message('recipe_not_deleted', 'INFORM', args.source))
 
 def subparser_add(subparser):
     """Subparser for add command."""

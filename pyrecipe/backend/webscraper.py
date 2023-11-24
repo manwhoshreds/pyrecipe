@@ -201,7 +201,6 @@ class RecipeWebScraper:
         for item in scrapers:
             self.register_scraper(item)
 
-
     def register_scraper(self, scraper):
         self._scrapers[scraper.URL] = scraper
 
