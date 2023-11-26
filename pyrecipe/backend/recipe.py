@@ -31,6 +31,7 @@ import json
 import string
 from typing import List
 from copy import deepcopy
+from enum import Enum, auto
 from zipfile import ZipFile, BadZipFile
 from dataclasses import dataclass, field
 from collections import OrderedDict, defaultdict
@@ -40,6 +41,23 @@ from pyrecipe import Quant, CULINARY_UNITS
 from pyrecipe.backend.recipe_numbers import RecipeNum
 
 
+class DishType(Enum):
+
+    MAIN = auto()
+    SIDE = auto()
+    DESSERT = auto()
+    CONDIMENT = auto()
+    DIP = auto()
+    PREP = auto()
+    SALAD_DRESSING = auto()
+    SAUCE = auto()
+    BASE = auto()
+    GARNISH = auto()
+    SEASONING = auto()
+
+    def __str__(self):
+        return self.name.lower().replace("_", " ")
+
 @dataclass
 class Recipe:
     """The recipe dataclass"""
@@ -47,7 +65,7 @@ class Recipe:
     recipe_id: int = None
     uuid: str = ''
     name: str = ''
-    dish_type: str = ''
+    dish_type: DishType = 1
     prep_time: int = 0
     cook_time: int = 0
     author: str = ''
@@ -108,6 +126,7 @@ class Recipe:
     def ingredients(self, value):
         """Set the ingredients of a recipe."""
         #value = ["test"]
+        print(value)
         if type(value[0]) in (str, dict):
             for item in value:
                 item = Ingredient(item)
@@ -199,27 +218,27 @@ class Ingredient:
         else:
             # amnt
             if self.amount:
-                ingred_string.append('{}'.format(self.amount))
+                ingred_string.append(f'{self.amount}')
             # size
             if self.size:
-                ingred_string.append(' {}'.format(self.size))
+                ingred_string.append(f' {self.size}')
             # portion
             if self.portion:
-                ingred_string.append(' ({})'.format(self.portion))
+                ingred_string.append(f' ({self.portion})')
             # unit
             if self.unit:
                 if self.unit == 'each':
                     pass
                 else:
-                    ingred_string.append(' {}'.format(self.unit))
+                    ingred_string.append(f' {self.unit}')
 
             # name
-            ingred_string.append(' {}'.format(self.name))
+            ingred_string.append(f' {self.name}')
 
         if self.prep:
             ingred_string.append(", " + self.prep)
         if self.note:
-            note = ' ({})'.format(self.note)
+            note = f' ({self.note})'
             ingred_string.append(note)
         string = ''.join(ingred_string).strip().capitalize()
         return string

@@ -31,7 +31,10 @@ def update_recipe(args):
     """Update a recipe"""
     pyrec = PyRecipe()
     rec = pyrec.get_recipe(args.source)
+    print(rec.dump_data())
     new_rec = View.edit_recipe(rec)
+    print(new_rec.dump_data())
+    exit()
     pyrec.update_recipe(new_rec)
 
 def delete_recipe(args):
@@ -95,7 +98,7 @@ def subparser_remove(subparser):
         help="Recipe to delete"
     )
 
-def get_parser():
+def get_args():
     """Parse args for recipe_tool."""
     parser = argparse.ArgumentParser(
         description="Recipe_tool has tab completion functionality. \
@@ -127,22 +130,14 @@ def get_parser():
     subparser_print(subparser)
     subparser_edit(subparser)
     subparser_remove(subparser)
-    return parser
+    return parser.parse_args()
 
 
 def main():
     """Main entry point of pyrecipe."""
 
-    parser = get_parser()
-    args = parser.parse_args()
-    if len(sys.argv) == 1:
-        sys.exit(parser.print_help())
-    elif len(sys.argv) == 2 and args.verbose:
-        # if recipe_tool is invoked with only a
-        # verbose flag it causes an exception so
-        # here we offer help if no other flags are given
-        sys.exit(parser.print_help())
-
+    args = get_args()
+    
     case = {
         'add': create_recipe,
         'print': read_recipe,
@@ -153,7 +148,10 @@ def main():
     if args.version:
         sys.exit(VER_STR)
     else:
-        case[args.subparser](args)
+        try:
+            case[args.subparser](args)
+        except KeyError:
+            sys.exit(parser.print_help())
 
 if __name__ == '__main__':
     main()

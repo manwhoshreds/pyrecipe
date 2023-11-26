@@ -14,7 +14,7 @@ import uuid
 
 import urwid as ur
 
-from pyrecipe.backend import DISH_TYPES, Recipe
+from pyrecipe.backend import Recipe, DishType
 from pyrecipe.utils import wrap
 
 
@@ -45,8 +45,8 @@ class IngredientsContainer(ur.WidgetWrap):
     """Main container for holding ingredient blocks."""
     def __init__(self, ingredients):
         if not ingredients:
-            #self.ingredients = {None: [Recipe.ingredient('Add ingredient')]}
-            self.ingredients = {None: None}
+            self.ingredients = {None: [Recipe.ingredient('Add ingredient')]}
+            #self.ingredients = {None: ''}
         else:
             self.ingredients = ingredients
         
@@ -106,7 +106,7 @@ class EntryBlock(ur.WidgetWrap):
     
     def __init__(self, entries=[], wrap_amount=70):
         if not entries:
-            entries = ['write here']
+            entries = ['Write here']
         self.widgets = []
         wrapped = wrap(entries, wrap_amount)
 
@@ -182,6 +182,8 @@ class EntryBlock(ur.WidgetWrap):
         entries = []
         for item in self.widget_list:
             text = item.get_edit_text()
+            if text == 'Write here':
+                continue
             text = ' '.join(text.split())
             entries.append(text)
         return entries
@@ -344,7 +346,6 @@ class IngredBlock(EntryBlock):
         return ingredients
 
 
-
 class RecipeEditor:
     """The pyrecipe console interface for managing recipes."""
     
@@ -367,6 +368,7 @@ class RecipeEditor:
             self.welcome = f'Add a Recipe: {self.recipe.name}'
             self.recipe.uuid = str(uuid.uuid4())
         
+        self.disht_group = []
         self.initial_state = self.recipe.dump_data()
         self.original_name = self.recipe.name
 
@@ -408,11 +410,10 @@ class RecipeEditor:
     
     def setup_listbox(self):
         """The main listbox"""
-        self.disht_group = []
         radio_dish_types = ur.GridFlow(
             [ur.AttrMap(
-                ur.RadioButton(self.disht_group, txt), 'buttn', 'buttnf')
-                                for txt in DISH_TYPES], 15, 0, 2, 'left'
+                ur.RadioButton(self.disht_group, str(txt)), 'buttn', 'buttnf')
+                                for txt in DishType], 15, 0, 2, 'left'
         )
         for item in self.disht_group:
             if item.get_label() == self.recipe.dish_type:
@@ -515,11 +516,8 @@ class RecipeEditor:
     @property
     def recipe_changed(self):
         """Check if the state of the recipe has changed."""
-        changed = False
         self.update_recipe_data()
-        if self.initial_state != self.recipe.dump_data():
-            changed = True
-        return changed
+        return self.initial_state != self.recipe.dump_data()
 
     
     def update_recipe_data(self):
@@ -555,11 +553,10 @@ class RecipeEditor:
             self.recipe.notes = notes
     
     
-    def save_recipe(self, debug=False):
+    def save_recipe(self):
         """Save the current state of the recipe and exit."""
         self.update_recipe_data()
-        if not debug:
-            raise ur.ExitMainLoop()
+        raise ur.ExitMainLoop()
 
     
     def start(self):
