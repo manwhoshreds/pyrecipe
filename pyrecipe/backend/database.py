@@ -597,6 +597,7 @@ class PyRecipe:
     """PyRecipe class"""
     
     def _analyze_source(self, source):
+        print(source)
         if re.compile(r'^https?\://').search(source):
             return 'is_url'
         elif os.path.isfile(source):

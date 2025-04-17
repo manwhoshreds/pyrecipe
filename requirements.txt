@@ -1,0 +1,7 @@
+pint
+urwid
+bs4
+lxml
+termcolor
+inflect
+requests
