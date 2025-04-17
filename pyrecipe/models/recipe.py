@@ -37,7 +37,7 @@ from collections import OrderedDict, defaultdict
 
 from pyrecipe import utils
 from pyrecipe import Quant, CULINARY_UNITS
-from pyrecipe.backend.recipe_numbers import RecipeNum
+from pyrecipe.models.recipe_numbers import RecipeNum
 
 
 @dataclass

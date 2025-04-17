@@ -11,55 +11,53 @@ import sys
 import argparse
 
 from pyrecipe import VER_STR
-from pyrecipe.view import View
-from pyrecipe.backend import PyRecipe, RecipeNotFound  # , RecipeAlreadyStored
+from pyrecipe.ui import View
+from pyrecipe.models import PyRecipe, RecipeNotFound#, RecipeAlreadyStored
 
-def create_recipe(args, pyrec):
+
+def create_recipe(args):
+    """Create a recipe"""
+    pyrec = PyRecipe()
     rec = pyrec.get_recipe(args.source)
     new_rec = View.create_recipe(rec)
     pyrec.create_recipe(new_rec)
 
-def view_recipe(args, pyrec):
-    rec = pyrec.get_recipe(args.source)
+def read_recipe(args):
+    """Read and print a recipe"""
+    rec = PyRecipe().get_recipe(args.source)
     View.print_recipe(rec, args.verbose)
 
-def update_recipe(args, pyrec):
+def update_recipe(args):
+    """Update a recipe"""
+    pyrec = PyRecipe()
     rec = pyrec.get_recipe(args.source)
     new_rec = View.edit_recipe(rec)
     pyrec.update_recipe(new_rec)
 
-def delete_recipe(args, pyrec):
-    """
-    Deletes a recipe from the database after user confirmation.
-
-    Args:
-        args: The parsed command-line arguments containing the source recipe.
-        pyrec: The PyRecipe object used to interact with the recipe database.
-
-    Raises:
-        RecipeNotFound: If the recipe cannot be found in the database.
-    """
+def delete_recipe(args):
+    """Delete a recipe"""
     try:
-        rec = pyrec.get_recipe(args.source)
-        answer = input(f"Are you sure you want to delete {args.source}? yes/no ")
-        if answer.strip().lower() in ('yes', 'y'):
+        rec = PyRecipe().get_recipe(args.source)
+        answer = input(f"Are you sure your want to delete {args.source}? yes/no ")
+        pyrec = PyRecipe()
+        if answer.strip() in ('yes', 'y'):
             pyrec.delete_recipe(args.source.lower())
             sys.exit(View.display_message('recipe_deleted', 'INFORM', args.source))
 
         sys.exit(View.display_message('recipe_not_deleted', 'INFORM', args.source))
     except RecipeNotFound:
         sys.exit(View.display_message('recipe_not_found', 'ERROR', args.source))
-    except Exception as e:
-        sys.exit(View.display_message('unexpected_error', 'ERROR', str(e)))
 
 def subparser_add(subparser):
+    """Subparser for add command."""
     parser_add = subparser.add_parser("add", help='Add a recipe')
     parser_add.add_argument("source", help='Name of the recipe to add')
 
-def subparser_view(subparser):
+def subparser_print(subparser):
+    """Subparser for print command."""
     parser = subparser.add_parser(
-        "view",
-        help="Display the recipe on screen"
+        "print",
+        help="Print the recipe to screen"
     )
     parser.add_argument(
         "source",
@@ -75,7 +73,9 @@ def subparser_view(subparser):
         help="Specify a yield for the recipe."
     )
 
+
 def subparser_edit(subparser):
+    """Subparser for edit command."""
     parser = subparser.add_parser(
         "edit",
         help="Edit a recipe data file"
@@ -86,7 +86,9 @@ def subparser_edit(subparser):
         help="Recipe to edit"
     )
 
+
 def subparser_remove(subparser):
+    """Subparser for remove command."""
     parser_remove = subparser.add_parser("remove", help='Delete a recipe')
     parser_remove.add_argument(
         "source",
@@ -94,69 +96,64 @@ def subparser_remove(subparser):
     )
 
 def get_parser():
-     
+    """Parse args for recipe_tool."""
     parser = argparse.ArgumentParser(
-        description="Recipe_tool has tab completion functionality.\n"
-                    "After adding a recipe, run: recipe_tool view <TAB><TAB>\n"
-                    "to view available recipes.",
+        description="Recipe_tool has tab completion functionality. \
+                     After adding a recipe, simply run recipe_tool \
+                     print <TAB><TAB> to view whats available.",
         add_help=False
     )
     parser.add_argument(
-            "-h", 
-            "--help", 
-            action='help', 
-            help="Show this help message and quit"
+        "-h", "--help",
+        action='help',
+        help="Show this help message and quit"
     )
     parser.add_argument(
-            "-v", 
-            "--verbose", 
-            action="store_true", 
-            help="Increase output verbosity. Works with 'view'."
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="Increase the verbosity of output. \
+              Only works with the print command."
     )
     parser.add_argument(
-            "-V", 
-            "--version", 
-            action="store_true", 
-            help="Print version and exit"
+        "-V",
+        "--version",
+        action="store_true",
+        help="Print version and exit"
     )
 
     subparser = parser.add_subparsers(dest='subparser')
     subparser_add(subparser)
-    subparser_view(subparser)
+    subparser_print(subparser)
     subparser_edit(subparser)
     subparser_remove(subparser)
     return parser
 
+
 def main():
-    """
-    Main entry point for recipe_tool. Processes command-line arguments 
-    and runs the relevant functions. If no subcommand is provided, or an 
-    invalid subcommand is given, it displays the help message.
-    """
+    """Main entry point of pyrecipe."""
+
     parser = get_parser()
     args = parser.parse_args()
-
     if len(sys.argv) == 1:
         sys.exit(parser.print_help())
     elif len(sys.argv) == 2 and args.verbose:
+        # if recipe_tool is invoked with only a
+        # verbose flag it causes an exception so
+        # here we offer help if no other flags are given
         sys.exit(parser.print_help())
+
+    case = {
+        'add': create_recipe,
+        'print': read_recipe,
+        'edit': update_recipe,
+        'remove': delete_recipe,
+    }
 
     if args.version:
         sys.exit(VER_STR)
-
-    pyrec = PyRecipe()
-    case = {
-        'add': lambda a: create_recipe(a, pyrec),
-        'view': lambda a: view_recipe(a, pyrec),
-        'edit': lambda a: update_recipe(a, pyrec),
-        'remove': lambda a: delete_recipe(a, pyrec),
-    }
-
-    if args.subparser:
-        case[args.subparser](args)
     else:
-        parser.print_help()
+        case[args.subparser](args)
 
 if __name__ == '__main__':
     main()
-

@@ -11,9 +11,9 @@
 
 from termcolor import colored
 
+from .editor import RecipeEditor
 from pyrecipe import utils
-from pyrecipe.backend.recipe_numbers import RecipeNum
-from pyrecipe.editor import RecipeEditor
+from pyrecipe.models.recipe_numbers import RecipeNum
 
 
 def divider(m):

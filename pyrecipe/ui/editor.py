@@ -14,7 +14,8 @@ import uuid
 
 import urwid as ur
 
-from pyrecipe.backend import DISH_TYPES, Recipe
+from pyrecipe.config import DISH_TYPES
+from pyrecipe.models import Recipe
 from pyrecipe.utils import wrap
 
 

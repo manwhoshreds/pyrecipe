@@ -12,8 +12,9 @@
 
 import os
 import sys
-from math import ceil
 import pkg_resources
+from math import ceil
+from pathlib import Path
 
 from pint import UnitRegistry
 import inflect
@@ -39,9 +40,8 @@ class Ureg(UnitRegistry):
         units += [p.plural(u) for u in units] + aliases
         return sorted(list(set(units)))
 
-_dir = os.path.dirname(__file__)
-_definitions = os.path.join(_dir, 'culinary_units.txt')
-ureg = Ureg(_definitions)
+units = Path(__file__).parent / "data" / "culinary_units.txt"
+ureg = Ureg(units)
 CULINARY_UNITS = ureg.get_culinary_units()
 
 VER_STR = r"""

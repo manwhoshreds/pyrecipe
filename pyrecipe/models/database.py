@@ -12,8 +12,8 @@ import sqlite3
 from itertools import zip_longest
 
 import pyrecipe.utils as utils
-from pyrecipe.backend.recipe import Recipe
-from pyrecipe.backend.webscraper import RecipeWebScraper
+from pyrecipe.models.recipe import Recipe
+from pyrecipe.scrapers.webscraper import RecipeWebScraper
 
 
 if not os.path.isdir(os.path.expanduser("~/.local/share/pyrecipe")):
