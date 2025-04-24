@@ -6,38 +6,26 @@
     the connection, query, and building of the database.
 """
 import os
-import re
 import sys
 import sqlite3
 from itertools import zip_longest
 
-import pyrecipe.utils as utils
 from pyrecipe.models.recipe import Recipe
-from pyrecipe.scrapers.webscraper import RecipeWebScraper
+from .exceptions import RecipeNotFound
 
 
-if not os.path.isdir(os.path.expanduser("~/.local/share/pyrecipe")):
-    os.makedirs(os.path.expanduser("~/.local/share/pyrecipe"))
 
 if sys.base_prefix == sys.prefix:
     DB_FILE = os.path.expanduser("~/.local/share/pyrecipe/recipes.db")
 else:
-    DB_FILE = os.path.expanduser("~/Code/pyrecipe/pyrecipe/backend/recipes.db")
+    DB_FILE = os.path.expanduser("~/Code/pyrecipe/data/recipes_dev.db")
 
 DB_DIR = os.path.dirname(os.path.realpath(__file__))
 
 
-class RecipeNotFound(Exception):
-    pass
-
-
-class RecipeAlreadyStored(Exception):
-    pass
-
-
-class RecipeDB:
+class PyRecipe:
     """A database class for pyrecipe."""
-    
+
     def __init__(self):
         try:
             self.connection = sqlite3.connect(DB_FILE)
@@ -46,7 +34,7 @@ class RecipeDB:
         self.connection.row_factory = sqlite3.Row
         self.cursor = self.connection.cursor()
         self.cursor.execute("PRAGMA foreign_keys = ON")
-    
+
     def __enter__(self):
         return self
 
@@ -62,7 +50,6 @@ class RecipeDB:
         """Given a sqlite row, return a dict"""
         return dict(zip(row.keys(), row))
 
-
     def _insert_ingredient(self, ingred):
         """Inserts ingredients data into the database"""
         self.cursor.execute(
@@ -75,7 +62,7 @@ class RecipeDB:
                     "INSERT OR IGNORE INTO IngredientGroups(group_name) VALUES(?)",
                        (ingred.group_name,)
                 )
-        
+
         self.cursor.execute(
             "INSERT OR IGNORE INTO Ingredients(name) VALUES(?)",
                (ingred.name,)
@@ -84,20 +71,20 @@ class RecipeDB:
             "INSERT OR IGNORE INTO Units(unit) VALUES(?)",
                (str(ingred.unit),)
         )
-        
+
         if ingred.size:
             self.cursor.execute(
                 "INSERT OR IGNORE INTO IngredientSizes(ingredient_size) VALUES(?)",
                    (str(ingred.size),)
             )
-        
+
         if ingred.prep:
             self.cursor.execute(
                 "INSERT OR IGNORE INTO IngredientPrep(prep) VALUES(?)",
                    (str(ingred.prep),)
             )
 
-    
+
     def _get_step_ids(self, recipe_id):
         self.cursor.execute(
             '''SELECT id
@@ -121,38 +108,38 @@ class RecipeDB:
         for item in note_ids:
             ids.append(self._get_dict_from_row(item)['id'])
         return ids
-    
+
     def _get_recipe_ingredients(self, recipe_id):
         self.cursor.execute(
-            '''SELECT 
+            '''SELECT
                 recipe_ingredient_id,
-                group_name, 
-                amount, 
-                ingredient_size, 
-                name, 
-                unit, 
+                group_name,
+                amount,
+                ingredient_size,
+                name,
+                unit,
                 prep
                FROM RecipeIngredients AS ri
-               LEFT JOIN IngredientGroups as ig 
+               LEFT JOIN IngredientGroups as ig
                     ON ri.group_id=ig.id
-               LEFT JOIN IngredientSizes AS isi 
+               LEFT JOIN IngredientSizes AS isi
                     ON ri.size_id=isi.id
-               INNER JOIN Units AS u 
+               INNER JOIN Units AS u
                     ON ri.unit_id=u.id
-               INNER JOIN Ingredients AS i 
+               INNER JOIN Ingredients AS i
                     ON ri.ingredient_id=i.id
-               LEFT JOIN IngredientPrep AS ip 
+               LEFT JOIN IngredientPrep AS ip
                     ON ri.prep_id=ip.id
                WHERE recipe_id=?''', (recipe_id,)
         )
-        
+
         ingred_rows = self.cursor.fetchall()
         ingred_list = []
         for item in ingred_rows:
             ingredient = self._get_dict_from_row(item)
             ingred_list.append(ingredient)
         return ingred_list
-    
+
     def get_all_recipes(self):
         '''Return a list of all recipes in the database'''
         self.cursor.execute(
@@ -162,11 +149,11 @@ class RecipeDB:
         for item in self.cursor.fetchall():
             recipes.append(self._get_dict_from_row(item)['name'])
         return recipes
-    
+
     def create_recipe(self, recipe):
         '''Add a recipe to the database.'''
         recipe_data = (
-            recipe.uuid, 
+            recipe.uuid,
             recipe.name.lower(),
             recipe.dish_type,
             recipe.author,
@@ -174,7 +161,7 @@ class RecipeDB:
             recipe.prep_time,
             recipe.cook_time
         )
-        
+
         self.cursor.execute(
             '''INSERT INTO Recipes (
                 uuid,
@@ -186,9 +173,9 @@ class RecipeDB:
                 cook_time
                 ) VALUES(?, ?, ?, ?, ?, ?, ?)''', recipe_data
         )
-        
+
         recipe_id = self.cursor.lastrowid
-        
+
         for item in recipe.ingredients:
             self._insert_ingredient(item)
             self.cursor.execute(
@@ -198,7 +185,7 @@ class RecipeDB:
             )
 
             ingredient_id = self.cursor.fetchone()['id']
-            
+
             self.cursor.execute(
                 '''SELECT id FROM Units
                    WHERE unit=?''',
@@ -206,9 +193,9 @@ class RecipeDB:
             )
 
             unit_id = self.cursor.fetchone()['id']
-            
+
             self.cursor.execute(
-                '''SELECT id 
+                '''SELECT id
                    FROM IngredientSizes
                    WHERE ingredient_size=?''',
                    (item.size,)
@@ -217,58 +204,58 @@ class RecipeDB:
                 ingredient_size_id = self.cursor.fetchone()['id']
             except TypeError:
                 ingredient_size_id = None
-            
+
             self.cursor.execute(
-                '''SELECT id 
+                '''SELECT id
                    FROM IngredientPrep
                    WHERE prep=?''',
                    (item.prep,)
             )
-            
+
             try:
                 prep_id = self.cursor.fetchone()['id']
             except TypeError:
                 prep_id = None
-            
+
             self.cursor.execute(
                 '''SELECT id
                    FROM IngredientGroups
                    WHERE group_name=?''',
                    (item.group_name,)
             )
-            try: 
+            try:
                 group_id = self.cursor.fetchone()['id']
             except TypeError:
                 group_id = None
-            
+
             self.cursor.execute(
                 '''INSERT OR IGNORE
-                   INTO RecipeIngredients 
-                   (recipe_id, 
+                   INTO RecipeIngredients
+                   (recipe_id,
                     group_id,
-                    amount, 
-                    size_id, 
-                    unit_id, 
+                    amount,
+                    size_id,
+                    unit_id,
                     ingredient_id,
                     prep_id
-                    ) VALUES(?, ?, ?, ?, ?, ?, ?)''', 
+                    ) VALUES(?, ?, ?, ?, ?, ?, ?)''',
                     (recipe_id,
                      group_id,
-                     str(item.amount), 
+                     str(item.amount),
                      ingredient_size_id,
-                     int(unit_id), 
+                     int(unit_id),
                      int(ingredient_id),
                      prep_id)
             )
-    
-        
+
+
         for item in recipe.steps:
             try:
                 #temp fix for reading from file
                 step = item['step']
             except TypeError:
                 step = item
-            
+
             self.cursor.execute(
                 '''INSERT OR REPLACE INTO RecipeSteps (
                     recipe_id,
@@ -277,7 +264,7 @@ class RecipeDB:
                 ''', (recipe_id, step)
             )
 
-        
+
         recipe.notes = ['Add note.']
         for note in recipe.notes:
             self.cursor.execute(
@@ -287,19 +274,20 @@ class RecipeDB:
                     ) VALUES(?, ?)
                 ''', (recipe_id, note)
             )
-        
+
         self.connection.commit()
 
-    def read_recipe(self, recipe_name: str):
-        self.cursor.execute("SELECT * FROM Recipes WHERE name=?", (recipe_name,))
+    def read_recipe(self, name: str):
+        """Read the recipe from the database"""
+        self.cursor.execute("SELECT * FROM Recipes WHERE name=?", (name,))
         row = self.cursor.fetchone()
-        if row:
-            recipe = Recipe()
-            row = self._get_dict_from_row(row)
-            recipe._set_data(row)
-        else:
-            raise RecipeNotFound()
-        
+        if row is None:
+            raise RecipeNotFound(f"No recipe found with name ' '{name}'")
+
+        recipe = Recipe()
+        row = self._get_dict_from_row(row)
+        recipe._set_data(row)
+
         recipe.ingredients = self._get_recipe_ingredients(recipe.recipe_id)
 
         self.cursor.execute(
@@ -314,25 +302,26 @@ class RecipeDB:
             step = self._get_dict_from_row(item)
             step_list.append(step['step'])
         recipe.steps = step_list
-        
+
         self.cursor.execute(
             '''SELECT id, note
                FROM RecipeNotes
                WHERE recipe_id=?''', (recipe.recipe_id,)
         )
-        
+
         note_rows = self.cursor.fetchall()
         note_list = []
         for item in note_rows:
             note = self._get_dict_from_row(item)
             note_list.append(note['note'])
         recipe.notes = note_list
-        
+
         return recipe
 
     def recipe_exists(self, recipe):
+        """See if the recipe_exists"""
         return recipe in self.get_all_recipes()
-    
+
     def update_recipe(self, recipe):
         '''Update a recipe in the database.'''
         recipe_data = (
@@ -356,7 +345,7 @@ class RecipeDB:
                 source_url=?
                WHERE recipe_id=?''', recipe_data
         )
-        
+
         ingreds = recipe.ingredients
         ingredient_ids = self._get_recipe_ingredients(recipe.recipe_id)
         ingredient_ids = [i['recipe_ingredient_id'] for i in ingredient_ids]
@@ -368,7 +357,7 @@ class RecipeDB:
                        (idd,)
                 )
                 continue
-            
+
             self._insert_ingredient(item)
 
             self.cursor.execute(
@@ -378,7 +367,7 @@ class RecipeDB:
             )
 
             ingredient_id = self.cursor.fetchone()['id']
-            
+
             self.cursor.execute(
                 '''SELECT id FROM Units
                    WHERE unit=?''',
@@ -386,9 +375,9 @@ class RecipeDB:
             )
 
             unit_id = self.cursor.fetchone()['id']
-            
+
             self.cursor.execute(
-                '''SELECT id 
+                '''SELECT id
                    FROM IngredientSizes
                    WHERE ingredient_size=?''',
                    (item.size,)
@@ -397,30 +386,30 @@ class RecipeDB:
                 ingredient_size_id = self.cursor.fetchone()['id']
             except TypeError:
                 ingredient_size_id = None
-            
+
             self.cursor.execute(
-                '''SELECT id 
+                '''SELECT id
                    FROM IngredientPrep
                    WHERE prep=?''',
                    (item.prep,)
             )
-            
+
             try:
                 prep_id = self.cursor.fetchone()['id']
             except TypeError:
                 prep_id = None
-            
+
             self.cursor.execute(
                 '''SELECT id
                    FROM IngredientGroups
                    WHERE group_name=?''',
                    (item.group_name,)
             )
-            try: 
+            try:
                 group_id = self.cursor.fetchone()['id']
             except TypeError:
                 group_id = None
-            
+
             if idd:
                 self.cursor.execute(
                     '''UPDATE RecipeIngredients
@@ -445,17 +434,17 @@ class RecipeDB:
                     '''INSERT into RecipeIngredients(
                         recipe_id,
                         group_id,
-                        amount, 
-                        size_id, 
-                        unit_id, 
+                        amount,
+                        size_id,
+                        unit_id,
                         ingredient_id,
                         prep_id)
                        VALUES(?, ?, ?, ?, ?, ?, ?)''',
                        (recipe.recipe_id,
                         group_id,
-                        str(item.amount), 
+                        str(item.amount),
                         ingredient_size_id,
-                        int(unit_id), 
+                        int(unit_id),
                         int(ingredient_id),
                         prep_id)
                 )
@@ -467,7 +456,7 @@ class RecipeDB:
                     '''DELETE FROM RecipeSteps
                        WHERE id=?''', (idd,)
                 )
-            
+
             if idd:
                 self.cursor.execute(
                     '''UPDATE RecipeSteps
@@ -491,7 +480,7 @@ class RecipeDB:
                     '''DELETE FROM RecipeNotes
                        WHERE id=?''', (idd,)
                 )
-            
+
             if idd:
                 self.cursor.execute(
                     '''UPDATE RecipeNotes
@@ -507,46 +496,39 @@ class RecipeDB:
                        VALUES(?, ?)''',
                        (recipe.recipe_id, note)
                 )
-        
+
         self.connection.commit()
-    
 
     def delete_recipe(self, recipe_name):
         """Delete recipe from database."""
-        self.cursor.execute(f"DELETE FROM Recipes WHERE name='{recipe_name}'")
-
-    def create_database(self):
-        """Create the recipe database."""
-        tables = os.path.join(DB_DIR, "tables.sql")
-        with open(tables) as fi:
-            self.cursor.executescript(fi.read())
+        self.cursor.execute(f"DELETE FROM Recipes WHERE name=?", (recipe_name,))
 
 
 class DBInfo():
     """Get data from the database as a dict."""
-    
+
     def get_recipes(self):
         """Return all of the recipe names in the database."""
         names = self.cursor.execute("SELECT name FROM Recipes")
         names = [x[0] for x in names]
         return names
-    
+
     def get_recipes_by_dishtype(self, dishtype):
-        """Get recipenames of a cirtain dishtype.""" 
+        """Get recipenames of a cirtain dishtype."""
         names = self.query(
             "SELECT name FROM Recipes WHERE dishtype = \'{}\'".format(dishtype)
         )
         names = [x[0] for x in names]
         return names
-    
+
     def get_recipes_by_author(self, author):
-        """Get recipenames of a cirtain dishtype.""" 
+        """Get recipenames of a cirtain dishtype."""
         names = self.cursor.execute(
             "SELECT name FROM Recipes WHERE author = \'{}\'".format(author)
         )
         names = [x[0] for x in names]
         return names
-    
+
     def get_uuid(self, name):
         """Get the uuid of the recipe."""
         uuid = self.query(
@@ -570,17 +552,17 @@ class DBInfo():
         for w in results:
             # Get rid of empty strings
             w = [i for i in w if i]
-            # Split words at spaces 
+            # Split words at spaces
             w = [w for s in w for w in s.split()]
             words += w
         return set(words)
-    
+
     def search(self, args=[]):
         """Search the database."""
         arg_list = []
         for arg in args:
             arg_list += arg.split()
-        arg_list += [p.plural(w) for w in arg_list] 
+        arg_list += [p.plural(w) for w in arg_list]
         queries = [
             'SELECT name FROM recipesearch WHERE recipesearch MATCH "{}"',
             'SELECT name FROM ingredientsearch WHERE ingredientsearch MATCH "{}"'
@@ -593,71 +575,6 @@ class DBInfo():
                 results += result
         return set(results)
 
-class PyRecipe:
-    """PyRecipe class"""
-    
-    def _analyze_source(self, source):
-        print(source)
-        if re.compile(r'^https?\://').search(source):
-            return 'is_url'
-        elif os.path.isfile(source):
-            return 'is_file'
-        else:
-            with RecipeDB() as db:
-                if source in db.get_all_recipes():
-                    return 'is_in_db'
-                else:
-                    return 'new_recipe'
-    
-    def _load_file(self, source):
-        pass
-
-    def _scrape_recipe(self, source):
-        rec = Recipe()
-        scraper = RecipeWebScraper()
-        rec = scraper.scrape(source, rec)
-        return rec
-    
-    def _load_from_database(self, source):
-        with RecipeDB() as db:
-            rec = db.read_recipe(source)
-        return rec
-
-    def get_recipe(self, source):
-        a_source = self._analyze_source(source) 
-        handler = {
-                'is_file': self._load_file,
-                'is_url': self._scrape_recipe,
-                'is_in_db': self._load_from_database,
-                'new_recipe': self.recipe
-        }
-        return handler[a_source](source)
-
-    def create_recipe(self, recipe: Recipe):
-        with RecipeDB() as db:
-            db.create_recipe(recipe)
-
-    def delete_recipe(self, recipe_name):
-        with RecipeDB() as db:
-            if db.recipe_exists(recipe_name):
-                db.delete_recipe(recipe_name)
-            else:
-                raise RecipeNotFound()
-
-    def update_recipe(self, recipe: Recipe):
-        with RecipeDB() as db:
-            db.update_recipe(recipe)
-
-    
-    def get_all_recipes(self):
-        with RecipeDB() as db:
-            recs = db.get_all_recipes()
-        return recs
-
-    def recipe(self, source):
-        return Recipe(name=source)
-
 
 if __name__ == '__main__':
-    db = RecipeDB()
-    print(db.recipe_exists('pesto'))
+    pass

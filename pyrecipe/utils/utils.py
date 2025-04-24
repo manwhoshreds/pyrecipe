@@ -196,4 +196,3 @@ def recipe2xml(func):
 if __name__ == '__main__':
     r = Recipe('pesto')
     test = get_recipe_xml(r)
-    print(test)

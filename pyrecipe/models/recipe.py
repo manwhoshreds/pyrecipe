@@ -159,16 +159,16 @@ class Ingredient:
         if isinstance(ingredient, str):
             self.parse_ingredient(ingredient)
         else:
-            self.group_name = ingredient.get('group_name', None)
+            self.group_name = ingredient.get('group_name', '')
             if self.amount:
                 self.amount = RecipeNum(self.amount)
             self.amount = ingredient.get('amount', '')
-            self.size = ingredient.get('size', None)
-            self.portion = ingredient.get('portion', None)
-            self.unit = ingredient.get('unit', None)
+            self.size = ingredient.get('size', '')
+            self.portion = ingredient.get('portion', '')
+            self.unit = ingredient.get('unit', '')
             self.name = ingredient['name']
-            self.prep = ingredient.get('prep', None)
-            self.note = ingredient.get('note', None)
+            self.prep = ingredient.get('prep', '')
+            self.note = ingredient.get('note', '')
 
 
     def __repr__(self):
@@ -306,7 +306,7 @@ class Ingredient:
         try:
             self.amount = str(RecipeNum(' '.join(amnt_list)))
         except ValueError:
-            self.amount = None
+            self.amount = ""
 
 
         ingred_list = [x for x in ingred_list if x not in amnt_list]
@@ -326,7 +326,7 @@ class Ingredient:
             self.prep = ingred_string.split(',')[-1].strip()
             ingred_string = ingred_string.replace(self.prep, '')
         else:
-            self.prep = None
+            self.prep = ""
 
         if not self.unit:
             self.unit = 'each'

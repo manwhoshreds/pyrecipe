@@ -7,6 +7,8 @@
 --    USING FTS5(name, ingredient)
 --;
 
+PRAGMA foreign_keys = ON;
+
 CREATE TABLE IF NOT EXISTS Recipes (
 	recipe_id INTEGER PRIMARY KEY AUTOINCREMENT,
 	uuid TEXT NOT NULL UNIQUE,

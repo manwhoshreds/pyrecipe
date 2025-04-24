@@ -13,7 +13,6 @@ from termcolor import colored
 
 from .editor import RecipeEditor
 from pyrecipe import utils
-from pyrecipe.models.recipe_numbers import RecipeNum
 
 
 def divider(m):
@@ -25,13 +24,13 @@ class View:
     """View class for the pyrecipe program"""
 
     @staticmethod
-    def print_recipe(recipe, verbose=False):
+    def view_recipe(recipe, verbose=False):
         """Print the recipe to standard output."""
 
         recipe_str = colored(recipe.name.title(), 'cyan', attrs=['bold'])
         recipe_str += f"\n\nDish Type: {recipe.dish_type}"
-        recipe_str += f"\nPrep Time: {RecipeNum(recipe.prep_time)}"
-        recipe_str += f"\nCook Time: {RecipeNum(recipe.cook_time)}"
+        recipe_str += f"\nPrep Time: {recipe.prep_time}"
+        recipe_str += f"\nCook Time: {recipe.cook_time}"
         recipe_str += f"\nAuthor: {recipe.author}"
 
         extra_info = False

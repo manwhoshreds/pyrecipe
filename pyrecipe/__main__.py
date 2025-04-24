@@ -11,33 +11,34 @@ import sys
 import argparse
 
 from pyrecipe import VER_STR
-from pyrecipe.ui import View
-from pyrecipe.models import PyRecipe, RecipeNotFound#, RecipeAlreadyStored
+from pyrecipe.views import View
+from pyrecipe.controllers import Controller
 
 
-def create_recipe(args):
+
+def view_recipe(args):
+    """Read and print a recipe"""
+    rec = PyRecipe().read_recipe(args.source)
+    View.view_recipe(rec, args.verbose)
+
+def add_recipe(args):
     """Create a recipe"""
     pyrec = PyRecipe()
-    rec = pyrec.get_recipe(args.source)
+    rec = pyrec.read_recipe(args.source)
     new_rec = View.create_recipe(rec)
     pyrec.create_recipe(new_rec)
 
-def read_recipe(args):
-    """Read and print a recipe"""
-    rec = PyRecipe().get_recipe(args.source)
-    View.print_recipe(rec, args.verbose)
-
-def update_recipe(args):
+def edit_recipe(args):
     """Update a recipe"""
     pyrec = PyRecipe()
-    rec = pyrec.get_recipe(args.source)
+    rec = pyrec.read_recipe(args.source)
     new_rec = View.edit_recipe(rec)
     pyrec.update_recipe(new_rec)
 
-def delete_recipe(args):
+def remove_recipe(args):
     """Delete a recipe"""
     try:
-        rec = PyRecipe().get_recipe(args.source)
+        rec = PyRecipe().read_recipe(args.source)
         answer = input(f"Are you sure your want to delete {args.source}? yes/no ")
         pyrec = PyRecipe()
         if answer.strip() in ('yes', 'y'):
@@ -53,18 +54,25 @@ def subparser_add(subparser):
     parser_add = subparser.add_parser("add", help='Add a recipe')
     parser_add.add_argument("source", help='Name of the recipe to add')
 
-def subparser_print(subparser):
-    """Subparser for print command."""
+def subparser_view(subparser):
+    """Subparser for view command."""
     parser = subparser.add_parser(
-        "print",
-        help="Print the recipe to screen"
+        "view",
+        help="Print the recipe to standard output"
     )
     parser.add_argument(
         "source",
         help="Recipe, file path, or url"
     )
     parser.add_argument(
-        "--yield",
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="Increase the verbosity of output. \
+              Only works with the view command."
+    )
+    parser.add_argument(
+        "--recipe-yield",
         default=0,
         nargs='?',
         metavar='N',
@@ -100,20 +108,13 @@ def get_parser():
     parser = argparse.ArgumentParser(
         description="Recipe_tool has tab completion functionality. \
                      After adding a recipe, simply run recipe_tool \
-                     print <TAB><TAB> to view whats available.",
+                     view <TAB><TAB> to view whats available.",
         add_help=False
     )
     parser.add_argument(
         "-h", "--help",
         action='help',
         help="Show this help message and quit"
-    )
-    parser.add_argument(
-        "-v",
-        "--verbose",
-        action="store_true",
-        help="Increase the verbosity of output. \
-              Only works with the print command."
     )
     parser.add_argument(
         "-V",
@@ -124,7 +125,7 @@ def get_parser():
 
     subparser = parser.add_subparsers(dest='subparser')
     subparser_add(subparser)
-    subparser_print(subparser)
+    subparser_view(subparser)
     subparser_edit(subparser)
     subparser_remove(subparser)
     return parser
@@ -144,10 +145,10 @@ def main():
         sys.exit(parser.print_help())
 
     case = {
-        'add': create_recipe,
-        'print': read_recipe,
-        'edit': update_recipe,
-        'remove': delete_recipe,
+        'add': add_recipe,
+        'view': view_recipe,
+        'edit': edit_recipe,
+        'remove': remove_recipe,
     }
 
     if args.version:
